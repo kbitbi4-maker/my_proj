@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Проект</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        #text-container { transition: color 0.3s; font-size: 1.2rem; }
+        button { 
+            padding: 15px 30px; 
+            font-size: 1rem; 
+            background: #4285f4; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:active { background: #3367d6; }
+    </style>
+</head>
+<body>
+
+    <button onclick="changeColor()">Сменить цвет текста</button>
+
+    <div id="text-container">
+        <h2>The Future of Strategy Gaming</h2>
+        <p>Strategy games have come a long way from simple board games to complex digital simulations. 
+        Today, titles like "Total War Saga: Troy" allow players to experience history and mythology in incredible detail.</p>
+    </div>
+
+    <script>
+        function changeColor() {
+            const container = document.getElementById('text-container');
+            const colors = ['#FF5733', '#33FF57', '#3357FF', '#F333FF', '#000000'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            container.style.color = randomColor;
+        }
+    </script>
+</body>
+</html>
