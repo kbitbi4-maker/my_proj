@@ -5,128 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр таблицы</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 10px; background: #f9f9f9; color: #333; }
-        
-        /* Верхнее меню */
-        .nav-menu { 
-            display: flex; 
-            justify-content: center; 
-            gap: 8px; 
-            margin-bottom: 15px; 
-            position: sticky; 
-            top: 0; 
-            background: #f9f9f9; 
-            padding: 10px 0; 
-            border-bottom: 1px solid #ddd;
-            z-index: 1000;
-        }
-        .btn { 
-            padding: 10px 14px; 
-            color: white; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            font-size: 0.85rem; 
-            border: none; 
-            cursor: pointer;
-            font-weight: 500;
-        }
+        body { font-family: sans-serif; padding: 10px; background: #f4f7f6; }
+        .nav-menu { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .btn { padding: 10px 15px; color: white; border-radius: 6px; text-decoration: none; font-size: 0.9rem; border: none; background: #4285f4; cursor: pointer; }
         .btn-green { background: #34a853; }
-        .btn-blue { background: #4285f4; }
-        
-        /* Заголовок и контейнер таблицы */
-        h2 { text-align: center; font-size: 1.2rem; color: #444; margin: 10px 0; }
-        .table-container { 
-            overflow-x: auto; 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
-        }
-        
-        /* Стили самой таблицы */
-        table { width: 100%; border-collapse: collapse; min-width: 300px; }
-        th, td { border: 1px solid #eee; padding: 12px 10px; text-align: left; }
-        th { 
-            background: #4285f4; 
-            color: white; 
-            position: sticky; 
-            top: 55px; /* Чтобы шапка не перекрывалась меню */
-            z-index: 10;
-        }
-        tr:nth-child(even) { background: #fcfcfc; }
-        tr:hover { background: #f1f5ff; }
-
-        /* Сообщение об ошибке */
-        #content.error { color: #ea4335; text-align: center; padding: 20px; font-weight: bold; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
+        th { background: #4285f4; color: white; }
+        tr:nth-child(even) { background: #fafafa; }
     </style>
 </head>
 <body>
 
     <div class="nav-menu">
         <a href="index.html" class="btn btn-green">Главное меню</a>
-        <a href="pr1.html" class="btn btn-blue">Назад</a>
-        <button class="btn btn-blue" onclick="location.reload()">Обновить</button>
+        <a href="pr1.html" class="btn">Назад</a>
     </div>
 
-    <h2 id="title">Загрузка...</h2>
-    
-    <div class="table-container" id="content">
-        <p style="text-align:center; padding: 20px;">Подключаемся к Google Таблицам...</p>
-    </div>
+    <h2 id="title" style="text-align:center;">Загрузка...</h2>
+    <div class="table-container" id="content"></div>
 
     <script>
-        // Ваш ID таблицы из обычной ссылки
-        const SPREADSHEET_ID = '1xFq4TBf1NPH5TGvN1v2lbb7hz6sz2CT-DbklfARsYjM';
-        
-        // Получаем название листа из ссылки (параметр ?sheet=...)
         const urlParams = new URLSearchParams(window.location.search);
         const sheetName = urlParams.get('sheet') || 'Лист1';
         document.getElementById('title').innerText = "Набор: " + sheetName;
 
-        // Прямой URL для экспорта в формате CSV
-        const url = `https://docs.google.com{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-
-        fetch(url)
-            .then(res => {
-                if (!res.ok) throw new Error('Ошибка сети');
-                return res.text();
-            })
-            .then(csv => {
-                // Разбиваем CSV на строки, учитывая переносы
-                const rows = csv.split(/\r?\n/).map(row => {
-                    // Сложное разделение по запятым, игнорируя запятые внутри кавычек
-                    const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                    return matches ? matches.map(cell => cell.replace(/^"|"$/g, '').trim()) : [];
-                });
-
-                if (rows.length === 0 || (rows.length === 1 && rows[0].length === 0)) {
-                    document.getElementById('content').innerHTML = "<p class='error'>Лист '" + sheetName + "' пуст или не найден.</p>";
+        // Загружаем локальный файл базы данных
+        fetch('database.json')
+            .then(response => response.json())
+            .then(data => {
+                const tableData = data[sheetName];
+                if (!tableData) {
+                    document.getElementById('content').innerHTML = "<p style='padding:20px;'>Набор не найден в базе данных.</p>";
                     return;
                 }
 
                 let html = '<table><thead><tr>';
-                
-                // Формируем заголовки (первая строка)
-                rows[0].forEach(cell => {
-                    html += `<th>${cell}</th>`;
-                });
+                // Заголовки (первая строка массива)
+                tableData[0].forEach(cell => html += `<th>${cell}</th>`);
                 html += '</tr></thead><tbody>';
 
-                // Формируем данные (остальные строки)
-                for (let i = 1; i < rows.length; i++) {
-                    if (rows[i].some(cell => cell !== "")) {
-                        html += '<tr>' + rows[i].map(cell => `<td>${cell}</td>`).join('') + '</tr>';
-                    }
+                // Данные (остальные строки)
+                for (let i = 1; i < tableData.length; i++) {
+                    html += '<tr>' + tableData[i].map(cell => `<td>${cell}</td>`).join('') + '</tr>';
                 }
                 
-                html += '</tbody></table>';
-                document.getElementById('content').innerHTML = html;
+                document.getElementById('content').innerHTML = html + '</tbody></table>';
             })
             .catch(err => {
-                document.getElementById('content').innerHTML = 
-                    "<div class='error'>Ошибка загрузки!<br><small>Убедитесь, что в Google Таблице включен доступ 'Все, у кого есть ссылка'.</small></div>";
+                document.getElementById('content').innerHTML = "Ошибка загрузки базы данных.";
                 console.error(err);
             });
     </script>
-
 </body>
 </html>
