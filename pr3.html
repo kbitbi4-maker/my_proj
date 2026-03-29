@@ -107,7 +107,6 @@
     <input type="text" id="msg-text" placeholder="Message..." autocomplete="off">
     <button onclick="send()">➤</button>
 </div>
-
 <script>
     const SCRIPT_URL = 'https://script.google.com';
     const chatBox = document.getElementById('chat-box');
@@ -126,7 +125,7 @@
         try {
             const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
             const data = await res.json();
-            const currentName = nameInput.value.trim();
+            const currentName = nameInput.value.trim().toLowerCase(); // Имя в нижнем регистре для сравнения
 
             if (!data || data.length === 0) {
                 chatBox.innerHTML = "<p style='text-align:center; color:#888;'>No messages yet</p>";
@@ -134,8 +133,10 @@
             }
 
             chatBox.innerHTML = data.map(row => {
-                const senderName = row[0] || 'Guest';
-                const isMe = (senderName === currentName && currentName !== "");
+                // row[0] - Имя, row[1] - Текст, row[2] - Время
+                const senderName = String(row[0] || 'Guest').trim();
+                const isMe = (senderName.toLowerCase() === currentName && currentName !== "");
+                
                 return `
                     <div class="msg ${isMe ? 'sent' : 'received'}">
                         ${!isMe ? `<b>${senderName}</b>` : ''}
@@ -163,5 +164,7 @@
     msgInput.onkeypress = (e) => { if (e.key === "Enter") send(); };
     setInterval(loadMessages, 5000);
 </script>
+
+
 </body>
 </html>
