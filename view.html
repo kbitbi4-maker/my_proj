@@ -33,7 +33,7 @@
         document.getElementById('title').innerText = "Набор: " + sheetName;
 
         // Ссылка для получения CSV данных из опубликованной таблицы
-        const url = `https://docs.google.com{PUB_ID}/pub?gid=0&single=true&output=csv&sheet=${encodeURIComponent(sheetName)}`;
+        const url = `https://docs.google.com{PUB_ID}/pub?output=csv&sheet=${encodeURIComponent(sheetName)}`;
 
         fetch(url)
             .then(res => res.text())
