@@ -1,4 +1,4 @@
-<!-- set_unlearn.html ver003 -->
+<!-- set_unlearn.html ver005 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,27 +10,20 @@
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .nav-bar { background: #075e54; padding: 10px; display: flex; gap: 10px; }
         .nav-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
-        
         .card-container { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-y: auto; }
         .info-cell { background: white; width: 100%; max-width: 450px; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); min-height: 48px; display: flex; align-items: center; border-left: 5px solid #4285f4; }
-        
-        /* Скрытие перевода */
         .translation-cell { color: white; border-left-color: #f39c12; transition: color 0.2s; user-select: none; }
         .translation-cell.visible { color: #333 !important; }
-
-        /* Сетка кнопок 2x2 */
         .action-panel { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; background: white; border-top: 1px solid #ddd; height: 160px; }
         .action-btn { border: none; border-radius: 8px; background: #075e54; color: white; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
-        .action-btn:active { opacity: 0.8; }
         .btn-orange { background: #f39c12; }
         .btn-red { background: #d32f2f; }
-
-        #loader { position: fixed; inset: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        #loader { position: fixed; inset: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 100; flex-direction: column; }
     </style>
 </head>
 <body>
 
-    <div id="loader">Загрузка...</div>
+    <div id="loader">Загрузка данных...</div>
 
     <nav class="nav-bar">
         <a href="index.html" class="nav-btn">Меню</a>
@@ -38,7 +31,7 @@
     </nav>
 
     <div class="card-container">
-        <div class="info-cell" id="c-num"></div>
+        <div class="info-cell" id="c-num" style="color: #666; font-size: 0.85rem;"></div>
         <div class="info-cell" id="c-word" style="font-weight:bold; font-size:1.2rem;"></div>
         <div class="info-cell" id="c-trans" style="font-style:italic;"></div>
         <div class="info-cell translation-cell" id="c-p1"></div>
@@ -55,66 +48,45 @@
     </div>
 
 <script>
-    // Добавляем случайный параметр t=Date.now(), чтобы Google не выдавал закешированный ответ
     const WORDS_URL = 'https://script.google.com/macros/s/AKfycbzpilOSGi2qEozCNOcyR7P6X8xoRfxZUpx_lK1yl2J6vvjfyuyk1-Q_pALyA8-hNzvo/exec';
     let studyList = [];
     let currentIndex = 0;
 
     async function init() {
         const loader = document.getElementById('loader');
-        loader.style.display = 'flex';
-        loader.innerText = "Синхронизация с таблицей...";
-
         try {
-            // Принудительное обновление данных при каждом входе
-            const response = await fetch(WORDS_URL + '?nocache=' + Date.now());
+            // При каждом запуске запрашиваем свежий массив из Google Таблицы
+            const response = await fetch(WORDS_URL + '?t=' + Date.now());
             const data = await response.json();
             
-            console.log("Получено строк из таблицы:", data.length);
-
-            // Фильтруем: берем 8-й столбец (индекс 7), убираем пробелы и приводим к нижнему регистру
+            // Формируем массив: только строки со статусом "на изучении" в 8-м столбце [индекс 7]
+            // БЕЗ перемешивания (sort удален)
             studyList = data.filter(row => {
-                if (!row || row.length < 8) return false;
-                const status = String(row[7] || "").toLowerCase().trim();
-                return status === 'на изучении';
+                return row && row[7] && String(row[7]).toLowerCase().trim() === 'на изучении';
             });
 
-            console.log("Найдено карточек для изучения:", studyList.length);
-
             if (studyList.length === 0) {
-                loader.innerHTML = `
-                    <div style="text-align:center; padding:20px;">
-                        <p>В таблице нет слов со статусом <b>"на изучении"</b>.</p>
-                        <button onclick="location.reload()" style="padding:10px; border-radius:5px; cursor:pointer;">Обновить</button>
-                        <br><br>
-                        <a href="index.html" style="color:#075e54;">Вернуться в меню</a>
-                    </div>`;
+                loader.innerHTML = "<h3>Нет слов для изучения</h3><a href='index.html'>Вернуться в меню</a>";
                 return;
             }
 
-            // Перемешиваем массив
-            studyList.sort(() => Math.random() - 0.5);
-
             loader.style.display = 'none';
-            currentIndex = 0; // Всегда начинаем с первой перемешанной карточки
+            currentIndex = 0;
             displayCard();
-
         } catch (e) {
-            console.error("Ошибка при загрузке:", e);
-            loader.innerText = "Ошибка сети или скрипта. Попробуйте еще раз.";
+            loader.innerText = "Ошибка загрузки данных.";
         }
     }
 
     function displayCard() {
         if (studyList.length === 0) return;
-        
         const row = studyList[currentIndex];
         
-        // Скрываем перевод перед показом новой карточки
+        // Скрываем перевод
         document.querySelectorAll('.translation-cell').forEach(el => el.classList.remove('visible'));
-        
-        // Заполняем ячейки (№, Word, Trans, P1, P2, P3, P4)
-        document.getElementById('c-num').innerText = `Карточка ${currentIndex + 1} из ${studyList.length}`;
+
+        // Заполняем данными. row[0] - это исходный номер из таблицы
+        document.getElementById('c-num').innerText = `Карточка ${currentIndex + 1} из ${studyList.length} (ID: ${row[0]})`;
         document.getElementById('c-word').innerText = row[1] || '';
         document.getElementById('c-trans').innerText = row[2] || '';
         document.getElementById('c-p1').innerText = row[3] || '';
@@ -124,7 +96,6 @@
     }
 
     function nextCard() {
-        if (studyList.length === 0) return;
         currentIndex = (currentIndex >= studyList.length - 1) ? 0 : currentIndex + 1;
         displayCard();
     }
@@ -143,37 +114,32 @@
     }
 
     async function markAsDone() {
-        if (!studyList[currentIndex]) return;
+        if (studyList.length === 0) return;
         
         const rowData = studyList[currentIndex];
-        const rowId = rowData[0]; // Берем ID из первого столбца (№)
+        const rowId = rowData[0]; // Привязка к номеру из исходного файла
         const btn = document.getElementById('btn-done');
         
         btn.disabled = true;
         btn.innerText = "⏳...";
 
-        // 1. Отправляем сигнал в Google Apps Script
-        // Скрипт должен уметь обрабатывать JSON с rowNum и status
+        // Отправка POST запроса в Google Apps Script для обновления файла
+        // В скрипте должна быть логика замены "на изучении" -> "выучено" и снятия фона
         fetch(WORDS_URL, { 
             method: 'POST', 
             mode: 'no-cors', 
             body: JSON.stringify({ rowNum: rowId, status: 'выучено' }) 
         });
 
-        // 2. Удаляем слово из текущего сеанса прямо сейчас
+        // Удаляем элемент из текущего экранного массива
         studyList.splice(currentIndex, 1);
 
         if (studyList.length === 0) {
-            document.body.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center;">
-                    <h2>🎉 Отлично!</h2>
-                    <p>Все выбранные слова выучены.</p>
-                    <a href="index.html" style="text-decoration:none; background:#075e54; color:white; padding:15px 30px; border-radius:8px;">В меню</a>
-                </div>`;
+            document.body.innerHTML = "<div style='text-align:center; padding-top:100px;'><h2>🎉 Вы выучили все слова!</h2><br><a href='index.html'>Меню</a></div>";
             return;
         }
 
-        // 3. Переходим к следующей карточке
+        // Если удалили последнюю карточку в списке, переходим на первую
         if (currentIndex >= studyList.length) currentIndex = 0;
         
         btn.disabled = false;
@@ -181,9 +147,7 @@
         displayCard();
     }
 
-    // Запуск инициализации при загрузке страницы
     window.onload = init;
 </script>
-
 </body>
 </html>
