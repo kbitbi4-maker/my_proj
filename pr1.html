@@ -1,45 +1,23 @@
-<!-- pr1.html ver016 -->
+<!-- pr1.html ver017 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Words Table v016</title>
+    <title>Words Table v017</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Шапка */
         .header { position: fixed; top: 0; width: 100%; height: 60px; background: #075e54; color: white; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
         .header a { text-decoration: none; color: white; font-weight: bold; font-size: 1.2rem; }
-
-        /* Панель поиска */
         .control-panel { margin-top: 60px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; z-index: 900; }
         .search-box { width: 100%; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
-
-        /* Контейнер для таблицы с прокруткой */
-        .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        table { width: 100%; border-collapse: collapse; min-width: 800px; /* Чтобы на мобильном был скролл вбок */ }
-        
-        /* Стили ячеек */
-        th, td { padding: 12px 10px; border: 1px solid #eee; text-align: left; font-size: 0.95rem; }
-        
-        /* Зафиксированная шапка таблицы */
-        thead th { 
-            position: sticky; 
-            top: 0; 
-            background: #4285f4; 
-            color: white; 
-            z-index: 10; 
-            border: none;
-        }
-
-        /* Зебра для строк */
+        .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 12px 10px; border: 1px solid #eee; text-align: left; font-size: 0.9rem; }
+        thead th { position: sticky; top: 0; background: #4285f4; color: white; z-index: 10; }
         tbody tr:nth-child(even) { background: #f9f9f9; }
-        tbody tr:hover { background: #f1f5ff; }
-
-        .loading { text-align: center; padding: 50px; color: #666; }
+        .msg-status { text-align: center; padding: 20px; color: #666; }
     </style>
 </head>
 <body>
@@ -51,74 +29,77 @@
 </div>
 
 <div class="control-panel">
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск по всей таблице..." oninput="filterWords()">
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск по словам и переводам..." oninput="filterData()">
 </div>
 
-<div class="table-wrapper" id="table-container">
-    <div class="loading">Загрузка данных из Google...</div>
+<div class="table-wrapper" id="main-container">
+    <div class="msg-status" id="status-text">Загрузка данных из Google...</div>
 </div>
 
 <script>
     const WORDS_URL = 'https://script.google.com';
-    let allWordsData = [];
+    let rawData = [];
 
-    async function loadWords() {
+    async function loadData() {
         try {
-            const res = await fetch(WORDS_URL + '?t=' + Date.now());
-            const data = await res.json();
+            const response = await fetch(WORDS_URL + '?t=' + Date.now());
+            const data = await response.json();
             
-            if (!data || data.length < 1) {
-                document.getElementById('table-container').innerHTML = "<p style='padding:20px;'>Лист пуст.</p>";
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById('status-text').innerHTML = "Данные не найдены в листе db_set_002";
                 return;
             }
 
-            allWordsData = data; // Сохраняем всё, включая заголовки
-            renderTable(allWordsData);
-
+            rawData = data;
+            renderTable(rawData);
         } catch (e) {
-            document.getElementById('table-container').innerHTML = "<p style='padding:20px; color:red;'>Ошибка загрузки.</p>";
+            document.getElementById('status-text').innerHTML = "Ошибка связи. Проверьте 'Поделиться' в таблице и 'Развернуть' в скрипте.";
+            console.error(e);
         }
     }
 
-    function renderTable(dataRows) {
-        if (dataRows.length === 0) return;
+    function renderTable(rows) {
+        if (!rows || rows.length === 0) return;
 
         let html = '<table><thead><tr>';
-        // Заголовки (берем из первой строки ДБ)
-        const headers = ["№", "Слово", "Транскрипция", "Перевод 1", "Перевод 2", "Перевод 3", "Перевод 4"]; 
+        const headers = ["№", "Слово", "Транскрипция", "Перевод 1", "Перевод 2", "Перевод 3", "Перевод 4"];
         headers.forEach(h => html += `<th>${h}</th>`);
         html += '</tr></thead><tbody>';
 
-        // Данные (пропускаем первую строку если там тоже заголовки)
-        const startIdx = (dataRows[0][0] === "№" || isNaN(dataRows[0][0])) ? 1 : 0;
+        // Пропускаем первую строку, если в ней заголовки (например "№" или "Слово")
+        const start = (rows[0][0] === "№" || String(rows[0][1]).toLowerCase() === "слово") ? 1 : 0;
 
-        for (let i = startIdx; i < dataRows.length; i++) {
-            const row = dataRows[i];
+        for (let i = start; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || r.length === 0) continue;
             html += '<tr>';
-            // Выводим 7 столбцов (0-6)
             for (let j = 0; j < 7; j++) {
-                html += `<td>${row[j] || ''}</td>`;
+                html += `<td>${r[j] !== undefined ? r[j] : ''}</td>`;
             }
             html += '</tr>';
         }
 
         html += '</tbody></table>';
-        document.getElementById('table-container').innerHTML = html;
+        document.getElementById('main-container').innerHTML = html;
     }
 
-    function filterWords() {
+    function filterData() {
         const query = document.getElementById('search-input').value.toLowerCase();
-        const headerRow = allWordsData[0];
-        
-        const filtered = allWordsData.slice(1).filter(row => {
+        if (!query) {
+            renderTable(rawData);
+            return;
+        }
+
+        const filtered = rawData.filter((row, index) => {
+            // Пропускаем заголовок при фильтрации
+            if (index === 0 && (row[0] === "№" || String(row[1]).toLowerCase() === "слово")) return false;
             return row.some(cell => String(cell).toLowerCase().includes(query));
         });
-        
-        // Рендерим с сохранением заголовка
-        renderTable([headerRow, ...filtered]);
+
+        renderTable(filtered);
     }
 
-    loadWords();
+    loadData();
 </script>
 
 </body>
