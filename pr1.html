@@ -1,10 +1,10 @@
-<!-- pr1.html ver021 -->
+<!-- pr1.html ver018 (v022 Fixed) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Words Table v021</title>
+    <title>Words Table v022</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -15,9 +15,8 @@
         .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; min-width: 650px; table-layout: fixed; }
         th, td { padding: 12px 8px; border: 1px solid #eee; text-align: left; font-size: 0.9rem; vertical-align: top; word-wrap: break-word; white-space: normal; }
-        th:nth-child(1) { width: 40px; } 
-        th:nth-child(2) { width: 110px; }
-        th:nth-child(3) { width: 100px; }
+        th:nth-child(1) { width: 45px; } 
+        th:nth-child(2) { width: 120px; }
         thead th { position: sticky; top: 0; background: #4285f4; color: white; z-index: 10; border: none; }
         tbody tr:nth-child(even) { background: #f9f9f9; }
         .status-area { text-align: center; padding: 40px; color: #666; font-style: italic; }
@@ -32,33 +31,37 @@
 </div>
 
 <div class="control-panel">
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск слова или перевода..." oninput="filterData()">
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск по таблице..." oninput="filterData()">
 </div>
 
 <div class="table-wrapper" id="main-container">
-    <div class="status-area" id="status-text">Загрузка данных из облака...</div>
+    <div class="status-area" id="status-text">Загрузка данных...</div>
 </div>
 
 <script>
     const WORDS_URL = 'https://script.google.com';
     let fullTableData = [];
 
+    // Используем более надежный метод получения JSON
     async function fetchData() {
         const status = document.getElementById('status-text');
         try {
-            const response = await fetch(WORDS_URL + '?t=' + Date.now());
-            if (!response.ok) throw new Error("HTTP Error " + response.status);
+            // Добавляем параметр redirect для Google
+            const response = await fetch(WORDS_URL + '?t=' + Date.now(), {
+                method: 'GET',
+                redirect: 'follow' 
+            });
             
             const data = await response.json();
             
-            if (Array.isArray(data) && data.length > 0) {
+            if (data && data.length > 0) {
                 fullTableData = data;
                 renderTable(fullTableData);
             } else {
-                status.innerHTML = "Данные получены, но список пуст. Проверьте лист db_set_002.";
+                status.innerHTML = "Лист пуст или не найден.";
             }
         } catch (e) {
-            status.innerHTML = "Ошибка: " + e.message + "<br><small>Проверьте публикацию скрипта (Доступ: Все).</small>";
+            status.innerHTML = "Ошибка: " + e.message + "<br><small>Попробуйте открыть ссылку скрипта в новой вкладке. Если там ошибка - исправьте доступ в Google.</small>";
             console.error(e);
         }
     }
@@ -70,17 +73,15 @@
         headers.forEach(h => html += `<th>${h}</th>`);
         html += '</tr></thead><tbody>';
 
-        // Пропускаем первую строку, если там заголовки (Слово, № и т.д.)
         const firstRowStr = String(rows[0]).toLowerCase();
         const start = (firstRowStr.includes('слово') || firstRowStr.includes('№')) ? 1 : 0;
 
         for (let i = start; i < rows.length; i++) {
             const r = rows[i];
-            if (!r || !Array.isArray(r) || r.length === 0) continue;
+            if (!r || r.length === 0) continue;
             html += '<tr>';
             for (let j = 0; j < 7; j++) {
-                let cellValue = (r[j] !== undefined && r[j] !== null) ? r[j] : '';
-                html += `<td>${cellValue}</td>`;
+                html += `<td>${(r[j] !== undefined && r[j] !== null) ? r[j] : ''}</td>`;
             }
             html += '</tr>';
         }
@@ -90,12 +91,9 @@
 
     function filterData() {
         const query = document.getElementById('search-input').value.toLowerCase();
-        if (!query) {
-            renderTable(fullTableData);
-            return;
-        }
+        if (!query) { renderTable(fullTableData); return; }
         const filtered = fullTableData.filter((row, index) => {
-            if (index === 0 && String(row[1]).toLowerCase().includes('слово')) return false;
+            if (index === 0 && String(row).toLowerCase().includes('слово')) return false;
             return row.some(cell => String(cell).toLowerCase().includes(query));
         });
         renderTable(filtered);
