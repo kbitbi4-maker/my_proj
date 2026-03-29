@@ -1,0 +1,110 @@
+<!-- set_unlearn.html ver001 -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Study Cards</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* 1. Навигация */
+        .nav-bar { background: #075e54; padding: 10px; display: flex; gap: 10px; }
+        .nav-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        
+        /* 2. Ячейки данных */
+        .card-container { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; overflow-y: auto; }
+        .info-cell { background: white; width: 100%; max-width: 400px; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-height: 45px; display: flex; align-items: center; border-left: 4px solid #4285f4; }
+        .info-cell:nth-child(1) { font-weight: bold; color: #777; border-left-color: #999; } /* Номер */
+        .info-cell:nth-child(2) { font-size: 1.2rem; font-weight: bold; color: #000; } /* Слово */
+        
+        /* 3. Кнопки действий */
+        .action-panel { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: white; border-top: 1px solid #ddd; }
+        .action-btn { padding: 15px; border: none; border-radius: 8px; background: #e8f0fe; color: #1967d2; font-weight: bold; cursor: pointer; }
+        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loading-overlay">Загрузка карточек...</div>
+
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn">Главное меню</a>
+        <button class="nav-btn" onclick="history.back()">Назад</button>
+    </nav>
+
+    <div class="card-container">
+        <div class="info-cell" id="c-num" title="№"></div>
+        <div class="info-cell" id="c-word" title="Слово"></div>
+        <div class="info-cell" id="c-trans" title="Транскрипция"></div>
+        <div class="info-cell" id="c-p1" title="Перевод 1"></div>
+        <div class="info-cell" id="c-p2" title="Перевод 2"></div>
+        <div class="info-cell" id="c-p3" title="Перевод 3"></div>
+        <div class="info-cell" id="c-p4" title="Перевод 4"></div>
+    </div>
+
+    <div class="action-panel">
+        <button class="action-btn" onclick="action(1)">Кнопка 1</button>
+        <button class="action-btn" onclick="action(2)">Кнопка 2</button>
+        <button class="action-btn" onclick="action(3)">Кнопка 3</button>
+        <button class="action-btn" onclick="action(4)">Кнопка 4</button>
+    </div>
+
+<script>
+    const WORDS_URL = 'https://script.google.com/macros/s/AKfycbzUvswfQIF0RbfqDZtHLczTdC8NLWyxvPQ4WXSnoghoBwnivFjDVtrgtHYUt2GEOdMo/exec';
+    let studyList = [];
+    let currentIndex = 0;
+
+    async function init() {
+        try {
+            const response = await fetch(WORDS_URL + '?t=' + Date.now());
+            const data = await response.json();
+            
+            // 3. Сортировка (фильтрация по "на изучении" в 8-м столбце [индекс 7])
+            studyList = data.filter(row => row[7] === 'на изучении');
+
+            if (studyList.length === 0) {
+                alert("Нет слов со статусом 'на изучении'!");
+                return;
+            }
+
+            // Перемешивание массива (Shuffle)
+            studyList.sort(() => Math.random() - 0.5);
+
+            // Скрытие загрузки и показ первой карточки
+            document.getElementById('loader').style.display = 'none';
+            displayCard();
+        } catch (e) {
+            document.getElementById('loader').innerText = "Ошибка загрузки данных.";
+        }
+    }
+
+    function displayCard() {
+        if (currentIndex >= studyList.length) {
+            alert("Карточки закончились!");
+            return;
+        }
+
+        const row = studyList[currentIndex];
+        
+        // Заполнение ячеек (0-6 индексы: №, Word, Trans, P1, P2, P3, P4)
+        document.getElementById('c-num').innerText = `Карточка №${currentIndex + 1} (исх. №${row[0]})`;
+        document.getElementById('c-word').innerText = row[1] || '';
+        document.getElementById('c-trans').innerText = row[2] || '';
+        document.getElementById('c-p1').innerText = row[3] || '';
+        document.getElementById('c-p2').innerText = row[4] || '';
+        document.getElementById('c-p3').innerText = row[5] || '';
+        document.getElementById('c-p4').innerText = row[6] || '';
+    }
+
+    function action(num) {
+        console.log("Нажата кнопка:", num);
+        // Здесь позже пропишем логику (например, переход к следующей: currentIndex++; displayCard();)
+    }
+
+    init();
+</script>
+</body>
+</html>
