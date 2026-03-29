@@ -7,16 +7,16 @@
     <style>
         * { box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
             margin: 0; 
             background: #e5ddd5; 
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Запрещаем скролл всей страницы */
+            overflow: hidden; /* Основной экран не скроллится */
         }
 
-        /* Фиксированная шапка */
+        /* ФИКСИРОВАННАЯ ШАПКА */
         .header { 
             position: fixed;
             top: 0;
@@ -30,19 +30,19 @@
             gap: 15px; 
             font-weight: bold; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-            z-index: 100; 
+            z-index: 1000; 
         }
         .back-btn { text-decoration: none; color: white; font-size: 1.8rem; line-height: 1; }
         
-        /* Область сообщений со своим скроллом */
+        /* ОБЛАСТЬ СООБЩЕНИЙ */
         #chat-box { 
             flex: 1; 
             overflow-y: auto; 
-            padding: 75px 15px 85px 15px; /* Отступы, чтобы текст не заходил под панели */
+            padding: 75px 15px 85px 15px; /* Отступы, чтобы контент не был под панелями */
             display: flex; 
             flex-direction: column; 
             gap: 10px; 
-            -webkit-overflow-scrolling: touch; /* Плавный скролл на iOS */
+            -webkit-overflow-scrolling: touch;
         }
         
         .msg { background: white; padding: 10px 15px; border-radius: 12px; max-width: 85%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); align-self: flex-start; }
@@ -51,21 +51,22 @@
         .msg p { margin: 0; font-size: 1rem; color: #333; line-height: 1.4; word-wrap: break-word; }
         .msg span { font-size: 0.65rem; color: #888; display: block; text-align: right; margin-top: 5px; }
 
-        /* Фиксированная нижняя панель */
+        /* ФИКСИРОВАННАЯ НИЖНЯЯ ПАНЕЛЬ */
         .input-area { 
             position: fixed;
             bottom: 0;
             width: 100%;
+            height: 70px;
             background: #f0f0f0; 
             padding: 10px; 
             display: flex; 
             gap: 8px; 
             align-items: center; 
             border-top: 1px solid #ddd; 
-            z-index: 100;
+            z-index: 1000;
         }
-        #user-name { width: 70px; flex: none; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 0.9rem; }
-        #msg-text { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
+        #user-name { width: 75px; flex: none; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 0.9rem; background: #fff; }
+        #msg-text { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 1rem; background: #fff; }
         button { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: none; }
     </style>
 </head>
@@ -76,7 +77,7 @@
     <span>Global Chat</span>
 </div>
 
-<div id="chat-box">Загрузка...</div>
+<div id="chat-box">Loading messages...</div>
 
 <div class="input-area">
     <input type="text" id="user-name" placeholder="Name" maxlength="12">
@@ -89,29 +90,27 @@
     const chatBox = document.getElementById('chat-box');
     const nameInput = document.getElementById('user-name');
     const msgInput = document.getElementById('msg-text');
-    let lastMessageCount = -1; // Установили -1, чтобы первая загрузка с 0 сообщений все равно сработала
 
+    // Загрузка имени и сообщений при старте
     window.onload = () => {
         const savedName = localStorage.getItem('chat_user_name');
         if (savedName) nameInput.value = savedName;
-        loadMessages(true);
+        loadMessages();
     };
 
+    // Сохранение имени при вводе
     nameInput.oninput = () => localStorage.setItem('chat_user_name', nameInput.value);
 
-    async function loadMessages(forceScroll = false) {
+    async function loadMessages() {
         try {
-            // Добавляем случайный параметр к URL, чтобы обойти кэш браузера
-            const res = await fetch(SCRIPT_URL + '?nocache=' + new Date().getTime());
+            // Добавляем timestamp для обхода кэша
+            const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
             const data = await res.json();
-            
-            // Проверяем, есть ли новые данные
-            if (data.length === lastMessageCount && !forceScroll) return;
             
             const currentName = nameInput.value.trim();
             
-            // Генерируем HTML
-            const html = data.map(row => {
+            // Полная перерисовка (мерцающая, но надежная версия)
+            chatBox.innerHTML = data.map(row => {
                 const isMe = (row[0] === currentName && currentName !== "");
                 return `
                     <div class="msg ${isMe ? 'my-msg' : ''}">
@@ -122,19 +121,9 @@
                 `;
             }).join('');
             
-            // Обновляем экран только если данные изменились
-            chatBox.innerHTML = html;
-            lastMessageCount = data.length;
-            
-            // Скроллим вниз
-            if (forceScroll || chatBox.scrollHeight - chatBox.scrollTop < 1000) {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
+            chatBox.scrollTop = chatBox.scrollHeight;
         } catch (e) { 
             console.error(e);
-            if (chatBox.innerHTML.includes("Загрузка")) {
-                chatBox.innerHTML = "<p style='text-align:center; color:red;'>Ошибка соединения. Пробуем снова...</p>";
-            }
         }
     }
 
@@ -142,25 +131,26 @@
         const user = nameInput.value.trim() || 'Guest';
         const text = msgInput.value.trim();
         if (!text) return;
+
+        msgInput.value = ''; // Очищаем сразу
         
-        msgInput.value = '';
         try {
-            // Отправляем POST запрос
             await fetch(SCRIPT_URL, { 
                 method: 'POST', 
                 mode: 'no-cors', 
                 body: JSON.stringify({ user, text }) 
             });
-            // Сразу запрашиваем обновление
-            setTimeout(() => loadMessages(true), 1000);
-        } catch (e) { console.error("Send error:", e); }
+            // Обновляем через секунду, чтобы Google успел записать
+            setTimeout(loadMessages, 1000);
+        } catch (e) { 
+            console.error("Send error:", e);
+        }
     }
 
     msgInput.onkeypress = (e) => { if (e.key === "Enter") send(); };
     
-    // Интервал обновлений (5 секунд)
-    setInterval(() => loadMessages(false), 5000);
+    // Интервал обновления — 5 секунд
+    setInterval(loadMessages, 5000);
 </script>
-
 </body>
 </html>
