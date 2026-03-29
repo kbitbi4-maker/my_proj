@@ -1,50 +1,32 @@
-<!-- pr1.html ver025 (Based on v018 with Strict Width) -->
+<!-- pr1.html ver018 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Words Table v025</title>
+    <title>Words Table v018</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
+        /* Шапка сайта */
         .header { position: fixed; top: 0; width: 100%; height: 60px; background: #075e54; color: white; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
         .header a { text-decoration: none; color: white; font-weight: bold; font-size: 1.2rem; }
 
+        /* Панель поиска */
         .control-panel { margin-top: 60px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; z-index: 900; }
         .search-box { width: 100%; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
 
+        /* Контейнер таблицы */
         .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
         
-        /* ЖЕСТКАЯ ШИРИНА КОЛОНОК */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1000px; /* Чтобы колонки не схлопывались в ноль */
-            table-layout: fixed; 
-        }
+        th, td { padding: 12px 10px; border: 1px solid #eee; text-align: left; font-size: 0.9rem; white-space: nowrap; }
         
-        th, td { 
-            padding: 12px 8px; 
-            border: 1px solid #eee; 
-            text-align: left; 
-            font-size: 0.9rem; 
-            white-space: nowrap; /* ЗАПРЕТ ПЕРЕНОСА (как в v018) */
-            overflow: hidden; 
-            text-overflow: ellipsis; /* Три точки, если текст не влез */
-        }
-        
-        /* Распределение ширины по вашему запросу */
-        th:nth-child(1) { width: 4%; }  /* № */
-        th:nth-child(2) { width: 8%; }  /* Слово */
-        th:nth-child(3) { width: 8%; }  /* Транскрипция */
-        th:nth-child(4) { width: 20%; } /* Пер 1 */
-        th:nth-child(5) { width: 20%; } /* Пер 2 */
-        th:nth-child(6) { width: 20%; } /* Пер 3 */
-        th:nth-child(7) { width: 20%; } /* Пер 4 */
-
+        /* Зафиксированная шапка таблицы */
         thead th { position: sticky; top: 0; background: #4285f4; color: white; z-index: 10; border: none; }
+
+        /* Зебра и ховер */
         tbody tr:nth-child(even) { background: #f9f9f9; }
         tbody tr:hover { background: #f1f5ff; }
 
@@ -60,14 +42,15 @@
 </div>
 
 <div class="control-panel">
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск..." oninput="filterData()">
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск по всем колонкам..." oninput="filterData()">
 </div>
 
 <div class="table-wrapper" id="main-container">
-    <div class="status-msg" id="status-text">Загрузка данных...</div>
+    <div class="status-msg" id="status-text">Подключение к базе данных...</div>
 </div>
 
 <script>
+    // Твоя рабочая ссылка
     const WORDS_URL = 'https://script.google.com';
     let fullData = [];
 
@@ -77,14 +60,15 @@
             const data = await response.json();
             
             if (!data || data.length === 0) {
-                document.getElementById('status-text').innerHTML = "Данные не найдены.";
+                document.getElementById('status-text').innerHTML = "Данные не найдены в листе db_set_002";
                 return;
             }
 
             fullData = data;
             renderHTMLTable(fullData);
         } catch (e) {
-            document.getElementById('status-text').innerHTML = "Ошибка загрузки. Проверьте соединение.";
+            document.getElementById('status-text').innerHTML = "Ошибка загрузки. Проверьте соединение или развертывание.";
+            console.error(e);
         }
     }
 
@@ -92,10 +76,11 @@
         if (!rows || rows.length === 0) return;
 
         let html = '<table><thead><tr>';
-        const headers = ["№", "Слово", "Транскр.", "Пер. 1", "Пер. 2", "Пер. 3", "Пер. 4"];
+        const headers = ["№", "Слово", "Транскрипция", "Перевод 1", "Перевод 2", "Перевод 3", "Перевод 4"];
         headers.forEach(h => html += `<th>${h}</th>`);
         html += '</tr></thead><tbody>';
 
+        // Пропускаем первую строку, если там заголовки в данных
         const startFrom = (String(rows[0]).toLowerCase().includes('№') || String(rows[0]).toLowerCase().includes('слово')) ? 1 : 0;
 
         for (let i = startFrom; i < rows.length; i++) {
@@ -120,7 +105,9 @@
         }
 
         const filtered = fullData.filter((row, index) => {
-            if (index === 0 && (String(row).includes('№'))) return false;
+            // Не фильтруем строку заголовков
+            const isHeader = (index === 0 && (String(row).includes('№') || String(row).toLowerCase().includes('слово')));
+            if (isHeader) return false;
             return row.some(cell => String(cell).toLowerCase().includes(query));
         });
 
