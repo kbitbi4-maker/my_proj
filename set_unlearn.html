@@ -1,59 +1,70 @@
-<!-- set_unlearn.html ver001 -->
+<!-- set_unlearn.html ver002 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Study Cards</title>
+    <title>Study Cards v002</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* 1. Навигация */
-        .nav-bar { background: #075e54; padding: 10px; display: flex; gap: 10px; }
+        .nav-bar { background: #075e54; padding: 10px; display: flex; gap: 10px; z-index: 10; }
         .nav-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
         
-        /* 2. Ячейки данных */
-        .card-container { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; overflow-y: auto; }
-        .info-cell { background: white; width: 100%; max-width: 400px; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-height: 45px; display: flex; align-items: center; border-left: 4px solid #4285f4; }
-        .info-cell:nth-child(1) { font-weight: bold; color: #777; border-left-color: #999; } /* Номер */
-        .info-cell:nth-child(2) { font-size: 1.2rem; font-weight: bold; color: #000; } /* Слово */
+        .card-container { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-y: auto; }
         
-        /* 3. Кнопки действий */
-        .action-panel { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: white; border-top: 1px solid #ddd; }
-        .action-btn { padding: 15px; border: none; border-radius: 8px; background: #e8f0fe; color: #1967d2; font-weight: bold; cursor: pointer; }
+        /* Общий стиль ячеек */
+        .info-cell { background: white; width: 100%; max-width: 450px; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); min-height: 48px; display: flex; align-items: center; border-left: 5px solid #4285f4; transition: 0.3s; }
         
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        /* Стили для разных типов данных */
+        #c-num { font-weight: bold; color: #777; border-left-color: #999; }
+        #c-word { font-size: 1.3rem; font-weight: bold; color: #000; border-left-color: #075e54; }
+        #c-trans { font-style: italic; color: #555; }
+        
+        /* Скрытие перевода (цвет текста = цвет фона) */
+        .translation-cell { color: white; border-left-color: #f39c12; }
+        .translation-cell.visible { color: #333 !important; } /* Класс для показа текста */
+
+        .action-panel { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: white; border-top: 1px solid #ddd; }
+        .action-btn { padding: 18px 10px; border: none; border-radius: 8px; background: #075e54; color: white; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .action-btn:active { background: #0bad9c; }
+        .btn-show { background: #f39c12; grid-column: span 2; } /* Кнопка перевода на всю ширину или в ряд */
+
+        #loader { position: fixed; inset: 0; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="loading-overlay">Загрузка карточек...</div>
+    <div id="loader">
+        <div style="margin-bottom:10px;">Загрузка слов...</div>
+    </div>
 
     <nav class="nav-bar">
-        <a href="index.html" class="nav-btn">Главное меню</a>
+        <a href="index.html" class="nav-btn">Меню</a>
         <button class="nav-btn" onclick="history.back()">Назад</button>
     </nav>
 
     <div class="card-container">
-        <div class="info-cell" id="c-num" title="№"></div>
-        <div class="info-cell" id="c-word" title="Слово"></div>
-        <div class="info-cell" id="c-trans" title="Транскрипция"></div>
-        <div class="info-cell" id="c-p1" title="Перевод 1"></div>
-        <div class="info-cell" id="c-p2" title="Перевод 2"></div>
-        <div class="info-cell" id="c-p3" title="Перевод 3"></div>
-        <div class="info-cell" id="c-p4" title="Перевод 4"></div>
+        <div class="info-cell" id="c-num"></div>
+        <div class="info-cell" id="c-word"></div>
+        <div class="info-cell" id="c-trans"></div>
+        <!-- Ячейки перевода с классом скрытия -->
+        <div class="info-cell translation-cell" id="c-p1"></div>
+        <div class="info-cell translation-cell" id="c-p2"></div>
+        <div class="info-cell translation-cell" id="c-p3"></div>
+        <div class="info-cell translation-cell" id="c-p4"></div>
     </div>
 
     <div class="action-panel">
-        <button class="action-btn" onclick="action(1)">Кнопка 1</button>
-        <button class="action-btn" onclick="action(2)">Кнопка 2</button>
-        <button class="action-btn" onclick="action(3)">Кнопка 3</button>
-        <button class="action-btn" onclick="action(4)">Кнопка 4</button>
+        <button class="action-btn" onclick="prevCard()">← Назад</button>
+        <button class="action-btn" onclick="nextCard()">Вперед →</button>
+        <button class="action-btn btn-show" onclick="showTranslation()">Показать перевод</button>
+        <button class="action-btn" onclick="action4()">Кнопка 4</button>
     </div>
 
 <script>
-    const WORDS_URL = 'https://script.google.com/macros/s/AKfycbzUvswfQIF0RbfqDZtHLczTdC8NLWyxvPQ4WXSnoghoBwnivFjDVtrgtHYUt2GEOdMo/exec';
+    const WORDS_URL = 'https://script.google.com';
     let studyList = [];
     let currentIndex = 0;
 
@@ -62,35 +73,32 @@
             const response = await fetch(WORDS_URL + '?t=' + Date.now());
             const data = await response.json();
             
-            // 3. Сортировка (фильтрация по "на изучении" в 8-м столбце [индекс 7])
+            // Фильтр: 8-й столбец (индекс 7) == "на изучении"
             studyList = data.filter(row => row[7] === 'на изучении');
 
             if (studyList.length === 0) {
-                alert("Нет слов со статусом 'на изучении'!");
+                document.getElementById('loader').innerHTML = "Нет слов для изучения.<br><button onclick='history.back()'>Вернуться</button>";
                 return;
             }
 
-            // Перемешивание массива (Shuffle)
+            // Перемешивание
             studyList.sort(() => Math.random() - 0.5);
 
-            // Скрытие загрузки и показ первой карточки
             document.getElementById('loader').style.display = 'none';
             displayCard();
         } catch (e) {
-            document.getElementById('loader').innerText = "Ошибка загрузки данных.";
+            document.getElementById('loader').innerText = "Ошибка сети.";
         }
     }
 
     function displayCard() {
-        if (currentIndex >= studyList.length) {
-            alert("Карточки закончились!");
-            return;
-        }
-
         const row = studyList[currentIndex];
         
-        // Заполнение ячеек (0-6 индексы: №, Word, Trans, P1, P2, P3, P4)
-        document.getElementById('c-num').innerText = `Карточка №${currentIndex + 1} (исх. №${row[0]})`;
+        // Сбрасываем видимость перевода при смене карточки
+        document.querySelectorAll('.translation-cell').forEach(el => el.classList.remove('visible'));
+
+        // Заполнение данных
+        document.getElementById('c-num').innerText = `Карточка ${currentIndex + 1} из ${studyList.length}`;
         document.getElementById('c-word').innerText = row[1] || '';
         document.getElementById('c-trans').innerText = row[2] || '';
         document.getElementById('c-p1').innerText = row[3] || '';
@@ -99,9 +107,33 @@
         document.getElementById('c-p4').innerText = row[6] || '';
     }
 
-    function action(num) {
-        console.log("Нажата кнопка:", num);
-        // Здесь позже пропишем логику (например, переход к следующей: currentIndex++; displayCard();)
+    function nextCard() {
+        if (currentIndex < studyList.length - 1) {
+            currentIndex++;
+            displayCard();
+        } else {
+            alert("Это последняя карточка!");
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            displayCard();
+        }
+        // Если currentIndex === 0, ничего не происходит (как и просили)
+    }
+
+    function showTranslation() {
+        document.querySelectorAll('.translation-cell').forEach(el => {
+            if (el.innerText.trim() !== "") {
+                el.classList.add('visible');
+            }
+        });
+    }
+
+    function action4() {
+        console.log("Кнопка 4 пока не задана");
     }
 
     init();
