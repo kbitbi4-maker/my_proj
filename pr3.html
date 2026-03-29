@@ -89,7 +89,7 @@
     const chatBox = document.getElementById('chat-box');
     const nameInput = document.getElementById('user-name');
     const msgInput = document.getElementById('msg-text');
-    let lastMessageCount = 0;
+    let lastMessageCount = -1; // Установили -1, чтобы первая загрузка с 0 сообщений все равно сработала
 
     window.onload = () => {
         const savedName = localStorage.getItem('chat_user_name');
@@ -101,13 +101,17 @@
 
     async function loadMessages(forceScroll = false) {
         try {
-            const res = await fetch(SCRIPT_URL);
+            // Добавляем случайный параметр к URL, чтобы обойти кэш браузера
+            const res = await fetch(SCRIPT_URL + '?nocache=' + new Date().getTime());
             const data = await res.json();
             
+            // Проверяем, есть ли новые данные
             if (data.length === lastMessageCount && !forceScroll) return;
             
             const currentName = nameInput.value.trim();
-            chatBox.innerHTML = data.map(row => {
+            
+            // Генерируем HTML
+            const html = data.map(row => {
                 const isMe = (row[0] === currentName && currentName !== "");
                 return `
                     <div class="msg ${isMe ? 'my-msg' : ''}">
@@ -118,24 +122,45 @@
                 `;
             }).join('');
             
+            // Обновляем экран только если данные изменились
+            chatBox.innerHTML = html;
             lastMessageCount = data.length;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (e) { console.error(e); }
+            
+            // Скроллим вниз
+            if (forceScroll || chatBox.scrollHeight - chatBox.scrollTop < 1000) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        } catch (e) { 
+            console.error(e);
+            if (chatBox.innerHTML.includes("Загрузка")) {
+                chatBox.innerHTML = "<p style='text-align:center; color:red;'>Ошибка соединения. Пробуем снова...</p>";
+            }
+        }
     }
 
     async function send() {
         const user = nameInput.value.trim() || 'Guest';
         const text = msgInput.value.trim();
         if (!text) return;
+        
         msgInput.value = '';
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user, text }) });
+            // Отправляем POST запрос
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', 
+                body: JSON.stringify({ user, text }) 
+            });
+            // Сразу запрашиваем обновление
             setTimeout(() => loadMessages(true), 1000);
-        } catch (e) { }
+        } catch (e) { console.error("Send error:", e); }
     }
 
     msgInput.onkeypress = (e) => { if (e.key === "Enter") send(); };
-    setInterval(loadMessages, 5000);
+    
+    // Интервал обновлений (5 секунд)
+    setInterval(() => loadMessages(false), 5000);
 </script>
+
 </body>
 </html>
