@@ -3,94 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Style Chat</title>
+    <title>Global Chat</title>
     <style>
         * { box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             margin: 0; 
             background: #e5ddd5; 
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; 
-        }
-
-        /* ФИКСИРОВАННАЯ ШАПКА */
-        .header { 
-            position: fixed;
-            top: 0;
-            width: 100%;
-            height: 60px;
-            background: #075e54; 
-            color: white; 
-            padding: 0 15px; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            font-weight: bold; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-            z-index: 1000; 
-        }
-        .back-btn { text-decoration: none; color: white; font-size: 1.8rem; line-height: 1; }
-        
-        /* ОБЛАСТЬ СООБЩЕНИЙ */
-        #chat-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 75px 15px 85px 15px; /* Отступы под фиксированные панели */
             display: flex; 
             flex-direction: column; 
-            gap: 8px; 
-            -webkit-overflow-scrolling: touch;
+            height: 100vh; 
+            overflow: hidden; /* Запрещаем скролл всему телу */
         }
         
-        /* СТИЛИ СООБЩЕНИЙ (WhatsApp Style) */
-        .msg { 
-            padding: 8px 12px; 
-            border-radius: 8px; 
-            max-width: 85%; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1); 
-            position: relative;
-            font-size: 0.95rem;
-            line-height: 1.4;
+        /* Фиксированная шапка */
+        .header { 
+            position: fixed; top: 0; width: 100%; height: 60px;
+            background: #075e54; color: white; padding: 15px; 
+            display: flex; align-items: center; gap: 15px; 
+            font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 100;
         }
-
-        /* Чужое сообщение (слева, белое) */
-        .msg.received { 
-            align-self: flex-start; 
-            background: white; 
-            border-bottom-left-radius: 2px;
+        .back-btn { text-decoration: none; color: white; font-size: 1.5rem; line-height: 1; }
+        
+        /* Окно чата со своим скроллом */
+        #chat-box { 
+            flex: 1; overflow-y: auto; 
+            padding: 75px 15px 85px 15px; /* Отступы под фиксированные панели */
+            display: flex; flex-direction: column; gap: 10px; 
         }
+        
+        .msg { background: white; padding: 10px 15px; border-radius: 12px; max-width: 80%; box-shadow: 0 1px 2px rgba(0,0,0,0.15); align-self: flex-start; }
+        .msg b { color: #075e54; font-size: 0.8rem; display: block; margin-bottom: 4px; border-bottom: 1px solid #f0f0f0; }
+        .msg p { margin: 0; font-size: 1rem; color: #333; line-height: 1.4; word-wrap: break-word; }
+        .msg span { font-size: 0.65rem; color: #888; display: block; text-align: right; margin-top: 5px; }
 
-        /* Мое сообщение (справа, зеленое) */
-        .msg.sent { 
-            align-self: flex-end; 
-            background: #dcf8c6; 
-            border-bottom-right-radius: 2px;
-        }
-
-        .msg b { color: #075e54; font-size: 0.75rem; display: block; margin-bottom: 2px; }
-        .msg p { margin: 0; word-wrap: break-word; }
-        .msg span { font-size: 0.65rem; color: #888; display: block; text-align: right; margin-top: 4px; }
-
-        /* ФИКСИРОВАННАЯ НИЖНЯЯ ПАНЕЛЬ */
+        /* Фиксированное поле ввода */
         .input-area { 
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            height: 70px;
-            background: #f0f0f0; 
-            padding: 10px; 
-            display: flex; 
-            gap: 8px; 
-            align-items: center; 
-            border-top: 1px solid #ddd; 
-            z-index: 1000;
+            position: fixed; bottom: 0; width: 100%; height: 75px;
+            padding: 12px; background: #f0f0f0; display: flex; 
+            gap: 8px; align-items: center; border-top: 1px solid #ddd; z-index: 100;
         }
-        #user-name { width: 75px; flex: none; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 0.9rem; background: #fff; }
-        #msg-text { flex: 1; padding: 12px; border-radius: 25px; border: 1px solid #ccc; outline: none; font-size: 1rem; background: #fff; }
-        button { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: none; }
+        #user-name { width: 70px; flex: none; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 0.9rem; }
+        #msg-text { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
+        button { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -100,71 +55,73 @@
     <span>Global Chat</span>
 </div>
 
-<div id="chat-box">Loading...</div>
+<div id="chat-box">Loading messages...</div>
 
 <div class="input-area">
-    <input type="text" id="user-name" placeholder="Name" maxlength="12">
-    <input type="text" id="msg-text" placeholder="Message..." autocomplete="off">
+    <input type="text" id="user-name" placeholder="Name" maxlength="15">
+    <input type="text" id="msg-text" placeholder="Type a message..." autocomplete="off">
     <button onclick="send()">➤</button>
 </div>
-<script>
-    const SCRIPT_URL = 'https://script.google.com';
-    const chatBox = document.getElementById('chat-box');
-    const nameInput = document.getElementById('user-name');
-    const msgInput = document.getElementById('msg-text');
 
+<script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyP1bElVZEVzu91dsqSGKsLgP0EipATMMZ1a2c2KcaxZR9so5eWazIFg0Fle7YgKHQ/exec';
+    const chatBox = document.getElementById('chat-box');
+    const msgInput = document.getElementById('msg-text');
+    const nameInput = document.getElementById('user-name');
+
+    // Загрузка имени из памяти
     window.onload = () => {
         const savedName = localStorage.getItem('chat_user_name');
         if (savedName) nameInput.value = savedName;
         loadMessages();
     };
-
     nameInput.oninput = () => localStorage.setItem('chat_user_name', nameInput.value);
 
     async function loadMessages() {
         try {
+            // Добавляем ?t=... чтобы телефон не брал старые данные из кэша
             const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
             const data = await res.json();
-            const currentName = nameInput.value.trim().toLowerCase(); // Имя в нижнем регистре для сравнения
-
+            
             if (!data || data.length === 0) {
                 chatBox.innerHTML = "<p style='text-align:center; color:#888;'>No messages yet</p>";
                 return;
             }
 
-            chatBox.innerHTML = data.map(row => {
-                // row[0] - Имя, row[1] - Текст, row[2] - Время
-                const senderName = String(row[0] || 'Guest').trim();
-                const isMe = (senderName.toLowerCase() === currentName && currentName !== "");
-                
-                return `
-                    <div class="msg ${isMe ? 'sent' : 'received'}">
-                        ${!isMe ? `<b>${senderName}</b>` : ''}
-                        <p>${row[1] || ''}</p>
-                        <span>${row[2] || ''}</span>
-                    </div>
-                `;
-            }).join('');
+            chatBox.innerHTML = data.map(row => `
+                <div class="msg">
+                    <b>${row[0] || 'Guest'}</b>
+                    <p>${row[1] || ''}</p>
+                    <span>${row[2] || ''}</span>
+                </div>
+            `).join('');
             
             chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error("Load error:", e);
+        }
     }
 
     async function send() {
         const user = nameInput.value.trim() || 'Guest';
         const text = msgInput.value.trim();
         if (!text) return;
+
         msgInput.value = '';
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user, text }) });
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ user, text })
+            });
             setTimeout(loadMessages, 1200);
-        } catch (e) { }
+        } catch (e) { console.error("Send error:", e); }
     }
 
-    msgInput.onkeypress = (e) => { if (e.key === "Enter") send(); };
+    msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") send(); });
     setInterval(loadMessages, 5000);
+    loadMessages();
 </script>
-
 
 </body>
 </html>
