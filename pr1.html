@@ -1,105 +1,119 @@
-<!-- pr1.html ver018 (v022 Fixed) -->
+<!-- pr1.html ver018 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Words Table v022</title>
+    <title>Words Table v018</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* Шапка сайта */
         .header { position: fixed; top: 0; width: 100%; height: 60px; background: #075e54; color: white; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
-        .header a { text-decoration: none; color: white; font-weight: bold; }
+        .header a { text-decoration: none; color: white; font-weight: bold; font-size: 1.2rem; }
+
+        /* Панель поиска */
         .control-panel { margin-top: 60px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; z-index: 900; }
-        .search-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
+        .search-box { width: 100%; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
+
+        /* Контейнер таблицы */
         .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; min-width: 650px; table-layout: fixed; }
-        th, td { padding: 12px 8px; border: 1px solid #eee; text-align: left; font-size: 0.9rem; vertical-align: top; word-wrap: break-word; white-space: normal; }
-        th:nth-child(1) { width: 45px; } 
-        th:nth-child(2) { width: 120px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        
+        th, td { padding: 12px 10px; border: 1px solid #eee; text-align: left; font-size: 0.9rem; white-space: nowrap; }
+        
+        /* Зафиксированная шапка таблицы */
         thead th { position: sticky; top: 0; background: #4285f4; color: white; z-index: 10; border: none; }
+
+        /* Зебра и ховер */
         tbody tr:nth-child(even) { background: #f9f9f9; }
-        .status-area { text-align: center; padding: 40px; color: #666; font-style: italic; }
+        tbody tr:hover { background: #f1f5ff; }
+
+        .status-msg { text-align: center; padding: 30px; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <a href="index.html">‹ Меню</a>
-    <span>DB: db_set_002</span>
+    <span>Таблица: db_set_002</span>
     <div style="width: 40px;"></div>
 </div>
 
 <div class="control-panel">
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск по таблице..." oninput="filterData()">
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск по всем колонкам..." oninput="filterData()">
 </div>
 
 <div class="table-wrapper" id="main-container">
-    <div class="status-area" id="status-text">Загрузка данных...</div>
+    <div class="status-msg" id="status-text">Подключение к базе данных...</div>
 </div>
 
 <script>
+    // Твоя рабочая ссылка (ver018)
     const WORDS_URL = 'https://script.google.com/macros/s/AKfycbw-Nsm19xk4Reka51OMVNNhEMhCSjE1FhEqcApNHSxRkuGmSE7SfY9ztKKj5UhHRWjQ/exec';
-    let fullTableData = [];
+    let fullData = [];
 
-    // Используем более надежный метод получения JSON
     async function fetchData() {
-        const status = document.getElementById('status-text');
         try {
-            // Добавляем параметр redirect для Google
-            const response = await fetch(WORDS_URL + '?t=' + Date.now(), {
-                method: 'GET',
-                redirect: 'follow' 
-            });
-            
+            const response = await fetch(WORDS_URL + '?nocache=' + Date.now());
             const data = await response.json();
             
-            if (data && data.length > 0) {
-                fullTableData = data;
-                renderTable(fullTableData);
-            } else {
-                status.innerHTML = "Лист пуст или не найден.";
+            if (!data || data.length === 0) {
+                document.getElementById('status-text').innerHTML = "Данные не найдены в листе db_set_002";
+                return;
             }
+
+            fullData = data;
+            renderHTMLTable(fullData);
         } catch (e) {
-            status.innerHTML = "Ошибка: " + e.message + "<br><small>Попробуйте открыть ссылку скрипта в новой вкладке. Если там ошибка - исправьте доступ в Google.</small>";
+            document.getElementById('status-text').innerHTML = "Ошибка загрузки. Проверьте соединение или развертывание.";
             console.error(e);
         }
     }
 
-    function renderTable(rows) {
+    function renderHTMLTable(rows) {
         if (!rows || rows.length === 0) return;
+
         let html = '<table><thead><tr>';
-        const headers = ["№", "Слово", "Транскр.", "Пер. 1", "Пер. 2", "Пер. 3", "Пер. 4"];
+        const headers = ["№", "Слово", "Транскрипция", "Перевод 1", "Перевод 2", "Перевод 3", "Перевод 4"];
         headers.forEach(h => html += `<th>${h}</th>`);
         html += '</tr></thead><tbody>';
 
-        const firstRowStr = String(rows[0]).toLowerCase();
-        const start = (firstRowStr.includes('слово') || firstRowStr.includes('№')) ? 1 : 0;
+        // Пропускаем первую строку, если там заголовки в данных
+        const startFrom = (String(rows[0]).toLowerCase().includes('№') || String(rows[0]).toLowerCase().includes('слово')) ? 1 : 0;
 
-        for (let i = start; i < rows.length; i++) {
+        for (let i = startFrom; i < rows.length; i++) {
             const r = rows[i];
             if (!r || r.length === 0) continue;
             html += '<tr>';
             for (let j = 0; j < 7; j++) {
-                html += `<td>${(r[j] !== undefined && r[j] !== null) ? r[j] : ''}</td>`;
+                html += `<td>${r[j] !== undefined ? r[j] : ''}</td>`;
             }
             html += '</tr>';
         }
+
         html += '</tbody></table>';
         document.getElementById('main-container').innerHTML = html;
     }
 
     function filterData() {
         const query = document.getElementById('search-input').value.toLowerCase();
-        if (!query) { renderTable(fullTableData); return; }
-        const filtered = fullTableData.filter((row, index) => {
-            if (index === 0 && String(row).toLowerCase().includes('слово')) return false;
+        if (!query) {
+            renderHTMLTable(fullData);
+            return;
+        }
+
+        const filtered = fullData.filter((row, index) => {
+            if (index === 0 && (String(row).includes('№') || String(row).toLowerCase().includes('слово'))) return false;
             return row.some(cell => String(cell).toLowerCase().includes(query));
         });
-        renderTable(filtered);
+
+        renderHTMLTable(filtered);
     }
 
     fetchData();
 </script>
+
 </body>
 </html>
