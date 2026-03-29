@@ -1,36 +1,45 @@
-<!-- pr1.html ver015 -->
+<!-- pr1.html ver016 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Words DB v015</title>
+    <title>Words Table v016</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         /* Шапка */
         .header { position: fixed; top: 0; width: 100%; height: 60px; background: #075e54; color: white; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; }
         .header a { text-decoration: none; color: white; font-weight: bold; font-size: 1.2rem; }
 
-        /* Панель управления и Поиск */
-        .control-panel { margin-top: 60px; padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; z-index: 900; }
-        .search-box { width: 100%; padding: 12px; border-radius: 20px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
-        .btn-group { display: flex; justify-content: center; gap: 8px; }
-        .btn-opt { background: #4285f4; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; flex: 1; max-width: 150px; }
+        /* Панель поиска */
+        .control-panel { margin-top: 60px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; z-index: 900; }
+        .search-box { width: 100%; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; outline: none; font-size: 1rem; }
 
-        /* Контейнер карточек */
-        #words-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
+        /* Контейнер для таблицы с прокруткой */
+        .table-wrapper { flex: 1; overflow: auto; background: white; margin: 5px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* Карточка слова (WhatsApp Style) */
-        .word-card { background: white; padding: 15px; border-radius: 10px; max-width: 90%; align-self: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #075e54; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; /* Чтобы на мобильном был скролл вбок */ }
         
-        .word-card b { color: #075e54; font-size: 1.2rem; display: block; margin-bottom: 3px; }
-        .word-card i { color: #666; font-size: 0.95rem; display: block; margin-bottom: 8px; font-style: normal; }
-        .word-card p { margin: 0; color: #333; font-size: 1.1rem; border-top: 1px solid #f0f0f0; padding-top: 8px; }
+        /* Стили ячеек */
+        th, td { padding: 12px 10px; border: 1px solid #eee; text-align: left; font-size: 0.95rem; }
         
-        .hidden { display: none; }
+        /* Зафиксированная шапка таблицы */
+        thead th { 
+            position: sticky; 
+            top: 0; 
+            background: #4285f4; 
+            color: white; 
+            z-index: 10; 
+            border: none;
+        }
+
+        /* Зебра для строк */
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+        tbody tr:hover { background: #f1f5ff; }
+
+        .loading { text-align: center; padding: 50px; color: #666; }
     </style>
 </head>
 <body>
@@ -42,63 +51,73 @@
 </div>
 
 <div class="control-panel">
-    <input type="text" id="search-input" class="search-box" placeholder="Поиск слова или перевода..." oninput="filterWords()">
-    <div class="btn-group">
-        <button class="btn-opt" onclick="loadWords()">Обновить</button>
-        <button class="btn-opt" onclick="alert('Функция в разработке')">Опция</button>
-    </div>
+    <input type="text" id="search-input" class="search-box" placeholder="Поиск по всей таблице..." oninput="filterWords()">
 </div>
 
-<div id="words-container">Загрузка данных из Google...</div>
+<div class="table-wrapper" id="table-container">
+    <div class="loading">Загрузка данных из Google...</div>
+</div>
 
 <script>
-    // ВАША ССЫЛКА ВСТАВЛЕНА
-    const WORDS_URL = 'https://script.google.com/macros/s/AKfycbwvYZuEeg_xO5yNRQU9W2snP3qT5UHkFimxBgNOZmQnZYiZLkoquCsQli6TFpeIt_7u/exec';
+    const WORDS_URL = 'https://script.google.com';
     let allWordsData = [];
 
     async function loadWords() {
-        const container = document.getElementById('words-container');
-        container.innerHTML = "Синхронизация...";
         try {
             const res = await fetch(WORDS_URL + '?t=' + Date.now());
             const data = await res.json();
             
-            if (!data || data.length < 2) {
-                container.innerHTML = "<p style='text-align:center;'>Лист пуст или не найден</p>";
+            if (!data || data.length < 1) {
+                document.getElementById('table-container').innerHTML = "<p style='padding:20px;'>Лист пуст.</p>";
                 return;
             }
 
-            allWordsData = data.slice(1); // Сохраняем данные для поиска
-            renderWords(allWordsData);
+            allWordsData = data; // Сохраняем всё, включая заголовки
+            renderTable(allWordsData);
 
         } catch (e) {
-            container.innerHTML = "<p style='text-align:center; color:red;'>Ошибка загрузки. Проверьте доступ к таблице.</p>";
+            document.getElementById('table-container').innerHTML = "<p style='padding:20px; color:red;'>Ошибка загрузки.</p>";
         }
     }
 
-    function renderWords(words) {
-        const container = document.getElementById('words-container');
-        container.innerHTML = words.map(row => `
-            <div class="word-card">
-                <b>${row[1] || '---'}</b>
-                <i>${row[2] || ''}</i>
-                <p>${row[3] || ''}</p>
-            </div>
-        `).join('');
+    function renderTable(dataRows) {
+        if (dataRows.length === 0) return;
+
+        let html = '<table><thead><tr>';
+        // Заголовки (берем из первой строки ДБ)
+        const headers = ["№", "Слово", "Транскрипция", "Перевод 1", "Перевод 2", "Перевод 3", "Перевод 4"]; 
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+
+        // Данные (пропускаем первую строку если там тоже заголовки)
+        const startIdx = (dataRows[0][0] === "№" || isNaN(dataRows[0][0])) ? 1 : 0;
+
+        for (let i = startIdx; i < dataRows.length; i++) {
+            const row = dataRows[i];
+            html += '<tr>';
+            // Выводим 7 столбцов (0-6)
+            for (let j = 0; j < 7; j++) {
+                html += `<td>${row[j] || ''}</td>`;
+            }
+            html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+        document.getElementById('table-container').innerHTML = html;
     }
 
     function filterWords() {
         const query = document.getElementById('search-input').value.toLowerCase();
-        const filtered = allWordsData.filter(row => {
-            const word = String(row[1]).toLowerCase();
-            const trans = String(row[2]).toLowerCase();
-            const translate = String(row[3]).toLowerCase();
-            return word.includes(query) || translate.includes(query) || trans.includes(query);
+        const headerRow = allWordsData[0];
+        
+        const filtered = allWordsData.slice(1).filter(row => {
+            return row.some(cell => String(cell).toLowerCase().includes(query));
         });
-        renderWords(filtered);
+        
+        // Рендерим с сохранением заголовка
+        renderTable([headerRow, ...filtered]);
     }
 
-    // Запуск при открытии
     loadWords();
 </script>
 
