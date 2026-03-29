@@ -5,26 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главное меню</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
-        h1 { color: #333; margin-bottom: 25px; }
-        .menu-container { display: flex; flex-direction: column; gap: 15px; width: 280px; }
-        .btn { padding: 18px; font-size: 1.1rem; text-align: center; text-decoration: none; color: white; background: #4285f4; border-radius: 12px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn:active { transform: scale(0.98); background: #3367d6; }
-        .btn.secondary { background: #34a853; }
-        .btn.disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            background: #f0f2f5; 
+        }
+        h1 { color: #333; margin-bottom: 30px; font-size: 1.8rem; }
+        .menu-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            width: 280px; 
+        }
+        .btn { 
+            padding: 20px; 
+            font-size: 1.1rem; 
+            text-align: center; 
+            text-decoration: none; 
+            color: white; 
+            background: #4285f4; 
+            border-radius: 15px; 
+            transition: transform 0.2s, background 0.2s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .btn span { font-weight: normal; font-size: 0.8rem; margin-top: 5px; opacity: 0.9; }
+        
+        /* Цвета для разных кнопок */
+        .btn-pr1 { background: #4285f4; } /* Синий */
+        .btn-pr2 { background: #34a853; } /* Зеленый */
+        .btn-pr3 { background: #075e54; } /* Темно-зеленый (Чат) */
+
+        .btn:active { transform: scale(0.95); opacity: 0.9; }
     </style>
 </head>
 <body>
+
     <h1>Мои Проекты</h1>
+
     <div class="menu-container">
-        <!-- Теперь кнопка pr1 ведет на вашу страницу выбора наборов -->
-        <a href="pr1.html" class="btn">Проект PR1 (Таблицы)</a>
+        <!-- Проект 1: Таблицы из JSON/Excel -->
+        <a href="pr1.html" class="btn btn-pr1">
+            ПРОЕКТ PR1
+            <span>Таблицы слов</span>
+        </a>
         
-        <!-- Кнопка pr2 ведет на старый проект с цветом текста -->
-        <a href="pr2.html" class="btn secondary">Проект PR2 (Цвет текста)</a>
+        <!-- Проект 2: Смена цвета текста -->
+        <a href="pr2.html" class="btn btn-pr2">
+            ПРОЕКТ PR2
+            <span>Цвет текста</span>
+        </a>
         
-        <!-- Проект 3 пока оставим заглушкой -->
-        <a href="#" class="btn disabled">Проект PR3 (В разработке)</a>
+        <!-- Проект 3: Локальный чат -->
+        <a href="pr3.html" class="btn btn-pr3">
+            ПРОЕКТ PR3
+            <span>Мини-чат</span>
+        </a>
     </div>
+
 </body>
 </html>
