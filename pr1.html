@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор набора</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; background: #f4f7f6; }
+        .btn { display: block; width: 100%; max-width: 300px; margin: 10px auto; padding: 15px; 
+               background: #4285f4; color: white; border-radius: 10px; text-decoration: none; font-size: 1.1rem; border: none; cursor: pointer; }
+        .home-btn { background: #34a853; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="btn home-btn">Главное меню</a>
+    <h2>Выберите набор слов:</h2>
+    
+    <!-- Измените 'Лист1', если ваша вкладка в Excel называется иначе -->
+    <button class="btn" onclick="openSet('Лист1')">Набор 1</button>
+    <button class="btn" onclick="openSet('Лист2')">Набор 2</button>
+
+    <script>
+        function openSet(sheetName) {
+            window.location.href = `view.html?sheet=${encodeURIComponent(sheetName)}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр таблицы</title>
+    <style>
+        body { font-family: sans-serif; padding: 10px; background: #fff; }
+        .nav-menu { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; position: sticky; top: 0; background: #fff; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .btn { padding: 10px; color: white; border-radius: 5px; text-decoration: none; font-size: 0.8rem; border: none; cursor: pointer; }
+        .btn-green { background: #34a853; } .btn-blue { background: #4285f4; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #4285f4; color: white; position: sticky; top: 50px; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <div class="nav-menu">
+        <a href="index.html" class="btn btn-green">Главное меню</a>
+        <a href="pr1.html" class="btn btn-blue">Назад</a>
+        <button class="btn btn-blue" onclick="location.reload()">Обновить</button>
+    </div>
+
+    <h2 id="title">Загрузка...</h2>
+    <div id="content">Загружаем данные из Google...</div>
+
+    <script>
+        // Ваш актуальный ID из опубликованной ссылки
+        const PUB_ID = '1vTiR2Js852Kp4gQ3QKDFJdWiBtwDXH2ftdH0oT5Jh1opdTxti28mlNvBD4sIbXb_5bkQua6YsnANT6M';
+        const urlParams = new URLSearchParams(window.location.search);
+        const sheetName = urlParams.get('sheet') || 'Лист1';
+        document.getElementById('title').innerText = "Набор: " + sheetName;
+
+        // Ссылка для получения CSV данных из опубликованной таблицы
+        const url = `https://docs.google.com{PUB_ID}/pub?gid=0&single=true&output=csv&sheet=${encodeURIComponent(sheetName)}`;
+
+        fetch(url)
+            .then(res => res.text())
+            .then(csv => {
+                const rows = csv.split(/\r?\n/).map(row => {
+                    return row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, ''));
+                });
+
+                if (rows.length === 0 || rows[0][0] === "") {
+                    document.getElementById('content').innerHTML = "Данные не найдены. Проверьте название листа.";
+                    return;
+                }
+
+                let html = '<table><thead><tr>';
+                rows[0].forEach(cell => html += `<th>${cell}</th>`);
+                html += '</tr></thead><tbody>';
+
+                for (let i = 1; i < rows.length; i++) {
+                    if (rows[i].length > 0 && rows[i][0] !== "") {
+                        html += '<tr>' + rows[i].map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+                    }
+                }
+                document.getElementById('content').innerHTML = html + '</tbody></table>';
+            })
+            .catch(err => {
+                document.getElementById('content').innerHTML = "Ошибка загрузки. Проверьте интернет или публикацию таблицы.";
+            });
+    </script>
+</body>
+</html>
