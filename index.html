@@ -6,19 +6,25 @@
     <title>Главное меню</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f0f2f5; }
-        h1 { color: #333; }
-        .menu-container { display: flex; flex-direction: column; gap: 15px; width: 250px; }
-        .btn { padding: 15px; font-size: 1.1rem; text-align: center; text-decoration: none; color: white; background: #4285f4; border-radius: 10px; transition: 0.3s; }
-        .btn:hover { background: #3367d6; }
-        .btn.disabled { background: #ccc; cursor: not-allowed; }
+        h1 { color: #333; margin-bottom: 25px; }
+        .menu-container { display: flex; flex-direction: column; gap: 15px; width: 280px; }
+        .btn { padding: 18px; font-size: 1.1rem; text-align: center; text-decoration: none; color: white; background: #4285f4; border-radius: 12px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.98); background: #3367d6; }
+        .btn.secondary { background: #34a853; }
+        .btn.disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
     </style>
 </head>
 <body>
-    <h1>Главное меню</h1>
+    <h1>Мои Проекты</h1>
     <div class="menu-container">
-        <a href="#" class="btn disabled">pr1 (Скоро)</a>
-        <a href="pr2.html" class="btn">pr2 (Текст и цвет)</a>
-        <a href="#" class="btn disabled">pr3 (Скоро)</a>
+        <!-- Теперь кнопка pr1 ведет на вашу страницу выбора наборов -->
+        <a href="pr1.html" class="btn">Проект PR1 (Таблицы)</a>
+        
+        <!-- Кнопка pr2 ведет на старый проект с цветом текста -->
+        <a href="pr2.html" class="btn secondary">Проект PR2 (Цвет текста)</a>
+        
+        <!-- Проект 3 пока оставим заглушкой -->
+        <a href="#" class="btn disabled">Проект PR3 (В разработке)</a>
     </div>
 </body>
 </html>
