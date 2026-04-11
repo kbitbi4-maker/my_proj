@@ -1,0 +1,154 @@
+<!-- set_unlearn.html ver009 -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Study Cards v009</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        .nav-bar { background: #075e54; padding: 10px; display: flex; gap: 10px; }
+        .nav-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+        
+        .card-container { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 8px; align-items: center; overflow-y: auto; }
+        .info-cell { background: white; width: 100%; max-width: 450px; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); min-height: 48px; display: flex; align-items: center; border-left: 5px solid #4285f4; }
+        
+        .translation-cell { color: white; border-left-color: #f39c12; transition: color 0.2s; }
+        .translation-cell.visible { color: #333 !important; }
+
+        .action-panel { padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: white; border-top: 1px solid #ddd; }
+        .action-btn { padding: 15px; border: none; border-radius: 8px; background: #075e54; color: white; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; transition: 0.2s; }
+        .btn-orange { background: #f39c12; }
+        .btn-red { background: #d32f2f; }
+
+        #loader { position: fixed; inset: 0; background: white; display: flex; align-items: center; justify-content: center; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">Загрузка данных...</div>
+
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-btn">Меню</a>
+        <button class="nav-btn" onclick="history.back()">Назад</button>
+    </nav>
+
+    <div class="card-container" id="card-content">
+        <div class="info-cell" id="c-num" style="color:#888; font-size:0.8rem;"></div>
+        <div class="info-cell" id="c-word" style="font-weight:bold; font-size:1.2rem;"></div>
+        <div class="info-cell" id="c-trans" style="font-style:italic;"></div>
+        <div class="info-cell translation-cell" id="c-p1"></div>
+        <div class="info-cell translation-cell" id="c-p2"></div>
+        <div class="info-cell translation-cell" id="c-p3"></div>
+        <div class="info-cell translation-cell" id="c-p4"></div>
+    </div>
+
+    <div class="action-panel">
+        <button class="action-btn" onclick="prevCard()">← Назад</button>
+        <button class="action-btn" onclick="nextCard()">Вперед →</button>
+        <button class="action-btn btn-orange" onclick="toggleTranslation()">👁 Перевод</button>
+        <button class="action-btn btn-red" id="btn-done" onclick="markAsDone()">✓ Выучено</button>
+    </div>
+
+<script>
+    // ВСТАВЬ СВОЙ URL ИЗ GOOGLE APPS SCRIPT
+    const WORDS_URL = 'https://script.google.com/macros/s/AKfycbyaYQ9IVLJEJPVQ1OadfXTNJFSL8ACn4uwmCcUQyMxx4S415yfy02JbEoceBG1Nuz43/exec';
+    
+    let studyList = [];
+    let currentIndex = 0;
+
+    async function init() {
+        try {
+            const response = await fetch(WORDS_URL + '?t=' + Date.now());
+            const data = await response.json();
+            
+            // Фильтрация: оставляем только "на изучении" (8-й столбец, индекс 7)
+            studyList = data.filter((row, idx) => {
+                return idx > 0 && row[7] && String(row[7]).toLowerCase().trim() === 'на изучении';
+            });
+
+            if (studyList.length === 0) {
+                document.getElementById('loader').innerHTML = "Все выучено!<br><br><a href='index.html' style='color:#075e54;font-weight:bold;'>В меню</a>";
+                return;
+            }
+
+            // Перемешивание карточек
+            studyList.sort(() => Math.random() - 0.5);
+            document.getElementById('loader').style.display = 'none';
+            displayCard();
+        } catch (e) { 
+            document.getElementById('loader').innerText = "Ошибка загрузки данных."; 
+        }
+    }
+
+    function displayCard() {
+        if (studyList.length === 0) return;
+        const row = studyList[currentIndex];
+        
+        // Скрываем перевод для новой карточки
+        document.querySelectorAll('.translation-cell').forEach(el => el.classList.remove('visible'));
+
+        // Заполнение ячеек (№, Слово, Транскрипция, Переводы)
+        document.getElementById('c-num').innerText = `Карточка ${currentIndex + 1} из ${studyList.length} (№${row[0]})`;
+        document.getElementById('c-word').innerText = row[1] || '';
+        document.getElementById('c-trans').innerText = row[2] || '';
+        document.getElementById('c-p1').innerText = row[3] || '';
+        document.getElementById('c-p2').innerText = row[4] || '';
+        document.getElementById('c-p3').innerText = row[5] || '';
+        document.getElementById('c-p4').innerText = row[6] || '';
+    }
+
+    function nextCard() {
+        if (studyList.length === 0) return;
+        currentIndex = (currentIndex >= studyList.length - 1) ? 0 : currentIndex + 1;
+        displayCard();
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            displayCard();
+        }
+    }
+
+    function toggleTranslation() {
+        document.querySelectorAll('.translation-cell').forEach(el => {
+            if (el.innerText.trim() !== "") el.classList.toggle('visible');
+        });
+    }
+
+    // ОБНОВЛЕННАЯ ФУНКЦИЯ: Мгновенное удаление карточки и фоновая отправка в Google
+    function markAsDone() {
+        if (studyList.length === 0) return;
+        
+        const rowData = studyList[currentIndex];
+        const rowId = rowData[0]; // Берем ID (№) из первой колонки
+        const btn = document.getElementById('btn-done');
+        
+        // 1. Фоновая отправка запроса (БЕЗ await - страница не ждет ответа)
+        fetch(WORDS_URL, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ rowNum: rowId, status: 'выучено' }) 
+        });
+
+        // 2. Мгновенное удаление карточки из локального списка на экране
+        studyList.splice(currentIndex, 1);
+
+        if (studyList.length === 0) {
+            document.getElementById('card-content').innerHTML = 
+                "<div style='text-align:center; padding-top:50px;'><h2>🎉 Отлично!</h2><p>Все карточки на сегодня пройдены.</p></div>";
+            document.querySelector('.action-panel').style.display = 'none';
+        } else {
+            // Если удалили последнюю в списке, переходим к первой
+            if (currentIndex >= studyList.length) currentIndex = 0;
+            displayCard();
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
