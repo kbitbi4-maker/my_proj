@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Chat v025</title>
+    <title>Global Chat v026</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #e5ddd5; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -14,19 +13,19 @@
         .msg.sent { align-self: flex-end; background: #dcf8c6; }
         .msg b { color: #075e54; font-size: 0.75rem; display: block; margin-bottom: 3px; }
         .msg p { margin: 0; font-size: 1rem; color: #333; word-wrap: break-word; line-height: 1.4; }
-        .msg a { display: inline-block; padding: 8px 12px; background: rgba(0,0,0,0.06); border-radius: 10px; color: #0277bd; font-weight: bold; text-decoration: none; margin-top: 5px; border: 1px solid rgba(0,0,0,0.1); }
+        .msg a { display: inline-block; padding: 10px 15px; background: #fff; border-radius: 10px; color: #075e54; font-weight: bold; text-decoration: none; margin-top: 5px; border: 1px solid #075e54; }
         .msg span { font-size: 0.65rem; color: #888; display: block; text-align: right; margin-top: 5px; }
         .input-area { position: fixed; bottom: 0; width: 100%; height: 80px; padding: 12px; background: #f0f0f0; display: flex; gap: 8px; align-items: center; border-top: 1px solid #ddd; z-index: 100; }
         #user-name { width: 75px; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
         #msg-text { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
-        .btn-send { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .btn-attach { background: #555; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .btn-send { background: #075e54; color: white; border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .btn-attach { background: #555; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         #status-bar { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; display: none; z-index: 200; }
     </style>
 </head>
 <body>
 
-<div class="header"><span>Global Chat v025</span></div>
+<div class="header"><span>Global Chat v026</span></div>
 <div id="chat-box">Загрузка...</div>
 <div id="status-bar">⏳ Отправка фото...</div>
 
@@ -39,7 +38,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyP1bElVZEVzu91dsqSGKsLgP0EipATMMZ1a2c2KcaxZR9so5eWazIFg0Fle7YgKHQ/exec'; // <-- ВСТАВЬТЕ СЮДА НОВУЮ ССЫЛКУ ПОСЛЕ DEPLOY
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyP1bElVZEVzu91dsqSGKsLgP0EipATMMZ1a2c2KcaxZR9so5eWazIFg0Fle7YgKHQ/exec'; // <-- ВСТАВЬТЕ ССЫЛКУ ИЗ GOOGLE SCRIPTS
 
     const chatBox = document.getElementById('chat-box');
     const msgInput = document.getElementById('msg-text');
@@ -66,7 +65,8 @@
                 
                 let contentHTML = "";
                 if (String(text).startsWith("http")) {
-                    contentHTML = `<p><a href="${text}" target="_blank">🖼 Открыть фото</a></p>`;
+                    // Добавлен rel="noopener noreferrer" для предотвращения открытия приложения
+                    contentHTML = `<p><a href="${text}" target="_blank" rel="noopener noreferrer">🖼 Открыть фото</a></p>`;
                 } else {
                     contentHTML = `<p>${text}</p>`;
                 }
@@ -78,7 +78,7 @@
                         </div>`;
             }).join('');
             chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (e) { console.log("Refresh..."); }
+        } catch (e) { console.log("Refresh error"); }
     }
 
     async function processFile(input) {
@@ -112,8 +112,7 @@
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user, text, file: data }) });
             setTimeout(() => { statusBar.style.display = 'none'; loadMessages(); }, 2500);
         } catch (e) { 
-            alert("Ошибка сети!"); 
-            statusBar.style.display = 'none'; 
+            statusBar.style.display = 'none';
         }
     }
 
