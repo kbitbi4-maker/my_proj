@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>QR Scanner</title>
+    <!-- Подключаем библиотеку принудительно -->
+    <script src="https://unpkg.com" type="text/javascript"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+        #reader { 
+            width: 100%; max-width: 400px; 
+            margin: 20px auto; background: #000; 
+            border-radius: 15px; overflow: hidden;
+            min-height: 300px; /* Чтобы блок не был нулевым до запуска */
+        }
+        .btn-start { 
+            padding: 20px 40px; background: #34a853; color: white; 
+            border: none; border-radius: 50px; cursor: pointer; 
+            font-weight: bold; font-size: 1.1rem; 
+        }
+        #result { margin-top: 20px; font-weight: bold; color: #075e54; font-size: 1.2rem; display: none; }
+        .btn-back { display: block; margin-top: 30px; color: #666; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <h2>СКАНЕР СКЛАДА</h2>
+    
+    <div id="reader"></div>
+    
+    <div id="result">Считано: <span id="res-text"></span></div>
+
+    <button class="btn-start" id="start-btn" onclick="startScanning()">ВКЛЮЧИТЬ СКАНЕР</button>
+
+    <a href="index.html" class="btn-back">← Вернуться в меню</a>
+
+    <script>
+        let html5QrCode;
+
+        async function startScanning() {
+            const startBtn = document.getElementById('start-btn');
+            startBtn.disabled = true; // Защита от двойного клика
+            
+            try {
+                // Если сканер уже был создан, очищаем его
+                if (html5QrCode) {
+                    await html5QrCode.clear();
+                }
+
+                html5QrCode = new Html5Qrcode("reader");
+
+                const config = { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0 
+                };
+
+                await html5QrCode.start(
+                    { facingMode: "environment" }, 
+                    config,
+                    (decodedText) => {
+                        document.getElementById('result').style.display = 'block';
+                        document.getElementById('res-text').innerText = decodedText;
+                        
+                        if (navigator.vibrate) navigator.vibrate(100);
+                        
+                        // Останавливаем камеру и выводим результат
+                        html5QrCode.stop().then(() => {
+                            startBtn.style.display = 'inline-block';
+                            startBtn.disabled = false;
+                            alert("Код считан: " + decodedText);
+                        });
+                    }
+                );
+                
+                startBtn.style.display = 'none';
+
+            } catch (err) {
+                alert("Ошибка запуска: " + err);
+                startBtn.disabled = false;
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
