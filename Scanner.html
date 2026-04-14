@@ -6,12 +6,12 @@
   <title>QR Scanner Minimal</title>
   <style>
     body { font-family: sans-serif; text-align: center; padding: 20px; }
-    .camera-preview { width: 100%; maxwidth: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; }
-    video { width: 100%; height: 100%; objectfit: cover; }
-    .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; borderradius: 8px; fontweight: bold; margin: 5px; }
+    .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+    .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; margin: 5px; }
     .btn-danger { background: #f44336; }
-    #result { margintop: 20px; padding: 15px; background: #e3f2fd; borderleft: 4px solid #2196f3; textalign: left; whitespace: prewrap; }
-    .status { margin: 10px 0; padding: 8px; borderradius: 4px; }
+    #result { margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; text-align: left; white-space: pre-wrap; }
+    .status { margin: 10px 0; padding: 8px; border-radius: 4px; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
   </style>
@@ -30,7 +30,7 @@
   <div id="status" class="status"></div>
   <div id="result">Результат сканирования появится здесь</div>
 
-  <!-- Библиотека для сканирования QR‑кодов -->
+  <!-- Библиотека для сканирования QR‑кодов (локальная копия или CDN) -->
   <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const video = document.getElementById('video');
@@ -65,9 +65,12 @@
         stopBtn.disabled = false;
         showStatus('Камера активна. Наведите на QR‑код...', 'success');
 
-        initCanvas();
-        scanning = true;
-        scanQR();
+        // Ждём, пока видео начнёт транслировать изображение
+        video.onloadedmetadata = () => {
+          initCanvas();
+          scanning = true;
+          scanQR();
+        };
       } catch (err) {
         handleCameraError(err);
       }
@@ -87,22 +90,41 @@
     async function scanQR() {
       if (!scanning || !stream) return;
 
+      // Ждём, пока видео получит размеры
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setTimeout(scanQR, 100);
+        return;
+      }
+
+      // Устанавливаем размеры canvas
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-      if (code) {
-        showResult(code.data);
-        await sendToGas(code.data);
-        scanning = false;
-        stream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      } else {
-        setTimeout(scanQR, 100);
+      // Захватываем кадр с видео
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Получаем данные изображения
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Сканируем QR‑код
+      try {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          // QR‑код найден!
+          showResult(code.data);
+          await sendToGas(code.data);
+          scanning = false;
+          stream.getTracks().forEach(track => track.stop());
+          video.srcObject = null;
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+        } else {
+          // Продолжаем сканирование
+          setTimeout(scanQR, 100);
+        }
+      } catch (error) {
+        console.error('Ошибка сканирования:', error);
+        setTimeout(scanQR, 100); // Продолжаем, несмотря на ошибку
       }
     }
 
@@ -134,7 +156,7 @@
 
     async function sendToGas(data) {
       try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbz3KF13nR_sLT4TJF-XduOX-W7XS4F40LUTXXeGToZLOKLj6y093TF3O4fcWTNg12hoRQ/exec', {
+        const response = await fetch('ЗАМЕНИТЕ_НА_ВАШ_URL_ИЗ_GAS', {
           method: 'POST',
           mode: 'no-cors',
           body: JSON.stringify({ qrData: data })
