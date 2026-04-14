@@ -3,60 +3,68 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Standalone QR Scanner</title>
+    <title>QR Scanner</title>
+    <!-- Подключаем библиотеку сканирования -->
+    <script src="https://unpkg.com"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+        #reader { 
+            width: 100%; max-width: 400px; 
+            margin: 20px auto; background: #000; 
+            border-radius: 15px; overflow: hidden; 
+        }
+        .btn-start { 
+            padding: 20px 40px; background: #34a853; color: white; 
+            border: none; border-radius: 50px; cursor: pointer; 
+            font-weight: bold; font-size: 1.1rem; 
+        }
+        #result { margin-top: 20px; font-weight: bold; color: #075e54; font-size: 1.2rem; display: none; }
+        .btn-back { display: block; margin-top: 30px; color: #666; text-decoration: none; }
     </style>
 </head>
 <body>
 
-    <h2>СКАНЕР (ВНЕШНИЙ)</h2>
-    <div class="camera-preview">
-        <video id="video" autoplay playsinline></video>
-    </div>
+    <h2>СКАНЕР СКЛАДА</h2>
     
-    <button class="btn-primary" id="start-camera">ВКЛЮЧИТЬ КАМЕРУ</button>
-    <p id="status"></p>
+    <!-- Поле для камеры (библиотека сама создаст тут видео) -->
+    <div id="reader"></div>
+    
+    <div id="result">Считано: <span id="res-text"></span></div>
+
+    <button class="btn-start" id="start-btn" onclick="startScanning()">ВКЛЮЧИТЬ СКАНЕР</button>
+
+    <a href="index.html" class="btn-back">← Вернуться в меню</a>
 
     <script>
-        // ЗАМЕНИТЕ НА ВАШ URL ИЗ ГУГЛ АПП СКРИПТ (заканчивается на /exec)
-        const SCRIPT_URL = 'https://google.com';
-        
-        const video = document.getElementById('video');
-        const startBtn = document.getElementById('start-camera');
-        const status = document.getElementById('status');
+        let html5QrCode;
 
-        startBtn.addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-                video.srcObject = stream;
-                status.innerText = "Камера работает. Отправка тестового сигнала...";
-                
-                // ТЕСТОВАЯ ОТПРАВКА В ТАБЛИЦУ
-                sendToGas("Тест камеры: ОК");
-                
-            } catch (err) {
-                alert("Ошибка доступа: " + err);
-            }
-        });
+        function startScanning() {
+            document.getElementById('start-btn').style.display = 'none';
+            
+            // Создаем объект сканера
+            html5QrCode = new Html5Qrcode("reader");
 
-        async function sendToGas(data) {
-            try {
-                // Используем fetch с mode: 'no-cors' для обхода CORS ограничений Google
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ qrData: data })
-                });
-                status.innerText = "Данные успешно отправлены в АС!";
-            } catch (e) {
-                status.innerText = "Ошибка отправки: " + e;
-            }
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                (decodedText) => {
+                    // ЕСЛИ КОД СЧИТАН
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('res-text').innerText = decodedText;
+                    
+                    // Вибрация телефона (если поддерживается)
+                    if (navigator.vibrate) navigator.vibrate(100);
+
+                    // Останавливаем камеру после успеха (опционально)
+                    html5QrCode.stop();
+                    alert("Код считан: " + decodedText);
+                }
+            ).catch(err => {
+                alert("Ошибка: " + err);
+                document.getElementById('start-btn').style.display = 'inline-block';
+            });
         }
     </script>
 </body>
