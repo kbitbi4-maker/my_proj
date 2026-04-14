@@ -3,83 +3,173 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>QR Scanner</title>
-    <!-- Подключаем библиотеку принудительно -->
-    <script src="https://unpkg.com" type="text/javascript"></script>
+    <title>Standalone QR Scanner</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-        #reader { 
-            width: 100%; max-width: 400px; 
-            margin: 20px auto; background: #000; 
-            border-radius: 15px; overflow: hidden;
-            min-height: 300px; /* Чтобы блок не был нулевым до запуска */
-        }
-        .btn-start { 
-            padding: 20px 40px; background: #34a853; color: white; 
-            border: none; border-radius: 50px; cursor: pointer; 
-            font-weight: bold; font-size: 1.1rem; 
-        }
-        #result { margin-top: 20px; font-weight: bold; color: #075e54; font-size: 1.2rem; display: none; }
-        .btn-back { display: block; margin-top: 30px; color: #666; text-decoration: none; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; margin: 5px; }
+        .btn-danger { background: #f44336; }
+        #result { margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; text-align: left; white-space: pre-wrap; }
+        .status { margin: 10px 0; padding: 8px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
 
-    <h2>СКАНЕР СКЛАДА</h2>
+    <h2>СКАНЕР (ВНЕШНИЙ)</h2>
     
-    <div id="reader"></div>
+    <div class="camera-preview">
+        <video id="video" autoplay playsinline></video>
+    </div>
     
-    <div id="result">Считано: <span id="res-text"></span></div>
+    <button class="btn-primary" id="start-camera">ВКЛЮЧИТЬ КАМЕРУ</button>
+    <button class="btn-primary btn-danger" id="stop-camera" disabled>ВЫКЛЮЧИТЬ КАМЕРУ</button>
+    
+    <div id="status" class="status"></div>
+    <div id="result">Результат сканирования появится здесь</div>
 
-    <button class="btn-start" id="start-btn" onclick="startScanning()">ВКЛЮЧИТЬ СКАНЕР</button>
-
-    <a href="index.html" class="btn-back">← Вернуться в меню</a>
+    <!-- Библиотека для сканирования QR‑кодов -->
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 
     <script>
-        let html5QrCode;
+        // ЗАМЕНИТЕ НА ВАШ URL ИЗ ГУГЛ АПП СКРИПТ (заканчивается на /exec)
+        const SCRIPT_URL = 'https://google.com';
 
-        async function startScanning() {
-            const startBtn = document.getElementById('start-btn');
-            startBtn.disabled = true; // Защита от двойного клика
-            
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('start-camera');
+        const stopBtn = document.getElementById('stop-camera');
+        const status = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+
+        let stream = null;
+        let scanning = false;
+        let canvas = null;
+        let context = null;
+
+        // Инициализация canvas для сканирования
+        function initCanvas() {
+            canvas = document.createElement('canvas');
+            context = canvas.getContext('2d');
+        }
+
+        startBtn.addEventListener('click', async () => {
             try {
-                // Если сканер уже был создан, очищаем его
-                if (html5QrCode) {
-                    await html5QrCode.clear();
+                // Проверяем поддержку камеры
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showStatus('Ваш браузер не поддерживает доступ к камере', 'error');
+            return;
                 }
 
-                html5QrCode = new Html5Qrcode("reader");
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                facingMode: 'environment', // Задняя камера
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+                });
 
-                const config = { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0 
-                };
+                video.srcObject = stream;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                showStatus('Камера активна. Наведите на QR‑код...', 'success');
 
-                await html5QrCode.start(
-                    { facingMode: "environment" }, 
-                    config,
-                    (decodedText) => {
-                        document.getElementById('result').style.display = 'block';
-                        document.getElementById('res-text').innerText = decodedText;
-                        
-                        if (navigator.vibrate) navigator.vibrate(100);
-                        
-                        // Останавливаем камеру и выводим результат
-                        html5QrCode.stop().then(() => {
-                            startBtn.style.display = 'inline-block';
-                            startBtn.disabled = false;
-                            alert("Код считан: " + decodedText);
-                        });
-                    }
-                );
-                
-                startBtn.style.display = 'none';
+                // Инициализируем canvas для сканирования
+                initCanvas();
 
+                // Запускаем сканирование
+                scanning = true;
+                scanQR();
             } catch (err) {
-                alert("Ошибка запуска: " + err);
+                handleCameraError(err);
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
                 startBtn.disabled = false;
-                console.error(err);
+                stopBtn.disabled = true;
+                showStatus('Камера остановлена', 'success');
+                scanning = false;
+            }
+        });
+
+        // Функция сканирования QR‑кода
+        async function scanQR() {
+            if (!scanning || !stream) return;
+
+            // Устанавливаем размеры canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Захватываем кадр с видео
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Получаем данные изображения
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            // Сканируем QR‑код
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+            if (code) {
+                // QR‑код найден!
+                showResult(code.data);
+                sendToGas(code.data); // Отправляем результат в Google Apps Script
+                scanning = false;
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            } else {
+                // Продолжаем сканирование
+                setTimeout(scanQR, 100);
+            }
+        }
+
+        // Отображение статуса
+        function showStatus(message, type = 'success') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        // Отображение результата
+        function showResult(data) {
+            resultDiv.innerHTML = `<strong>Найден QR‑код:</strong>\n${data}`;
+        }
+
+        // Обработка ошибок камеры
+        function handleCameraError(error) {
+            console.error('Ошибка камеры:', error);
+            let message = `Ошибка: ${error.message}`;
+
+            switch (error.name) {
+                case 'NotAllowedError':
+                    message = 'Для работы камеры разрешите доступ в настройках браузера';
+            break;
+                case 'NotFoundError':
+            message = 'Камера не подключена или недоступна';
+            break;
+                case 'OverconstrainedError':
+            message = 'Не удалось найти камеру с нужным разрешением';
+            break;
+            }
+            showStatus(message, 'error');
+        }
+
+        // Отправка данных в Google Apps Script
+        async function sendToGas(data) {
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ qrData: data })
+                });
+                showStatus('Данные успешно отправлены в АС!', 'success');
+            } catch (e) {
+                showStatus(`Ошибка отправки: ${e.message}`, 'error');
             }
         }
     </script>
