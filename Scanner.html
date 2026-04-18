@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_004</title>
+  <title>QR_002</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
@@ -33,7 +33,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2>QR_004</h2>
+    <h2>QR_002</h2>
     <button id="sync-btn" class="btn-icon">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
@@ -140,7 +140,17 @@
     function updateNumUI() { numDisplay.innerText = currentQty; addBtn.innerText = `ДОБАВИТЬ ${currentQty}`; }
 
  addBtn.onclick = async () => {
-  const entry = `${qrLogs.length + 1}/${currentQR}/${currentQty}`;
+  // Находим самый большой номер в текущем списке
+let nextNumber = 1;
+if (qrLogs.length > 0) {
+    // Берем первую часть (до "/") у каждой строки, превращаем в число и находим максимум
+    const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
+    nextNumber = Math.max(...numbers) + 1;
+}
+
+// Теперь используем вычисленный nextNumber
+const entry = `${nextNumber}/${currentQR}/${currentQty}`;
+
   qrLogs.push(entry);
   renderLogs();
   modal.classList.add('hidden');
