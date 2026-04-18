@@ -5,35 +5,36 @@
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   <title>QR_006</title>
   <style>
+    /* Настройки интерфейса */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
     
-    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; }
+    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; }
     .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; }
+    .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
     
-    .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; }
-    #toggle-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; }
-    
+    #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; }
+    #start-camera:disabled { opacity: 0.5; }
+
     .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; }
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
     
-    #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; margin-bottom: 100px; }
-    .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.9rem; box-sizing: border-box; }
+    #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; font-size: 0.9rem; }
+    .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
     .hidden { display: none !important; }
 
-    /* Стили цифрового табло (Модальное окно) */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-    .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 100%; max-width: 300px; text-align: center; }
-    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-    .num-btn { padding: 15px; font-size: 1.5rem; background: #eee; border: none; border-radius: 8px; cursor: pointer; }
-    .num-btn:active { background: #ddd; }
-    .action-btn { width: 100%; padding: 15px; margin-top: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    .btn-add { background: #4caf50; color: white; font-size: 1.1rem; }
-    .btn-cancel { background: #f44336; color: white; }
-    #numpad-display { font-size: 2rem; font-weight: bold; margin-bottom: 10px; color: #3f51b5; min-height: 2.4rem; }
+    /* Табло */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .numpad-container { background: white; padding: 15px; border-radius: 15px; width: 90%; max-width: 300px; }
+    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
+    .num-btn { padding: 15px; font-size: 1.4rem; background: #eee; border: none; border-radius: 8px; cursor: pointer; }
+    .num-btn:active { background: #ccc; }
+    .btn-add { width: 100%; padding: 15px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 8px; cursor: pointer; }
+    .btn-cancel { width: 100%; padding: 10px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    #numpad-display { font-size: 2rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; }
   </style>
 </head>
 <body>
@@ -41,21 +42,20 @@
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
     <h2>QR_006</h2>
-    <button id="toggle-camera">ВКЛЮЧИТЬ</button>
+    <button id="start-camera">Найти QR</button>
   </header>
 
   <main class="content">
-    <div id="camera-container" class="camera-preview hidden">
+    <div class="camera-preview">
       <video id="video" autoplay playsinline></video>
     </div>
-    <div id="status" class="status hidden"></div>
+    <div id="status" class="status"></div>
     <div id="result">Список пуст</div>
   </main>
 
-  <!-- Модальное табло -->
   <div id="modal" class="modal-overlay hidden">
     <div class="numpad-container">
-      <h3>Сколько ед.товара добавить?</h3>
+      <h3 style="margin:0; font-size: 1rem; text-align:center;">Сколько ед.товара добавить?</h3>
       <div id="numpad-display">0</div>
       <div class="numpad-grid">
         <button class="num-btn" onclick="pressNum(1)">1</button>
@@ -68,18 +68,17 @@
         <button class="num-btn" onclick="pressNum(8)">8</button>
         <button class="num-btn" onclick="pressNum(9)">9</button>
         <button class="num-btn" onclick="pressNum(0)">0</button>
-        <button class="num-btn" onclick="pressNum('C')" style="grid-column: span 2; background: #ffccbc;">Сброс</button>
+        <button class="num-btn" style="grid-column: span 2; background:#ffccbc;" onclick="pressNum('C')">C</button>
       </div>
-      <button id="add-btn" class="action-btn btn-add">ДОБАВИТЬ 0</button>
-      <button id="cancel-btn" class="action-btn btn-cancel">ОТМЕНА</button>
+      <button id="add-btn" class="btn-add">ДОБАВИТЬ 0</button>
+      <button id="cancel-btn" class="btn-cancel">ОТМЕНА</button>
     </div>
   </div>
 
-  <script src="https://unpkg.com"></script>
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const video = document.getElementById('video');
-    const toggleBtn = document.getElementById('toggle-camera');
-    const cameraContainer = document.getElementById('camera-container');
+    const startBtn = document.getElementById('start-camera');
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
     const modal = document.getElementById('modal');
@@ -93,59 +92,65 @@
     
     let currentQR = "";
     let currentQty = "0";
-    
-    // Загрузка из ЛС при старте
+
+    // Инициализация из LocalStorage
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v6')) || [];
     renderLogs();
 
-    toggleBtn.addEventListener('click', async () => {
-      if (!scanning) startCamera();
-      else stopCamera();
-    });
+    function initCanvas() {
+      canvas = document.createElement('canvas');
+      context = canvas.getContext('2d');
+    }
 
-    async function startCamera() {
+    startBtn.addEventListener('click', async () => {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showStatus('Браузер не поддерживает камеру', 'error');
+          return;
+        }
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         video.srcObject = stream;
-        cameraContainer.classList.remove('hidden');
-        status.classList.remove('hidden');
-        toggleBtn.innerText = "СТОП";
+        startBtn.disabled = true;
+        showStatus('Камера активна. Ищу QR...', 'success');
+
         video.onloadedmetadata = () => {
-          canvas = document.createElement('canvas');
-          context = canvas.getContext('2d');
+          initCanvas();
           scanning = true;
-          showStatus('Ищу QR...', 'success');
           scanQR();
         };
       } catch (err) { showStatus('Ошибка: ' + err.message, 'error'); }
-    }
-
-    function stopCamera() {
-      scanning = false;
-      if (stream) stream.getTracks().forEach(t => t.stop());
-      cameraContainer.classList.add('hidden');
-      toggleBtn.innerText = "ВКЛЮЧИТЬ";
-    }
+    });
 
     async function scanQR() {
-      if (!scanning) return;
-      if (video.videoWidth > 0) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const code = jsQR(context.getImageData(0,0,canvas.width,canvas.height).data, canvas.width, canvas.height);
-        
+      if (!scanning || !stream) return;
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setTimeout(scanQR, 100);
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+      try {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
         if (code) {
           currentQR = code.data;
-          stopCamera(); // Пауза камеры для ввода данных
+          // ПАУЗА сканирования и камеры для ввода количества
+          scanning = false;
+          stream.getTracks().forEach(t => t.stop());
+          video.srcObject = null;
+          startBtn.disabled = false;
+          
           openModal();
-          return; // Выходим из цикла сканирования
+        } else {
+          setTimeout(scanQR, 100);
         }
-      }
-      setTimeout(scanQR, 100);
+      } catch (e) { setTimeout(scanQR, 100); }
     }
 
-    // Логика Табло
+    // Логика табло
     function openModal() {
       currentQty = "0";
       updateNumUI();
@@ -156,7 +161,7 @@
       if (n === 'C') currentQty = "0";
       else {
         if (currentQty === "0") currentQty = n.toString();
-        else if (currentQty.length < 5) currentQty += n.toString();
+        else if (currentQty.length < 6) currentQty += n.toString();
       }
       updateNumUI();
     }
@@ -166,27 +171,27 @@
       addBtn.innerText = `ДОБАВИТЬ ${currentQty}`;
     }
 
-    document.getElementById('cancel-btn').addEventListener('click', () => {
+    document.getElementById('cancel-btn').onclick = () => {
       modal.classList.add('hidden');
-      startCamera(); // Возвращаемся к сканеру
-    });
+      showStatus('Отменено', 'error');
+    };
 
-    addBtn.addEventListener('click', () => {
+    addBtn.onclick = () => {
+      // Формат: 1. "расшифровка" "количество"
       const entry = `${qrLogs.length + 1}. "${currentQR}" "${currentQty}"`;
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v6', JSON.stringify(qrLogs));
       renderLogs();
       modal.classList.add('hidden');
-      showStatus(`Добавлено: ${currentQty} шт.`, 'success');
-      startCamera(); // Продолжаем работу
-    });
+      showStatus(`Добавлено №${qrLogs.length}`, 'success');
+    };
 
     function renderLogs() {
       if (qrLogs.length === 0) {
         resultDiv.innerText = "Список пуст";
-        return;
+      } else {
+        resultDiv.innerHTML = "<strong>База (LocalStorage):</strong>\n" + qrLogs.join('\n');
       }
-      resultDiv.innerHTML = "<strong>История (ЛС):</strong>\n" + qrLogs.join('\n');
     }
 
     function showStatus(msg, type) {
