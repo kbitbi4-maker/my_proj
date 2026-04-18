@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_003</title>
+  <title>QR_004</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
@@ -33,7 +33,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2>QR_003</h2>
+    <h2>QR_004</h2>
     <button id="sync-btn" class="btn-icon">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
@@ -140,27 +140,24 @@
     function updateNumUI() { numDisplay.innerText = currentQty; addBtn.innerText = `ДОБАВИТЬ ${currentQty}`; }
 
  addBtn.onclick = async () => {
-      // 1. Формируем новую строку
-      const entry = `${qrLogs.length + 1}/${currentQR}/${currentQty}`;
-      
-      // 2. Сначала добавляем локально для скорости интерфейса
-      qrLogs.push(entry);
-      renderLogs();
-      modal.classList.add('hidden');
-      
-      // 3. ОТПРАВЛЯЕМ ТОЛЬКО НОВУЮ СТРОКУ
-      try {
-        await fetch(SCRIPT_URL, { 
-          method: 'POST', 
-          mode: 'no-cors', 
-          body: JSON.stringify({ newRow: entry }) // Отправляем только одну запись
-        });
-        showStatus('Данные внесены в таблицу', 'success');
-      } catch (e) {
-        showStatus('Ошибка сети. Сохранено локально.', 'error');
-      }
-    };
-
+  const entry = `${qrLogs.length + 1}/${currentQR}/${currentQty}`;
+  qrLogs.push(entry);
+  renderLogs();
+  modal.classList.add('hidden');
+  
+  // Отправляем ВЕСЬ обновленный список. 
+  // Google сотрет старое и запишет это новое. Дублей не будет.
+  try {
+    await fetch(SCRIPT_URL, { 
+      method: 'POST', 
+      mode: 'no-cors', 
+      body: JSON.stringify({ allRows: qrLogs }) 
+    });
+    showStatus('База синхронизирована', 'success');
+  } catch (e) {
+    showStatus('Офлайн: сохранено в телефоне', 'error');
+  }
+};
     // Функция синхронизации (забирает всю таблицу раз в секунду)
     async function syncData() {
       try {
