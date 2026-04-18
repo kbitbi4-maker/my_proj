@@ -3,22 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>QR Scanner Minimal1</title>
+  <title>QR_001</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; }
+    /* Внедренные настройки для фиксации интерфейса */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: sans-serif; 
+      text-align: center; 
+      padding: 20px;
+      overscroll-behavior-y: none; /* Отключает pull‑to‑refresh */
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    /* Остальные стили */
+    .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
     .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; margin: 5px; }
     .btn-danger { background: #f44336; }
-    #result { margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; text-align: left; white-space: pre-wrap; }
+    #result { margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; text-align: left; white-space: pre-wrap; overflow-y: auto; }
     .status { margin: 10px 0; padding: 8px; border-radius: 4px; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
+  <!-- Контент страницы -->
 
-  <h2>QR СКАНЕР (МИНИМАЛЬНЫЙ)1</h2>
+
+  <h2>QR_001</h2>
 
   <div class="camera-preview">
     <video id="video" autoplay playsinline></video>
