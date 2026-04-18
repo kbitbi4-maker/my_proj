@@ -3,148 +3,210 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>QR_001</title>
+  <title>QR_002</title>
   <style>
-    /* Внедренные настройки для фиксации интерфейса */
+    /* Базовые настройки экрана */
     html, body {
       height: 100%;
-      overflow: hidden;
-      touch-action: manipulation;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      overscroll-behavior-y: none; /* Блокировка pull-to-refresh */
     }
 
     body {
-      font-family: sans-serif; 
-      text-align: center; 
-      padding: 20px;
-      overscroll-behavior-y: none; /* Отключает pull‑to‑refresh */
       display: flex;
       flex-direction: column;
+      background: #f5f5f5;
+      overflow-y: auto; /* Возвращаем прокрутку контента */
+    }
+
+    /* Шапка приложения */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background: #3f51b5;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      flex-grow: 1;
+      text-align: center;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Кнопка управления камерой в шапке */
+    #toggle-camera {
+      font-size: 0.9rem;
+      border: 1px solid white;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    /* Контейнер контента */
+    .content {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .camera-preview { 
+      width: 100%; 
+      max-width: 400px; 
+      height: 300px; 
+      background: #000; 
+      border-radius: 12px;
+      overflow: hidden; 
+      position: relative; 
+      margin-bottom: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    #result { 
+      width: 100%;
+      max-width: 400px;
+      margin-top: 10px; 
+      padding: 15px; 
+      background: white; 
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: left; 
+      white-space: pre-wrap; 
       box-sizing: border-box;
     }
 
-    /* Остальные стили */
-    .camera-preview { width: 100%; max-width: 400px; height: 300px; margin: 0 auto 16px; background: #000; border: 2px solid #ccc; position: relative; overflow: hidden; flex-shrink: 0; }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    .btn-primary { padding: 15px 30px; background: #3f51b5; color: #fff; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; margin: 5px; }
-    .btn-danger { background: #f44336; }
-    #result { margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; text-align: left; white-space: pre-wrap; overflow-y: auto; }
-    .status { margin: 10px 0; padding: 8px; border-radius: 4px; }
+    .status { 
+      margin: 10px 0; 
+      padding: 10px; 
+      border-radius: 6px; 
+      font-size: 0.9rem;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
+    
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <!-- Контент страницы -->
 
+  <header class="header">
+    <button class="btn-icon" onclick="history.back()">←</button>
+    <h2>QR_002</h2>
+    <button id="toggle-camera" class="btn-icon">Найти QR</button>
+  </header>
 
-  <h2>QR_001</h2>
+  <main class="content">
+    <div id="camera-container" class="camera-preview hidden">
+      <video id="video" autoplay playsinline></video>
+    </div>
 
-  <div class="camera-preview">
-    <video id="video" autoplay playsinline></video>
-  </div>
+    <div id="status" class="status hidden"></div>
+    <div id="result">Результат сканирования появится здесь</div>
+  </main>
 
-  <button class="btn-primary" id="start-camera">ВКЛЮЧИТЬ КАМЕРУ</button>
-  <button class="btn-primary btn-danger" id="stop-camera" disabled>ВЫКЛЮЧИТЬ КАМЕРУ</button>
-
-  <div id="status" class="status"></div>
-  <div id="result">Результат сканирования появится здесь</div>
-
-  <!-- Библиотека для сканирования QR‑кодов (локальная копия или CDN) -->
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com"></script>
   <script>
     const video = document.getElementById('video');
-    const startBtn = document.getElementById('start-camera');
-    const stopBtn = document.getElementById('stop-camera');
+    const toggleBtn = document.getElementById('toggle-camera');
+    const cameraContainer = document.getElementById('camera-container');
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
 
     let stream = null;
     let scanning = false;
-    let canvas = null;
-    let context = null;
+    let canvas = document.createElement('canvas');
+    let context = canvas.getContext('2d');
 
-    function initCanvas() {
-      canvas = document.createElement('canvas');
-      context = canvas.getContext('2d');
-    }
+    toggleBtn.addEventListener('click', async () => {
+      if (!scanning) {
+        await startScanning();
+      } else {
+        stopScanning();
+      }
+    });
 
-    startBtn.addEventListener('click', async () => {
+    async function startScanning() {
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          showStatus('Ваш браузер не поддерживает доступ к камере', 'error');
-          return;
-        }
-
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }
         });
 
         video.srcObject = stream;
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        showStatus('Камера активна. Наведите на QR‑код...', 'success');
+        cameraContainer.classList.remove('hidden');
+        status.classList.remove('hidden');
+        toggleBtn.innerText = "Стоп";
+        toggleBtn.style.background = "#f44336";
+        
+        showStatus('Поиск QR...', 'success');
 
-        // Ждём, пока видео начнёт транслировать изображение
         video.onloadedmetadata = () => {
-          initCanvas();
           scanning = true;
-          scanQR();
+          requestAnimationFrame(scanQR);
         };
       } catch (err) {
         handleCameraError(err);
       }
-    });
+    }
 
-    stopBtn.addEventListener('click', () => {
+    function stopScanning() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
         video.srcObject = null;
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        showStatus('Камера остановлена', 'success');
-        scanning = false;
       }
-    });
+      scanning = false;
+      cameraContainer.classList.add('hidden');
+      toggleBtn.innerText = "Найти QR";
+      toggleBtn.style.background = "transparent";
+      showStatus('Камера выключена', 'success');
+    }
 
-    async function scanQR() {
-      if (!scanning || !stream) return;
+    function scanQR() {
+      if (!scanning) return;
 
-      // Ждём, пока видео получит размеры
-      if (video.videoWidth === 0 || video.videoHeight === 0) {
-        setTimeout(scanQR, 100);
-        return;
-      }
-
-      // Устанавливаем размеры canvas
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      // Захватываем кадр с видео
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // Получаем данные изображения
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Сканируем QR‑код
-      try {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
+
         if (code) {
-          // QR‑код найден!
           showResult(code.data);
-          await sendToGas(code.data);
-          scanning = false;
-          stream.getTracks().forEach(track => track.stop());
-          video.srcObject = null;
-          startBtn.disabled = false;
-          stopBtn.disabled = true;
-        } else {
-          // Продолжаем сканирование
-          setTimeout(scanQR, 100);
+          sendToGas(code.data);
+          // Опционально: останавливаем после нахождения
+          // stopScanning(); 
+          // return;
         }
-      } catch (error) {
-        console.error('Ошибка сканирования:', error);
-        setTimeout(scanQR, 100); // Продолжаем, несмотря на ошибку
       }
+      requestAnimationFrame(scanQR);
     }
 
     function showStatus(message, type = 'success') {
@@ -157,32 +219,19 @@
     }
 
     function handleCameraError(error) {
-      console.error('Ошибка камеры:', error);
-      let message = `Ошибка: ${error.message}`;
-      switch (error.name) {
-        case 'NotAllowedError':
-          message = 'Разрешите доступ к камере в настройках браузера';
-          break;
-        case 'NotFoundError':
-          message = 'Камера не найдена';
-          break;
-        case 'OverconstrainedError':
-          message = 'Не удалось найти камеру с нужным разрешением';
-          break;
-      }
-      showStatus(message, 'error');
+      showStatus('Ошибка камеры: ' + error.message, 'error');
     }
 
     async function sendToGas(data) {
       try {
-        const response = await fetch('ЗАМЕНИТЕ_НА_ВАШ_URL_ИЗ_GAS', {
+        await fetch('ЗАМЕНИТЕ_НА_ВАШ_URL', {
           method: 'POST',
           mode: 'no-cors',
           body: JSON.stringify({ qrData: data })
         });
-        showStatus('Данные успешно отправлены в Google Таблицу!', 'success');
+        showStatus('Данные отправлены!', 'success');
       } catch (e) {
-        showStatus(`Ошибка отправки: ${e.message}`, 'error');
+        showStatus('Ошибка сети', 'error');
       }
     }
   </script>
