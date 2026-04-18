@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-
-  <title>QR_004</title>
+  <title>QR_005</title>
   <style>
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       font-family: sans-serif;
-      overscroll-behavior-y: none; /* Запрет pull-to-refresh */
+      overscroll-behavior-y: none;
+      touch-action: pan-x pan-y; 
     }
 
     body {
       display: flex;
       flex-direction: column;
       background: #f5f5f5;
-      overflow-y: auto; /* Разрешен обычный скролл */
+      overflow-y: auto;
     }
 
     .header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 10px;
       padding: 10px 15px;
       background: #3f51b5;
       color: white;
@@ -33,7 +33,7 @@
       z-index: 1000;
     }
 
-    .header h2 { margin: 0; font-size: 1.2rem; flex-grow: 1; text-align: center; }
+    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; }
 
     .btn-icon {
       background: transparent;
@@ -43,14 +43,19 @@
       cursor: pointer;
       display: flex;
       align-items: center;
+      padding: 5px;
     }
 
+    /* Кнопка БД */
+    .btn-db { font-size: 1.3rem; }
+
     #toggle-camera {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       border: 1px solid white;
       border-radius: 6px;
-      padding: 6px 12px;
+      padding: 6px 10px;
       text-transform: uppercase;
+      font-weight: bold;
     }
 
     .content { padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -79,7 +84,9 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2>QR_004</h2>
+    <h2>QR_005</h2>
+    <!-- Новая кнопка сохранения БД -->
+    <button id="save-db" class="btn-icon btn-db" title="Сохранить БД">📁</button>
     <button id="toggle-camera" class="btn-icon">Найти QR</button>
   </header>
 
@@ -89,13 +96,14 @@
     </div>
 
     <div id="status" class="status hidden"></div>
-    <div id="result">Нажмите «Найти QR» для запуска сканера</div>
+    <div id="result">Нажмите «Найти QR» для запуска</div>
   </main>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com"></script>
   <script>
     const video = document.getElementById('video');
     const toggleBtn = document.getElementById('toggle-camera');
+    const saveDbBtn = document.getElementById('save-db');
     const cameraContainer = document.getElementById('camera-container');
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
@@ -104,6 +112,9 @@
     let scanning = false;
     let canvas = document.createElement('canvas');
     let context = canvas.getContext('2d');
+    
+    // Офлайн-хранилище в памяти текущей сессии
+    let qrLogs = [];
 
     toggleBtn.addEventListener('click', async () => {
       if (!scanning) {
@@ -111,6 +122,25 @@
       } else {
         stopScanning();
       }
+    });
+
+    // Логика сохранения текстового файла
+    saveDbBtn.addEventListener('click', () => {
+      if (qrLogs.length === 0) {
+        alert("База пуста. Сначала отсканируйте коды.");
+        return;
+      }
+      
+      const textToSave = qrLogs.join('\n');
+      const blob = new Blob([textToSave], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      
+      a.href = url;
+      a.download = `QR_Database_${new Date().toLocaleDateString()}.txt`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showStatus('Файл БД сформирован', 'success');
     });
 
     async function startScanning() {
@@ -126,8 +156,8 @@
         
         video.onloadedmetadata = () => {
           scanning = true;
-          showStatus('Сканирование активно...', 'success');
-          scanQR(); // Запуск цикла
+          showStatus('Сканирование...', 'success');
+          scanQR();
         };
       } catch (err) {
         showStatus('Ошибка камеры: ' + err.message, 'error');
@@ -148,22 +178,25 @@
 
     function scanQR() {
       if (!scanning) return;
-
       if (video.videoWidth > 0 && video.videoHeight > 0) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
-
+        
         if (code) {
-          showResult(code.data);
-          sendToGas(code.data);
-          // Если нужно сканировать только один раз - раскомментируйте stopScanning();
+          const timestamp = new Date().toLocaleString();
+          const entry = `[${timestamp}] ${code.data}`;
+          
+          // Проверка на дубликаты (чтобы не спамить одну и ту же запись)
+          if (!qrLogs.includes(entry)) {
+            qrLogs.push(entry);
+            showResult(code.data);
+            sendToGas(code.data);
+          }
         }
       }
-      // Возвращаем проверенный setTimeout для стабильности на мобильных
       setTimeout(scanQR, 250); 
     }
 
@@ -173,19 +206,19 @@
     }
 
     function showResult(data) {
-      resultDiv.innerHTML = `<strong>Результат:</strong><br>${data}`;
+      resultDiv.innerHTML = `<strong>Найдено (${qrLogs.length}):</strong><br>${data}`;
     }
 
     async function sendToGas(data) {
       try {
-        await fetch('ВАШ_URL_ЗДЕСЬ', {
+        await fetch('ВАШ_URL', {
           method: 'POST',
           mode: 'no-cors',
           body: JSON.stringify({ qrData: data })
         });
-        showStatus('Отправлено в таблицу!', 'success');
+        showStatus('Сохранено в облако и локально', 'success');
       } catch (e) {
-        console.log('Ошибка GAS');
+        showStatus('Сохранено локально (офлайн)', 'success');
       }
     }
   </script>
