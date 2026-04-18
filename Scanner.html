@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_006</title>
+  <title>QR_007</title>
   <style>
-    /* Настройки интерфейса */
+    /* Настройки интерфейса из эталона */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
     
-    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; }
+    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
     .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; }
     .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
     
@@ -20,7 +20,7 @@
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
     
-    #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; font-size: 0.9rem; }
+    #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; font-size: 0.85rem; font-family: monospace; }
     .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
@@ -41,7 +41,9 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2>QR_006</h2>
+    <h2>QR_007</h2>
+    <!-- Кнопка выгрузки в гугл -->
+    <button id="sync-btn" class="btn-icon" title="Отправить в Google">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
 
@@ -79,6 +81,7 @@
   <script>
     const video = document.getElementById('video');
     const startBtn = document.getElementById('start-camera');
+    const syncBtn = document.getElementById('sync-btn');
     const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
     const modal = document.getElementById('modal');
@@ -93,8 +96,11 @@
     let currentQR = "";
     let currentQty = "0";
 
-    // Инициализация из LocalStorage
-    let qrLogs = JSON.parse(localStorage.getItem('qr_db_v6')) || [];
+    // ЗАМЕНИТЕ НА ВАШ URL ИЗ ГУГЛ АПП СКРИПТ
+    const SCRIPT_URL = 'ВАШ_URL_ЗДЕСЬ';
+
+    // Инициализация из LocalStorage (v7 для нового формата)
+    let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
     renderLogs();
 
     function initCanvas() {
@@ -137,7 +143,7 @@
         const code = jsQR(imageData.data, imageData.width, imageData.height);
         if (code) {
           currentQR = code.data;
-          // ПАУЗА сканирования и камеры для ввода количества
+          // ПАУЗА согласно эталону
           scanning = false;
           stream.getTracks().forEach(t => t.stop());
           video.srcObject = null;
@@ -150,7 +156,6 @@
       } catch (e) { setTimeout(scanQR, 100); }
     }
 
-    // Логика табло
     function openModal() {
       currentQty = "0";
       updateNumUI();
@@ -177,21 +182,39 @@
     };
 
     addBtn.onclick = () => {
-      // Формат: 1. "расшифровка" "количество"
-      const entry = `${qrLogs.length + 1}. "${currentQR}" "${currentQty}"`;
+      // НОВЫЙ ФОРМАТ: Номер/Расшифровка/Количество
+      const entry = `${qrLogs.length + 1}/${currentQR}/${currentQty}`;
       qrLogs.push(entry);
-      localStorage.setItem('qr_db_v6', JSON.stringify(qrLogs));
+      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
       modal.classList.add('hidden');
-      showStatus(`Добавлено №${qrLogs.length}`, 'success');
+      showStatus('Записано в базу', 'success');
+    };
+
+    // Функция отправки накопленных данных в Google
+    syncBtn.onclick = async () => {
+      if (qrLogs.length === 0) return alert("Список пуст");
+      showStatus('Отправка в Google...', 'success');
+      
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ data: qrLogs })
+        });
+        showStatus('Данные отправлены!', 'success');
+        if(confirm("Очистить локальную базу после отправки?")) {
+          qrLogs = [];
+          localStorage.removeItem('qr_db_v7');
+          renderLogs();
+        }
+      } catch (e) {
+        showStatus('Ошибка сети', 'error');
+      }
     };
 
     function renderLogs() {
-      if (qrLogs.length === 0) {
-        resultDiv.innerText = "Список пуст";
-      } else {
-        resultDiv.innerHTML = "<strong>База (LocalStorage):</strong>\n" + qrLogs.join('\n');
-      }
+      resultDiv.innerHTML = qrLogs.length ? "<strong>Реестр (ЛС):</strong>\n" + qrLogs.join('\n') : "Список пуст";
     }
 
     function showStatus(msg, type) {
