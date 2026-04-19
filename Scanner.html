@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_014</title>
+  <title>QR_015</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -23,9 +23,15 @@
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-    .num-btn, .user-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; }
-    .btn-add { width: 100%; padding: 18px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
+    .num-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    
+    /* Единый стиль для кнопок управления */
+    .btn-sub, .btn-add, .btn-cancel, .user-btn { width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 60px; }
+    .btn-sub { background: #3f51b5; color: white; }
+    .btn-add { background: #4caf50; color: white; }
+    .btn-cancel { background: #f44336; color: white; margin-bottom: 0; }
+    .user-btn { background: #e3f2fd; color: black; }
+
     #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; }
     .hidden { display: none !important; }
   </style>
@@ -34,7 +40,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_015</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
   </header>
@@ -56,7 +62,7 @@
       </div>
       <button class="btn-sub" onclick="openUserMenu()">КОМУ ВЫДАНО: <span id="who-label">...</span></button>
       <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
-      <button class="user-btn" style="background:#f44336;color:white;margin-top:10px" onclick="closeModal()">ОТМЕНА</button>
+      <button class="btn-cancel" onclick="closeModal()">ОТМЕНА</button>
     </div>
     <div class="numpad-container hidden" id="user-view">
       <button class="btn-icon" style="color:black;font-weight:bold" onclick="closeUserMenu()">← НАЗАД</button>
@@ -95,11 +101,7 @@
     }
 
     async function toggleScanner() {
-      if (scanning) {
-        stopCamera();
-      } else {
-        startScanner();
-      }
+      if (scanning) { stopCamera(); } else { startScanner(); }
     }
 
     async function startScanner() {
@@ -118,7 +120,8 @@
         if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
         if (code) { currentQR = code.data; stopCamera(); openModal(); return; }
       }
       if (scanning) requestAnimationFrame(tick);
@@ -135,7 +138,7 @@
     function openModal() { document.getElementById('modal').classList.remove('hidden'); currentQty = "0"; updateNumpad(); }
     function closeModal() { document.getElementById('modal').classList.add('hidden'); stopCamera(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty = currentQty==="0" ? String(n) : currentQty+n; updateNumpad(); }
-    function updateNumpad() { document.getElementById('numpad-display').textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
+    function updateNumpad() { numDisplay.textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
     function selectUser(n) { currentUser = n; whoLabel.textContent = n; updateNumpad(); closeUserMenu(); }
