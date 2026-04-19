@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_015</title>
+  <title>QR_014</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -17,26 +17,24 @@
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
     #result { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
-    .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.1rem; margin-bottom: 5px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+    .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.1rem; margin-bottom: 5px; width: 100%; }
     
-    /* Стили для логов и выделения */
-    .log-item { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-all; font-family: monospace; font-size: 0.85rem; color: #333; width: 100%; box-sizing: border-box; transition: 0.2s; border: 2px solid transparent; cursor: pointer; }
-    .log-item.selected { border-color: #ff4b2b; background: #fff1f0; transform: scale(0.98); }
+    /* Стили элементов списка и выделения */
+    .log-item { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-all; font-family: monospace; font-size: 0.85rem; color: #333; width: 100%; box-sizing: border-box; border: 2px solid transparent; transition: 0.2s; }
+    .log-item.selected { border-color: #ff4b2b; background: #fff5f5; }
     
-    /* Кнопка удаления */
-    #delete-btn { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; display: none; }
+    /* Кнопка удаления в шапке */
+    #del-btn { background: #ff4b2b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; cursor: pointer; display: none; }
 
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
     .num-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    
     .btn-control, .btn-add, .btn-cancel { width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 60px; }
     .btn-control { background: #3f51b5; color: white; }
     .btn-add { background: #4caf50; color: white; }
     .btn-cancel { background: #f44336; color: white; margin-bottom: 0; }
     .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
     #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
     .hidden { display: none !important; }
   </style>
@@ -45,8 +43,8 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_015</h2>
-    <button id="delete-btn" onclick="deleteSelected()">Удалить (0)</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
+    <button id="del-btn" onclick="deleteSelected()">УДАЛИТЬ</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
   </header>
@@ -94,145 +92,112 @@
     const whoLabel = document.getElementById('who-label');
     const numDisplay = document.getElementById('numpad-display');
     const addBtn = document.getElementById('add-btn');
-    const delBtn = document.getElementById('delete-btn');
+    const syncBtn = document.getElementById('sync-btn');
+    const delBtn = document.getElementById('del-btn');
 
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
-    let selectedIndices = new Set();
+    let selectedSet = new Set();
     let stream = null, scanning = false, canvas = null, context = null;
-    let currentQR = "", currentQty = "0", currentUser = "Не указан";
+    let currentQR = "", currentQty = "0", lastHash = "", currentUser = "Не указан";
 
     function renderLogs() {
       if (!qrLogs.length) { 
         resultDiv.innerHTML = '<div class="log-title" style="text-align:center">Список пуст</div>'; 
-        delBtn.style.display = 'none';
+        toggleDelMode(false);
         return; 
       }
       let html = '<div class="log-title">База данных:</div>';
-      qrLogs.slice().reverse().forEach((log, index) => {
-        const realIndex = qrLogs.length - 1 - index;
-        const isSelected = selectedIndices.has(realIndex) ? 'selected' : '';
-        html += `<div class="log-item ${isSelected}" onclick="toggleSelect(${realIndex})">${log}</div>`;
+      [...qrLogs].reverse().forEach((log, index) => {
+        const originalIndex = qrLogs.length - 1 - index;
+        const isSelected = selectedSet.has(originalIndex) ? 'selected' : '';
+        html += `<div class="log-item ${isSelected}" onclick="toggleSelect(${originalIndex})">${log}</div>`;
       });
       resultDiv.innerHTML = html;
-      updateDeleteButton();
+      toggleDelMode(selectedSet.size > 0);
     }
 
-    function toggleSelect(index) {
-      if (selectedIndices.has(index)) {
-        selectedIndices.delete(index);
-      } else {
-        selectedIndices.add(index);
-      }
+    function toggleSelect(idx) {
+      if (selectedSet.has(idx)) selectedSet.delete(idx);
+      else selectedSet.add(idx);
       renderLogs();
     }
 
-    function updateDeleteButton() {
-      if (selectedIndices.size > 0) {
-        delBtn.style.display = 'block';
-        delBtn.innerText = `Удалить (${selectedIndices.size})`;
-      } else {
-        delBtn.style.display = 'none';
-      }
+    function toggleDelMode(show) {
+      delBtn.style.display = show ? 'block' : 'none';
+      syncBtn.style.display = show ? 'none' : 'block';
     }
 
     async function deleteSelected() {
-      if (!confirm(`Удалить выбранные записи (${selectedIndices.size} шт.)?`)) return;
+      if (!confirm(`Удалить выбранное (${selectedSet.size})?`)) return;
 
-      const logsToDelete = Array.from(selectedIndices).map(i => qrLogs[i]);
+      const toDelete = Array.from(selectedSet).map(i => qrLogs[i]);
       
-      // 1. Локальное удаление
-      qrLogs = qrLogs.filter((_, i) => !selectedIndices.has(i));
+      // Удаляем из локального массива
+      qrLogs = qrLogs.filter((_, i) => !selectedSet.has(i));
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-      selectedIndices.clear();
+      selectedSet.clear();
       renderLogs();
 
-      // 2. Удаление из АС (если онлайн)
+      // Удаляем из Google Таблицы (АС)
       if (navigator.onLine) {
         try {
-          indicator.classList.add('net-online');
           await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ action: 'delete', items: logsToDelete })
+            body: JSON.stringify({ action: 'delete', items: toDelete })
           });
-        } catch (e) { console.error("Ошибка удаления в облаке", e); }
+        } catch (e) { console.log("Оффлайн удаление"); }
       }
     }
 
-    async function toggleScanner() {
-      if (scanning) { stopCamera(); } else { startScanner(); }
+    async function syncFromGoogle() {
+      if (!navigator.onLine) return;
+      try {
+        indicator.classList.add('net-online');
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        if (JSON.stringify(data) !== lastHash) {
+          qrLogs = data;
+          localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+          lastHash = JSON.stringify(data);
+          renderLogs();
+        }
+      } catch (e) { indicator.classList.remove('net-online'); }
     }
 
+    // --- Оригинальная логика сканера из эталона ---
+    async function toggleScanner() { if (scanning) stopCamera(); else startScanner(); }
     async function startScanner() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         video.srcObject = stream;
         scanning = true;
-        startBtn.innerText = "Стоп";
+        startBtn.textContent = "ВЫКЛЮЧИТЬ";
         requestAnimationFrame(tick);
-      } catch (err) { alert("Ошибка камеры: " + err); }
+      } catch (err) { alert("Камера недоступна"); }
     }
-
     function stopCamera() {
       if (stream) stream.getTracks().forEach(t => t.stop());
       scanning = false;
-      startBtn.innerText = "Найти QR";
+      startBtn.textContent = "Найти QR";
     }
-
     function tick() {
       if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-        if (!canvas) {
-          canvas = document.createElement('canvas');
-          context = canvas.getContext('2d', { willReadFrequently: true });
-        }
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-        if (code && code.data) {
-          currentQR = code.data;
-          stopCamera();
-          openModal();
-          return;
-        }
+        if (code && code.data) { currentQR = code.data; stopCamera(); openModal(); return; }
       }
       if (scanning) requestAnimationFrame(tick);
     }
 
-    function openModal() {
-      currentQty = "0";
-      numDisplay.innerText = "0";
-      addBtn.innerText = "ДОБАВИТЬ 0";
-      document.getElementById('modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('modal').classList.add('hidden');
-    }
-
-    function pressNum(n) {
-      if (n === 'C') { currentQty = "0"; }
-      else { currentQty = currentQty === "0" ? String(n) : currentQty + n; }
-      numDisplay.innerText = currentQty;
-      addBtn.innerText = `ДОБАВИТЬ ${currentQty}`;
-    }
-
-    function openUserMenu() {
-      document.getElementById('numpad-view').classList.add('hidden');
-      document.getElementById('user-view').classList.remove('hidden');
-    }
-
-    function closeUserMenu() {
-      document.getElementById('user-view').classList.add('hidden');
-      document.getElementById('numpad-view').classList.remove('hidden');
-    }
-
-    function selectUser(name) {
-      currentUser = name;
-      whoLabel.innerText = name;
-      closeUserMenu();
-    }
+    function openModal() { currentQty = "0"; numDisplay.innerText = "0"; addBtn.innerText = "ДОБАВИТЬ 0"; document.getElementById('modal').classList.remove('hidden'); }
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+    function pressNum(n) { if (n === 'C') currentQty = "0"; else currentQty = currentQty === "0" ? String(n) : currentQty + n; numDisplay.innerText = currentQty; addBtn.innerText = `ДОБАВИТЬ ${currentQty}`; }
+    function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
+    function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
+    function selectUser(name) { currentUser = name; whoLabel.innerText = name; closeUserMenu(); }
 
     async function saveEntry() {
       const entry = `${currentQR} | Кол-во: ${currentQty} | Кому: ${currentUser} | ${new Date().toLocaleString()}`;
@@ -240,27 +205,18 @@
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
       closeModal();
-      
       if (navigator.onLine) {
-        try {
-          await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ data: entry })
-          });
-        } catch(e) {}
+        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: entry }) }); } catch(e) {}
       }
     }
 
-    function updateStatus() {
-      indicator.classList.toggle('net-online', navigator.onLine);
-    }
-
+    function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); if(navigator.onLine) syncFromGoogle(); }
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
+
     updateStatus();
     renderLogs();
+    setInterval(syncFromGoogle, 5000);
   </script>
 </body>
 </html>
- 
