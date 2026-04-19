@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_009</title>
+  <title>QR_008</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -37,7 +37,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_009</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_008</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="uploadToGoogle()">☁</button>
     <button id="start-camera" onclick="startScanner()">Найти QR</button>
   </header>
@@ -91,8 +91,7 @@
   <script>
     const video = document.getElementById('video');
     const startBtn = document.getElementById('start-camera');
-    const syncBtn = document.getElementById('sync-btn');
-    const status = document.getElementById('status');
+    const statusDiv = document.getElementById('status');
     const resultDiv = document.getElementById('result');
     const modal = document.getElementById('modal');
     const numDisplay = document.getElementById('numpad-display');
@@ -109,10 +108,10 @@
     renderLogs();
 
     function showStatus(msg, type) {
-      status.textContent = msg;
-      status.className = `status ${type}`;
-      status.classList.remove('hidden');
-      setTimeout(() => status.classList.add('hidden'), 3000);
+      statusDiv.textContent = msg;
+      statusDiv.className = `status ${type}`;
+      statusDiv.classList.remove('hidden');
+      setTimeout(() => statusDiv.classList.add('hidden'), 3000);
     }
 
     async function startScanner() {
@@ -130,12 +129,8 @@
 
     function tick() {
       if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-        if (!canvas) {
-          canvas = document.createElement('canvas');
-          context = canvas.getContext('2d');
-        }
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
@@ -156,18 +151,41 @@
       startBtn.disabled = false;
     }
 
-    function openModal() { modal.classList.remove('hidden'); currentQty = "0"; updateNumpad(); }
+    function openModal() {
+      modal.classList.remove('hidden');
+      currentQty = "0";
+      currentUser = "Не указан";
+      whoLabel.textContent = "...";
+      updateNumpad();
+    }
+
     function closeModal() { modal.classList.add('hidden'); stopCamera(); }
-    function pressNum(n) { if (n === 'C') currentQty = "0"; else currentQty = currentQty === "0" ? String(n) : currentQty + n; updateNumpad(); }
-    function updateNumpad() { numDisplay.textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty}`; }
+
+    function pressNum(n) {
+      if (n === 'C') currentQty = "0";
+      else currentQty = currentQty === "0" ? String(n) : currentQty + n;
+      updateNumpad();
+    }
+
+    function updateNumpad() {
+      numDisplay.textContent = currentQty;
+      addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`;
+    }
+
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
-    function selectUser(name) { currentUser = name; whoLabel.textContent = name; closeUserMenu(); }
+
+    function selectUser(name) {
+      currentUser = name;
+      whoLabel.textContent = name;
+      updateNumpad();
+      closeUserMenu();
+    }
 
     async function saveEntry() {
       let nextNumber = 1;
       if (qrLogs.length > 0) {
-          const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
+          const numbers = qrLogs.map(log => parseInt(log.split('/')) || 0);
           nextNumber = Math.max(...numbers) + 1;
       }
       const now = new Date();
@@ -193,7 +211,9 @@
       try {
         await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
         showStatus("Синхронизировано", "success");
-      } catch (e) { showStatus("Ошибка синхронизации", "error"); }
+      } catch (e) {
+        showStatus("Ошибка синхронизации", "error");
+      }
     }
 
     setInterval(() => { indicator.classList.toggle('net-online', navigator.onLine); }, 2000);
