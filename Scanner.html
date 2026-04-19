@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_009</title>
+  <title>QR_001</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     
@@ -50,7 +50,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_009</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_001</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
@@ -212,32 +212,31 @@
       addBtn.innerText = `ДОБАВИТЬ: ${currentQty} / ${currentUser}`;
     }
 
-    async function saveEntry() {
+        async function saveEntry() {
       let nextNumber = 1;
       if (qrLogs.length > 0) {
+          // Берем первую часть строки до первого "/" и превращаем в число
           const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
           nextNumber = Math.max(...numbers) + 1;
       }
       
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      // Формат 22:14 без лишних секунд и дат
+      const timeStr = now.getHours().toString().padStart(2, '0') + ":" + 
+                      now.getMinutes().toString().padStart(2, '0');
       
-      // Добавляем время 5-м элементом через "/"
-      const entry = `${nextNumber}/${currentQR}/${currentQty}/${currentUser}/${timeStr}`;
+      // Добавляем время. Символ ' перед временем гарантирует, что Таблица не превратит его в 1899 год
+      const entry = `${nextNumber}/${currentQR}/${currentQty}/${currentUser}/'${timeStr}`;
       
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
       closeModal();
-      await uploadToGoogle();
+      if (typeof uploadToGoogle === "function") {
+          await uploadToGoogle();
+      }
     }
 
-    function renderLogs() {
-      const scrollPos = resultDiv.scrollTop;
-      // Оставляем твою логику индикации "Список пуст"
-      resultDiv.innerHTML = qrLogs.length ? "<strong>База данных:</strong>\n" + qrLogs.join('\n') : "Список пуст";
-      resultDiv.scrollTop = scrollPos;
-    }
 
 
     function showStatus(msg, type) { status.textContent = msg; status.className = `status ${type}`; }
