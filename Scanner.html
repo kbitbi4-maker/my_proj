@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_004_FINAL</title>
+  <title>QR_005</title>
   <style>
     /* Настройки интерфейса из эталона */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
@@ -42,9 +42,10 @@
 </head>
 <body>
 
-  <header class="header">
-    <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_004</h2>
+ <header class="header">
+    <!-- Изменено: теперь ведет на главную страницу меню -->
+    <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_005</h2>
     <button id="sync-btn" class="btn-icon">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
