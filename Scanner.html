@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_015</title>
+  <title>QR_013</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -12,8 +12,7 @@
     .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
     .net-online { background: #00e676; box-shadow: 0 0 8px #00e676; }
     .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
-    #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; }
-    #start-camera:disabled { opacity: 0.5; }
+    #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; transition: 0.3s; }
     .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; background: transparent; width: 100%; box-sizing: border-box; }
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
@@ -25,14 +24,14 @@
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
     .num-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     
-    /* Единый стиль для кнопок управления */
-    .btn-sub, .btn-add, .btn-cancel, .user-btn { width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 60px; }
-    .btn-sub { background: #3f51b5; color: white; }
+    /* Стили кнопок управления с одинаковой высотой */
+    .btn-control, .btn-add, .btn-cancel { width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 60px; }
+    .btn-control { background: #3f51b5; color: white; }
     .btn-add { background: #4caf50; color: white; }
     .btn-cancel { background: #f44336; color: white; margin-bottom: 0; }
-    .user-btn { background: #e3f2fd; color: black; }
+    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-    #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; }
+    #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -40,7 +39,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_015</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_013</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
   </header>
@@ -60,7 +59,7 @@
         <button class="num-btn" onclick="pressNum(7)">7</button><button class="num-btn" onclick="pressNum(8)">8</button><button class="num-btn" onclick="pressNum(9)">9</button>
         <button class="num-btn" onclick="pressNum(0)">0</button><button class="num-btn" style="grid-column:span 2;background:#ffccbc" onclick="pressNum('C')">СБРОС</button>
       </div>
-      <button class="btn-sub" onclick="openUserMenu()">КОМУ ВЫДАНО: <span id="who-label">...</span></button>
+      <button class="btn-control" onclick="openUserMenu()">КОМУ: <span id="who-label">...</span></button>
       <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
       <button class="btn-cancel" onclick="closeModal()">ОТМЕНА</button>
     </div>
@@ -152,12 +151,13 @@
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs(); closeModal();
-      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
+      syncFromGoogle();
     }
 
     async function syncFromGoogle() {
       if (!navigator.onLine) { indicator.classList.remove('net-online'); return; }
       try {
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
         const res = await fetch(SCRIPT_URL);
         const json = await res.json();
         const newHash = JSON.stringify(json.data);
@@ -172,7 +172,7 @@
     }
 
     renderLogs();
-    setInterval(syncFromGoogle, 5000);
+    setInterval(syncFromGoogle, 1000);
   </script>
 </body>
 </html>
