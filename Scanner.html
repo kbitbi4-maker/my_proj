@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_008</title>
+  <title>QR_009</title>
   <style>
     /* Ваши стили без изменений */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
@@ -37,7 +37,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_008</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_009</h2>
     <button id="sync-btn" class="btn-icon" onclick="syncData()">☁</button>
     <button id="start-camera" onclick="startScanning()">Найти QR</button>
   </header>
@@ -188,24 +188,26 @@
     }
 
     // СОХРАНЕНИЕ С НОВЫМИ ПОЛЯМИ
-    function saveEntry() {
-      const now = new Date();
-      const entry = {
-        qr: currentQR,           // 1 столбец
-        qty: currentQty,         // 2 столбец
-        user: currentUser,       // 3 столбец
-        time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}), // 8 столбец
-        day: now.getDate(),      // 9 столбец
-        month: now.getMonth() + 1, // 11 столбец
-        year: String(now.getFullYear()).slice(-2) // 12 столбец (формат 26)
-      };
+   function saveEntry() {
+  const now = new Date();
+  const entry = {
+    qr: currentQR,           // 1
+    qty: currentQty,         // 2
+    user: currentUser,       // 3
+    id: Date.now(),          // 4 (уникальный ID на базе времени)
+    time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}), // 5
+    day: now.getDate(),      // 6
+    month: now.getMonth() + 1, // 7
+    year: String(now.getFullYear()).slice(-2) // 8 (формат "26")
+  };
 
-      qrLogs.push(entry);
-      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-      renderLogs();
-      closeModal();
-      showStatus("Запись сохранена", "success");
-    }
+  qrLogs.push(entry);
+  localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+  renderLogs();
+  closeModal();
+  showStatus("Сохранено", "success");
+}
+
 
     function renderLogs() {
       if (qrLogs.length === 0) {
