@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_015</title>
+  <title>QR_014</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -18,13 +18,9 @@
     video { width: 100%; height: 100%; object-fit: cover; }
     #result { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
     .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.1rem; margin-bottom: 5px; width: 100%; }
-    
-    /* Твои стили логов + добавка для выделения */
     .log-item { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-all; font-family: monospace; font-size: 0.85rem; color: #333; width: 100%; box-sizing: border-box; border: 2px solid transparent; transition: 0.2s; }
     .log-item.selected { border-color: #ff4b2b; background: #fff5f5; }
-    
     #del-btn { background: #ff4b2b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; cursor: pointer; display: none; }
-
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
@@ -42,7 +38,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_015</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
     <button id="del-btn" onclick="deleteSelected()">УДАЛИТЬ</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
@@ -81,9 +77,9 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com"></script>
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3KF13nR_sLT4TJF-XduOX-W7XS4F40LUTXXeGToZLOKLj6y093TF3O4fcWTNg12hoRQ/exec';
+    const SCRIPT_URL = 'https://google.com';
     const video = document.getElementById('video');
     const resultDiv = document.getElementById('result');
     const startBtn = document.getElementById('start-camera');
@@ -147,18 +143,20 @@
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
         const dataString = JSON.stringify(data);
-        if (data && (dataString !== lastHash || qrLogs.length === 0)) {
+        
+        // Принудительная загрузка если LS пуст или данные изменились
+        if (data && Array.isArray(data) && (dataString !== lastHash || qrLogs.length === 0)) {
           qrLogs = data;
           localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
           lastHash = dataString;
           renderLogs();
         }
-      } catch (e) { indicator.classList.remove('net-online'); }
+      } catch (e) { 
+        indicator.classList.remove('net-online'); 
+      }
     }
 
-    async function toggleScanner() {
-      if (scanning) { stopCamera(); } else { startScanner(); }
-    }
+    async function toggleScanner() { if (scanning) stopCamera(); else startScanner(); }
 
     async function startScanner() {
       try {
@@ -211,13 +209,15 @@
       indicator.classList.toggle('net-online', navigator.onLine); 
       if(navigator.onLine) syncFromGoogle(); 
     }
+
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
 
+    // Инициализация
     updateStatus();
     renderLogs();
-    syncFromGoogle();
-    setInterval(syncFromGoogle, 10000);
+    syncFromGoogle(); 
+    setInterval(syncFromGoogle, 5000);
   </script>
 </body>
 </html>
