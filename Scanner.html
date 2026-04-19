@@ -31,6 +31,21 @@
     .btn-sub { width: 100%; padding: 12px; background: #3f51b5; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
     .btn-cancel { width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .log-item {
+      background: white;
+      padding: 10px;
+      margin-top: 10px; /* Зазор между карточками */
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      word-break: break-all;
+    }
+    .log-title {
+      color: white;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px black;
+      margin-bottom: 5px;
+    }
+
   </style>
 </head>
 <body>
@@ -194,11 +209,43 @@
       closeModal();
     }
 
-    function renderLogs() {
-      // Создаем копию массива [...qrLogs], переворачиваем её .reverse() 
-      // и выводим. Оригинальный qrLogs остается нетронутым для синхронизации.
-      resultDiv.innerHTML = qrLogs.length ? "<strong>База данных:</strong>\n" + [...qrLogs].reverse().join('\n') : "Список пуст";
+         function renderLogs() {
+      if (!qrLogs.length) {
+        resultDiv.innerHTML = "Список пуст";
+        return;
+      }
+
+      // Заголовок
+      let html = '<div class="log-title">База данных:</div>';
+
+      // Разворачиваем копию массива и создаем карточки
+      const reversedLogs = [...qrLogs].reverse();
+      
+      reversedLogs.forEach(log => {
+        html += `<div class="log-item">${log}</div>`;
+      });
+
+      resultDiv.innerHTML = html;
+      resultDiv.style.background = "transparent"; // Убедимся, что контейнер прозрачный
+      resultDiv.style.boxShadow = "none";
     }
+
+
+      // Заголовок
+      let html = '<div class="log-title">База данных:</div>';
+
+      // Разворачиваем копию массива и создаем карточки
+      const reversedLogs = [...qrLogs].reverse();
+      
+      reversedLogs.forEach(log => {
+        html += `<div class="log-item">${log}</div>`;
+      });
+
+      resultDiv.innerHTML = html;
+      resultDiv.style.background = "transparent"; // Убедимся, что контейнер прозрачный
+      resultDiv.style.boxShadow = "none";
+    }
+
 
     async function syncFromGoogle() {
       if (!navigator.onLine) { indicator.classList.remove('net-online'); return; }
