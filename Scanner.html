@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_003</title>
+  <title>QR_004_FINAL</title>
   <style>
+    /* Настройки интерфейса из эталона */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
     
@@ -12,22 +13,24 @@
     .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
     
     /* Точка-индикатор связи */
-    .net-indicator { width: 10px; height: 10px; border-radius: 50%; background: #ff4b2b; border: 1px solid white; transition: 0.3s; }
+    .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
     .net-online { background: #00e676; box-shadow: 0 0 8px #00e676; }
 
     .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
     #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; }
-    
+    #start-camera:disabled { opacity: 0.5; }
+
     .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; }
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
     
     #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; font-size: 0.85rem; font-family: monospace; }
-    .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; }
+    .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; text-align: center; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
     .hidden { display: none !important; }
 
+    /* Табло */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .numpad-container { background: white; padding: 15px; border-radius: 15px; width: 90%; max-width: 300px; }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
@@ -41,8 +44,8 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_003</h2>
-    <button id="sync-btn" class="btn-icon" title="Синхронизация">☁</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_004</h2>
+    <button id="sync-btn" class="btn-icon">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
 
@@ -56,7 +59,7 @@
 
   <div id="modal" class="modal-overlay hidden">
     <div class="numpad-container">
-      <h3 style="margin:0; font-size: 1rem; text-align:center;">Сколько ед.товара добавить?</h3>
+      <h3 style="margin:0; font-size: 1rem; text-align:center;">Сколько товара добавить?</h3>
       <div id="numpad-display">0</div>
       <div class="numpad-grid">
         <button class="num-btn" onclick="pressNum(1)">1</button>
@@ -76,7 +79,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com"></script>
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const video = document.getElementById('video');
     const startBtn = document.getElementById('start-camera');
@@ -96,23 +99,7 @@
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
     renderLogs();
 
-    // Функция POST-запроса (Отдача данных)
-    async function uploadToGoogle() {
-      if (qrLogs.length === 0) return;
-      try {
-        await fetch(SCRIPT_URL, { 
-          method: 'POST', 
-          mode: 'no-cors', 
-          body: JSON.stringify({ data: qrLogs }) 
-        });
-        indicator.classList.add('net-online');
-      } catch (e) {
-        indicator.classList.remove('net-online');
-        throw e;
-      }
-    }
-
-    // Функция GET-запроса (Получение данных)
+    // 1. ПОЛУЧЕНИЕ ДАННЫХ (GET)
     async function syncFromGoogle() {
       try {
         const response = await fetch(SCRIPT_URL);
@@ -125,26 +112,30 @@
           lastHash = newHash;
         }
         indicator.classList.add('net-online');
+      } catch (e) { indicator.classList.remove('net-online'); }
+    }
+
+    // 2. ОТПРАВКА ДАННЫХ (POST)
+    async function uploadToGoogle() {
+      if (qrLogs.length === 0) return;
+      try {
+        await fetch(SCRIPT_URL, { 
+          method: 'POST', 
+          mode: 'no-cors', 
+          body: JSON.stringify({ data: qrLogs }) 
+        });
+        indicator.classList.add('net-online');
+        showStatus('Облако обновлено', 'success');
       } catch (e) {
         indicator.classList.remove('net-online');
+        showStatus('Ошибка связи (оффлайн)', 'error');
       }
     }
 
-    // Интервал фоновой проверки
     setInterval(syncFromGoogle, 2000);
+    syncBtn.onclick = () => { showStatus('Обновление...', 'success'); syncFromGoogle(); uploadToGoogle(); };
 
-    // Кнопка облака: "Ручной выход из оффлайна"
-    syncBtn.onclick = async () => {
-      showStatus('Попытка синхронизации...', 'success');
-      try {
-        await uploadToGoogle();
-        await syncFromGoogle();
-        showStatus('Облако обновлено!', 'success');
-      } catch (e) {
-        showStatus('Ошибка: сеть недоступна', 'error');
-      }
-    };
-
+    // 3. ЭТАЛОННЫЙ СКАНЕР
     function initCanvas() { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
 
     startBtn.addEventListener('click', async () => {
@@ -173,6 +164,7 @@
       } else { setTimeout(scanQR, 100); }
     }
 
+    // 4. ТАБЛО И НУМЕРАЦИЯ
     function openModal() { currentQty = "0"; updateNumUI(); modal.classList.remove('hidden'); }
     function pressNum(n) {
       if (n === 'C') currentQty = "0";
@@ -192,18 +184,12 @@
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
       modal.classList.add('hidden');
-      
-      try {
-        await uploadToGoogle();
-        showStatus('Записано и отправлено!', 'success');
-      } catch (e) {
-        showStatus('Сохранено в памяти телефона (оффлайн)', 'error');
-      }
+      await uploadToGoogle();
     };
 
     function renderLogs() {
       const scrollPos = resultDiv.scrollTop;
-      resultDiv.innerHTML = qrLogs.length ? "<strong>База (Синхронизация):</strong>\n" + qrLogs.join('\n') : "Список пуст";
+      resultDiv.innerHTML = qrLogs.length ? "<strong>База (Реестр):</strong>\n" + qrLogs.join('\n') : "Список пуст";
       resultDiv.scrollTop = scrollPos;
     }
 
