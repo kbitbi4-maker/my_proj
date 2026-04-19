@@ -3,23 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_002</title>
+  <title>QR_003</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: #f5f5f5; }
+    
     .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
-    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; }
+    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    /* Точка-индикатор связи */
+    .net-indicator { width: 10px; height: 10px; border-radius: 50%; background: #ff4b2b; border: 1px solid white; transition: 0.3s; }
+    .net-online { background: #00e676; box-shadow: 0 0 8px #00e676; }
+
     .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
     #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; }
-    #start-camera:disabled { opacity: 0.5; }
+    
     .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; }
     .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
     video { width: 100%; height: 100%; object-fit: cover; }
+    
     #result { width: 100%; max-width: 400px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: left; white-space: pre-wrap; font-size: 0.85rem; font-family: monospace; }
     .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; }
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
     .hidden { display: none !important; }
+
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .numpad-container { background: white; padding: 15px; border-radius: 15px; width: 90%; max-width: 300px; }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0; }
@@ -33,8 +41,8 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2>QR_002</h2>
-    <button id="sync-btn" class="btn-icon">☁</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_003</h2>
+    <button id="sync-btn" class="btn-icon" title="Синхронизация">☁</button>
     <button id="start-camera">Найти QR</button>
   </header>
 
@@ -43,12 +51,12 @@
       <video id="video" autoplay playsinline></video>
     </div>
     <div id="status" class="status"></div>
-    <div id="result">Загрузка данных...</div>
+    <div id="result">Список пуст</div>
   </main>
 
   <div id="modal" class="modal-overlay hidden">
     <div class="numpad-container">
-      <h3 style="margin:0; font-size: 1rem; text-align:center;">Сколько товара добавить?</h3>
+      <h3 style="margin:0; font-size: 1rem; text-align:center;">Сколько ед.товара добавить?</h3>
       <div id="numpad-display">0</div>
       <div class="numpad-grid">
         <button class="num-btn" onclick="pressNum(1)">1</button>
@@ -68,7 +76,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com"></script>
   <script>
     const video = document.getElementById('video');
     const startBtn = document.getElementById('start-camera');
@@ -78,6 +86,7 @@
     const modal = document.getElementById('modal');
     const numDisplay = document.getElementById('numpad-display');
     const addBtn = document.getElementById('add-btn');
+    const indicator = document.getElementById('indicator');
 
     let stream = null, scanning = false, canvas = null, context = null;
     let currentQR = "", currentQty = "0", lastHash = "";
@@ -87,7 +96,24 @@
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
     renderLogs();
 
-    async function syncData() {
+    // Функция POST-запроса (Отдача данных)
+    async function uploadToGoogle() {
+      if (qrLogs.length === 0) return;
+      try {
+        await fetch(SCRIPT_URL, { 
+          method: 'POST', 
+          mode: 'no-cors', 
+          body: JSON.stringify({ data: qrLogs }) 
+        });
+        indicator.classList.add('net-online');
+      } catch (e) {
+        indicator.classList.remove('net-online');
+        throw e;
+      }
+    }
+
+    // Функция GET-запроса (Получение данных)
+    async function syncFromGoogle() {
       try {
         const response = await fetch(SCRIPT_URL);
         const result = await response.json();
@@ -98,10 +124,26 @@
           renderLogs();
           lastHash = newHash;
         }
-      } catch (e) { console.log("Связь..."); }
+        indicator.classList.add('net-online');
+      } catch (e) {
+        indicator.classList.remove('net-online');
+      }
     }
-    setInterval(syncData, 1000);
-    syncBtn.onclick = () => { showStatus('Обновление...', 'success'); syncData(); };
+
+    // Интервал фоновой проверки
+    setInterval(syncFromGoogle, 2000);
+
+    // Кнопка облака: "Ручной выход из оффлайна"
+    syncBtn.onclick = async () => {
+      showStatus('Попытка синхронизации...', 'success');
+      try {
+        await uploadToGoogle();
+        await syncFromGoogle();
+        showStatus('Облако обновлено!', 'success');
+      } catch (e) {
+        showStatus('Ошибка: сеть недоступна', 'error');
+      }
+    };
 
     function initCanvas() { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
 
@@ -139,55 +181,29 @@
     }
     function updateNumUI() { numDisplay.innerText = currentQty; addBtn.innerText = `ДОБАВИТЬ ${currentQty}`; }
 
- addBtn.onclick = async () => {
-  // Находим самый большой номер в текущем списке
-let nextNumber = 1;
-if (qrLogs.length > 0) {
-    // Берем первую часть (до "/") у каждой строки, превращаем в число и находим максимум
-    const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
-    nextNumber = Math.max(...numbers) + 1;
-}
-
-// Теперь используем вычисленный nextNumber
-const entry = `${nextNumber}/${currentQR}/${currentQty}`;
-
-  qrLogs.push(entry);
-  renderLogs();
-  modal.classList.add('hidden');
-  
-  // Отправляем ВЕСЬ обновленный список. 
-  // Google сотрет старое и запишет это новое. Дублей не будет.
-  try {
-    await fetch(SCRIPT_URL, { 
-      method: 'POST', 
-      mode: 'no-cors', 
-      body: JSON.stringify({ allRows: qrLogs }) 
-    });
-    showStatus('База синхронизирована', 'success');
-  } catch (e) {
-    showStatus('Офлайн: сохранено в телефоне', 'error');
-  }
-};
-    // Функция синхронизации (забирает всю таблицу раз в секунду)
-    async function syncData() {
+    addBtn.onclick = async () => {
+      let nextNumber = 1;
+      if (qrLogs.length > 0) {
+          const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
+          nextNumber = Math.max(...numbers) + 1;
+      }
+      const entry = `${nextNumber}/${currentQR}/${currentQty}`;
+      qrLogs.push(entry);
+      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+      renderLogs();
+      modal.classList.add('hidden');
+      
       try {
-        const response = await fetch(SCRIPT_URL);
-        const result = await response.json();
-        const newHash = JSON.stringify(result.data);
-        
-        // Обновляем список, только если в таблице появились новые строки от других пользователей
-        if (newHash !== lastHash) {
-          qrLogs = result.data;
-          localStorage.setItem('qr_db_v7', newHash);
-          renderLogs();
-          lastHash = newHash;
-        }
-      } catch (e) { console.log("Связь..."); }
-    }
+        await uploadToGoogle();
+        showStatus('Записано и отправлено!', 'success');
+      } catch (e) {
+        showStatus('Сохранено в памяти телефона (оффлайн)', 'error');
+      }
+    };
 
     function renderLogs() {
       const scrollPos = resultDiv.scrollTop;
-      resultDiv.innerHTML = qrLogs.length ? "<strong>База данных:</strong>\n" + qrLogs.join('\n') : "Список пуст";
+      resultDiv.innerHTML = qrLogs.length ? "<strong>База (Синхронизация):</strong>\n" + qrLogs.join('\n') : "Список пуст";
       resultDiv.scrollTop = scrollPos;
     }
 
