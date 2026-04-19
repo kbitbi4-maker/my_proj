@@ -96,9 +96,8 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
-    /* Весь JS-код из эталона версии QR_003 (синхронизация, сканер, табло) остается без изменений */
     const video = document.getElementById('video');
     const startBtn = document.getElementById('start-camera');
     const syncBtn = document.getElementById('sync-btn');
@@ -117,7 +116,8 @@
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
     renderLogs();
 
-    async function syncData() {
+    // 1. СИНХРОНИЗАЦИЯ
+    async function syncFromGoogle() {
       try {
         const response = await fetch(SCRIPT_URL);
         const result = await response.json();
@@ -131,46 +131,73 @@
         indicator.classList.add('net-online');
       } catch (e) { indicator.classList.remove('net-online'); }
     }
-    setInterval(syncData, 2000);
 
-    syncBtn.onclick = async () => {
-      showStatus('Синхронизация...', 'success');
+    async function uploadToGoogle() {
+      if (qrLogs.length === 0) return;
       try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: qrLogs }) });
-        await syncData();
-        showStatus('Обновлено!', 'success');
-      } catch (e) { showStatus('Сеть недоступна', 'error'); }
-    };
+        await fetch(SCRIPT_URL, { 
+          method: 'POST', 
+          mode: 'no-cors', 
+          body: JSON.stringify({ data: qrLogs }) 
+        });
+        indicator.classList.add('net-online');
+      } catch (e) { indicator.classList.remove('net-online'); }
+    }
 
-    function initCanvas() { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+    setInterval(syncFromGoogle, 2000);
+    syncBtn.onclick = () => { showStatus('Обновление...', 'success'); syncFromGoogle(); uploadToGoogle(); };
+
+    // 2. ЭТАЛОННАЯ ЛОГИКА СКАНЕРА (ВОССТАНОВЛЕНО)
+    function initCanvas() { 
+      canvas = document.createElement('canvas'); 
+      context = canvas.getContext('2d'); 
+    }
 
     startBtn.addEventListener('click', async () => {
       try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showStatus('Браузер не поддерживает камеру', 'error');
+          return;
+        }
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         video.srcObject = stream;
         startBtn.disabled = true;
-        status.classList.remove('hidden');
         showStatus('Ищу QR...', 'success');
-        video.onloadedmetadata = () => { initCanvas(); scanning = true; scanQR(); };
+        video.onloadedmetadata = () => { 
+          initCanvas(); 
+          scanning = true; 
+          scanQR(); 
+        };
       } catch (err) { showStatus('Ошибка: ' + err.message, 'error'); }
     });
 
     async function scanQR() {
       if (!scanning || !stream) return;
-      if (video.videoWidth === 0) { setTimeout(scanQR, 100); return; }
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      if (video.videoWidth === 0 || video.videoHeight === 0) { 
+        setTimeout(scanQR, 100); 
+        return; 
+      }
+      canvas.width = video.videoWidth; 
+      canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const code = jsQR(context.getImageData(0,0,canvas.width,canvas.height).data, canvas.width, canvas.height);
+      
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      
       if (code) {
         currentQR = code.data;
         scanning = false;
+        // Остановка камеры согласно эталону
         stream.getTracks().forEach(t => t.stop());
         video.srcObject = null;
         startBtn.disabled = false;
         openModal();
-      } else { setTimeout(scanQR, 100); }
+      } else { 
+        setTimeout(scanQR, 100); 
+      }
     }
 
+    // 3. ТАБЛО И НУМЕРАЦИЯ
     function openModal() { currentQty = "0"; updateNumUI(); modal.classList.remove('hidden'); }
     function pressNum(n) {
       if (n === 'C') currentQty = "0";
@@ -182,7 +209,7 @@
     addBtn.onclick = async () => {
       let nextNumber = 1;
       if (qrLogs.length > 0) {
-          const numbers = qrLogs.map(log => parseInt(log.split('/')) || 0);
+          const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
           nextNumber = Math.max(...numbers) + 1;
       }
       const entry = `${nextNumber}/${currentQR}/${currentQty}`;
@@ -190,20 +217,22 @@
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
       modal.classList.add('hidden');
-      try {
-        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: qrLogs }) });
-        showStatus('Записано и отправлено!', 'success');
-      } catch (e) { showStatus('Сохранено в телефоне (офлайн)', 'error'); }
+      await uploadToGoogle();
     };
 
     function renderLogs() {
       const scrollPos = resultDiv.scrollTop;
-      resultDiv.innerHTML = qrLogs.length ? "<strong>База данных:</strong>\n" + qrLogs.join('\n') : "Список пуст";
+      resultDiv.innerHTML = qrLogs.length ? "<strong>База (Реестр):</strong>\n" + qrLogs.join('\n') : "Список пуст";
       resultDiv.scrollTop = scrollPos;
     }
 
-    function showStatus(msg, type) { status.textContent = msg; status.className = `status ${type}`; }
+    function showStatus(msg, type) { 
+      status.textContent = msg; 
+      status.className = `status ${type}`; 
+    }
+    
     document.getElementById('cancel-btn').onclick = () => modal.classList.add('hidden');
   </script>
+
 </body>
 </html>
