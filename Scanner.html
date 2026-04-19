@@ -190,15 +190,19 @@
     // СОХРАНЕНИЕ С НОВЫМИ ПОЛЯМИ
    function saveEntry() {
   const now = new Date();
+  
+  // Форматируем месяц: если меньше 10, добавляем 0 спереди
+  const formattedMonth = ("0" + (now.getMonth() + 1)).slice(-2);
+  
   const entry = {
-    qr: currentQR,           // 1
-    qty: currentQty,         // 2
-    user: currentUser,       // 3
-    id: Date.now(),          // 4 (уникальный ID на базе времени)
-    time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}), // 5
-    day: now.getDate(),      // 6
-    month: now.getMonth() + 1, // 7
-    year: String(now.getFullYear()).slice(-2) // 8 (формат "26")
+    qr: currentQR,           // 1. QR
+    qty: currentQty,         // 2. Кол-во
+    user: currentUser,       // 3. Фамилия
+    id: Date.now(),          // 4. ID
+    time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}), // 5. Время
+    day: now.getDate(),      // 6. Дата
+    month: formattedMonth,   // 7. Месяц (будет 04)
+    year: String(now.getFullYear()).slice(-2) // 8. Год (26)
   };
 
   qrLogs.push(entry);
@@ -207,6 +211,7 @@
   closeModal();
   showStatus("Сохранено", "success");
 }
+
 
 
     function renderLogs() {
