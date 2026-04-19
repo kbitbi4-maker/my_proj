@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_013</title>
+  <title>QR_014</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -34,9 +34,9 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_013</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
-    <button id="start-camera" onclick="startScanner()">Найти QR</button>
+    <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
   </header>
 
   <main class="content">
@@ -54,7 +54,7 @@
         <button class="num-btn" onclick="pressNum(7)">7</button><button class="num-btn" onclick="pressNum(8)">8</button><button class="num-btn" onclick="pressNum(9)">9</button>
         <button class="num-btn" onclick="pressNum(0)">0</button><button class="num-btn" style="grid-column:span 2;background:#ffccbc" onclick="pressNum('C')">СБРОС</button>
       </div>
-      <button class="user-btn" style="background:#3f51b5;color:white" onclick="openUserMenu()">КОМУ: <span id="who-label">...</span></button>
+      <button class="btn-sub" onclick="openUserMenu()">КОМУ ВЫДАНО: <span id="who-label">...</span></button>
       <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
       <button class="user-btn" style="background:#f44336;color:white;margin-top:10px" onclick="closeModal()">ОТМЕНА</button>
     </div>
@@ -94,13 +94,21 @@
       resultDiv.innerHTML = html;
     }
 
+    async function toggleScanner() {
+      if (scanning) {
+        stopCamera();
+      } else {
+        startScanner();
+      }
+    }
+
     async function startScanner() {
-      if (scanning) return;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         video.srcObject = stream;
         scanning = true;
-        startBtn.disabled = true;
+        startBtn.textContent = "ВЫКЛЮЧИТЬ";
+        startBtn.style.background = "#f44336";
         requestAnimationFrame(tick);
       } catch (e) { alert("Ошибка камеры"); }
     }
@@ -116,11 +124,18 @@
       if (scanning) requestAnimationFrame(tick);
     }
 
-    function stopCamera() { scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); startBtn.disabled = false; }
+    function stopCamera() {
+      scanning = false;
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      video.srcObject = null;
+      startBtn.textContent = "Найти QR";
+      startBtn.style.background = "transparent";
+    }
+
     function openModal() { document.getElementById('modal').classList.remove('hidden'); currentQty = "0"; updateNumpad(); }
     function closeModal() { document.getElementById('modal').classList.add('hidden'); stopCamera(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty = currentQty==="0" ? String(n) : currentQty+n; updateNumpad(); }
-    function updateNumpad() { numDisplay.textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
+    function updateNumpad() { document.getElementById('numpad-display').textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
     function selectUser(n) { currentUser = n; whoLabel.textContent = n; updateNumpad(); closeUserMenu(); }
