@@ -6,7 +6,7 @@
   <title>QR_008</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
-    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; background-color: #f0f0f0; }
+    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
     .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
     .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
@@ -26,7 +26,7 @@
     .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
     .num-btn, .user-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; border: none; }
+    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; }
     .btn-add { width: 100%; padding: 18px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 1.1rem; }
     .btn-sub { width: 100%; padding: 12px; background: #3f51b5; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
     .btn-cancel { width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -39,7 +39,7 @@
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
     <h2><div id="indicator" class="net-indicator"></div> QR_008</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="uploadToGoogle()">☁</button>
-    <button id="start-camera" onclick="initScanner()">Найти QR</button>
+    <button id="start-camera" onclick="startScanner()">Найти QR</button>
   </header>
 
   <main class="content">
@@ -87,17 +87,18 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com"></script>
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const video = document.getElementById('video');
-    const statusDiv = document.getElementById('status');
+    const startBtn = document.getElementById('start-camera');
+    const syncBtn = document.getElementById('sync-btn');
+    const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
     const modal = document.getElementById('modal');
     const numDisplay = document.getElementById('numpad-display');
     const addBtn = document.getElementById('add-btn');
     const indicator = document.getElementById('indicator');
     const whoLabel = document.getElementById('who-label');
-    const startBtn = document.getElementById('start-camera');
 
     let stream = null, scanning = false, canvas = null, context = null;
     let currentQR = "", currentQty = "0", currentUser = "Не указан";
@@ -108,13 +109,13 @@
     renderLogs();
 
     function showStatus(msg, type) {
-      statusDiv.textContent = msg;
-      statusDiv.className = `status ${type}`;
-      statusDiv.classList.remove('hidden');
-      setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+      status.textContent = msg;
+      status.className = `status ${type}`;
+      status.classList.remove('hidden');
+      setTimeout(() => status.classList.add('hidden'), 3000);
     }
 
-    async function initScanner() {
+    async function startScanner() {
       if (scanning) return;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -169,16 +170,13 @@
           const numbers = qrLogs.map(log => parseInt(log.split('/')[0]) || 0);
           nextNumber = Math.max(...numbers) + 1;
       }
-      
       const now = new Date();
       const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
       const day = now.getDate().toString().padStart(2, '0');
       const month = (now.getMonth() + 1).toString().padStart(2, '0');
       const year = now.getFullYear().toString().slice(-2);
 
-      // Формат: Номер/QR/Кол-во/Фамилия/Время/День/Месяц/Год (8 элементов)
       const entry = `${nextNumber}/${currentQR}/${currentQty}/${currentUser}/${time}/${day}/${month}/${year}`;
-      
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
@@ -187,27 +185,18 @@
     }
 
     function renderLogs() {
-      const scrollPos = resultDiv.scrollTop;
       resultDiv.innerHTML = qrLogs.length ? "<strong>База данных:</strong>\n" + qrLogs.join('\n') : "Список пуст";
-      resultDiv.scrollTop = scrollPos;
     }
 
     async function uploadToGoogle() {
       if (!navigator.onLine) { showStatus("Нет сети", "error"); return; }
       try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: JSON.stringify({ data: qrLogs })
-        });
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
         showStatus("Синхронизировано", "success");
-      } catch (e) {
-        showStatus("Ошибка синхронизации", "error");
-      }
+      } catch (e) { showStatus("Ошибка синхронизации", "error"); }
     }
 
-    setInterval(() => {
-      indicator.classList.toggle('net-online', navigator.onLine);
-    }, 2000);
+    setInterval(() => { indicator.classList.toggle('net-online', navigator.onLine); }, 2000);
   </script>
 </body>
 </html>
