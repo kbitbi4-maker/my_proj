@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_008</title>
+  <title>QR_009</title>
   <style>
+    /* Стили из твоего эталона */
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
-    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; background-color: #f0f0f0; }
+    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
     .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
     .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
@@ -25,7 +26,7 @@
     .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
     .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
     .num-btn, .user-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; border: none; cursor: pointer; }
+    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; }
     .btn-add { width: 100%; padding: 18px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 1.1rem; }
     .btn-sub { width: 100%; padding: 12px; background: #3f51b5; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
     .btn-cancel { width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -36,8 +37,8 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_008</h2>
-    <button id="sync-btn" class="btn-icon" onclick="syncWithGoogle()" title="Синхронизация">☁</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_009</h2>
+    <button id="sync-btn" class="btn-icon" onclick="syncData()">☁</button>
     <button id="start-camera" onclick="initScanner()">Найти QR</button>
   </header>
 
@@ -86,21 +87,24 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com"></script>
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3KF13nR_sLT4TJF-XduOX-W7XS4F40LUTXXeGToZLOKLj6y093TF3O4fcWTNg12hoRQ/exec';
     
     const video = document.getElementById('video');
+    const statusDiv = document.getElementById('status');
     const resultDiv = document.getElementById('result');
     const modal = document.getElementById('modal');
-    const statusDiv = document.getElementById('status');
-    const whoLabel = document.getElementById('who-label');
     const numDisplay = document.getElementById('numpad-display');
     const addBtn = document.getElementById('add-btn');
+    const whoLabel = document.getElementById('who-label');
+    const indicator = document.getElementById('indicator');
+
+    let stream = null, scanning = false;
+    let currentQR = "", currentQty = "0", currentUser = "Не указан";
 
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
-    let scanning = false;
-    let currentQR = "", currentQty = "0", currentUser = "Не указан";
+    renderLogs();
 
     function showStatus(msg, type) {
       statusDiv.textContent = msg;
@@ -109,16 +113,16 @@
       setTimeout(() => statusDiv.classList.add('hidden'), 3000);
     }
 
-    // --- ЛОГИКА СКАНЕРА ---
+    // --- ФУНКЦИИ СКАНЕРА ---
     async function initScanner() {
       if (scanning) return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         video.srcObject = stream;
         scanning = true;
         requestAnimationFrame(tick);
       } catch (err) {
-        showStatus("Нет доступа к камере", "error");
+        showStatus("Ошибка камеры", "error");
       }
     }
 
@@ -129,8 +133,7 @@
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imgData.data, imgData.width, imgData.height);
+        const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
 
         if (code) {
           currentQR = code.data;
@@ -144,10 +147,7 @@
 
     function stopCamera() {
       scanning = false;
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-      }
+      if (stream) stream.getTracks().forEach(t => t.stop());
     }
 
     // --- МОДАЛКА И НУМПАД ---
@@ -189,21 +189,18 @@
       closeUserMenu();
     }
 
-    // --- СОХРАНЕНИЕ (8 СТОЛБЦОВ) ---
+    // --- СОХРАНЕНИЕ С 8 СТОЛБЦАМИ ---
     function saveEntry() {
       const now = new Date();
-      const formattedMonth = ("0" + (now.getMonth() + 1)).slice(-2);
-      const formattedDay = ("0" + now.getDate()).slice(-2);
-      
       const entry = {
-        qr: currentQR,           // 1
-        qty: currentQty,         // 2
-        user: currentUser,       // 3
-        id: Date.now(),          // 4
-        time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}), // 5
-        day: formattedDay,       // 6
-        month: formattedMonth,   // 7
-        year: String(now.getFullYear()).slice(-2) // 8
+        qr: currentQR,
+        qty: currentQty,
+        user: currentUser,
+        id: Date.now(),
+        time: now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}),
+        day: ("0" + now.getDate()).slice(-2),
+        month: ("0" + (now.getMonth() + 1)).slice(-2),
+        year: String(now.getFullYear()).slice(-2)
       };
 
       qrLogs.push(entry);
@@ -214,55 +211,32 @@
     }
 
     function renderLogs() {
-      if (qrLogs.length === 0) {
-        resultDiv.innerHTML = "Список пуст";
-        return;
-      }
-      resultDiv.innerHTML = qrLogs.map((e, i) => 
+      resultDiv.innerHTML = qrLogs.length ? qrLogs.map((e, i) => 
         `${i+1}. [${e.day}.${e.month}.${e.year} ${e.time}] ${e.qty} шт - ${e.user}`
-      ).reverse().join('\n');
+      ).reverse().join('\n') : "Список пуст";
     }
 
-    // --- СИНХРОНИЗАЦИЯ ПОД ТВОЙ АС ---
-    async function syncWithGoogle() {
-      if (qrLogs.length === 0) return showStatus("Нет данных", "error");
-      
+    // --- СИНХРОНИЗАЦИЯ ПОД ТВОЙ ЭТАЛОННЫЙ АС ---
+    async function syncData() {
+      if (!qrLogs.length) return showStatus("Нет данных", "error");
       showStatus("Синхронизация...", "success");
 
-      // Склеиваем 8 элементов через "/" в массив строк для твоего АС
-      const dataToSync = qrLogs.map(item => {
-        return [
-          item.qr,    // A
-          item.qty,   // B
-          item.user,  // C
-          item.id,    // D
-          item.time,  // E
-          item.day,   // F
-          item.month, // G
-          item.year   // H
-        ].join('/');
-      });
+      const dataToSync = qrLogs.map(i => [i.qr, i.qty, i.user, i.id, i.time, i.day, i.month, i.year].join('/'));
 
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify({ data: dataToSync }) 
         });
-        
-        const result = await response.text();
-        if (result.includes("Success")) {
-          showStatus("Данные в таблице!", "success");
-        } else {
-          showStatus("Ошибка АС", "error");
-        }
+        const resText = await response.text();
+        if (resText.includes("Success")) showStatus("Данные в таблице!", "success");
       } catch (e) {
         showStatus("Ошибка сети", "error");
       }
     }
 
     window.onload = () => {
-      renderLogs();
-      if (navigator.onLine) document.getElementById('indicator').classList.add('net-online');
+      if (navigator.onLine) indicator.classList.add('net-online');
     };
   </script>
 </body>
