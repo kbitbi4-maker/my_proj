@@ -3,31 +3,161 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR Scanner</title>
-  <!-- Подключаем стили -->
-  <link rel="stylesheet" href="style.css">
+  <title>QR_012</title>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
+    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
+    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
+    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
+    .net-online { background: #00e676; box-shadow: 0 0 8px #00e676; }
+    .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
+    #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; }
+    #start-camera:disabled { opacity: 0.5; }
+    .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; background: transparent; width: 100%; box-sizing: border-box; }
+    .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* НОВЫЕ СТИЛИ ДЛЯ КАРТОЧЕК */
+    #result { width: 100%; max-width: 400px; background: transparent; box-shadow: none; padding: 0; }
+    .log-title { color: white; font-weight: bold; text-shadow: 1px 1px 2px black; margin-bottom: 15px; font-size: 1rem; width: 100%; }
+    .log-item { background: white; padding: 12px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); word-break: break-all; font-family: monospace; font-size: 0.85rem; }
+    
+    .status { margin: 10px 0; padding: 10px; border-radius: 6px; width: 100%; max-width: 400px; font-size: 0.8rem; box-sizing: border-box; min-height: 38px; text-align: center; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .hidden { display: none !important; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+    .num-btn, .user-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; }
+    .btn-add { width: 100%; padding: 18px; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 1.1rem; }
+    .btn-sub { width: 100%; padding: 12px; background: #3f51b5; color: white; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+    .btn-cancel { width: 100%; padding: 12px; background: #f44336; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+  </style>
 </head>
 <body>
 
-  <!-- Scanner.html (фрагмент заголовка) -->
-<header class="header">
-  <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-  <div id="indicator" class="net-indicator"></div>
-  <h2>QR_015</h2>
-  <!-- Убрали кнопку ☁ -->
-  <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
-</header>
-
+  <header class="header">
+    <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_012</h2>
+    <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="uploadData()">☁</button>
+    <button id="start-camera" onclick="initScanner()">Найти QR</button>
+  </header>
 
   <main class="content">
-    <div id="camera-box" class="camera-preview">
-      <video id="video" autoplay playsinline></video>
-    </div>
-    <div id="result-list">Загрузка данных...</div>
+    <div class="camera-preview"><video id="video" autoplay playsinline></video></div>
+    <div id="status" class="status hidden"></div>
+    <div id="result">Список пуст</div>
   </main>
 
-  <!-- Библиотека и логика -->
-  <script src="https://unpkg.com"></script>
-  <script src="script.js"></script>
+  <div id="modal" class="modal-overlay hidden">
+    <div class="numpad-container" id="numpad-view">
+      <h3 style="margin:0; font-size: 1rem; text-align:center;">Количество товара:</h3>
+      <div id="numpad-display">0</div>
+      <div class="numpad-grid">
+        <button class="num-btn" onclick="pressNum(1)">1</button><button class="num-btn" onclick="pressNum(2)">2</button><button class="num-btn" onclick="pressNum(3)">3</button>
+        <button class="num-btn" onclick="pressNum(4)">4</button><button class="num-btn" onclick="pressNum(5)">5</button><button class="num-btn" onclick="pressNum(6)">6</button>
+        <button class="num-btn" onclick="pressNum(7)">7</button><button class="num-btn" onclick="pressNum(8)">8</button><button class="num-btn" onclick="pressNum(9)">9</button>
+        <button class="num-btn" onclick="pressNum(0)">0</button><button class="num-btn" style="grid-column: span 2; background:#ffccbc;" onclick="pressNum('C')">СБРОС</button>
+      </div>
+      <button class="btn-sub" onclick="openUserMenu()">КОМУ ВЫДАНО: <span id="who-label">...</span></button>
+      <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
+      <button class="btn-cancel" onclick="closeModal()">ОТМЕНА</button>
+    </div>
+
+    <div class="numpad-container hidden" id="user-view">
+      <button class="btn-icon" style="color:black; font-size: 1rem; font-weight: bold;" onclick="closeUserMenu()">← НАЗАД</button>
+      <h3 style="text-align:center; margin-top: 10px;">Выберите фамилию:</h3>
+      <div style="max-height: 300px; overflow-y: auto; padding: 5px;">
+        <button class="user-btn" onclick="selectUser('Головин')">Головин</button>
+        <button class="user-btn" onclick="selectUser('Иванов')">Иванов</button>
+        <button class="user-btn" onclick="selectUser('Мытин')">Мытин</button>
+        <button class="user-btn" onclick="selectUser('Погорелов')">Погорелов</button>
+        <button class="user-btn" onclick="selectUser('Гуляев')">Гуляев</button>
+        <button class="user-btn" onclick="selectUser('Бывальцев')">Бывальцев</button>
+        <button class="user-btn" onclick="selectUser('Божков')">Божков</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script>
+    const video = document.getElementById('video');
+    const startBtn = document.getElementById('start-camera');
+    const resultDiv = document.getElementById('result');
+    const modal = document.getElementById('modal');
+    const whoLabel = document.getElementById('who-label');
+    const addBtn = document.getElementById('add-btn');
+    const indicator = document.getElementById('indicator');
+
+    let stream = null, scanning = false, canvas = null, context = null;
+    let currentQR = "", currentQty = "0", currentUser = "Не указан";
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3KF13nR_sLT4TJF-XduOX-W7XS4F40LUTXXeGToZLOKLj6y093TF3O4fcWTNg12hoRQ/exec';
+
+    let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
+    renderLogs();
+
+    async function initScanner() {
+      if (scanning) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        scanning = true;
+        requestAnimationFrame(tick);
+      } catch (err) { alert("Ошибка камеры"); }
+    }
+
+    function tick() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+        if (code) { currentQR = code.data; stopCamera(); openModal(); return; }
+      }
+      if (scanning) requestAnimationFrame(tick);
+    }
+
+    function stopCamera() { scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); }
+    function openModal() { modal.classList.remove('hidden'); currentQty = "0"; updateNumpad(); }
+    function closeModal() { modal.classList.add('hidden'); stopCamera(); }
+    function pressNum(n) { if (n === 'C') currentQty = "0"; else currentQty = currentQty === "0" ? String(n) : currentQty + n; updateNumpad(); }
+    function updateNumpad() { document.getElementById('numpad-display').textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
+    function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
+    function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
+    function selectUser(name) { currentUser = name; whoLabel.textContent = name; updateNumpad(); closeUserMenu(); }
+
+    function saveEntry() {
+      const now = new Date();
+      const num = qrLogs.length ? Math.max(...qrLogs.map(l => parseInt(l.split('/')) || 0)) + 1 : 1;
+      const time = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+      const date = now.getDate().toString().padStart(2,'0') + "/" + (now.getMonth()+1).toString().padStart(2,'0') + "/" + now.getFullYear().toString().slice(-2);
+      
+      const entry = `${num}/${currentQR}/${currentQty}/${currentUser}/${time}/${date}`;
+      qrLogs.push(entry);
+      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+      renderLogs(); closeModal(); uploadData();
+    }
+
+    function renderLogs() {
+      if (!qrLogs.length) { resultDiv.innerHTML = "Список пуст"; return; }
+      let html = '<div class="log-title">База данных:</div>';
+      [...qrLogs].reverse().forEach(log => {
+        html += `<div class="log-item">${log}</div>`;
+      });
+      resultDiv.innerHTML = html;
+    }
+
+    async function uploadData() {
+      if (!navigator.onLine) return;
+      try {
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
+        indicator.classList.add('net-online');
+      } catch (e) { indicator.classList.remove('net-online'); }
+    }
+
+    setInterval(uploadData, 5000);
+  </script>
 </body>
 </html>
