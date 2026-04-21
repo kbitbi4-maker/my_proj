@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_013</title>
+  <title>QR_1</title>
   
 <style>
     /* БАЗОВЫЙ СТИЛЬ (оригинальный) */
@@ -55,7 +55,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_013</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_1</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="startScanner()">Найти QR</button>
   </header>
@@ -93,7 +93,7 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+   <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwA_bvWI5beo46zIxMBINICG2lBnEc-kEHT0cGjsTECwCvXEzRzrEydNuy5Z87j_Hawyw/exec';
     const video = document.getElementById('video');
@@ -139,12 +139,27 @@
     }
 
     function openModal() {
+      // Вывод считанного товара в заголовок окна
+      const display = document.getElementById('numpad-display');
+      if (display) {
+          const title = document.querySelector('#numpad-view h3');
+          if (title) title.innerText = "ТОВАР: " + currentQR;
+      }
+
       currentQty = "0"; numDisplay.innerText = "0"; whoLabel.innerText = "Не указан"; currentUser = "Не указан";
       addBtn.innerText = "ДОБАВИТЬ 0";
       document.getElementById('modal').classList.remove('hidden');
     }
 
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); startBtn.disabled = false; scanning = false; }
+    function closeModal() { 
+      // Возвращаем заголовок в исходное состояние при закрытии
+      const title = document.querySelector('#numpad-view h3');
+      if (title) title.innerText = "Количество:";
+      document.getElementById('modal').classList.add('hidden'); 
+      startBtn.disabled = false; 
+      scanning = false; 
+    }
+
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
     function selectUser(name) { currentUser = name; whoLabel.innerText = name; closeUserMenu(); }
@@ -156,9 +171,8 @@
       addBtn.innerText = "ДОБАВИТЬ " + currentQty;
     }
 
-         async function saveEntry() {
+    async function saveEntry() {
       const now = new Date();
-      // Рассчитываем номер (ID)
       const nextNum = qrLogs.length ? Math.max(...qrLogs.map(l => parseInt(l.split('/')[0]) || 0)) + 1 : 1;
       const time = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
       const date = now.getDate().toString().padStart(2,'0')+"/"+(now.getMonth()+1).toString().padStart(2,'0')+"/"+now.getFullYear().toString().slice(-2);
@@ -170,13 +184,11 @@
       renderLogs(); 
       closeModal();
 
-      // ОТПРАВКА
       if (navigator.onLine) {
         try {
           await fetch(SCRIPT_URL, { 
             method: 'POST', 
             mode: 'no-cors', 
-            // Отправляем ВЕСЬ массив qrLogs, так как скрипт в таблице делает .map()
             body: JSON.stringify({ data: qrLogs }) 
           });
         } catch (e) {
@@ -185,27 +197,20 @@
       }
     }
 
-
-
-       async function syncFromGoogle() {
+    async function syncFromGoogle() {
       if (!navigator.onLine) {
         alert("Нет интернета");
         return;
       }
-      
-      // Визуальный эффект: индикатор тускнеет во время загрузки
       indicator.style.opacity = "0.3"; 
-
       try {
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
-        
         if (data && Array.isArray(data)) {
           qrLogs = data;
           localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
           lastHash = JSON.stringify(data);
           renderLogs();
-          console.log("Данные обновлены из облака");
         }
       } catch (e) { 
         console.error("Sync error:", e); 
@@ -219,10 +224,9 @@
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
     
-    // Инициализация при запуске
     updateStatus();
     renderLogs();
-    // syncFromGoogle() здесь НЕ вызываем, чтобы загрузка была только по кнопке
   </script>
+
 </body>
 </html>
