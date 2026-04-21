@@ -146,7 +146,7 @@
     }
 
     async function saveEntry() {
-      const entry = `${currentQR} | Кол-во: ${currentQty} | Кому: ${currentUser} | ${new Date().toLocaleString()}`;
+      const entry = `${currentQR} / ${currentQty} / ${currentUser} / ${dateStr} / ${timeStr}`;
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
       renderLogs();
