@@ -199,7 +199,8 @@
   function openModal() {
     // Поиск остатка в inventoryData по первому столбцу
     const foundRow = inventoryData.find(row => String(row[0]) === String(currentQR));
-    const stockInfo = foundRow ? ` (Ост: ${foundRow[1] || '?'})` : "";
+    const stockInfo = foundRow ? ` (Ост: ${foundRow[4] || '?'})` : "";
+
     
     qrDisplay.innerText = "ТОВАР: " + currentQR + stockInfo;
     currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
