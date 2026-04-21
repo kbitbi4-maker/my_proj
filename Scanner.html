@@ -9,14 +9,15 @@
 </head>
 <body>
 
-  <header class="header">
-    <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <div id="indicator" class="net-indicator"></div>
-    <button id="del-btn">УДАЛИТЬ</button>
-    <h2>QR_01</h2>
-    <button id="sync-btn" class="btn-icon">☁</button>
-    <button id="start-camera">Найти QR</button>
-  </header>
+  <!-- Scanner.html (фрагмент заголовка) -->
+<header class="header">
+  <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
+  <div id="indicator" class="net-indicator"></div>
+  <h2>QR_015</h2>
+  <!-- Убрали кнопку ☁ -->
+  <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
+</header>
+
 
   <main class="content">
     <div id="camera-box" class="camera-preview">
