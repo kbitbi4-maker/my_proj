@@ -156,16 +156,31 @@
       if (scanning) requestAnimationFrame(tick);
     }
 
-    function openModal() {
-      const foundRow = inventoryData.find(r => String(r[0]) === String(currentQR));
-      const stock = foundRow ? ` (Ост: ${foundRow[4] || '?'})` : "";
+       function openModal() {
+      // 1. Разбиваем КК на части
+      const qrParts = currentQR.split('/');
+      const qrArt = qrParts[0]; // Первое число (Артикул)
+      const qrParam = qrParts[1]; // Второе число (Параметр)
+
+      // 2. Ищем строку, где совпадает и 1-й и 2-й столбцы таблицы
+      // r[0] — 1-й столбец, r[1] — 2-й столбец
+      const foundRow = inventoryData.find(r => 
+        String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
+      );
+
+      // 3. Если нашли, берем остаток из 5-го столбца (индекс 4)
+      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+
+      // 4. Выводим информацию в шапку
       document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+      
       currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
       addBtn.innerText = "ДОБАВИТЬ 0";
       document.getElementById('modal').classList.remove('hidden');
       document.getElementById('numpad-view').classList.remove('hidden');
       document.getElementById('stock-view').classList.add('hidden');
     }
+
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
