@@ -3,36 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_015</title>
+  <title>QR_015_FIX</title>
   <style>
-    html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
-    body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
-    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; gap: 10px; }
-    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; transition: 0.3s; flex-shrink: 0; }
+    html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; background: #f5f5f5; }
+    .header { display: flex; align-items: center; padding: 10px 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; }
+    .header h2 { margin: 0; font-size: 1.1rem; flex-grow: 1; text-align: center; }
+    .net-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; margin-right: 10px; }
     .net-online { background: #00e676; box-shadow: 0 0 8px #00e676; }
-    .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; padding: 5px; display: flex; align-items: center; }
-    #start-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; transition: 0.3s; }
-    .content { padding: 20px; display: flex; flex-direction: column; align-items: center; flex-grow: 1; overflow-y: auto; background: transparent; width: 100%; box-sizing: border-box; }
-    .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; border: 2px solid #ccc; flex-shrink: 0; }
-    video { width: 100%; height: 100%; object-fit: cover; }
-    #result { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
-    .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 1.1rem; margin-bottom: 5px; width: 100%; }
+    .btn-icon { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    #toggle-camera { font-size: 0.75rem; border: 1px solid white; border-radius: 6px; padding: 6px 10px; text-transform: uppercase; font-weight: bold; background: transparent; color: white; }
     
-    .log-item { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); word-break: break-all; font-family: monospace; font-size: 0.85rem; color: #333; width: 100%; box-sizing: border-box; border: 2px solid transparent; }
-    .log-item.selected { border-color: #ff4b2b; background: #fff5f5; box-shadow: 0 0 10px rgba(255,75,43,0.5); }
-    #del-btn { background: #ff4b2b; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.7rem; cursor: pointer; display: none; }
-
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-    .numpad-container { background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 320px; }
-    .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-    .num-btn { padding: 15px; font-size: 1.3rem; background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .btn-control, .btn-add, .btn-cancel { width: 100%; padding: 18px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; border: none; cursor: pointer; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 60px; }
-    .btn-control { background: #3f51b5; color: white; }
-    .btn-add { background: #4caf50; color: white; }
-    .btn-cancel { background: #f44336; color: white; margin-bottom: 0; }
-    .user-btn { font-size: 1.1rem; width: 100%; margin-bottom: 8px; background: #e3f2fd; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    #numpad-display { font-size: 2.5rem; font-weight: bold; margin: 10px 0; color: #3f51b5; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .content { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .camera-preview { width: 100%; max-width: 400px; height: 300px; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 15px; display: none; }
+    video { width: 100%; height: 100%; object-fit: cover; }
+    
+    #result-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; }
+    .log-item { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); word-break: break-all; font-family: monospace; font-size: 0.85rem; border: 2px solid transparent; }
+    /* Стиль выделения */
+    .log-item.selected { border-color: #ff4b2b; background: #fff5f5; }
+    
+    #del-btn { background: #ff4b2b; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; display: none; margin-right: 10px; cursor: pointer; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -40,149 +30,136 @@
 
   <header class="header">
     <button class="btn-icon" onclick="location.reload()">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_015</h2>
+    <div id="indicator" class="net-indicator"></div>
     <button id="del-btn" onclick="deleteSelected()">УДАЛИТЬ</button>
-    <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
-    <button id="start-camera" onclick="toggleScanner()">Найти QR</button>
+    <h2>QR_015</h2>
+    <button id="sync-cloud" class="btn-icon" onclick="syncFromGoogle()">☁</button>
+    <button id="toggle-camera">Найти QR</button>
   </header>
 
   <main class="content">
-    <div id="cam-box" class="camera-preview hidden"><video id="video" autoplay playsinline></video></div>
-    <div id="result">Загрузка данных...</div>
+    <div id="camera-box" class="camera-preview">
+      <video id="video" autoplay playsinline></video>
+    </div>
+    <div id="result-list">Загрузка...</div>
   </main>
 
-  <div id="modal" class="modal-overlay hidden">
-    <div class="numpad-container" id="numpad-view">
-      <h3 style="text-align:center;margin:0">Количество:</h3>
-      <div id="numpad-display">0</div>
-      <div class="numpad-grid">
-        <button class="num-btn" onclick="pressNum(1)">1</button><button class="num-btn" onclick="pressNum(2)">2</button><button class="num-btn" onclick="pressNum(3)">3</button>
-        <button class="num-btn" onclick="pressNum(4)">4</button><button class="num-btn" onclick="pressNum(5)">5</button><button class="num-btn" onclick="pressNum(6)">6</button>
-        <button class="num-btn" onclick="pressNum(7)">7</button><button class="num-btn" onclick="pressNum(8)">8</button><button class="num-btn" onclick="pressNum(9)">9</button>
-        <button class="num-btn" onclick="pressNum(0)">0</button><button class="num-btn" style="grid-column:span 2;background:#ffccbc" onclick="pressNum('C')">СБРОС</button>
-      </div>
-      <button class="btn-control" onclick="openUserMenu()">КОМУ: <span id="who-label">...</span></button>
-      <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
-      <button class="btn-cancel" onclick="closeModal()">ОТМЕНА</button>
-    </div>
-    <div class="numpad-container hidden" id="user-view">
-      <button class="btn-icon" style="color:black;font-weight:bold" onclick="closeUserMenu()">← НАЗАД</button>
-      <div style="max-height:300px;overflow-y:auto">
-        <button class="user-btn" onclick="selectUser('Головин')">Головин</button>
-        <button class="user-btn" onclick="selectUser('Иванов')">Иванов</button>
-        <button class="user-btn" onclick="selectUser('Мытин')">Мытин</button>
-        <button class="user-btn" onclick="selectUser('Погорелов')">Погорелов</button>
-        <button class="user-btn" onclick="selectUser('Гуляев')">Гуляев</button>
-        <button class="user-btn" onclick="selectUser('Бывальцев')">Бывальцев</button>
-        <button class="user-btn" onclick="selectUser('Божков')">Божков</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com"></script>
   <script>
     const SCRIPT_URL = 'https://google.com';
     const video = document.getElementById('video');
-    const resultDiv = document.getElementById('result');
-    const startBtn = document.getElementById('start-camera');
-    const indicator = document.getElementById('indicator');
-    const whoLabel = document.getElementById('who-label');
-    const numDisplay = document.getElementById('numpad-display');
-    const addBtn = document.getElementById('add-btn');
-    const syncBtn = document.getElementById('sync-btn');
+    const toggleBtn = document.getElementById('toggle-camera');
+    const cameraBox = document.getElementById('camera-box');
+    const resultList = document.getElementById('result-list');
     const delBtn = document.getElementById('del-btn');
-    const camBox = document.getElementById('cam-box');
+    const syncCloud = document.getElementById('sync-cloud');
+    const indicator = document.getElementById('indicator');
 
     let qrLogs = JSON.parse(localStorage.getItem('qr_db_v7')) || [];
-    let selectedSet = new Set();
-    let stream = null, scanning = false;
+    let selectedIndices = new Set();
+    let stream = null;
+    let scanning = false;
     let canvas = document.createElement('canvas');
     let context = canvas.getContext('2d');
-    let currentQR = "", currentQty = "0", lastHash = "", currentUser = "Не указан";
 
-    function renderLogs() {
-      if (!qrLogs.length) { 
-        resultDiv.innerHTML = '<div class="log-title" style="text-align:center">Список пуст</div>'; 
-        toggleDelMode(false);
-        return; 
+    // Отрисовка списка
+    function render() {
+      if (qrLogs.length === 0) {
+        resultList.innerHTML = '<p style="text-align:center">Список пуст</p>';
+        updateDelUI();
+        return;
       }
-      let html = '<div class="log-title">База данных:</div>';
+      let html = '';
       [...qrLogs].reverse().forEach((log, index) => {
-        const originalIndex = qrLogs.length - 1 - index;
-        const isSelected = selectedSet.has(originalIndex) ? 'selected' : '';
-        html += `<div class="log-item ${isSelected}" onclick="toggleSelect(${originalIndex})">${log}</div>`;
+        const realIdx = qrLogs.length - 1 - index;
+        const selClass = selectedIndices.has(realIdx) ? 'selected' : '';
+        html += `<div class="log-item ${selClass}" onclick="toggleSelect(${realIdx})">${log}</div>`;
       });
-      resultDiv.innerHTML = html;
-      toggleDelMode(selectedSet.size > 0);
+      resultList.innerHTML = html;
+      updateDelUI();
     }
 
     function toggleSelect(idx) {
-      if (selectedSet.has(idx)) selectedSet.delete(idx);
-      else selectedSet.add(idx);
-      renderLogs();
+      if (selectedIndices.has(idx)) selectedIndices.delete(idx);
+      else selectedIndices.add(idx);
+      render();
     }
 
-    function toggleDelMode(show) {
-      delBtn.style.display = show ? 'block' : 'none';
-      syncBtn.style.display = show ? 'none' : 'block';
-    }
-
-    async function deleteSelected() {
-      if (!confirm(`Удалить выбранное (${selectedSet.size})?`)) return;
-      const toDelete = Array.from(selectedSet).map(i => qrLogs[i]);
-      qrLogs = qrLogs.filter((_, i) => !selectedSet.has(i));
-      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-      selectedSet.clear();
-      renderLogs();
-      if (navigator.onLine) {
-        try {
-          await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'delete', items: toDelete }) });
-        } catch (e) {}
+    function updateDelUI() {
+      if (selectedIndices.size > 0) {
+        delBtn.style.display = 'block';
+        delBtn.innerText = `УДАЛИТЬ (${selectedIndices.size})`;
+        syncCloud.style.display = 'none';
+      } else {
+        delBtn.style.display = 'none';
+        syncCloud.style.display = 'block';
       }
     }
 
-    async function syncFromGoogle() {
-      if (!navigator.onLine) return;
+    // Удаление из ЛС и АС
+    async function deleteSelected() {
+      if (!confirm("Удалить выбранные записи?")) return;
+      
+      const itemsToDelete = Array.from(selectedIndices).map(i => qrLogs[i]);
+      
+      // Удаляем локально
+      qrLogs = qrLogs.filter((_, i) => !selectedIndices.has(i));
+      localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+      selectedIndices.clear();
+      render();
+
+      // Удаляем из таблицы (если онлайн)
       try {
-        indicator.classList.add('net-online');
-        const response = await fetch(SCRIPT_URL);
-        const data = await response.json();
-        const dataString = JSON.stringify(data);
-        if (data && (dataString !== lastHash || qrLogs.length === 0)) {
-          qrLogs = data;
-          localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-          lastHash = dataString;
-          renderLogs();
-        }
-      } catch (e) { indicator.classList.remove('net-online'); }
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ action: 'delete', items: itemsToDelete })
+        });
+      } catch (e) { console.log("Удалено только локально"); }
     }
 
-    async function toggleScanner() {
+    // Синхронизация (подкачка)
+    async function syncFromGoogle() {
+      indicator.classList.remove('net-online');
+      try {
+        const res = await fetch(SCRIPT_URL);
+        const data = await res.json();
+        if (data && Array.isArray(data)) {
+          qrLogs = data;
+          localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+          indicator.classList.add('net-online');
+          render();
+        }
+      } catch (e) { console.error("Ошибка синхронизации"); }
+    }
+
+    // Логика камеры из твоего рабочего кода QR_004
+    toggleBtn.addEventListener('click', async () => {
       if (!scanning) {
         try {
           stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
           video.srcObject = stream;
-          camBox.classList.remove('hidden');
-          startBtn.textContent = "СТОП";
-          startBtn.style.background = "#f44336";
+          cameraBox.style.display = 'block';
+          toggleBtn.innerText = "СТОП";
+          toggleBtn.style.background = "#f44336";
           scanning = true;
-          scanLoop();
-        } catch (err) { alert("Ошибка камеры: " + err); }
+          scanQR();
+        } catch (err) { alert("Камера недоступна"); }
       } else {
-        stopScanner();
+        stopScanning();
       }
-    }
+    });
 
-    function stopScanner() {
+    function stopScanning() {
       scanning = false;
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      if (stream) stream.getTracks().forEach(track => track.stop());
       video.srcObject = null;
-      camBox.classList.add('hidden');
-      startBtn.textContent = "Найти QR";
-      startBtn.style.background = "transparent";
+      cameraBox.style.display = 'none';
+      toggleBtn.innerText = "Найти QR";
+      toggleBtn.style.background = "transparent";
     }
 
-    function scanLoop() {
+    function scanQR() {
       if (!scanning) return;
       if (video.videoWidth > 0) {
         canvas.width = video.videoWidth;
@@ -190,40 +167,28 @@
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
         if (code) {
-          currentQR = code.data;
-          stopScanner();
-          openModal();
+          const entry = `${code.data} | ${new Date().toLocaleString()}`;
+          saveEntry(entry);
+          stopScanning();
           return;
         }
       }
-      setTimeout(scanLoop, 250); 
+      setTimeout(scanQR, 250); 
     }
 
-    function openModal() { currentQty = "0"; numDisplay.innerText = "0"; addBtn.innerText = "ДОБАВИТЬ 0"; document.getElementById('modal').classList.remove('hidden'); }
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-    function pressNum(n) { if (n === 'C') currentQty = "0"; else currentQty = currentQty === "0" ? String(n) : currentQty + n; numDisplay.innerText = currentQty; addBtn.innerText = `ДОБАВИТЬ ${currentQty}`; }
-    function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
-    function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
-    function selectUser(name) { currentUser = name; whoLabel.innerText = name; closeUserMenu(); }
-
-    async function saveEntry() {
-      const entry = `${currentQR} | Кол-во: ${currentQty} | Кому: ${currentUser} | ${new Date().toLocaleString()}`;
+    async function saveEntry(entry) {
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-      renderLogs();
-      closeModal();
-      if (navigator.onLine) {
-        try { await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: entry }) }); } catch(e) {}
-      }
+      render();
+      try {
+        await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: entry }) });
+      } catch (e) {}
     }
 
-    function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); if(navigator.onLine) syncFromGoogle(); }
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    
-    updateStatus();
-    renderLogs();
-    setInterval(syncFromGoogle, 10000);
+    // Старт
+    render();
+    syncFromGoogle();
+    setInterval(() => { if(navigator.onLine) indicator.classList.add('net-online'); else indicator.classList.remove('net-online'); }, 2000);
   </script>
 </body>
 </html>
