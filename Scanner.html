@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_014</title>
+  <title>QR_011</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -34,7 +34,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_011</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="startScanner()">Найти QR</button>
   </header>
@@ -148,26 +148,42 @@
       }
     }
 
-    async function syncFromGoogle() {
-      if (!navigator.onLine) return;
+       async function syncFromGoogle() {
+      if (!navigator.onLine) {
+        alert("Нет интернета");
+        return;
+      }
+      
+      // Визуальный эффект: индикатор тускнеет во время загрузки
+      indicator.style.opacity = "0.3"; 
+
       try {
         const response = await fetch(SCRIPT_URL);
         const data = await response.json();
-        const dataString = JSON.stringify(data);
-        if (data && dataString !== lastHash) {
+        
+        if (data && Array.isArray(data)) {
           qrLogs = data;
           localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-          lastHash = dataString;
+          lastHash = JSON.stringify(data);
           renderLogs();
+          console.log("Данные обновлены из облака");
         }
-      } catch (e) { console.error("Sync error:", e); }
+      } catch (e) { 
+        console.error("Sync error:", e); 
+        alert("Ошибка при получении данных из таблицы");
+      } finally {
+        indicator.style.opacity = "1";
+      }
     }
 
     function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); }
     window.addEventListener('online', updateStatus);
     window.addEventListener('offline', updateStatus);
+    
+    // Инициализация при запуске
     updateStatus();
     renderLogs();
+    // syncFromGoogle() здесь НЕ вызываем, чтобы загрузка была только по кнопке
   </script>
 </body>
 </html>
