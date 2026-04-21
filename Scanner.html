@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_013</title>
+  <title>QR_014</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -34,7 +34,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_013</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_014</h2>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="startScanner()">Найти QR</button>
   </header>
@@ -110,51 +110,64 @@
         if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-        if (code) { currentQR = code.data; stopCamera(); openModal(); return; }
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) { currentQR = code.data; scanning = false; stream.getTracks().forEach(t => t.stop()); openModal(); return; }
       }
       if (scanning) requestAnimationFrame(tick);
     }
 
-    function stopCamera() { scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); startBtn.disabled = false; }
-    function openModal() { document.getElementById('modal').classList.remove('hidden'); currentQty = "0"; updateNumpad(); }
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); stopCamera(); }
-    function pressNum(n) { if (n==='C') currentQty="0"; else currentQty = currentQty==="0" ? String(n) : currentQty+n; updateNumpad(); }
-    function updateNumpad() { numDisplay.textContent = currentQty; addBtn.textContent = `ДОБАВИТЬ ${currentQty} (${currentUser})`; }
+    function openModal() {
+      currentQty = "0"; numDisplay.innerText = "0"; whoLabel.innerText = "Не указан"; currentUser = "Не указан";
+      addBtn.innerText = "ДОБАВИТЬ 0";
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); startBtn.disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
-    function selectUser(n) { currentUser = n; whoLabel.textContent = n; updateNumpad(); closeUserMenu(); }
+    function selectUser(name) { currentUser = name; whoLabel.innerText = name; closeUserMenu(); }
+
+    function pressNum(n) {
+      if (n === 'C') { currentQty = "0"; } 
+      else { currentQty = (currentQty === "0") ? String(n) : currentQty + n; }
+      numDisplay.innerText = currentQty;
+      addBtn.innerText = "ДОБАВИТЬ " + currentQty;
+    }
 
     async function saveEntry() {
-      const now = new Date();
-      const nextNum = qrLogs.length ? Math.max(...qrLogs.map(l => parseInt(l.split('/')) || 0)) + 1 : 1;
-      const time = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
-      const date = now.getDate().toString().padStart(2,'0')+"/"+(now.getMonth()+1).toString().padStart(2,'0')+"/"+now.getFullYear().toString().slice(-2);
-      const entry = `${nextNum}/${currentQR}/${currentQty}/${currentUser}/${time}/${date}`;
+      const entry = `${currentQR} | Кол-во: ${currentQty} | Кому: ${currentUser} | ${new Date().toLocaleString()}`;
       qrLogs.push(entry);
       localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
-      renderLogs(); closeModal();
-      await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ data: qrLogs }) });
+      renderLogs();
+      closeModal();
+      if (navigator.onLine) {
+        try {
+          await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: entry }) });
+        } catch (e) {}
+      }
     }
 
     async function syncFromGoogle() {
-      if (!navigator.onLine) { indicator.classList.remove('net-online'); return; }
+      if (!navigator.onLine) return;
       try {
-        const res = await fetch(SCRIPT_URL);
-        const json = await res.json();
-        const newHash = JSON.stringify(json.data);
-        if (newHash !== lastHash) {
-          qrLogs = json.data;
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        const dataString = JSON.stringify(data);
+        if (data && dataString !== lastHash) {
+          qrLogs = data;
           localStorage.setItem('qr_db_v7', JSON.stringify(qrLogs));
+          lastHash = dataString;
           renderLogs();
-          lastHash = newHash;
         }
-        indicator.classList.add('net-online');
-      } catch (e) { indicator.classList.remove('net-online'); }
+      } catch (e) { console.error("Sync error:", e); }
     }
 
+    function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); }
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
     renderLogs();
-    setInterval(syncFromGoogle, 5000);
   </script>
 </body>
 </html>
