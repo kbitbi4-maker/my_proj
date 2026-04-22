@@ -108,23 +108,28 @@
     const numDisplay = document.getElementById('numpad-display');
     const addBtn = document.getElementById('add-btn');
 
-    let qrLogs = JSON.parse(localStorage.getItem('qr_db_v8')) || [];
+   let qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
     let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
     let stream = null, scanning = false, canvas = null, context = null;
     let currentQR = "", currentQty = "0", currentUser = "Не указан";
 
     function renderLogs() {
-      const head = document.getElementById('logs-head');
-      const body = document.getElementById('logs-body');
-      if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="6">Список пуст</td></tr>'; return; }
-      head.innerHTML = qrLogs[0].map(h => `<th>${h}</th>`).join('');
-      body.innerHTML = qrLogs.slice(1).reverse().map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
-    }
+  const head = document.getElementById('logs-head');
+  const body = document.getElementById('logs-body');
+  if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
+
+  // Отрисовка: если status === 'ok', добавляем стиль фона
+  body.innerHTML = qrLogs.slice().reverse().map(item => {
+    const isSynced = item.status === 'ok';
+    const bg = isSynced ? 'style="background:#d4edda;"' : '';
+    return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+  }).join('');
+}
 
     function showStock() {
       const head = document.getElementById('stock-head');
       const body = document.getElementById('stock-body');
-      if (!inventoryData.length) { alert("Нет данных. Нажмите ☁"); return; }
+     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
       head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
       body.innerHTML = inventoryData.slice(1).map(row => `<tr onclick="selectFromStock('${row[0]}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
       document.getElementById('modal').classList.remove('hidden');
@@ -188,52 +193,95 @@
     function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
 
-     async function saveEntry() {
-      const now = new Date();
-      const time = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
-      
-      // РАЗБИВАЕМ дату на три отдельные части
-      const day = now.getDate().toString().padStart(2,'0');
-      const month = (now.getMonth()+1).toString().padStart(2,'0');
-      const year = now.getFullYear().toString().slice(-2);
-      
-      const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.slice(1).map(r => parseInt(r[0]) || 0)) + 1 : 1;
-      
-      // РАЗБИВАЕМ QR-код на части по разделителю "/"
-      const qrParts = currentQR.split('/'); 
-      
-      // Собираем новую строку: ID + части QR + Кол-во + Кто + Время + День + Месяц + Год
-      const newRow = [nextId, ...qrParts, currentQty, currentUser, time, day, month, year];
-      
-      qrLogs.push(newRow);
-      localStorage.setItem('qr_db_v8', JSON.stringify(qrLogs));
-      renderLogs(); 
-      closeModal();
-      
-      if (navigator.onLine) {
-        try {
-          await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({data:qrLogs}) });
-        } catch(e){ console.error("Ошибка сети"); }
+    async function saveEntry() {
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0')+":"+now.getMinutes().toString().padStart(2,'0');
+  const day = now.getDate().toString().padStart(2,'0'), month = (now.getMonth()+1).toString().padStart(2,'0'), year = now.getFullYear().toString().slice(-2);
+  
+  const qrParts = currentQR.split('/');
+  const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
+
+  const newRowData = [nextId, ...qrParts, currentQty, currentUser, time, day, month, year];
+
+  // 1. УМЕНЬШАЕМ ЛОКАЛЬНЫЙ ОСТАТАТOK (InventoryData)
+  const qty = parseInt(currentQty) || 0;
+  inventoryData = inventoryData.map(r => {
+    if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
+      r[4] = (parseInt(r[4]) || 0) - qty;
+    }
+    return r;
+  });
+  localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+
+  // 2. СОХРАНЯЕМ ЛОГ СО СТАТУСОМ 'wait'
+  qrLogs.push({ data: newRowData, status: 'wait' });
+  localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
+  
+  renderLogs();
+  closeModal();
+  sendUnsynced(); // Пробуем отправить, если есть сеть
+}
+
+async function sendUnsynced() {
+  if (!navigator.onLine) return;
+
+  for (let i = 0; i < qrLogs.length; i++) {
+    if (qrLogs[i].status === 'wait') {
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ row: qrLogs[i].data })
+        });
+        
+        // Если запрос ушел (no-cors всегда "успешен", если нет ошибки сети)
+        qrLogs[i].status = 'ok';
+        localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
+        renderLogs(); // Строка позеленеет
+      } catch (e) {
+        console.log("Сеть пропала, ждем...");
+        break; 
       }
     }
-
-
+  }
+}
     async function syncFromGoogle() {
-      if (!navigator.onLine) { alert("Нет интернета"); return; }
-      indicator.style.opacity = "0.3";
-      try {
-        const res = await fetch(SCRIPT_URL);
-        const data = await res.json();
-        if (data.logs) { qrLogs = data.logs; localStorage.setItem('qr_db_v8', JSON.stringify(qrLogs)); }
-        if (data.stock) { inventoryData = data.stock; localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData)); }
-        renderLogs(); alert("Синхронизация выполнена");
-      } catch (e) { alert("Ошибка загрузки"); }
-      finally { indicator.style.opacity = "1"; }
+  if (!navigator.onLine) return;
+  try {
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    
+    // Помечаем все логи из таблицы как синхронизированные
+    if (data.logs) {
+      qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
+      localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
+    }
+    if (data.stock) {
+      inventoryData = data.stock;
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+    }
+    renderLogs();
+  } catch (e) { alert("Ошибка"); }
+}
+
+
+        function updateStatus() { 
+      indicator.classList.toggle('net-online', navigator.onLine); 
     }
 
-    function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); }
-    window.addEventListener('online', updateStatus); window.addEventListener('offline', updateStatus);
-    updateStatus(); renderLogs();
+    // Измененный обработчик: при появлении сети обновляем статус и запускаем отправку
+    window.addEventListener('online', () => {
+      updateStatus();
+      sendUnsynced(); 
+    });
+
+    window.addEventListener('offline', updateStatus);
+    
+    // Инициализация при запуске
+    updateStatus(); 
+    renderLogs();
+    sendUnsynced(); // Пробуем отправить накопленное сразу при открытии страницы
   </script>
 </body>
 </html>
+
