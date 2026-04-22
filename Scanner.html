@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_18</title>
+  <title>QR_TABLE_PRO_19</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -38,10 +38,11 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_18</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_19</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
-    <button id="start-camera" onclick="startScanner()">Найти QR</button>
+    <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
+
   </header>
 
   <main class="content">
@@ -139,16 +140,37 @@
 
     function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
 
-    async function startScanner() {
+        // Переключатель: если сканирует — выключить, если нет — включить
+    function toggleCamera() {
+      if (scanning) { stopCamera(); } 
+      else { startScanner(); }
+    }
+
+    // Полная остановка камеры и сброс кнопки
+    function stopCamera() {
+      scanning = false;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      video.srcObject = null;
+      const sBtn = document.getElementById('start-camera');
+      sBtn.innerText = "Найти QR";
+      sBtn.disabled = false;
+    }
+    
+        async function startScanner() {
       if (scanning) return;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         video.srcObject = stream;
         scanning = true;
-        document.getElementById('start-camera').disabled = true;
+        const sBtn = document.getElementById('start-camera');
+        sBtn.innerText = "ВЫКЛ КАМЕРУ"; // Меняем текст
+        sBtn.disabled = false;         // Кнопка остается активной для нажатия
         requestAnimationFrame(tick);
       } catch (e) { alert("Ошибка камеры"); }
     }
+
 
     function tick() {
       if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
@@ -156,19 +178,25 @@
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-        if (code) { currentQR = code.data; scanning = false; if (stream) stream.getTracks().forEach(t => t.stop()); openModal(); return; }
+        
+        if (code) { 
+          currentQR = code.data; 
+          // Останавливаем камеру и сбрасываем текст кнопки
+          stopCamera(); 
+          openModal(); 
+          return; 
+        }
       }
       if (scanning) requestAnimationFrame(tick);
     }
 
-       function openModal() {
+    function openModal() {
       // 1. Разбиваем КК на части
       const qrParts = currentQR.split('/');
       const qrArt = qrParts[0]; // Первое число (Артикул)
       const qrParam = qrParts[1]; // Второе число (Параметр)
 
       // 2. Ищем строку, где совпадает и 1-й и 2-й столбцы таблицы
-      // r[0] — 1-й столбец, r[1] — 2-й столбец
       const foundRow = inventoryData.find(r => 
         String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
       );
