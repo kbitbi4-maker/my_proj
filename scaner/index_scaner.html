@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_21</title>
+  <title>QR_TABLE_PRO_20</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -19,9 +19,9 @@
     #result { width: 90%; max-width: none; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
     .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 2.2vh; width: 100%; padding-left: 5%; }
     .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); background: rgba(255,255,255,0.95); }
-    table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 1.6vh; background: white; }
-    th { background: #3f51b5; color: white; padding: 10px 5px; border: 1px solid #333; position: sticky; top: 0; z-index: 2; }
-    td { padding: 8px 5px; border: 1px solid #888; text-align: center; color: #000; font-weight: 500; }
+    table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 1.6vh; }
+    th { background: #3f51b5; color: white; padding: 10px 5px; border: 1px solid #ddd; position: sticky; top: 0; }
+    td { padding: 8px 5px; border: 1px solid #ddd; text-align: center; color: #333; }
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 5px; }
     .numpad-container { background: white; padding: 25px; border-radius: 15px; width: 95%; max-width: 600px; max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,0.5); box-sizing: border-box; }
     #qr-data-display { font-size: 2.8vh; font-weight: bold; color: #3f51b5; text-align: center; padding: 15px; background: #f0f2ff; border-radius: 8px; margin-bottom: 15px; word-break: break-all; border: 1px solid #d0d7ff; }
@@ -31,35 +31,18 @@
     .btn-add { width: 100%; padding: 25px; background: #4caf50; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 3.2vh; margin-top: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
     #numpad-display { font-size: 7.5vh; font-weight: bold; margin: 12px 0; color: #3f51b5; text-align: center; border-bottom: 4px solid #eee; }
     .hidden { display: none !important; }
-    #user-view div, #stock-view div { max-height: none; overflow-y: visible; }
-    /* стили таблиц */
-    #stock-view table th { border: 1px solid #000; background: #283593; }
-    #stock-view table td { border: 1px solid #999; }
-    .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 1px solid #333; }
-    /* Новые правки для окна остатков */
-    #stock-view.numpad-container { width: 100%; max-width: 100%; height: 100vh; border-radius: 0; padding: 15px; }
-    .view-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .view-header h3 { margin: 0; color: #3f51b5; font-size: 2.4vh; }
+    #user-view div, #stock-view div { max-height: 50vh; overflow-y: auto; }
   </style>
 </head>
 <body>
 
-  <div id="auth-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:10000; flex-direction:column; align-items:center; justify-content:center;">
-    <h2>Вход в систему</h2>
-    <select id="auth-user-select" style="padding:15px; width:80%; font-size:18px; margin-bottom:10px;">
-        <option value="Неугодников">Неугодников</option>
-        <option value="Петров">Петров</option>
-    </select>
-    <input type="password" id="auth-pin-input" placeholder="ПИН-КОД" inputmode="numeric" style="padding:15px; width:80%; font-size:24px; text-align:center; margin-bottom:20px;">
-    <button id="auth-submit-btn" style="padding:20px 40px; font-size:20px; background:#28a745; color:white; border:none; border-radius:10px;">ВОЙТИ</button>
-</div>
-  
   <header class="header">
-    <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_21</h2>
+    <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_20</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
+
   </header>
 
   <main class="content">
@@ -93,7 +76,7 @@
 
     <!-- Окно Пользователей -->
     <div class="numpad-container hidden" id="user-view">
-      <button class="btn-icon" style="color:black;font-weight:bold;justify-content:flex-start;" onclick="closeUserMenu()">← НАЗАД</button>
+      <button class="btn-icon" style="color:black;font-weight:bold" onclick="closeUserMenu()">← НАЗАД</button>
       <div>
         <button class="user-btn" onclick="selectUser('Головин')">Головин</button>
         <button class="user-btn" onclick="selectUser('Иванов')">Иванов</button>
@@ -106,17 +89,9 @@
     </div>
 
     <!-- Окно Остатков (Лист 1) -->
-    <div class="numpad-container hidden" id="stock-view">
-      <div class="view-header">
-        <button class="btn-icon" style="color:#3f51b5; font-weight:bold;" onclick="closeModal()">←</button>
-        <h3>Остатки на складе</h3>
-      </div>
-      
-      <input type="text" id="stock-search" placeholder="Поиск..." 
-             style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; border:1px solid #ccc; font-size:2.2vh; box-sizing:border-box;"
-             oninput="renderStock()"> 
-
-      <div style="overflow:auto;flex-grow:1;border:1px solid #ddd;border-radius:8px;">
+    <div class="numpad-container hidden" id="stock-view" style="width:98%;max-width:none;">
+      <button class="user-btn" style="background:#3f51b5;color:white" onclick="closeModal()">← ВЕРНУТЬСЯ</button>
+      <div style="overflow:auto;flex-grow:1;">
         <table>
           <thead><tr id="stock-head"></tr></thead>
           <tbody id="stock-body"></tbody>
@@ -124,9 +99,8 @@
       </div>
     </div>
   </div>
-<!-- Подключаем вынесенный код камеры -->
-<script src="js/camera.js"></script>
-<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+
+  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
     const video = document.getElementById('video');
@@ -166,35 +140,79 @@
 
     function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
 
+        // Переключатель: если сканирует — выключить, если нет — включить
+    function toggleCamera() {
+      if (scanning) { stopCamera(); } 
+      else { startScanner(); }
+    }
+
+    // Полная остановка камеры и сброс кнопки
+    function stopCamera() {
+      scanning = false;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      video.srcObject = null;
+      const sBtn = document.getElementById('start-camera');
+      sBtn.innerText = "Найти QR";
+      sBtn.disabled = false;
+    }
+    
+        async function startScanner() {
+      if (scanning) return;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = stream;
+        scanning = true;
+        const sBtn = document.getElementById('start-camera');
+        sBtn.innerText = "ВЫКЛ КАМЕРУ"; // Меняем текст
+        sBtn.disabled = false;         // Кнопка остается активной для нажатия
+        requestAnimationFrame(tick);
+      } catch (e) { alert("Ошибка камеры"); }
+    }
+
+
+    function tick() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
+        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+        
+        if (code) { 
+          currentQR = code.data; 
+          // Останавливаем камеру и сбрасываем текст кнопки
+          stopCamera(); 
+          openModal(); 
+          return; 
+        }
+      }
+      if (scanning) requestAnimationFrame(tick);
+    }
+
     function openModal() {
-  // 1. Разбиваем КК на части
-  const qrParts = currentQR.split('/');
-  const qrArt = qrParts[0]; 
-  const qrParam = qrParts[1]; 
+      // 1. Разбиваем КК на части
+      const qrParts = currentQR.split('/');
+      const qrArt = qrParts[0]; // Первое число (Артикул)
+      const qrParam = qrParts[1]; // Второе число (Параметр)
 
-  // 2. Ищем строку в справочнике
-  const foundRow = inventoryData.find(r => 
-    String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
-  );
+      // 2. Ищем строку, где совпадает и 1-й и 2-й столбцы таблицы
+      const foundRow = inventoryData.find(r => 
+        String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
+      );
 
-  // 3. Получаем остаток
-  const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+      // 3. Если нашли, берем остаток из 5-го столбца (индекс 4)
+      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
 
-  // 4. Обновляем данные пользователя из auth.js
-  currentUser = window.authUser || "Не указан"; 
-  
-  // 5. Выводим информацию в интерфейс
-  document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
-  whoLabel.innerText = currentUser;
-  
-  currentQty = "0"; 
-  numDisplay.innerText = "0"; 
-  addBtn.innerText = `ДОБАВИТЬ 0 (${currentUser})`;
-  
-  document.getElementById('modal').classList.remove('hidden');
-  document.getElementById('numpad-view').classList.remove('hidden');
-  document.getElementById('stock-view').classList.add('hidden');
-}
+      // 4. Выводим информацию в шапку
+      document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+      
+      currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
+      addBtn.innerText = "ДОБАВИТЬ 0";
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('numpad-view').classList.remove('hidden');
+      document.getElementById('stock-view').classList.add('hidden');
+    }
 
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
@@ -300,6 +318,6 @@ async function sendUnsynced() {
     renderLogs();
     sendUnsynced(); // Пробуем отправить накопленное сразу при открытии страницы
   </script>
-
 </body>
 </html>
+
