@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_23</title>
+  <title>QR_TABLE_PRO_24</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -38,7 +38,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_23</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_24</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
@@ -132,18 +132,25 @@
     }).join('');
   }
 
-  function showStock() {
+   function showStock() {
     const head = document.getElementById('stock-head');
     const body = document.getElementById('stock-body');
     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
     head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
-    body.innerHTML = inventoryData.slice(1).map(row => `<tr onclick="selectFromStock('${row[0]}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+    
+    // ИЗМЕНЕНО: собираем виртуальный КК из первых четырех столбцов через "/"
+    body.innerHTML = inventoryData.slice(1).map(row => {
+      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
+      return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    }).join('');
+
     document.getElementById('modal').classList.remove('hidden');
     document.getElementById('numpad-view').classList.add('hidden');
     document.getElementById('stock-view').classList.remove('hidden');
   }
 
   function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
+  
   function openModal() {
     const qrParts = currentQR.split('/');
     const qrArt = qrParts[0]; 
@@ -163,6 +170,7 @@
     document.getElementById('numpad-view').classList.remove('hidden');
     document.getElementById('stock-view').classList.add('hidden');
   }
+
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
