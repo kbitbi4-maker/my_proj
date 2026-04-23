@@ -1,1 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; background: #f0f2f5; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        select, input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        button { background: #3f51b5; color: white; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>Склад ПРО</h2>
+        <select id="user-name">
+            <option value="">Кто вы?</option>
+            <option value="Неугодников">Неугодников</option>
+            <option value="Петров">Петров</option>
+        </select>
+        <input type="password" id="user-pin" placeholder="ПИН-код" inputmode="numeric">
+        <button onclick="doLogin()">ВОЙТИ</button>
+    </div>
 
+    <script>
+        const STAFF = { "Неугодников": "1234", "Петров": "5555" };
+
+        function doLogin() {
+            const name = document.getElementById('user-name').value;
+            const pin = document.getElementById('user-pin').value;
+
+            if (STAFF[name] === pin) {
+                // Сохраняем метку авторизации
+                localStorage.setItem('qr_auth_user', name);
+                localStorage.setItem('qr_auth_time', Date.now());
+                // Переходим на основную страницу
+                window.location.href = 'index_scaner.html';
+            } else {
+                alert("Неверный ПИН-код");
+            }
+        }
+    </script>
+</body>
+</html>
