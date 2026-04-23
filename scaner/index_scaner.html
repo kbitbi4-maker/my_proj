@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_27</title>
+  <title>QR_TABLE_PRO_28</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -46,7 +46,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_27</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_28</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
@@ -151,7 +151,6 @@
     }).join('');
   }
 
-
      function showStock() {
     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
     
@@ -171,15 +170,12 @@
     const body = document.getElementById('stock-body');
     const searchInput = document.getElementById('stock-search');
     const term = searchInput ? searchInput.value.toLowerCase() : "";
-    
     // Всегда берем заголовок из первой строки
     head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
-    
     // Фильтруем данные (пропуская заголовок)
     const filtered = inventoryData.slice(1).filter(row => 
       row.some(cell => String(cell).toLowerCase().includes(term))
     );
-
     // Отрисовка отфильтрованных строк
     body.innerHTML = filtered.map(row => {
       const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
@@ -190,7 +186,6 @@
       body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>';
     }
   }
-
 
   function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
   
@@ -214,15 +209,16 @@
     document.getElementById('stock-view').classList.add('hidden');
   }
 
-
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
     function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
 
+   async function saveEntry() {
+    if (isSaving) return; // Блокировка от повторного нажатия
+    isSaving = true;
 
-  async function saveEntry() {
     const now = new Date();
     const hh = now.getHours().toString().padStart(2,'0');
     const mm = now.getMinutes().toString().padStart(2,'0');
@@ -251,33 +247,32 @@
     
     renderLogs();
     closeModal();
-    sendUnsynced(); 
+    await sendUnsynced(); 
+    isSaving = false; // Разблокировка после попытки отправки
   }
 
-
-async function sendUnsynced() {
-  if (!navigator.onLine) return;
-
-  for (let i = 0; i < qrLogs.length; i++) {
-    if (qrLogs[i].status === 'wait') {
-      try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ row: qrLogs[i].data })
-        });
-        
-        // Если запрос ушел (no-cors всегда "успешен", если нет ошибки сети)
-        qrLogs[i].status = 'ok';
-        localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
-        renderLogs(); // Строка позеленеет
-      } catch (e) {
-        console.log("Сеть пропала, ждем...");
-        break; 
+  async function sendUnsynced() {
+    if (!navigator.onLine) return;
+    for (let i = 0; i < qrLogs.length; i++) {
+      if (qrLogs[i].status === 'wait') {
+        qrLogs[i].status = 'syncing'; // Временный статус, чтобы не отправить дважды
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ row: qrLogs[i].data })
+          });
+          qrLogs[i].status = 'ok';
+          localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
+          renderLogs();
+        } catch (e) {
+          qrLogs[i].status = 'wait'; // Возврат статуса при ошибке сети
+          break; 
+        }
       }
     }
   }
-}
+
     async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
