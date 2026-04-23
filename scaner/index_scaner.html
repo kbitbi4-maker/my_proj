@@ -137,12 +137,17 @@
     const body = document.getElementById('logs-body');
     if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
 
-    body.innerHTML = qrLogs.slice().reverse().map(item => {
+    // 1. Отрисовываем заголовок отдельно (всегда берем из первой записи в массиве)
+    head.innerHTML = qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+
+    // 2. Отрисовываем тело: берем всё КРОМЕ первой строки, переворачиваем и выводим
+    body.innerHTML = qrLogs.slice(1).reverse().map(item => {
       const isSynced = item.status === 'ok';
       const bg = isSynced ? 'style="background:#d4edda;"' : '';
       return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
     }).join('');
   }
+
 
      function showStock() {
     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
