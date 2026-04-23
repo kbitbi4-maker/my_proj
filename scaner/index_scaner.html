@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_24</title>
+  <title>QR_TABLE_PRO_25</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -38,7 +38,7 @@
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_24</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_25</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
@@ -91,6 +91,12 @@
     <!-- Окно Остатков (Лист 1) -->
     <div class="numpad-container hidden" id="stock-view" style="width:98%;max-width:none;">
       <button class="user-btn" style="background:#3f51b5;color:white" onclick="closeModal()">← ВЕРНУТЬСЯ</button>
+      
+      <!-- ДОБАВЛЕНО ПОЛЕ ВВОДА -->
+      <input type="text" id="stock-search" placeholder="Поиск по артикулу или названию..." 
+             style="width:100%; padding:15px; margin:10px 0; border-radius:10px; border:1px solid #ccc; font-size:2.2vh; box-sizing:border-box;"
+             oninput="renderStock()"> 
+
       <div style="overflow:auto;flex-grow:1;">
         <table>
           <thead><tr id="stock-head"></tr></thead>
@@ -98,7 +104,6 @@
         </table>
       </div>
     </div>
-  </div>
 
  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <!-- Подключаем вынесенный код камеры -->
@@ -132,22 +137,45 @@
     }).join('');
   }
 
-   function showStock() {
-    const head = document.getElementById('stock-head');
-    const body = document.getElementById('stock-body');
+     function showStock() {
     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
-    head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
     
-    // ИЗМЕНЕНО: собираем виртуальный КК из первых четырех столбцов через "/"
-    body.innerHTML = inventoryData.slice(1).map(row => {
-      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
-      return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
-    }).join('');
+    // Сброс текста поиска при открытии окна
+    const searchInput = document.getElementById('stock-search');
+    if (searchInput) searchInput.value = "";
 
     document.getElementById('modal').classList.remove('hidden');
     document.getElementById('numpad-view').classList.add('hidden');
     document.getElementById('stock-view').classList.remove('hidden');
+    
+    renderStock(); // Отрисовка актуального списка
   }
+
+  function renderStock() {
+    const head = document.getElementById('stock-head');
+    const body = document.getElementById('stock-body');
+    const searchInput = document.getElementById('stock-search');
+    const term = searchInput ? searchInput.value.toLowerCase() : "";
+    
+    // Всегда берем заголовок из первой строки
+    head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
+    
+    // Фильтруем данные (пропуская заголовок)
+    const filtered = inventoryData.slice(1).filter(row => 
+      row.some(cell => String(cell).toLowerCase().includes(term))
+    );
+
+    // Отрисовка отфильтрованных строк
+    body.innerHTML = filtered.map(row => {
+      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
+      return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    }).join('');
+    
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>';
+    }
+  }
+
 
   function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
   
