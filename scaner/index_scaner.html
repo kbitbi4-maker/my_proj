@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_27</title>
+  <title>QR_TABLE_PRO_28</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -44,21 +44,30 @@
 </head>
 <body>
 
-  <!-- Измени только эту строку в HTML -->
-    <div id="auth-overlay" style="display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:10000; flex-direction:column; align-items:center; justify-content:center;">
-    <h2 style="font-family:sans-serif;">Вход в систему</h2>
-    <select id="auth-user-select" style="padding:10px; width:200px; margin-bottom:10px;">
-        <option value="">Выберите сотрудника</option>
-        <option value="Неугодников">Неугодников</option>
-        <option value="Петров">Петров</option>
-    </select>
-    <input type="password" id="auth-pin-input" placeholder="PIN-код" inputmode="numeric" style="padding:10px; width:180px; text-align:center; font-size:20px; margin-bottom:10px;">
-    <button onclick="login()" style="padding:10px 40px; background:#28a745; color:white; border:none; border-radius:5px;">ВОЙТИ</button>
+ <div id="auth-overlay" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100000; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="text-align: center;">
+        <h2 style="font-family:sans-serif; margin-bottom: 20px;">Вход в систему</h2>
+        <select id="auth-user-select" style="padding:15px; width:220px; margin-bottom:15px; font-size:16px;">
+            <option value="">Выберите сотрудника</option>
+            <option value="Неугодников">Неугодников</option>
+            <option value="Петров">Петров</option>
+        </select>
+        <br>
+        <input type="password" id="auth-pin-input" placeholder="PIN-код" inputmode="numeric" style="padding:15px; width:190px; text-align:center; font-size:20px; margin-bottom:20px;">
+        <br>
+        <button type="button" id="auth-submit-btn" style="padding:15px 50px; background:#28a745; color:white; border:none; border-radius:5px; font-size:18px; font-weight:bold;">
+            ВОЙТИ
+        </button>
+    </div>
 </div>
+
+<!-- Подключаем скрипт ПОСЛЕ верстки окна -->
+<script src="auth.js"></script>
+
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_27</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_28</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
@@ -130,7 +139,6 @@
  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <!-- Подключаем вынесенный код камеры -->
 <script src="js/camera.js"></script>
-<script src="js/auth.js"></script>
 <script>
   let isSaving = false;
   let scanning = false;
