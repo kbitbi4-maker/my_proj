@@ -1,6 +1,6 @@
 // Переменные состояния камеры
 let stream = null;
-let scanning = false;
+scanning = false;
 let canvas = null;
 let context = null;
 
