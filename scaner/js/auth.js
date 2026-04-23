@@ -1,4 +1,6 @@
 // auth.js
+
+let authUser = JSON.parse(localStorage.getItem('qr_auth_user')) || null;
 const STAFF_AUTH = {
     "Неугодников": "03ac674216f3e15c611c391ad522185821c5b05612491ad081846c9411690111", // pin 1234
     "Петров": "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f"      // pin 5555
