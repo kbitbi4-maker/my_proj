@@ -15,16 +15,28 @@ async function getHash(str) {
 }
 
 async function login() {
-    const nameSelect = document.getElementById('auth-user-select');
-    const pinInput = document.getElementById('auth-pin-input');
+    const name = document.getElementById('auth-user-select').value;
+    const pin = document.getElementById('auth-pin-input').value;
     
-    const name = nameSelect.value;
-    const pin = pinInput.value;
+    if (!name || !pin) return;
 
-    if (!name || !pin) {
-        alert("Выберите сотрудника и введите PIN");
-        return;
+    const hashed = await getHash(pin);
+    const expected = STAFF_AUTH[name];
+
+    // Это покажет нам реальную причину
+    if (hashed !== expected) {
+        console.log("Длина введённого:", hashed.length);
+        console.log("Длина ожидаемого:", expected ? expected.length : "0");
+        alert("ОШИБКА!\nТвой ПИН выдал: " + hashed.substring(0,10) + "...\nВ базе записано: " + (expected ? expected.substring(0,10) : "пусто") + "...");
     }
+
+    if (hashed === expected) {
+        authUser = name;
+        localStorage.setItem('qr_auth_user', JSON.stringify(authUser));
+        document.getElementById('auth-overlay').style.display = 'none';
+    }
+}
+
 
     const hashed = await getHash(pin);
     const expected = STAFF_AUTH[name] ? STAFF_AUTH[name].trim().toLowerCase() : "";
