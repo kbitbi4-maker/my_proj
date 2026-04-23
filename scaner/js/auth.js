@@ -13,8 +13,11 @@ let authUser = JSON.parse(localStorage.getItem('qr_auth_user')) || null;
 async function getHash(str) {
     const msgBuffer = new TextEncoder().encode(str);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    // Важно: каждый байт должен быть строго 2 символа (padStart)
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
 
 // 4. Функция входа
 async function login() {
