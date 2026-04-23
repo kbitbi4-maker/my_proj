@@ -100,120 +100,68 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-    const video = document.getElementById('video');
-    const indicator = document.getElementById('indicator');
-    const whoLabel = document.getElementById('who-label');
-    const numDisplay = document.getElementById('numpad-display');
-    const addBtn = document.getElementById('add-btn');
+ <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Подключаем вынесенный код камеры -->
+<script src="js/camera.js"></script>
 
-   let qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
-    let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
-    let stream = null, scanning = false, canvas = null, context = null;
-    let currentQR = "", currentQty = "0", currentUser = "Не указан";
+<script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
+  const video = document.getElementById('video');
+  const indicator = document.getElementById('indicator');
+  const whoLabel = document.getElementById('who-label');
+  const numDisplay = document.getElementById('numpad-display');
+  const addBtn = document.getElementById('add-btn');
 
-    function renderLogs() {
-  const head = document.getElementById('logs-head');
-  const body = document.getElementById('logs-body');
-  if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
+  let qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
+  let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
+  let scanning = false;
+  // Эти переменные теперь управляются внутри js/camera.js, 
+  // но должны быть доступны глобально для корректной работы
+  let currentQR = "", currentQty = "0", currentUser = "Не указан";
 
-  // Отрисовка: если status === 'ok', добавляем стиль фона
-  body.innerHTML = qrLogs.slice().reverse().map(item => {
-    const isSynced = item.status === 'ok';
-    const bg = isSynced ? 'style="background:#d4edda;"' : '';
-    return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
-  }).join('');
-}
+  function renderLogs() {
+    const head = document.getElementById('logs-head');
+    const body = document.getElementById('logs-body');
+    if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
 
-    function showStock() {
-      const head = document.getElementById('stock-head');
-      const body = document.getElementById('stock-body');
-     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
-      head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
-      body.innerHTML = inventoryData.slice(1).map(row => `<tr onclick="selectFromStock('${row[0]}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('numpad-view').classList.add('hidden');
-      document.getElementById('stock-view').classList.remove('hidden');
-    }
+    body.innerHTML = qrLogs.slice().reverse().map(item => {
+      const isSynced = item.status === 'ok';
+      const bg = isSynced ? 'style="background:#d4edda;"' : '';
+      return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+    }).join('');
+  }
 
-    function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
+  function showStock() {
+    const head = document.getElementById('stock-head');
+    const body = document.getElementById('stock-body');
+    if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
+    head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
+    body.innerHTML = inventoryData.slice(1).map(row => `<tr onclick="selectFromStock('${row[0]}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('numpad-view').classList.add('hidden');
+    document.getElementById('stock-view').classList.remove('hidden');
+  }
 
-        // Переключатель: если сканирует — выключить, если нет — включить
-    function toggleCamera() {
-      if (scanning) { stopCamera(); } 
-      else { startScanner(); }
-    }
+  function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
+  function openModal() {
+    const qrParts = currentQR.split('/');
+    const qrArt = qrParts[0]; 
+    const qrParam = qrParts[1]; 
 
-    // Полная остановка камеры и сброс кнопки
-    function stopCamera() {
-      scanning = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      video.srcObject = null;
-      const sBtn = document.getElementById('start-camera');
-      sBtn.innerText = "Найти QR";
-      sBtn.disabled = false;
-    }
+    const foundRow = inventoryData.find(r => 
+      String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
+    );
+
+    const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+
+    document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
     
-        async function startScanner() {
-      if (scanning) return;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-        scanning = true;
-        const sBtn = document.getElementById('start-camera');
-        sBtn.innerText = "ВЫКЛ КАМЕРУ"; // Меняем текст
-        sBtn.disabled = false;         // Кнопка остается активной для нажатия
-        requestAnimationFrame(tick);
-      } catch (e) { alert("Ошибка камеры"); }
-    }
-
-
-    function tick() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-        
-        if (code) { 
-          currentQR = code.data; 
-          // Останавливаем камеру и сбрасываем текст кнопки
-          stopCamera(); 
-          openModal(); 
-          return; 
-        }
-      }
-      if (scanning) requestAnimationFrame(tick);
-    }
-
-    function openModal() {
-      // 1. Разбиваем КК на части
-      const qrParts = currentQR.split('/');
-      const qrArt = qrParts[0]; // Первое число (Артикул)
-      const qrParam = qrParts[1]; // Второе число (Параметр)
-
-      // 2. Ищем строку, где совпадает и 1-й и 2-й столбцы таблицы
-      const foundRow = inventoryData.find(r => 
-        String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
-      );
-
-      // 3. Если нашли, берем остаток из 5-го столбца (индекс 4)
-      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
-
-      // 4. Выводим информацию в шапку
-      document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
-      
-      currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
-      addBtn.innerText = "ДОБАВИТЬ 0";
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('numpad-view').classList.remove('hidden');
-      document.getElementById('stock-view').classList.add('hidden');
-    }
-
+    currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
+    addBtn.innerText = "ДОБАВИТЬ 0";
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('numpad-view').classList.remove('hidden');
+    document.getElementById('stock-view').classList.add('hidden');
+  }
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
@@ -221,41 +169,38 @@
     function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
 
-   async function saveEntry() {
-  const now = new Date();
-  
-  // Добавляем символ ' в начало, чтобы Google Таблица видела в этом ТЕКСТ, а не дату
-  const hh = now.getHours().toString().padStart(2,'0');
-  const mm = now.getMinutes().toString().padStart(2,'0');
-  const time = "'" + hh + ":" + mm; 
 
-  const day = now.getDate().toString().padStart(2,'0');
-  const month = (now.getMonth()+1).toString().padStart(2,'0');
-  const year = now.getFullYear().toString().slice(-2);
-  
-  const qrParts = currentQR.split('/');
-  const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
+  async function saveEntry() {
+    const now = new Date();
+    const hh = now.getHours().toString().padStart(2,'0');
+    const mm = now.getMinutes().toString().padStart(2,'0');
+    const time = "'" + hh + ":" + mm; 
 
-  const newRowData = [nextId, ...qrParts, currentQty, currentUser, time, day, month, year];
+    const day = now.getDate().toString().padStart(2,'0');
+    const month = (now.getMonth()+1).toString().padStart(2,'0');
+    const year = now.getFullYear().toString().slice(-2);
+    
+    const qrParts = currentQR.split('/');
+    const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
 
-  // 1. УМЕНЬШАЕМ ЛОКАЛЬНЫЙ ОСТАТАТOK (InventoryData)
-  const qty = parseInt(currentQty) || 0;
-  inventoryData = inventoryData.map(r => {
-    if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
-      r[4] = (parseInt(r[4]) || 0) - qty;
-    }
-    return r;
-  });
-  localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+    const newRowData = [nextId, ...qrParts, currentQty, currentUser, time, day, month, year];
 
-  // 2. СОХРАНЯЕМ ЛОГ СО СТАТУСОМ 'wait'
-  qrLogs.push({ data: newRowData, status: 'wait' });
-  localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
-  
-  renderLogs();
-  closeModal();
-  sendUnsynced(); // Пробуем отправить, если есть сеть
-}
+    const qty = parseInt(currentQty) || 0;
+    inventoryData = inventoryData.map(r => {
+      if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
+        r[4] = (parseInt(r[4]) || 0) - qty;
+      }
+      return r;
+    });
+    localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+
+    qrLogs.push({ data: newRowData, status: 'wait' });
+    localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
+    
+    renderLogs();
+    closeModal();
+    sendUnsynced(); 
+  }
 
 
 async function sendUnsynced() {
@@ -299,9 +244,8 @@ async function sendUnsynced() {
     renderLogs();
   } catch (e) { alert("Ошибка"); }
 }
-
-
-        function updateStatus() { 
+        
+  function updateStatus() { 
       indicator.classList.toggle('net-online', navigator.onLine); 
     }
 
