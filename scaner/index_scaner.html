@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_23</title>
+  <title>QR_TABLE_PRO_25</title>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
     body { display: flex; flex-direction: column; background: url('fon_s.jpg') no-repeat center center fixed; background-size: cover; }
@@ -19,9 +19,9 @@
     #result { width: 90%; max-width: none; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
     .log-title { color: white; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 2.2vh; width: 100%; padding-left: 5%; }
     .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); background: rgba(255,255,255,0.95); }
-    table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 1.6vh; }
-    th { background: #3f51b5; color: white; padding: 10px 5px; border: 1px solid #ddd; position: sticky; top: 0; }
-    td { padding: 8px 5px; border: 1px solid #ddd; text-align: center; color: #333; }
+    table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 1.6vh; background: white; }
+    th { background: #3f51b5; color: white; padding: 10px 5px; border: 1px solid #333; position: sticky; top: 0; z-index: 2; }
+    td { padding: 8px 5px; border: 1px solid #888; text-align: center; color: #000; font-weight: 500; }
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 5px; }
     .numpad-container { background: white; padding: 25px; border-radius: 15px; width: 95%; max-width: 600px; max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,0.5); box-sizing: border-box; }
     #qr-data-display { font-size: 2.8vh; font-weight: bold; color: #3f51b5; text-align: center; padding: 15px; background: #f0f2ff; border-radius: 8px; margin-bottom: 15px; word-break: break-all; border: 1px solid #d0d7ff; }
@@ -31,18 +31,25 @@
     .btn-add { width: 100%; padding: 25px; background: #4caf50; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 3.2vh; margin-top: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
     #numpad-display { font-size: 7.5vh; font-weight: bold; margin: 12px 0; color: #3f51b5; text-align: center; border-bottom: 4px solid #eee; }
     .hidden { display: none !important; }
-    #user-view div, #stock-view div { max-height: 50vh; overflow-y: auto; }
+    #user-view div, #stock-view div { max-height: none; overflow-y: visible; }
+    /* стили таблиц */
+    #stock-view table th { border: 1px solid #000; background: #283593; }
+    #stock-view table td { border: 1px solid #999; }
+    .table-wrapper { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border: 1px solid #333; }
+    /* Новые правки для окна остатков */
+    #stock-view.numpad-container { width: 100%; max-width: 100%; height: 100vh; border-radius: 0; padding: 15px; }
+    .view-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .view-header h3 { margin: 0; color: #3f51b5; font-size: 2.4vh; }
   </style>
 </head>
 <body>
 
   <header class="header">
-    <button class="btn-icon" onclick="window.location.href='index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_23</h2>
+    <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
+    <h2><div id="indicator" class="net-indicator"></div> QR_25</h2>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
-
   </header>
 
   <main class="content">
@@ -76,7 +83,7 @@
 
     <!-- Окно Пользователей -->
     <div class="numpad-container hidden" id="user-view">
-      <button class="btn-icon" style="color:black;font-weight:bold" onclick="closeUserMenu()">← НАЗАД</button>
+      <button class="btn-icon" style="color:black;font-weight:bold;justify-content:flex-start;" onclick="closeUserMenu()">← НАЗАД</button>
       <div>
         <button class="user-btn" onclick="selectUser('Головин')">Головин</button>
         <button class="user-btn" onclick="selectUser('Иванов')">Иванов</button>
@@ -89,9 +96,17 @@
     </div>
 
     <!-- Окно Остатков (Лист 1) -->
-    <div class="numpad-container hidden" id="stock-view" style="width:98%;max-width:none;">
-      <button class="user-btn" style="background:#3f51b5;color:white" onclick="closeModal()">← ВЕРНУТЬСЯ</button>
-      <div style="overflow:auto;flex-grow:1;">
+    <div class="numpad-container hidden" id="stock-view">
+      <div class="view-header">
+        <button class="btn-icon" style="color:#3f51b5; font-weight:bold;" onclick="closeModal()">←</button>
+        <h3>Остатки на складе</h3>
+      </div>
+      
+      <input type="text" id="stock-search" placeholder="Поиск..." 
+             style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; border:1px solid #ccc; font-size:2.2vh; box-sizing:border-box;"
+             oninput="renderStock()"> 
+
+      <div style="overflow:auto;flex-grow:1;border:1px solid #ddd;border-radius:8px;">
         <table>
           <thead><tr id="stock-head"></tr></thead>
           <tbody id="stock-body"></tbody>
@@ -100,120 +115,176 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
-  <script src="js/camera.js"></script> 
-  <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-    const video = document.getElementById('video');
-    const indicator = document.getElementById('indicator');
-    const whoLabel = document.getElementById('who-label');
-    const numDisplay = document.getElementById('numpad-display');
-    const addBtn = document.getElementById('add-btn');
-   let qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
-    let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
-    let currentQR = "", currentQty = "0", currentUser = "Не указан";
-    function renderLogs() {
-  const head = document.getElementById('logs-head');
-  const body = document.getElementById('logs-body');
-  if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
-  // Отрисовка: если status === 'ok', добавляем стиль фона
-  body.innerHTML = qrLogs.slice().reverse().map(item => {
-    const isSynced = item.status === 'ok';
-    const bg = isSynced ? 'style="background:#d4edda;"' : '';
-    return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
-  }).join('');
-}
-    function showStock() {
-      const head = document.getElementById('stock-head');
-      const body = document.getElementById('stock-body');
-     if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
-      head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
-      body.innerHTML = inventoryData.slice(1).map(row => `<tr onclick="selectFromStock('${row[0]}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('numpad-view').classList.add('hidden');
-      document.getElementById('stock-view').classList.remove('hidden');
+ <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- Подключаем вынесенный код камеры -->
+<script src="js/camera.js"></script>
+
+<script>
+  let authUser = "Неугодников"; 
+  let isSaving = false;
+  let scanning = false;
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
+  const video = document.getElementById('video');
+  const indicator = document.getElementById('indicator');
+  const whoLabel = document.getElementById('who-label');
+  const numDisplay = document.getElementById('numpad-display');
+  const addBtn = document.getElementById('add-btn');
+
+  let qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
+  let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
+  
+  // Эти переменные теперь управляются внутри js/camera.js, 
+  // но должны быть доступны глобально для корректной работы
+  let currentQR = "", currentQty = "0", currentUser = "Не указан";
+
+  function renderLogs() {
+    const head = document.getElementById('logs-head');
+    const body = document.getElementById('logs-body');
+    if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
+
+    // 1. Отрисовываем заголовок отдельно (всегда берем из первой записи в массиве)
+    head.innerHTML = qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+
+    // 2. Отрисовываем тело: берем всё КРОМЕ первой строки, переворачиваем и выводим
+    body.innerHTML = qrLogs.slice(1).reverse().map(item => {
+      const isSynced = item.status === 'ok';
+      const bg = isSynced ? 'style="background:#d4edda;"' : '';
+      return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+    }).join('');
+  }
+
+     function showStock() {
+    if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
+    
+    // Сброс текста поиска при открытии окна
+    const searchInput = document.getElementById('stock-search');
+    if (searchInput) searchInput.value = "";
+
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('numpad-view').classList.add('hidden');
+    document.getElementById('stock-view').classList.remove('hidden');
+    
+    renderStock(); // Отрисовка актуального списка
+  }
+
+  function renderStock() {
+    const head = document.getElementById('stock-head');
+    const body = document.getElementById('stock-body');
+    const searchInput = document.getElementById('stock-search');
+    const term = searchInput ? searchInput.value.toLowerCase() : "";
+    // Всегда берем заголовок из первой строки
+    head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
+    // Фильтруем данные (пропуская заголовок)
+    const filtered = inventoryData.slice(1).filter(row => 
+      row.some(cell => String(cell).toLowerCase().includes(term))
+    );
+    // Отрисовка отфильтрованных строк
+    body.innerHTML = filtered.map(row => {
+      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
+      return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    }).join('');
+    
+    if (filtered.length === 0) {
+      body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>';
     }
-    function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
-        // Переключатель: если сканирует — выключить, если нет — включить
-   
-    function openModal() {
-      // 1. Разбиваем КК на части
-      const qrParts = currentQR.split('/');
-      const qrArt = qrParts[0]; // Первое число (Артикул)
-      const qrParam = qrParts[1]; // Второе число (Параметр)
-      // 2. Ищем строку, где совпадает и 1-й и 2-й столбцы таблицы
-      const foundRow = inventoryData.find(r => 
-        String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
-      );
-      // 3. Если нашли, берем остаток из 5-го столбца (индекс 4)
-      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
-      // 4. Выводим информацию в шапку
-      document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
-      currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
-      addBtn.innerText = "ДОБАВИТЬ 0";
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('numpad-view').classList.remove('hidden');
-      document.getElementById('stock-view').classList.add('hidden');
-    }
+  }
+
+  function selectFromStock(code) { currentQR = code; closeModal(); openModal(); }
+  
+  function openModal() {
+    const qrParts = currentQR.split('/');
+    const qrArt = qrParts[0]; 
+    const qrParam = qrParts[1]; 
+
+    const foundRow = inventoryData.find(r => 
+      String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
+    );
+
+    const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+
+    document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+    
+    currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
+    addBtn.innerText = "ДОБАВИТЬ 0";
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('numpad-view').classList.remove('hidden');
+    document.getElementById('stock-view').classList.add('hidden');
+  }
+
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
     function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
     function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
     function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
-   async function saveEntry() {
-  const now = new Date();
-  // Добавляем символ ' в начало, чтобы Google Таблица видела в этом ТЕКСТ, а не дату
-  const hh = now.getHours().toString().padStart(2,'0');
-  const mm = now.getMinutes().toString().padStart(2,'0');
-  const time = "'" + hh + ":" + mm; 
-  const day = now.getDate().toString().padStart(2,'0');
-  const month = (now.getMonth()+1).toString().padStart(2,'0');
-  const year = now.getFullYear().toString().slice(-2);
-  const qrParts = currentQR.split('/');
-  const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
-  const newRowData = [nextId, ...qrParts, currentQty, currentUser, time, day, month, year];
-  // 1. УМЕНЬШАЕМ ЛОКАЛЬНЫЙ ОСТАТАТOK (InventoryData)
-  const qty = parseInt(currentQty) || 0;
-  inventoryData = inventoryData.map(r => {
-    if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
-      r[4] = (parseInt(r[4]) || 0) - qty;
-    }
-    return r;
-  });
-  localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
-  // 2. СОХРАНЯЕМ ЛОГ СО СТАТУСОМ 'wait'
-  qrLogs.push({ data: newRowData, status: 'wait' });
-  localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
-  renderLogs();
-  closeModal();
-  sendUnsynced(); // Пробуем отправить, если есть сеть
-}
-async function sendUnsynced() {
-  if (!navigator.onLine) return;
-  for (let i = 0; i < qrLogs.length; i++) {
-    if (qrLogs[i].status === 'wait') {
-      try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ row: qrLogs[i].data })
-        }); 
-        // Если запрос ушел (no-cors всегда "успешен", если нет ошибки сети)
-        qrLogs[i].status = 'ok';
-        localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
-        renderLogs(); // Строка позеленеет
-      } catch (e) {
-        console.log("Сеть пропала, ждем...");
-        break; 
+
+      async function saveEntry() {
+    if (isSaving) return; 
+    isSaving = true;
+
+    try {
+      const now = new Date(),
+            hh = now.getHours().toString().padStart(2,'0'),
+            mm = now.getMinutes().toString().padStart(2,'0'),
+            time = "'" + hh + ":" + mm,
+            day = now.getDate().toString().padStart(2,'0'),
+            month = (now.getMonth()+1).toString().padStart(2,'0'),
+            year = now.getFullYear().toString().slice(-2);
+      
+      const authUser = "Неугодников"; 
+      const qrParts = currentQR.split('/');
+      const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
+
+      // СТРУКТУРА: 1:ID, 2-5:QR, 6:Кол-во, 7:Исполнитель, 8:ВЫДАВШИЙ, 9:Время, 10:День, 11:Месяц, 12:Год
+      const newRowData = [nextId, ...qrParts, currentQty, currentUser, authUser, time, day, month, year];
+
+      const qty = parseInt(currentQty) || 0;
+      inventoryData = inventoryData.map(r => {
+        if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
+          r[4] = (parseInt(r[4]) || 0) - qty;
+        }
+        return r;
+      });
+
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+      qrLogs.push({ data: newRowData, status: 'wait' });
+      localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
+      
+      renderLogs(); closeModal();
+      isSaving = false; sendUnsynced(); 
+      
+    } catch (e) { console.error(e); isSaving = false; }
+  }
+
+  async function sendUnsynced() {
+    if (!navigator.onLine) return;
+    for (let i = 0; i < qrLogs.length; i++) {
+      if (qrLogs[i].status === 'wait') {
+        qrLogs[i].status = 'syncing'; 
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ row: qrLogs[i].data })
+          });
+          qrLogs[i].status = 'ok';
+          localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
+          renderLogs();
+        } catch (e) {
+          qrLogs[i].status = 'wait'; 
+          localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
+          break; 
+        }
       }
     }
   }
-}
+
+
     async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
+    
     // Помечаем все логи из таблицы как синхронизированные
     if (data.logs) {
       qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
@@ -226,19 +297,23 @@ async function sendUnsynced() {
     renderLogs();
   } catch (e) { alert("Ошибка"); }
 }
-        function updateStatus() { 
+        
+  function updateStatus() { 
       indicator.classList.toggle('net-online', navigator.onLine); 
     }
+
     // Измененный обработчик: при появлении сети обновляем статус и запускаем отправку
     window.addEventListener('online', () => {
       updateStatus();
       sendUnsynced(); 
     });
+
     window.addEventListener('offline', updateStatus);
+    
+    // Инициализация при запуске
     updateStatus(); 
     renderLogs();
     sendUnsynced(); // Пробуем отправить накопленное сразу при открытии страницы
   </script>
 </body>
 </html>
-
