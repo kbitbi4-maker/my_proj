@@ -245,7 +245,8 @@
       const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
 
       // СТРУКТУРА: 1:ID, 2-5:QR, 6:Кол-во, 7:Исполнитель, 8:ВЫДАВШИЙ, 9:Время, 10:День, 11:Месяц, 12:Год
-     const newRowData = [nextId, ...qrParts, currentQty, currentUser, authUser, time, day, month, year];
+     const newRowData = [nextId, ...qrParts, currentQty, currentUser, window.authUser, time, day, month, year];
+
 
       const qty = parseInt(currentQty) || 0;
       inventoryData = inventoryData.map(r => {
