@@ -19,16 +19,16 @@
         .main-container { display: flex; flex-grow: 1; height: calc(100vh - 9.6vh); }
         .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
         .right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; }
-        .example-line { font-size: 3.5vh; font-weight: bold; color: #333; margin-bottom: 15px; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-        .block { padding: 4px 8px; border-radius: 6px; display: inline-block; }
+        .example-line { font-size: 3.2vh; font-weight: bold; color: #333; margin-bottom: 15px; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+        .block { padding: 3px 6px; border-radius: 6px; display: inline-block; background: #e4e7eb; }
         .block-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .block-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
-        .num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 3vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+        .num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
         .num-btn:active { background: #ddd; transform: scale(0.95); }
         .num-btn.clear { background: #ff4b2b; color: white; }
         .num-btn.op { background: #ff9800; color: white; }
-        .num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 15px 0; font-size: 2.5vh; }
+        .num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 12px 0; font-size: 2.2vh; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -130,32 +130,9 @@
             const line = document.createElement('div');
             line.className = 'example-line';
             line.id = 'active-line';
-            line.innerHTML = `<span>${currentExampleText}</span><span id="answer-area">= _</span>`;
             examplesList.appendChild(line);
+            renderInput();
             examplesList.scrollTop = examplesList.scrollHeight;
-        }
-
-        function pressNum(n) {
-            if (!currentMode) return;
-            const area = document.getElementById('answer-area');
-            if (n === 'C') {
-                currentInput = '';
-            } else if (n === 'D') {
-                currentInput = currentInput.slice(0, -1);
-            } else {
-                currentInput += n;
-            }
-            
-            // Визуализация ввода с разделением блоков
-            let parts = currentInput.split('=');
-            let html = '= ';
-            
-            if (parts.length === 1) {
-                html += `<span>${parts[0] || '_'}</span>`;
-            } else {
-                html += `<span>${parts[0]}</span> = <span>${parts[1] || '_'}</span>`;
-            }
-            area.innerHTML = html;
         }
 
         function evaluateExpr(str) {
@@ -166,38 +143,75 @@
             }
         }
 
+        function renderInput() {
+            const line = document.getElementById('active-line');
+            if (!line) return;
+            
+            let parts = currentInput.split('=');
+            let html = `<span>${currentExampleText}</span>`;
+            
+            // Если ввели первый знак равенства
+            if (parts.length > 1) {
+                let simText = parts[0];
+                let simVal = evaluateExpr(simText);
+                let simCorrect = (simVal === correctValue);
+                
+                // Подсвечиваем второй блок только после того, как ребенок нажал "=" (т.е. появился 3-й пустой блок или он уже пишет финал)
+                if (parts.length > 2 || parts[1].length > 0) {
+                    html += ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+                } else {
+                    html += ` = <span class="block">${simText || '?'}</span>`;
+                }
+            }
+            
+            // Если ввели второй знак равенства (решение финала)
+            if (parts.length > 2) {
+                let finText = parts[1];
+                let finVal = evaluateExpr(finText);
+                let finCorrect = (finVal === correctValue);
+                
+                // Проверяем ответ (подсвечиваем на ходу или пустым маркером)
+                if (finText.length > 0) {
+                    html += ` = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+                } else {
+                    html += ` = <span class="block">_</span>`;
+                }
+            } else if (parts.length === 2 && parts[1].length === 0) {
+                // Если знак равенства один и за ним пустота
+                html += ` = <span class="block">_</span>`;
+            } else if (parts.length === 1 && currentInput.length > 0) {
+                // Если равенство еще не нажали, но уже начали писать число
+                html += ` = <span class="block">${currentInput}</span>`;
+            } else if (currentInput.length === 0) {
+                // Исходное пустое состояние строки
+                html += ` = <span class="block">_</span>`;
+            }
+            
+            line.innerHTML = html;
+        }
+
+        function pressNum(n) {
+            if (!currentMode) return;
+            
+            if (n === 'C') {
+                currentInput = '';
+            } else if (n === 'D') {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                let parts = currentInput.split('=');
+                // Запрещаем ребенку ставить больше двух знаков равенства
+                if (n === '=' && parts.length >= 3) return;
+                currentInput += n;
+            }
+            renderInput();
+        }
+
         function confirmAndNext() {
             if (!currentMode) return;
             const activeLine = document.getElementById('active-line');
-            
             if (activeLine) {
-                const parts = currentInput.split('=');
-                let html = '';
-                
-                if (parts.length === 1) {
-                    // Только один блок (ответ без промежуточного упрощения)
-                    let userAns = parts[0];
-                    let val = evaluateExpr(userAns);
-                    let isCorrect = (val === correctValue);
-                    html = `= <span class="block ${isCorrect ? 'block-correct' : 'block-incorrect'}">${userAns || '?'}</span>`;
-                } else {
-                    // Два блока: упрощение и финал
-                    let simplifyBlock = parts[0];
-                    let finalAns = parts[1];
-                    
-                    let simVal = evaluateExpr(simplifyBlock);
-                    let finVal = evaluateExpr(finalAns);
-                    
-                    let simCorrect = (simVal === correctValue);
-                    let finCorrect = (finVal === correctValue);
-                    
-                    html = `= <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simplifyBlock}</span> = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finalAns || '?'}</span>`;
-                }
-                
-                activeLine.innerHTML = `<span>${currentExampleText}</span> ${html}`;
-                activeLine.removeAttribute('id');
+                activeLine.removeAttribute('id'); // Закрепляем строчку
             }
-            
             currentInput = '';
             isAddition = !isAddition;
             generateExample();
