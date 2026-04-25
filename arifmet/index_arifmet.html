@@ -9,23 +9,101 @@
         body { display: flex; flex-direction: column; background: #f0f2f5; }
         .header { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
-        .header-title { font-size: 2.7vh; font-weight: bold; flex-grow: 1; text-align: center; }
+        .header-title { font-size: 2.3vh; font-weight: bold; flex-grow: 1; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; }
-        .content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; text-align: center; color: #777; }
+        .dropdown { position: absolute; top: 9.6vh; left: 50%; transform: translateX(-50%); background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; width: 150px; z-index: 1001; }
+        .dropdown.active { display: flex; }
+        .dropdown-item { padding: 12px; color: #333; text-align: center; cursor: pointer; font-size: 16px; border-bottom: 1px solid #eee; }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background: #f0f2f5; }
+        .content { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-grow: 1; text-align: center; }
+        .example-box { font-size: 6vh; font-weight: bold; color: #333; margin-bottom: 30px; }
+        .next-btn { padding: 15px 30px; font-size: 2.5vh; background: #4caf50; color: white; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); font-weight: bold; }
+        .next-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
-        <div class="header-title">Сложение и вычитание</div>
+        <div class="header-title" onclick="toggleMenu()">Режим: Выбрать ▼</div>
         <div class="version">arifmet_001</div>
     </div>
 
-    <div class="content">
-        <h1>Тут будет игра 🎈</h1>
-        <p>Начнем наполнять её математикой в следующем шаге.</p>
+    <!-- Выпадающее меню -->
+    <div id="menu" class="dropdown">
+        <div class="dropdown-item" onclick="setMode('tens')">Десятки</div>
+        <div class="dropdown-item" onclick="setMode('hundreds')">Сотни</div>
+        <div class="dropdown-item" onclick="setMode('thousands')">Тысячи</div>
     </div>
 
+    <!-- Область игры -->
+    <div class="content">
+        <div class="example-box" id="example">Выберите режим в меню</div>
+        <button class="next-btn" id="btn-next" onclick="generateExample()" style="display: none;">Следующий пример</button>
+    </div>
+
+    <script>
+        const menu = document.getElementById('menu');
+        const exampleBox = document.getElementById('example');
+        const btnNext = document.getElementById('btn-next');
+        
+        let currentMode = '';
+        let isAddition = true; // Первым всегда идет сложение
+
+        function toggleMenu() { menu.classList.toggle('active'); }
+
+        function setMode(mode) {
+            menu.classList.remove('active');
+            if (mode === 'hundreds' || mode === 'thousands') { alert("Режим в разработке 🛠️"); return; }
+            
+            currentMode = mode;
+            isAddition = true; // Сбрасываем очередь при смене режима
+            
+            const title = mode === 'tens' ? 'Десятки' : 'Выбрать';
+            document.querySelector('.header-title').innerText = 'Режим: ' + title + ' ▼';
+            
+            btnNext.style.display = 'block';
+            generateExample();
+        }
+
+        function generateExample() {
+            if (currentMode !== 'tens') return;
+            
+            let num1, num2, text;
+            
+            if (isAddition) {
+                // Правила для сложения
+                while (true) {
+                    num1 = Math.floor(Math.random() * 90) + 10; // от 10 до 99
+                    num2 = Math.floor(Math.random() * 90) + 10; // от 10 до 99
+                    const units1 = num1 % 10;
+                    const units2 = num2 % 10;
+                    
+                    if (units1 + units2 > 10 && (num1 + num2) >= 100) {
+                        text = `${num1} + ${num2} = ?`;
+                        break;
+                    }
+                }
+            } else {
+                // Правила для вычитания
+                while (true) {
+                    num1 = Math.floor(Math.random() * 90) + 10; // от 10 до 99
+                    num2 = Math.floor(Math.random() * 90) + 10; // от 10 до 99
+                    const units1 = num1 % 10;
+                    const units2 = num2 % 10;
+                    
+                    // num1 должен быть больше num2, единицы num2 как минимум на 1 больше единиц num1
+                    if (num1 > num2 && units2 >= (units1 + 1) && (num1 - num2) >= 1) {
+                        text = `${num1} - ${num2} = ?`;
+                        break;
+                    }
+                }
+            }
+            
+            exampleBox.innerText = text;
+            isAddition = !isAddition; // Меняем сложение на вычитание для следующего шага
+        }
+    </script>
 </body>
 </html>
