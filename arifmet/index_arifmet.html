@@ -39,7 +39,7 @@
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="header-title" onclick="toggleMenu()">Режим: Выбрать ▼</div>
-        <div class="version">arifmet_007</div>
+        <div class="version">arifmet_008</div>
     </div>
 
     <div id="menu" class="dropdown">
@@ -81,8 +81,6 @@
         
         let currentMode = '';
         let isAddition = true; 
-        
-        // Хранилище для всех созданных примеров
         let examplesHistory = [];
         let activeIndex = -1;
 
@@ -126,7 +124,6 @@
                 }
             }
             
-            // Добавляем новый пример в массив истории
             examplesHistory.push({
                 exampleText: text,
                 correctValue: correctValue,
@@ -141,7 +138,9 @@
 
         function evaluateExpr(str) {
             try {
-                return Function('"use strict"; return (' + str.replace(/[^0-9+-]/g, '') + ')')();
+                const cleaned = str.replace(/[^0-9+-]/g, '');
+                if (!cleaned) return null;
+                return Function('"use strict"; return (' + cleaned + ')')();
             } catch (e) {
                 return null;
             }
@@ -151,7 +150,6 @@
             const placeholder = examplesList.querySelector('div[style*="color: #999"]');
             if (placeholder) placeholder.remove();
             
-            // Полностью перерисовываем все строки из истории
             examplesList.innerHTML = '';
             
             examplesHistory.forEach((item, index) => {
@@ -162,31 +160,36 @@
                 let parts = item.currentInput.split('=');
                 let html = `<span>${item.exampleText}</span>`;
                 
-                // Модель отображения блоков для каждого примера
+                // 1. Блок упрощения
                 if (parts.length > 1) {
-                    let simText = parts;
+                    let simText = parts[1];
                     let simVal = evaluateExpr(simText);
                     let simCorrect = (simVal === item.correctValue);
-                    // Второй блок подсвечивается только если уже нажат знак "=" (есть 3 части)
-                    if (parts.length > 2 || parts.length > 0) {
+                    
+                    if (parts.length > 2 || parts[2] !== undefined) {
                         html += ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
                     } else {
-                        html += ` = <span class="block">${simText || '?'}</span>`;
+                        html += ` = <span class="block">${simText || '_'}</span>`;
                     }
                 }
                 
+                // 2. Блок ответа
                 if (parts.length > 2) {
-                    let finText = parts;
+                    let finText = parts[2];
                     let finVal = evaluateExpr(finText);
                     let finCorrect = (finVal === item.correctValue);
                     
-                    if (finText.length > 0) {
+                    let isTwoDigits = /^[0-9]{2,}$/.test(finText.trim());
+                    
+                    if (isTwoDigits || finText.trim() === String(item.correctValue)) {
                         html += ` = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+                    } else if (finText.length > 0) {
+                        html += ` = <span class="block">${finText}</span>`;
                     } else {
                         html += ` = <span class="block">_</span>`;
                     }
-                } else if (parts.length === 2 && parts.length === 0) {
-                    html += ` = <span class="block">_</span>`;
+                } else if (parts.length === 2 && parts[1] !== undefined && parts[1].length > 0) {
+                    // Если знак равенства один и за ним пустота
                 } else if (parts.length === 1 && item.currentInput.length > 0) {
                     html += ` = <span class="block">${item.currentInput}</span>`;
                 } else if (item.currentInput.length === 0) {
@@ -197,7 +200,6 @@
                 examplesList.appendChild(line);
             });
             
-            // Автопрокрутка к активному элементу
             const activeElem = examplesList.querySelector('.active');
             if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
