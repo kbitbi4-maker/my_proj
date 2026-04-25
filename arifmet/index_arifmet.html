@@ -118,7 +118,7 @@
                     num2 = Math.floor(Math.random() * 90) + 10;
                     const units1 = num1 % 10;
                     const units2 = num2 % 10;
-                    if (units1 + units2 > 10 && (num1 + num2) >= 100) {
+                    if (units1 + units2 > 10 && (num1 + num2) < 100) {
                         currentExampleText = `${num1} + ${num2} = `;
                         break;
                     }
