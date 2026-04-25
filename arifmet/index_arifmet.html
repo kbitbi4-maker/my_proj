@@ -39,7 +39,7 @@
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="header-title" onclick="toggleMenu()">Режим: Выбрать ▼</div>
-        <div class="version">arifmet_008</div>
+        <div class="version">arifmet_009</div>
     </div>
 
     <div id="menu" class="dropdown">
@@ -160,22 +160,20 @@
                 let parts = item.currentInput.split('=');
                 let html = `<span>${item.exampleText}</span>`;
                 
+                let simText = parts[0] || '';
+                let finText = parts[1] || '';
+                
                 // 1. Блок упрощения
-                if (parts.length > 1) {
-                    let simText = parts[1];
+                if (item.currentInput.includes('=')) {
                     let simVal = evaluateExpr(simText);
                     let simCorrect = (simVal === item.correctValue);
-                    
-                    if (parts.length > 2 || parts[2] !== undefined) {
-                        html += ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
-                    } else {
-                        html += ` = <span class="block">${simText || '_'}</span>`;
-                    }
+                    html += ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+                } else {
+                    html += ` = <span class="block">${simText || '_'}</span>`;
                 }
                 
                 // 2. Блок ответа
-                if (parts.length > 2) {
-                    let finText = parts[2];
+                if (parts.length > 1) {
                     let finVal = evaluateExpr(finText);
                     let finCorrect = (finVal === item.correctValue);
                     
@@ -188,12 +186,6 @@
                     } else {
                         html += ` = <span class="block">_</span>`;
                     }
-                } else if (parts.length === 2 && parts[1] !== undefined && parts[1].length > 0) {
-                    // Если знак равенства один и за ним пустота
-                } else if (parts.length === 1 && item.currentInput.length > 0) {
-                    html += ` = <span class="block">${item.currentInput}</span>`;
-                } else if (item.currentInput.length === 0) {
-                    html += ` = <span class="block">_</span>`;
                 }
                 
                 line.innerHTML = html;
@@ -220,7 +212,7 @@
                 activeItem.currentInput = activeItem.currentInput.slice(0, -1);
             } else {
                 let parts = activeItem.currentInput.split('=');
-                if (n === '=' && parts.length >= 3) return;
+                if (n === '=' && parts.length >= 2) return;
                 activeItem.currentInput += n;
             }
             
