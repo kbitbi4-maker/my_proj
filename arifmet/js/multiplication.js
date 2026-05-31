@@ -1,17 +1,13 @@
-// Переменная для хранения текущего игрового задания (сколько монстров и пицц)
 let currentMultiTask = null;
 
-// 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
 
-// 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
-    // Убрали проблемную проверку, так как функция и так вызывается только в нужном режиме
-    const itemsPerMonster = Math.floor(Math.random() * 4) + 2; // сколько пицц (2-5)
-    const monsterCount = Math.floor(Math.random() * 4) + 2;    // сколько монстров (2-5)
+    const itemsPerMonster = Math.floor(Math.random() * 4) + 2; 
+    const monsterCount = Math.floor(Math.random() * 4) + 2;    
     
     const text = `${itemsPerMonster}×${monsterCount}`;
     const correctValue = itemsPerMonster * monsterCount;
@@ -33,22 +29,21 @@ function generateMultiExample() {
     renderMonsterGame();
 }
 
-// 3. Функция синхронизации при клике на старые примеры в истории
 function syncMonsterGame() {
     if (window.activeIndex === -1) return;
     
     const activeItem = window.examplesHistory[window.activeIndex];
     const parts = activeItem.exampleText.split('×');
     
+    // Исправлено: берем конкретные индексы массива вместо всего объекта
     currentMultiTask = {
-        items: parseInt(parts[0]),
-        monsters: parseInt(parts[1])
+        items: parseInt(parts[0], 10),
+        monsters: parseInt(parts[1], 10)
     };
     
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц под списком примеров
 function renderMonsterGame() {
     const leftArea = document.getElementById('examples-list');
     if (!leftArea) return;
