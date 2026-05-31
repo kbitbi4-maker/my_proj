@@ -38,7 +38,6 @@ function setMode(mode) {
 // Универсальный калькулятор для проверки выражений
 function evaluateExpr(str) {
     try {
-        // Разрешаем цифры, плюсы, минусы и знак умножения × (заменяя его на *)
         const cleaned = str.replace(/[^0-9+-\\*×]/g, '').replace(/×/g, '*');
         if (!cleaned) return null;
         return Function('"use strict"; return (' + cleaned + ')')();
@@ -50,9 +49,6 @@ function evaluateExpr(str) {
 // Универсальный рендеринг строк для ВСЕХ режимов
 function renderAllLines() {
     if (!examplesList) return;
-    
-    const placeholder = examplesList.querySelector('div[style*="color: #999"]');
-    if (placeholder) placeholder.remove();
     
     examplesList.innerHTML = '';
     
@@ -81,7 +77,6 @@ function renderAllLines() {
             let finVal = evaluateExpr(finText);
             let finCorrect = (finVal === item.correctValue);
             
-            // Поддерживаем как однозначные (для умножения), так и двузначные числа
             let isValidLength = /^[0-9]{1,}$/.test(finText.trim());
             
             if (isValidLength || finText.trim() === String(item.correctValue)) {
@@ -104,7 +99,6 @@ function renderAllLines() {
 function selectExample(index) {
     activeIndex = index;
     renderAllLines();
-    // Логика синхронизации визуальной игры для умножения (напишем позже)
     if (currentMode === 'multiplication' && typeof syncMonsterGame === 'function') {
         syncMonsterGame();
     }
