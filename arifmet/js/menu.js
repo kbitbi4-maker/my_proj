@@ -46,52 +46,76 @@ function evaluateExpr(str) {
     }
 }
 
-// Универсальный рендеринг строк для ВСЕХ режимов
+// Универсальный рендеринг строк для ВСЕХ режимов (без мерцания!)
 function renderAllLines() {
     if (!examplesList) return;
     
-    examplesList.innerHTML = '';
-    
+    // Перерисовываем список с нуля ТОЛЬКО при смене режима или полной очистке истории
+    if (examplesList.children.length !== examplesHistory.length) {
+        examplesList.innerHTML = '';
+        
+        examplesHistory.forEach((item, index) => {
+            const line = document.createElement('div');
+            line.className = `example-line ${index === activeIndex ? 'active' : ''}`;
+            line.setAttribute('data-index', index); // Маркер, чтобы находить строку без перезаписи
+            line.onclick = () => selectExample(index);
+            
+            // Создаем каркас строки один раз
+            line.innerHTML = `
+                <span class="example-text">${item.exampleText}</span>
+                <span class="sim-block-wrapper"></span>
+                <span class="fin-block-wrapper"></span>
+            `;
+            examplesList.appendChild(line);
+        });
+    }
+
+    // Точечно обновляем содержимое ТОЛЬКО для активной (или измененной) строки
     examplesHistory.forEach((item, index) => {
-        const line = document.createElement('div');
-        line.className = `example-line ${index === activeIndex ? 'active' : ''}`;
-        line.onclick = () => selectExample(index);
-        
-        let parts = item.currentInput.split('=');
-        let html = `<span>${item.exampleText}</span>`;
-        
-        let simText = parts[0] || '';
-        let finText = parts[1] || '';
-        
-        // 1. Блок упрощения
+        const line = examplesList.querySelector(`[data-index="${index}"]`);
+        if (!line) return;
+
+        // Синхронизируем класс активности (подсветка строки)
+        if (index === activeIndex) {
+            line.classList.add('active');
+        } else {
+            line.classList.remove('active');
+        }
+
+        const parts = item.currentInput.split('=');
+        const simText = parts[0] || '';
+        const finText = parts[1] || '';
+
+        const simWrapper = line.querySelector('.sim-block-wrapper');
+        const finWrapper = line.querySelector('.fin-block-wrapper');
+
+        // Обновляем Блок 1 (Упрощение)
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
-            html += ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+            simWrapper.innerHTML = ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
         } else {
-            html += ` = <span class="block">${simText || '_'}</span>`;
+            simWrapper.innerHTML = ` = <span class="block">${simText || '_'}</span>`;
         }
-        
-        // 2. Блок ответа
+
+        // Обновляем Блок 2 (Ответ)
         if (parts.length > 1) {
             let finVal = evaluateExpr(finText);
             let finCorrect = (finVal === item.correctValue);
-            
             let isValidLength = /^[0-9]{1,}$/.test(finText.trim());
-            
+
             if (isValidLength || finText.trim() === String(item.correctValue)) {
-                html += ` = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+                finWrapper.innerHTML = ` = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
             } else if (finText.length > 0) {
-                html += ` = <span class="block">${finText}</span>`;
+                finWrapper.innerHTML = ` = <span class="block">${finText}</span>`;
             } else {
-                html += ` = <span class="block">_</span>`;
+                finWrapper.innerHTML = ` = <span class="block">_</span>`;
             }
+        } else {
+            finWrapper.innerHTML = ''; // Стираем блок ответа, если знака "=" еще нет
         }
-        
-        line.innerHTML = html;
-        examplesList.appendChild(line);
     });
-    
+
     const activeElem = examplesList.querySelector('.active');
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
