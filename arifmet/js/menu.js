@@ -46,36 +46,44 @@ function evaluateExpr(str) {
     }
 }
 
-// Универсальный рендеринг строк для ВСЕХ режимов (без мерцания!)
+// Универсальный рендеринг строк для ВСЕХ режимов (теперь ПОЛНОСТЬЮ без мерцания!)
 function renderAllLines() {
     if (!examplesList) return;
     
-    // Перерисовываем список с нуля ТОЛЬКО при смене режима или полной очистке истории
-    if (examplesList.children.length !== examplesHistory.length) {
-        examplesList.innerHTML = '';
-        
-        examplesHistory.forEach((item, index) => {
+    // Удаляем заглушку "Выберите режим", если она есть
+    const placeholder = examplesList.querySelector('div[style*="color: #999"]');
+    if (placeholder) placeholder.remove();
+
+    // Вместо полной очистки проверяем, сколько строк не хватает на экране
+    let currentRenderedCount = examplesList.children.length;
+
+    if (currentRenderedCount < examplesHistory.length) {
+        // Дорисовываем ТОЛЬКО новые примеры, которые появились в массиве
+        for (let index = currentRenderedCount; index < examplesHistory.length; index++) {
+            const item = examplesHistory[index];
             const line = document.createElement('div');
             line.className = `example-line ${index === activeIndex ? 'active' : ''}`;
-            line.setAttribute('data-index', index); // Маркер, чтобы находить строку без перезаписи
+            line.setAttribute('data-index', index);
             line.onclick = () => selectExample(index);
             
-            // Создаем каркас строки один раз
             line.innerHTML = `
                 <span class="example-text">${item.exampleText}</span>
                 <span class="sim-block-wrapper"></span>
                 <span class="fin-block-wrapper"></span>
             `;
             examplesList.appendChild(line);
-        });
+        }
+    } else if (currentRenderedCount > examplesHistory.length) {
+        // Если массив очистился (например, при смене режима) — синхронизируем экран
+        examplesList.innerHTML = '';
     }
 
-    // Точечно обновляем содержимое ТОЛЬКО для активной (или измененной) строки
+    // Точечно обновляем содержимое строк
     examplesHistory.forEach((item, index) => {
         const line = examplesList.querySelector(`[data-index="${index}"]`);
         if (!line) return;
 
-        // Синхронизируем класс активности (подсветка строки)
+        // Переключаем подсветку активности без перерисовки элементов
         if (index === activeIndex) {
             line.classList.add('active');
         } else {
@@ -112,7 +120,7 @@ function renderAllLines() {
                 finWrapper.innerHTML = ` = <span class="block">_</span>`;
             }
         } else {
-            finWrapper.innerHTML = ''; // Стираем блок ответа, если знака "=" еще нет
+            finWrapper.innerHTML = '';
         }
     });
 
