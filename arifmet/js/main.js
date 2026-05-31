@@ -1,3 +1,9 @@
+// Функция старта режима "Десятки" (вызывается из menu.js при клике)
+function initTensMode() {
+    isAddition = true; 
+    document.querySelector('.header-title').innerText = 'Режим: Десятки ▼';
+    generateExample(); // Вот теперь пример сгенерируется!
+}
 // Константы и переменные, специфичные только для режима "Десятки"
 const examplesList = document.getElementById('examples-list');
 let isAddition = true; 
