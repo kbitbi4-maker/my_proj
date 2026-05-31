@@ -1,14 +1,8 @@
-// Функция старта режима "Десятки" (вызывается из menu.js при клике)
-function initTensMode() {
-    isAddition = true; 
-    document.querySelector('.header-title').innerText = 'Режим: Десятки ▼';
-    generateExample(); // Вот теперь пример сгенерируется!
-}
 // Константы и переменные, специфичные только для режима "Десятки"
 const examplesList = document.getElementById('examples-list');
 let isAddition = true; 
 
-// Функция инициализации режима, вызывается из menu.js
+// Функция инициализации режима, вызывается из menu.js при клике
 function initTensMode() {
     isAddition = true; 
     document.querySelector('.header-title').innerText = 'Режим: Десятки ▼';
@@ -121,7 +115,8 @@ function selectExample(index) {
     renderAllLines();
 }
 
-function pressNum(n) {
+// Переименовали под логику menu.js, чтобы глобальное меню управляло вводом
+function tensPressNum(n) {
     if (activeIndex === -1 || currentMode !== 'tens') return;
     
     let activeItem = examplesHistory[activeIndex];
@@ -137,9 +132,4 @@ function pressNum(n) {
     }
     
     renderAllLines();
-}
-
-function confirmAndNext() {
-    if (currentMode !== 'tens') return;
-    generateExample();
 }
