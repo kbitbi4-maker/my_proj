@@ -56,4 +56,84 @@ function syncMonsterGame() {
     
     renderMonsterGame();
 }
+// 4. Отрисовка монстриков и пицц под списком примеров
+function renderMonsterGame() {
+    // Находим левую колонку, где живут примеры
+    const leftArea = document.getElementById('examples-list');
+    if (!leftArea) return;
+
+    // Ищем, нет ли уже созданной игровой зоны на странице
+    let gameZone = document.getElementById('game-zone');
+    
+    // Если зоны еще нет — создаем её и аккуратно прикрепляем в самый конец левой области
+    if (!gameZone) {
+        gameZone = document.createElement('div');
+        gameZone.id = 'game-zone';
+        
+        // Стилизуем зону: делаем красивую рамку-лужайку
+        gameZone.style.cssText = `
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f0fdf4;
+            border: 2px dashed #4ade80;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        `;
+        leftArea.appendChild(gameZone);
+    }
+
+    // Если задание по какой-то причине пустое — очищаем лужайку
+    if (!currentMultiTask) {
+        gameZone.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    
+    // Генерируем карточку для каждого монстрика
+    for (let i = 0; i < currentMultiTask.monsters; i++) {
+        // Используем встроенный метод повторения строк .repeat() для быстрой генерации пицц
+        const pizzasHTML = '<span style="font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        
+        html += `
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: #ffffff;
+                padding: 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                min-width: 90px;
+                animation: popIn 0.3s ease-out;
+            ">
+                <!-- Забавный эмодзи монстрика -->
+                <span style="font-size: 42px; margin-bottom: 8px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
+                
+                <!-- Контейнер с порцией пиццы для этого конкретного монстра -->
+                <div style="
+                    display: flex;
+                    gap: 4px;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    max-width: 75px;
+                    background: #fff7ed;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: 1px dashed #fed7aa;
+                ">
+                    ${pizzasHTML}
+                </div>
+            </div>
+        `;
+    }
+    
+    gameZone.innerHTML = html;
+}
 
