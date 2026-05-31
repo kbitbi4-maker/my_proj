@@ -35,7 +35,7 @@ function syncMonsterGame() {
     const activeItem = window.examplesHistory[window.activeIndex];
     const parts = activeItem.exampleText.split('×');
     
-    // Исправлено: берем конкретные индексы массива вместо всего объекта
+    // Очищено от лишних скрытых символов
     currentMultiTask = {
         items: parseInt(parts[0], 10),
         monsters: parseInt(parts[1], 10)
