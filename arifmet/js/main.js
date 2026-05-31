@@ -41,5 +41,5 @@ function generateExample() {
     activeIndex = examplesHistory.length - 1;
     isAddition = !isAddition;
     
-    renderAllLines(); // Вызываем глобальный рендер из menu.js
+    renderAllLines();
 }
