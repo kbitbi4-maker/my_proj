@@ -1,4 +1,3 @@
-// Явно привязываем переменные к окну браузера, чтобы их видели все файлы
 window.currentMode = '';
 window.examplesHistory = [];
 window.activeIndex = -1;
@@ -27,7 +26,6 @@ function setMode(mode) {
     const oldZone = document.getElementById('game-zone');
     if (oldZone) oldZone.remove();
 
-    // Запускаем нужный игровой движок
     if (mode === 'tens') {
         initTensMode(); 
     } else if (mode === 'multiplication') {
@@ -35,18 +33,40 @@ function setMode(mode) {
     }
 }
 
-// Универсальный калькулятор для проверки выражений
+// БЕЗОПАСНЫЙ калькулятор без использования Function/eval
 function evaluateExpr(str) {
-    try {
-        const cleaned = str.replace(/[^0-9+-\\*×]/g, '').replace(/×/g, '*');
-        if (!cleaned) return null;
-        return Function('"use strict"; return (' + cleaned + ')')();
-    } catch (e) {
-        return null;
+    if (!str) return null;
+    
+    // Переводим знак × в умножение
+    let cleaned = str.replace(/×/g, '*').trim();
+    
+    // 1. Обработка умножения (для нового режима)
+    if (cleaned.includes('*')) {
+        let parts = cleaned.split('*');
+        if (parts.length === 2) {
+            return parseInt(parts[0], 10) * parseInt(parts[1], 10);
+        }
     }
+    // 2. Обработка сложения
+    if (cleaned.includes('+')) {
+        let parts = cleaned.split('+');
+        if (parts.length === 2) {
+            return parseInt(parts[0], 10) + parseInt(parts[1], 10);
+        }
+    }
+    // 3. Обработка вычитания
+    if (cleaned.includes('-')) {
+        let parts = cleaned.split('-');
+        if (parts.length === 2) {
+            return parseInt(parts[0], 10) - parseInt(parts[1], 10);
+        }
+    }
+    
+    // Если это просто число без знаков
+    let num = parseInt(cleaned, 10);
+    return isNaN(num) ? null : num;
 }
 
-// Универсальный рендеринг строк для ВСЕХ режимов (без мерцания!)
 function renderAllLines() {
     if (!examplesList) return;
     
