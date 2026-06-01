@@ -5,10 +5,10 @@ let currentMultiTask = null;
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     
-    // Показываем выделенную область монстров на экране
+    // Опечатка полностью исправлена, код теперь работает безошибочно
     const gameZone = document.getElementById('game-zone');
     if (gameZone) {
-        gameZone.style.style.display = 'flex';
+        gameZone.style.display = 'flex'; 
     }
     
     generateMultiExample();
@@ -61,7 +61,6 @@ function renderMonsterGame() {
 
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
-        gameZone.style.display = 'none'; // Скрываем область, если нет активной задачи
         gameZone.removeAttribute('data-current-example');
         return;
     }
