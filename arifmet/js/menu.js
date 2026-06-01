@@ -13,6 +13,10 @@ const examplesList = document.getElementById('examples-list');
 let simFailSoundPlayed = false;
 let finFailSoundPlayed = false;
 
+// НОВЫЕ ФЛАГИ: Чтобы победные звуки в десятках срабатывали ровно по одному разу
+let simWinSoundPlayed = false;
+let finWinSoundPlayed = false;
+
 function toggleMenu() { 
     menu.classList.toggle('active'); 
 }
@@ -31,6 +35,8 @@ function setMode(mode) {
     window.mixStep = 0;
     simFailSoundPlayed = false;
     finFailSoundPlayed = false;
+    simWinSoundPlayed = false;
+    finWinSoundPlayed = false;
     
     if (examplesList) examplesList.innerHTML = '';
     
@@ -74,7 +80,7 @@ function generateMixExample() {
     window.mixStep++;
 }
 
-// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР (С восстановленными индексами)
+// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -115,10 +121,22 @@ function evaluateExpr(str) {
     return isNaN(num) ? null : num;
 }
 
-// ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ВАШЕГО ГОТОВОГО ФАЙЛА ОШИБКИ
+// ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ЗВУКА ОШИБКИ
 function playFailSound() {
     try {
         const audio = new Audio('audio/fail.mp3');
+        audio.volume = 0.25;
+        audio.play();
+    } catch (e) {
+        console.log("Звук заблокирован политикой браузера");
+    }
+}
+
+// НОВАЯ ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ЗВУКА УСПЕХА ДЛЯ ДЕСЯТКОВ
+function playTensWinSound() {
+    try {
+        // Запускаем ваш скачанный win.mp3
+        const audio = new Audio('audio/win.mp3');
         audio.volume = 0.25;
         audio.play();
     } catch (e) {
@@ -166,7 +184,6 @@ function renderAllLines() {
 
         const partsArr = item.currentInput.split('=');
         
-        // Восстановлены правильные индексы [0] и [1] для вывода текста на экран
         const simText = (partsArr.length > 0) ? partsArr[0] : '';
         const finText = (partsArr.length > 1) ? partsArr[1] : '';
 
@@ -177,7 +194,7 @@ function renderAllLines() {
 
         let isMultiplicationLine = item.exampleText.includes('×');
 
-        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
+        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Слагаемые или Промежуточное вычисление)
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
@@ -192,12 +209,20 @@ function renderAllLines() {
 
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             
-            if (!simCorrect && index === window.activeIndex && !simFailSoundPlayed) {
-                playFailSound();
-                simFailSoundPlayed = true; 
-            }
-            if (simCorrect && index === window.activeIndex) {
-                simFailSoundPlayed = false; 
+            // Логика звуков для Блока Упрощения
+            if (index === window.activeIndex) {
+                if (!simCorrect && !simFailSoundPlayed) {
+                    playFailSound();
+                    simFailSoundPlayed = true; 
+                }
+                // ЗВУК ТРИУМФА: Если это ПЛЮС или МИНУС (не умножение) и блок стал зеленым
+                if (simCorrect && !isMultiplicationLine && !simWinSoundPlayed) {
+                    playTensWinSound();
+                    simWinSoundPlayed = true; // Блокируем повтор
+                }
+                // Сброс флагов при исправлении ошибок
+                if (simCorrect) simFailSoundPlayed = false;
+                if (!simCorrect) simWinSoundPlayed = false;
             }
 
         } else {
@@ -213,20 +238,33 @@ function renderAllLines() {
             if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 
-                if (!finCorrect && index === window.activeIndex && !finFailSoundPlayed) {
-                    playFailSound();
-                    finFailSoundPlayed = true;
-                }
-                if (finCorrect && index === window.activeIndex) {
-                    finFailSoundPlayed = false;
+                // Логика звуков для Финального Ответа
+                if (index === window.activeIndex) {
+                    if (!finCorrect && !finFailSoundPlayed) {
+                        playFailSound();
+                        finFailSoundPlayed = true;
+                    }
+                    // ЗВУК ТРИУМФА: Если ответ верный и это ПЛЮС или МИНУС (у умножения свой плеер в multiplication.js)
+                    if (finCorrect && !isMultiplicationLine && !finWinSoundPlayed) {
+                        playTensWinSound();
+                        finWinSoundPlayed = true;
+                    }
+                    if (finCorrect) finFailSoundPlayed = false;
+                    if (!finCorrect) finWinSoundPlayed = false;
                 }
 
             } else if (trimmedFinText.length > 0) {
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
-                finFailSoundPlayed = false; 
+                if (index === window.activeIndex) {
+                    finFailSoundPlayed = false; 
+                    finWinSoundPlayed = false; // Сбрасываем флаг, пока ребенок дописывает число
+                }
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
-                finFailSoundPlayed = false;
+                if (index === window.activeIndex) {
+                    finFailSoundPlayed = false;
+                    finWinSoundPlayed = false;
+                }
             }
         } else {
             finWrapper.innerHTML = '';
@@ -241,54 +279,7 @@ function selectExample(index) {
     window.activeIndex = index;
     simFailSoundPlayed = false;
     finFailSoundPlayed = false;
+    simWinSoundPlayed = false;
+    finWinSoundPlayed = false;
     renderAllLines();
 
-    const activeItem = window.examplesHistory[index];
-    if (activeItem && activeItem.exampleText.includes('×')) {
-        if (typeof syncMonsterGame === 'function') syncMonsterGame();
-    } else {
-        const gameZone = document.getElementById('game-zone');
-        if (gameZone) {
-            gameZone.innerHTML = '';
-            gameZone.removeAttribute('data-current-example');
-        }
-    }
-}
-
-function pressNum(n) {
-    if (window.activeIndex === -1) return;
-    
-    let activeItem = window.examplesHistory[window.activeIndex];
-    
-    if (n === 'C') {
-        activeItem.currentInput = '';
-        simFailSoundPlayed = false;
-        finFailSoundPlayed = false;
-    } else if (n === 'D') {
-        activeItem.currentInput = activeItem.currentInput.slice(0, -1);
-        simFailSoundPlayed = false;
-        finFailSoundPlayed = false;
-    } else {
-        let partsArr = activeItem.currentInput.split('=');
-        if (n === '=' && partsArr.length >= 2) return;
-        activeItem.currentInput += n;
-    }
-    
-    renderAllLines();
-
-    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') {
-        renderMonsterGame();
-    }
-}
-
-function confirmAndNext() {
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
-    if (window.currentMode === 'tens') {
-        generateExample();
-    } else if (window.currentMode === 'multiplication') {
-        generateMultiExample();
-    } else if (window.currentMode === 'mix') {
-        generateMixExample();
-    }
-}
