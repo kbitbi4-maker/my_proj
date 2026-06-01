@@ -6,6 +6,10 @@ window.activeIndex = -1;
 const menu = document.getElementById('menu');
 const examplesList = document.getElementById('examples-list');
 
+// Флаги, чтобы звуки ошибки не частили и не тарахтели при вводе каждой неверной цифры
+let simFailSoundPlayed = false;
+let finFailSoundPlayed = false;
+
 function toggleMenu() { 
     menu.classList.toggle('active'); 
 }
@@ -21,6 +25,8 @@ function setMode(mode) {
     window.currentMode = mode;
     window.examplesHistory = [];
     window.activeIndex = -1;
+    simFailSoundPlayed = false;
+    finFailSoundPlayed = false;
     
     if (examplesList) examplesList.innerHTML = '';
     
@@ -38,7 +44,7 @@ function setMode(mode) {
     }
 }
 
-// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР (С полной защитой от NaN)
+// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -59,7 +65,7 @@ function evaluateExpr(str) {
         let sum = 0;
         for (let i = 0; i < partsArr.length; i++) {
             let num = parseInt(partsArr[i], 10);
-            if (isNaN(num)) return null; // Защита от незавершенного ввода ("3+3+")
+            if (isNaN(num)) return null; 
             sum += num;
         }
         return sum;
@@ -77,6 +83,38 @@ function evaluateExpr(str) {
     
     let num = parseInt(cleaned, 10);
     return isNaN(num) ? null : num;
+}
+
+// МЯГКИЙ СИНТЕЗ ЗВУКА РАЗОЧАРОВАНИЯ (Мультяшный съезжающий вниз тон "оу-у...")
+function playFailSound() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        let now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        // Мягкая синусоидальная волна, чтобы звук не резал слух
+        osc.type = 'sine'; 
+        
+        // Стартуем с грустной низкой ноты (180 Гц) и плавно съезжаем еще ниже (90 Гц)
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(90, now + 0.35);
+
+        // Настройка деликатной громкости (10%), чтобы не напугать ребенка
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.36);
+    } catch (e) {
+        console.log("Звук заблокирован политикой браузера");
+    }
 }
 
 // Универсальный рендеринг строк для ВСЕХ режимов
@@ -125,10 +163,9 @@ function renderAllLines() {
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // Вычисляем длину строки правильного ответа (например, для 12 длина равна 2)
         const targetLength = String(item.correctValue).length;
 
-        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
+        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Слагаемые)
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
@@ -142,24 +179,44 @@ function renderAllLines() {
             }
 
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
+            
+            // Включаем звук грусти, если слагаемые неверны и звук еще не проигрывался для этого шага
+            if (!simCorrect && index === window.activeIndex && !simFailSoundPlayed) {
+                playFailSound();
+                simFailSoundPlayed = true; // Блокируем повтор до исправления
+            }
+            if (simCorrect && index === window.activeIndex) {
+                simFailSoundPlayed = false; // Сбрасываем блокировку при исправлении
+            }
+
         } else {
             simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
         }
 
-        // 2. РЕНДЕРИНГ БЛОКА ОТВЕТА (Доработан с отложенной проверкой по длине строки)
+        // 2. РЕНДЕРИНГ БЛОКА ОТВЕТА
         if (partsArr.length > 1) {
             let finVal = evaluateExpr(finText);
             let finCorrect = (finVal === item.correctValue);
             let trimmedFinText = String(finText).trim();
             
-            // Запускаем цветную валидацию, только если количество символов совпало или превысило эталон
             if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
+                
+                // Включаем звук грусти, если итоговый ответ неверный
+                if (!finCorrect && index === window.activeIndex && !finFailSoundPlayed) {
+                    playFailSound();
+                    finFailSoundPlayed = true;
+                }
+                if (finCorrect && index === window.activeIndex) {
+                    finFailSoundPlayed = false;
+                }
+
             } else if (trimmedFinText.length > 0) {
-                // Если символы есть, но их меньше нужного количества знаков — блок остается нейтрально серым
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
+                finFailSoundPlayed = false; // Сбрасываем флаг, пока ребенок вводит новые цифры
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
+                finFailSoundPlayed = false;
             }
         } else {
             finWrapper.innerHTML = '';
@@ -170,16 +227,17 @@ function renderAllLines() {
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Выделение примера мышкой
 function selectExample(index) {
     window.activeIndex = index;
+    // При переключении примеров обнуляем звуковые предохранители
+    simFailSoundPlayed = false;
+    finFailSoundPlayed = false;
     renderAllLines();
     if (window.currentMode === 'multiplication' && typeof syncMonsterGame === 'function') {
         syncMonsterGame();
     }
 }
 
-// Единая логика для кнопок нумпада
 function pressNum(n) {
     if (window.activeIndex === -1) return;
     
@@ -187,8 +245,12 @@ function pressNum(n) {
     
     if (n === 'C') {
         activeItem.currentInput = '';
+        simFailSoundPlayed = false;
+        finFailSoundPlayed = false;
     } else if (n === 'D') {
         activeItem.currentInput = activeItem.currentInput.slice(0, -1);
+        simFailSoundPlayed = false;
+        finFailSoundPlayed = false;
     } else {
         let partsArr = activeItem.currentInput.split('=');
         if (n === '=' && partsArr.length >= 2) return;
@@ -203,6 +265,8 @@ function pressNum(n) {
 }
 
 function confirmAndNext() {
+    simFailSoundPlayed = false;
+    finFailSoundPlayed = false;
     if (window.currentMode === 'tens') {
         generateExample();
     } else if (window.currentMode === 'multiplication') {
