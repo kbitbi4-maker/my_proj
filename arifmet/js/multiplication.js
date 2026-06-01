@@ -50,7 +50,42 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц в панорамной нижней области (высота 32%)
+// ФУНКЦИЯ СИНТЕЗА ЗВУКА ПОБЕДЫ (Web Audio API)
+function playWinSound() {
+    try {
+        // Создаем аудио-контекст браузера
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        // Быстрая мажорная победная цепочка нот (до, ми, соль, до следующей октавы)
+        const notes = [261.63, 329.63, 392.00, 523.25]; 
+        const nextTime = ctx.currentTime;
+        
+        notes.forEach((freq, index) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            // Настраиваем приятный мягкий "игровой" звук треугольной волны
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(freq, nextTime + index * 0.1);
+            
+            // Плавное затухание каждой ноты, чтобы звук не щелкал
+            gain.gain.setValueAtTime(0.15, nextTime + index * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.01, nextTime + index * 0.1 + 0.15);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start(nextTime + index * 0.1);
+            osc.stop(nextTime + index * 0.1 + 0.15);
+        });
+    } catch (e) {
+        console.log("Звук заблокирован политикой браузера до первого клика");
+    }
+}
+
+// 4. Отрисовка монстриков и пицц в панорамной нижней области
 function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
@@ -86,24 +121,27 @@ function renderMonsterGame() {
         let finVal = evaluateExpr(finText);
         let finCorrect = (finVal === activeItem.correctValue);
 
-        // Если и слагаемые, и ответ верны — победа!
         if (simCorrect && finCorrect) {
             isFullySolved = true;
         }
     }
 
-    // Кэш-ключ теперь отслеживает и текст примера, и статус победы
     const cacheKey = activeItem.exampleText + "_" + (isFullySolved ? "win" : "play");
     if (gameZone.getAttribute('data-current-example') === cacheKey) {
         return;
     }
+    
+    // ЕСЛИ ПРОИЗОШЕЛ ПЕРЕХОД В СТАТУС ВЕРИФИЦИРОВАННОЙ ПОБЕДЫ — ВКЛЮЧАЕМ ФАНФАРЫ
+    if (isFullySolved) {
+        playWinSound();
+    }
+    
     gameZone.setAttribute('data-current-example', cacheKey);
 
     let html = '';
     
     // Генерируем карточки монстриков
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        // Если пример решен — пиццы превращаются в текст "Ням-ням!"
         const pizzasHTML = isFullySolved 
             ? '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>' 
             : '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
