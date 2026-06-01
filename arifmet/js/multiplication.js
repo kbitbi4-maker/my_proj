@@ -50,38 +50,46 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// ФУНКЦИЯ СИНТЕЗА ЗВУКА ПОБЕДЫ (Web Audio API)
+// ОБНОВЛЕННАЯ ФУНКЦИЯ: Повторяющийся забавный "клич" пришельцев
 function playWinSound() {
     try {
-        // Создаем аудио-контекст браузера
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
+        if (!AudioContext || !currentMultiTask) return;
         const ctx = new AudioContext();
         
-        // Быстрая мажорная победная цепочка нот (до, ми, соль, до следующей октавы)
-        const notes = [261.63, 329.63, 392.00, 523.25]; 
-        const nextTime = ctx.currentTime;
+        // Количество повторений звука равно количеству монстров на экране
+        const repeatCount = currentMultiTask.monsters;
+        let startTime = ctx.currentTime;
         
-        notes.forEach((freq, index) => {
+        for (let i = 0; i < repeatCount; i++) {
+            // Каждое следующее "повторение" звучит с небольшой задержкой (0.18 сек)
+            let noteTime = startTime + (i * 0.18);
+            
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             
-            // Настраиваем приятный мягкий "игровой" звук треугольной волны
-            osc.type = 'triangle'; 
-            osc.frequency.setValueAtTime(freq, nextTime + index * 0.1);
+            // Используем "пилообразную" (sawtooth) или "синусоидальную" волну для забавного космического эффекта
+            osc.type = 'sine'; 
             
-            // Плавное затухание каждой ноты, чтобы звук не щелкал
-            gain.gain.setValueAtTime(0.15, nextTime + index * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.01, nextTime + index * 0.1 + 0.15);
+            // Стартовая частота звука ("голос" пришельца)
+            let baseFreq = 300 + (Math.random() * 100); // Слегка рандомизируем тон, чтобы пришельцы звучали по-разному
+            osc.frequency.setValueAtTime(baseFreq, noteTime);
+            
+            // Эффект "виу-виу" — частота резко улетает вверх за долю секунды
+            osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.5, noteTime + 0.12);
+            
+            // Настройка громкости и плавного затухания
+            gain.gain.setValueAtTime(0.12, noteTime);
+            gain.gain.linearRampToValueAtTime(0.01, noteTime + 0.15);
             
             osc.connect(gain);
             gain.connect(ctx.destination);
             
-            osc.start(nextTime + index * 0.1);
-            osc.stop(nextTime + index * 0.1 + 0.15);
-        });
+            osc.start(noteTime);
+            osc.stop(noteTime + 0.15);
+        }
     } catch (e) {
-        console.log("Звук заблокирован политикой браузера до первого клика");
+        console.log("Звук заблокирован политикой браузера");
     }
 }
 
@@ -131,7 +139,7 @@ function renderMonsterGame() {
         return;
     }
     
-    // ЕСЛИ ПРОИЗОШЕЛ ПЕРЕХОД В СТАТУС ВЕРИФИЦИРОВАННОЙ ПОБЕДЫ — ВКЛЮЧАЕМ ФАНФАРЫ
+    // Если зафиксирована победа — включаем космический хор монстров
     if (isFullySolved) {
         playWinSound();
     }
