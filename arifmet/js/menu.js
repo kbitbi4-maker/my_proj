@@ -98,7 +98,7 @@ function renderAllLines() {
             }
         } else { finWrapper.innerHTML = ''; }
     });
-    let cur = window.examplesHistory[window.activeIndex]; // Рендеринг вычитания при любом обновлении ввода
+    let cur = window.examplesHistory[window.activeIndex]; // Синхронизация вычитания при обновлении ввода
     if (cur && cur.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
         let nums = cur.exampleText.split('-');
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
@@ -112,7 +112,8 @@ function selectExample(index) {
     renderAllLines();
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) { 
-        if (typeof syncMonsterGame === 'function') syncMonsterGame(); // Восстанавливаем оригинальный синк умножения
+        if (typeof syncMonsterGame === 'function') syncMonsterGame();
+        if (typeof renderMonsterGame === 'function') renderMonsterGame(); // Принудительный рендер инопланетян
     } else if (activeItem && activeItem.exampleText.includes('+')) {
         if (typeof renderAdditionVisual === 'function') {
             let nums = activeItem.exampleText.split('+');
@@ -148,9 +149,7 @@ function pressNum(n) {
         let nums = activeItem.exampleText.split('-');
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
-    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') {
-        renderMonsterGame(); // Оставляем ваш оригинальный апдейтер для умножения
-    }
+    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
 }
 function confirmAndNext() {
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
