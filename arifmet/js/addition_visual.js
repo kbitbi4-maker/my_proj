@@ -76,6 +76,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
 
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%; animation:fadeIn 0.3s;">
+                <!-- ЛЕВЫЙ РОБОТ -->
                 <div class="crystal-truck">
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <span style="font-size:36px; line-height:1;">🤖</span>
@@ -87,6 +88,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
                     </div>
                 </div>
                 <div style="font-size:24px; font-weight:bold; color:#22c55e;">+</div>
+                <!-- ПРАВЫЙ РОБОТ -->
                 <div class="crystal-truck">
                     <div class="crystal-deck orange-theme" style="margin-right:10px; ${simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : ''}">${generateCrystalColumnsHTML(rightTens, true, rightBorrowCount)} ${generateOnesHTML(rightOnes, true)}</div>
                     <div style="display:flex; flex-direction:column; align-items:center;">
@@ -95,16 +97,61 @@ function renderAdditionVisual(num1, num2, currentInput) {
                     </div>
                 </div>
             </div>`;
-    } else {
-        // ФАЗА 3: ОТВЕТ. Умное сохранение цветов истории примера при слиянии
+        } else {
+        // ФАЗА 3: ОТВЕТ. Идеальное следование цепочке цветов слева направо
         let totalOnes = ones1 + ones2;
         let leftBorrowCount = 0;
         let rightBorrowCount = 0;
 
-        // Фиксируем, был ли размен. Если да, вычисляем количество кубиков соседа на вершине
+        // Вычисляем, кто именно у кого занимал кубики
         if (totalOnes >= 10) {
-            leftBorrowCount = 10 - ones1; 
+            // Чтобы понять, какая сторона округлялась в коде ребенка, смотрим на simText
+            if (simText.includes('+')) {
+                const userParts = simText.split('+');
+                let leftNum = parseInt(userParts.at(0), 10);
+                let rightNum = parseInt(userParts.at(1), 10);
+                
+                if (!isNaN(leftNum) && Math.floor(leftNum / 10) > tens1) {
+                    leftBorrowCount = 10 - ones1; // Левый робот округлился вверх, взял оранжевые
+                } else if (!isNaN(rightNum) && Math.floor(rightNum / 10) > tens2) {
+                    rightBorrowCount = 10 - ones2; // Правый робот округлился вверх, взял синие
+                }
+            } else {
+                // Предохранитель, если simText пуст или не распарсился — дефолтный размен
+                leftBorrowCount = 10 - ones1;
+            }
             totalOnes -= 10;
+        }
+
+        // Собираем HTML-цепочку строго слева направо по условию задачи
+        let deckContentHTML = '';
+
+        if (rightBorrowCount > 0) {
+            // СЦЕНАРИЙ А (Пример: 33+29=32+30): Упрощалось второе число, правый робот взял 1 синий кубик
+            // 1. Неполный синий столбик-остаток слева (33 - 1 = 32, осталось 2 синих кубика)
+            deckContentHTML += generateOnesHTML(totalOnes, false);
+            // 2. Чистые синие столбики десятков первого числа
+            deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
+            // 3. Чистые оранжевые столбики десятков второго числа
+            deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
+            // 4. Смешанный столбик справа (оранжевое основание + синий кубик на вершине)
+            deckContentHTML += generateCrystalColumnsHTML(1, true, rightBorrowCount);
+        } else if (leftBorrowCount > 0) {
+            // СЦЕНАРИЙ Б (Пример: 27+66=30+63): Упрощалось первое число, левый робот взял 3 оранжевых кубика
+            // 1. Чистые синие столбики десятков первого числа
+            deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
+            // 2. Смешанный столбик (синее основание + оранжевые кубики на вершине)
+            deckContentHTML += generateCrystalColumnsHTML(1, false, leftBorrowCount);
+            // 3. Чистые оранжевые столбики десятков второго числа
+            deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
+            // 4. Неполный оранжевый столбик-остаток справа (66 - 3 = 63, осталось 3 оранжевых кубика)
+            deckContentHTML += generateOnesHTML(totalOnes, true);
+        } else {
+            // Сценарий без перехода через разряд (если вдруг прилетит простой пример)
+            deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
+            deckContentHTML += generateOnesHTML(ones1, false);
+            deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
+            deckContentHTML += generateOnesHTML(ones2, true);
         }
 
         html = `
@@ -116,21 +163,9 @@ function renderAdditionVisual(num1, num2, currentInput) {
                         <span style="font-size:36px; line-height:1;">🤖</span>
                     </div>
 
-                    <!-- ЛЕВАЯ ПЛАТФОРМА: Несет только чистые синие базовые десятки левого робота -->
-                    <div class="crystal-deck">
-                        ${generateCrystalColumnsHTML(tens1, false, 0)}
-                    </div>
-
-                    <!-- ПРАВАЯ ПЛАТФОРМА: Берет на себя гибридный столбик, чистые оранжевые десятки и остаток единиц -->
-                    <div class="crystal-deck orange-theme">
-                        <!-- 1. Тот самый гибридный столбик (передаем левый заем, чтобы он раскрасился снизу синим, сверху оранжевым) -->
-                        ${leftBorrowCount > 0 ? generateCrystalColumnsHTML(1, false, leftBorrowCount) : ''}
-                        
-                        <!-- 2. Чистые оранжевые десятки правого робота -->
-                        ${generateCrystalColumnsHTML(tens2, true, 0)}
-                        
-                        <!-- 3. Оставшиеся неполные оранжевые единицы -->
-                        ${generateOnesHTML(totalOnes, true)}
+                    <!-- ЕДИНАЯ ОБЪЕДИНЕННАЯ ПЛАТФОРМА С СОХРАНЕНИЕМ ВСЕЙ ЦЕПОЧКИ ЦВЕТОВ -->
+                    <div class="crystal-deck" style="background:#f0fdf4; border-color:#4ade80;">
+                        ${deckContentHTML}
                     </div>
 
                     <!-- ГОЛОВА ПРАВОГО РОБОТА -->
@@ -140,7 +175,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
 
                 </div>
                 <b style="color:#22c55e; font-size:14px; margin-top:8px;">
-                    ${isFullyCorrect ? 'Ура! Ответ верный! Платформы соединены! 🎉' : 'Проверяем ответ... 👀'}
+                    ${isFullyCorrect ? 'Ура! Ответ верный! История цветов сохранена! 🎉' : 'Проверяем ответ... 👀'}
                 </b>
             </div>`;
     }
@@ -157,6 +192,10 @@ function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
             let extraClass = '';
             if (isLastColumn && j > (10 - borrowCount)) {
                 extraClass = isOrangeTheme ? 'borrow-blue' : 'borrow-orange';
+            } else if (isOrangeTheme) {
+                extraClass = 'borrow-orange';
+            } else {
+                extraClass = 'borrow-blue';
             }
             html += `<div class="crystal-item ${extraClass}"></div>`;
         }
@@ -169,9 +208,11 @@ function generateOnesHTML(count, isOrangeTheme) {
     if (count === 0) return '';
     let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
     for (let i = 0; i < count; i++) {
-        let styleFix = isOrangeTheme ? 'background:#fb923c; border-color:#ea580c;' : 'background:#38bdf8; border-color:#0284c7;';
-        html += `<div class="crystal-item" style="${styleFix}"></div>`;
+        let extraClass = isOrangeTheme ? 'borrow-orange' : 'borrow-blue';
+        html += `<div class="crystal-item ${extraClass}"></div>`;
     }
     html += `</div>`;
     return html;
 }
+
+        
