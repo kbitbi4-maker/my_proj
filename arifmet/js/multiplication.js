@@ -37,7 +37,10 @@ function syncMonsterGame() {
     if (window.activeIndex === -1) return;
     
     const activeItem = window.examplesHistory[window.activeIndex];
+    if (!activeItem || !activeItem.exampleText) return;
+    
     const parts = activeItem.exampleText.split('×');
+    if (parts.length !== 2) return;
     
     currentMultiTask = {
         items: parseInt(parts.at(0), 10),
@@ -52,17 +55,19 @@ function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
 
-    // Если режим сменился или нет активной задачи — просто очищаем нижний этаж
-    if (!currentMultiTask || window.activeIndex === -1 || window.currentMode !== 'multiplication') {
+    // ОЧИЩЕНО: Убрана конфликтная проверка window.currentMode, которая стирала монстров
+    if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
         return;
     }
 
     const activeItem = window.examplesHistory[window.activeIndex];
+    if (!activeItem || !activeItem.exampleText) return;
+    
     const exampleText = activeItem.exampleText;
 
-    // Удержание графики при редактировании примера (защита от моргания и вылетов)
+    // Удержание графики при редактировании примера (блокируем мерцание)
     if (gameZone.getAttribute('data-current-example') === exampleText) {
         return;
     }
@@ -71,7 +76,7 @@ function renderMonsterGame() {
 
     let html = '';
     
-    // Генерируем карточки монстриков (оптимизировали размеры под 32% высоты экрана)
+    // Генерируем карточки монстриков
     for (let i = 0; i < currentMultiTask.monsters; i++) {
         const pizzasHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         
