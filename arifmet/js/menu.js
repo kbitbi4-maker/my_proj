@@ -40,21 +40,21 @@ function evaluateExpr(str) {
     let cleaned = str.replace(/×/g, '*').trim();
     
     if (cleaned.includes('*')) {
-        let parts = cleaned.split('*');
-        if (parts.length === 2) {
-            return parseInt(parts[0], 10) * parseInt(parts[1], 10);
+        let partsArr = cleaned.split('*');
+        if (partsArr.length === 2) {
+            return parseInt(partsArr[0], 10) * parseInt(partsArr[1], 10);
         }
     }
     if (cleaned.includes('+')) {
-        let parts = cleaned.split('+');
-        if (parts.length === 2) {
-            return parseInt(parts[0], 10) + parseInt(parts[1], 10);
+        let partsArr = cleaned.split('+');
+        if (partsArr.length === 2) {
+            return parseInt(partsArr[0], 10) + parseInt(partsArr[1], 10);
         }
     }
     if (cleaned.includes('-')) {
-        let parts = cleaned.split('-');
-        if (parts.length === 2) {
-            return parseInt(parts[0], 10) - parseInt(parts[1], 10);
+        let partsArr = cleaned.split('-');
+        if (partsArr.length === 2) {
+            return parseInt(partsArr[0], 10) - parseInt(partsArr[1], 10);
         }
     }
     
@@ -62,7 +62,7 @@ function evaluateExpr(str) {
     return isNaN(num) ? null : num;
 }
 
-// Универсальный рендеринг строк для ВСЕХ режимов (ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ)
+// Универсальный рендеринг строк для ВСЕХ режимов
 function renderAllLines() {
     if (!examplesList) return;
     
@@ -100,52 +100,53 @@ function renderAllLines() {
             line.classList.remove('active');
         }
 
-        const parts = item.currentInput.split('=');
-        // ЖЕСТКО ИСПРАВЛЕНО: Возвращены правильные индексы массивов [0] и [1]
-        const simText = parts[0] || '';
-        const finText = parts[1] || '';
+        const partsArr = item.currentInput.split('=');
+        
+        // ЖЕСТКАЯ ЗАЩИТА: Явно извлекаем элементы с проверкой существования индексов
+        const simText = (partsArr.length > 0) ? partsArr[0] : '';
+        const finText = (partsArr.length > 1) ? partsArr[1] : '';
 
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // ЛОГИКА ДЛЯ РЕЖИМА "УМНОЖЕНИЕ" (Ввод сразу ответа, без промежуточных блоков)
+        // ЛОГИКА ДЛЯ РЕЖИМА "УМНОЖЕНИЕ"
         if (window.currentMode === 'multiplication') {
-            simWrapper.innerHTML = ''; // Скрываем блок упрощения
+            simWrapper.innerHTML = ''; 
             
             if (item.currentInput.length > 0) {
                 let userVal = parseInt(item.currentInput, 10);
                 let isCorrect = (userVal === item.correctValue);
-                // Подсвечиваем зеленым, если ответ совпал, или пишем синим, пока ребенок вводит цифры
+                
                 if (userVal === item.correctValue || item.currentInput.length >= String(item.correctValue).length) {
-                    finWrapper.innerHTML = ` = <span class="block ${isCorrect ? 'block-correct' : 'block-incorrect'}">${item.currentInput}</span>`;
+                    finWrapper.innerHTML = ' = <span class="block ' + (isCorrect ? 'block-correct' : 'block-incorrect') + '">' + item.currentInput + '</span>';
                 } else {
-                    finWrapper.innerHTML = ` = <span class="block">${item.currentInput}</span>`;
+                    finWrapper.innerHTML = ' = <span class="block">' + item.currentInput + '</span>';
                 }
             } else {
-                finWrapper.innerHTML = ` = <span class="block">_</span>`;
+                finWrapper.innerHTML = ' = <span class="block">_</span>';
             }
         } 
-        // ЛОГИКА ДЛЯ РЕЖИМА "ДЕСЯТКИ" (Двухуровневый ввод с упрощением через "=")
+        // ЛОГИКА ДЛЯ РЕЖИМА "ДЕСЯТКИ"
         else {
             if (item.currentInput.includes('=')) {
                 let simVal = evaluateExpr(simText);
                 let simCorrect = (simVal === item.correctValue);
-                simWrapper.innerHTML = ` = <span class="block ${simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+                simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             } else {
-                simWrapper.innerHTML = ` = <span class="block">${simText || '_'}</span>`;
+                simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
             }
 
-            if (parts.length > 1) {
+            if (partsArr.length > 1) {
                 let finVal = evaluateExpr(finText);
                 let finCorrect = (finVal === item.correctValue);
                 let isValidLength = /^[0-9]{1,}$/.test(finText.trim());
 
                 if (isValidLength || finText.trim() === String(item.correctValue)) {
-                    finWrapper.innerHTML = ` = <span class="block ${finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+                    finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 } else if (finText.length > 0) {
-                    finWrapper.innerHTML = ` = <span class="block">${finText}</span>`;
+                    finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
                 } else {
-                    finWrapper.innerHTML = ` = <span class="block">_</span>`;
+                    finWrapper.innerHTML = ' = <span class="block">_</span>';
                 }
             } else {
                 finWrapper.innerHTML = '';
@@ -175,11 +176,10 @@ function pressNum(n) {
     } else if (n === 'D') {
         activeItem.currentInput = activeItem.currentInput.slice(0, -1);
     } else {
-        // Если это умножение — запрещаем вводить знак "=" (он не нужен)
         if (window.currentMode === 'multiplication' && n === '=') return;
         
-        let parts = activeItem.currentInput.split('=');
-        if (n === '=' && parts.length >= 2) return;
+        let partsArr = activeItem.currentInput.split('=');
+        if (n === '=' && partsArr.length >= 2) return;
         activeItem.currentInput += n;
     }
     
