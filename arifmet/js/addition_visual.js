@@ -4,8 +4,8 @@ function renderAdditionVisual(num1, num2, currentInput) {
 
     const partsArr = currentInput.split('=');
     const hasPressedEqual = currentInput.includes('=');
-    const simText = partsArr.length > 0 ? partsArr[0] : '';
-    const finText = partsArr.length > 1 ? partsArr[1] : '';
+    const simText = partsArr.length > 0 ? partsArr.at(0) : '';
+    const finText = partsArr.length > 1 ? partsArr.at(1) : '';
 
     const targetLength = String(num1 + num2).length;
     const hasFinalAnswer = partsArr.length > 1 && finText.trim().length >= targetLength;
@@ -22,7 +22,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
     let html = '';
 
     if (!hasPressedEqual) {
-        // ФАЗА 1: СТАРТ. У левого — всё синее (включая единицы), у правого — всё оранжевое
+        // ФАЗА 1: СТАРТ. Роботы разделены, каждый со своим чистым цветом
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%;">
                 <div class="crystal-truck">
@@ -38,7 +38,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 <div style="font-size:28px; font-weight:bold; color:#94a3b8;">+</div>
                 <div class="crystal-truck">
                     <div class="crystal-deck orange-theme" style="margin-right:10px;">
-                        ${generateCrystalColumnsHTML(tens2, false, 0)}
+                        ${generateCrystalColumnsHTML(tens2, true, 0)}
                         ${generateOnesHTML(ones2, true)}
                     </div>
                     <div style="display:flex; flex-direction:column; align-items:center;">
@@ -48,7 +48,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 </div>
             </div>`;
     } else if (hasPressedEqual && !hasFinalAnswer) {
-        // ФАЗА 2: УПРОЩЕНИЕ. Расчёт заимствования кубиков в реальном времени
+        // ФАЗА 2: УПРОЩЕНИЕ. Расчёт заимствования кубиков на верхушку стопки
         let leftTens = 0, leftOnes = 0;
         let rightTens = 0, rightOnes = 0;
         let leftLabel = '0', rightLabel = '0';
@@ -68,15 +68,15 @@ function renderAdditionVisual(num1, num2, currentInput) {
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === (num1 + num2));
 
-        // Вычисляем, было ли округление до полных десятков вверх
+        // Вычисляем заимствование (сколько кубиков доложили СВЕРХУ до круглого десятка)
         let leftBorrowCount = 0;
         if (leftTens > tens1 && leftOnes === 0 && ones1 > 0) {
-            leftBorrowCount = 10 - ones1; // Сколько оранжевых кубиков забрали у правого робота
+            leftBorrowCount = 10 - ones1; 
         }
 
         let rightBorrowCount = 0;
         if (rightTens > tens2 && rightOnes === 0 && ones2 > 0) {
-            rightBorrowCount = 10 - ones2; // Сколько синих кубиков забрали у левого робота
+            rightBorrowCount = 10 - ones2; 
         }
 
         html = `
@@ -124,7 +124,6 @@ function renderAdditionVisual(num1, num2, currentInput) {
                     <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}">
                         <span style="font-size:36px; line-height:1;">🤖</span>
                     </div>
-                    <!-- На финальной фазе соединяем чистые цвета базовых десятков -->
                     <div class="crystal-deck">${generateCrystalColumnsHTML(leftDisplayTens, false, 0)}</div>
                     <div class="crystal-deck orange-theme">${generateCrystalColumnsHTML(rightDisplayTens, true, 0)}${generateOnesHTML(totalOnes, true)}</div>
                     <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}">
@@ -139,19 +138,20 @@ function renderAdditionVisual(num1, num2, currentInput) {
     gameZone.innerHTML = html;
 }
 
-// Умный генератор столбиков десятков с поддержкой перекрашивания верхушки
+// ПЕРЕПИСАННЫЙ ИСПРАВЛЕННЫЙ ГЕНЕРАТОР: строит столбики строго снизу вверх
 function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     let html = '';
     for (let i = 0; i < count; i++) {
         html += `<div class="crystal-column">`;
-        // Если это САМЫЙ ПОСЛЕДНИЙ (новый) добавленный столбик, мы красим его верхушку в цвет соседа
+        // Проверяем, является ли текущий столбик тем самым новым округлённым десятком
         let isLastColumn = (i === count - 1) && (borrowCount > 0);
         
-        for (let j = 0; j < 10; j++) {
+        // Цикл идет снизу вверх: от 1-го кубика на полу до 10-го на вершине
+        for (let j = 1; j <= 10; j++) {
             let extraClass = '';
-            // Браузер строит column снизу вверх. j идет от 0 до 9. 
-            // Последние кубики (верхушка столбика) — это j от (10 - borrowCount) до 9.
-            if (isLastColumn && j >= (10 - borrowCount)) {
+            // Если это последний столбик и мы дошли до вершины (последние borrowCount штук),
+            // красим их в цвет соседа. Например, если прилетело 3 кубика, это будут j = 8, 9, 10.
+            if (isLastColumn && j > (10 - borrowCount)) {
                 extraClass = isOrangeTheme ? 'borrow-blue' : 'borrow-orange';
             }
             html += `<div class="crystal-item ${extraClass}"></div>`;
@@ -161,12 +161,10 @@ function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     return html;
 }
 
-// Генератор единиц: теперь полностью поддерживает собственный цвет платформы (левый - синие, правый - оранжевые)
 function generateOnesHTML(count, isOrangeTheme) {
     if (count === 0) return '';
     let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
     for (let i = 0; i < count; i++) {
-        // Левые единицы — синие (оригинальный цвет), правые — оранжевые (задаются через orange-theme)
         let styleFix = isOrangeTheme ? 'background:#fb923c; border-color:#ea580c;' : 'background:#38bdf8; border-color:#0284c7;';
         html += `<div class="crystal-item" style="${styleFix}"></div>`;
     }
