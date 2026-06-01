@@ -1,21 +1,17 @@
-// Переменная для хранения текущего игрового задания (сколько монстров и пицц)
 let currentMultiTask = null;
 
-// 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
 
-// 2. Генерация примера на умножение
 function generateMultiExample() {
-    const num1 = Math.floor(Math.random() * 4) + 2; // сколько пицц у каждого (2-5)
-    const num2 = Math.floor(Math.random() * 4) + 2; // сколько монстров (2-5)
+    const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
+    const num2 = Math.floor(Math.random() * 4) + 2; // количество монстров (2-5)
     
     const text = num1 + '×' + num2;
     const correctValue = num1 * num2;
 
-    // Сохраняем параметры для отрисовки графики
     currentMultiTask = {
         items: num1,
         monsters: num2
@@ -30,33 +26,30 @@ function generateMultiExample() {
     window.activeIndex = window.examplesHistory.length - 1;
     
     renderAllLines();
-    renderMonsterGame(); // Отрисовываем лужайку с монстриками
+    renderMonsterGame(); 
 }
 
-// 3. Функция синхронизации при клике на старые примеры в левой колонке
 function syncMonsterGame() {
     if (window.activeIndex === -1) return;
     
     const activeItem = window.examplesHistory[window.activeIndex];
     const parts = activeItem.exampleText.split('×');
     
-    // Безопасное извлечение чисел с индексами без скрытых символов
     currentMultiTask = {
-        items: parseInt(parts[0], 10),
-        monsters: parseInt(parts[1], 10)
+        items: parseInt(parts.at(0), 10),
+        monsters: parseInt(parts.at(1), 10)
     };
     
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц под списком примеров
+// ОПТИМИЗИРОВАННАЯ ОТРИСОВКА (без лишних перерисовок и морганий)
 function renderMonsterGame() {
     const leftArea = document.getElementById('examples-list');
     if (!leftArea) return;
 
     let gameZone = document.getElementById('game-zone');
     
-    // Если зоны еще нет — создаем её в самом низу левой области
     if (!gameZone) {
         gameZone = document.createElement('div');
         gameZone.id = 'game-zone';
@@ -78,14 +71,24 @@ function renderMonsterGame() {
         leftArea.appendChild(gameZone);
     }
 
-    if (!currentMultiTask) {
+    if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
+        gameZone.removeAttribute('data-current-example');
         return;
     }
 
+    const activeItem = window.examplesHistory[window.activeIndex];
+    const exampleText = activeItem.exampleText;
+
+    // ЖЕЛЕЗНАЯ ПРОВЕРКА: Если этот пример уже нарисован на экране — выходим, ничего не трогая!
+    if (gameZone.getAttribute('data-current-example') === exampleText) {
+        return;
+    }
+
+    // Запоминаем, какой пример мы сейчас нарисовали
+    gameZone.setAttribute('data-current-example', exampleText);
+
     let html = '';
-    
-    // Генерируем монстриков и раскладываем пиццы
     for (let i = 0; i < currentMultiTask.monsters; i++) {
         const pizzasHTML = '<span style="font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         
