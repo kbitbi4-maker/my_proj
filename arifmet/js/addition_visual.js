@@ -138,19 +138,18 @@ function renderAdditionVisual(num1, num2, currentInput) {
     gameZone.innerHTML = html;
 }
 
-// ПЕРЕПИСАННЫЙ ИСПРАВЛЕННЫЙ ГЕНЕРАТОР: строит столбики строго снизу вверх
+// ПУЛЕНЕПРОБИВАЕМЫЙ ЦИКЛ: Генерирует кубики от пола к потолку под управлением column-reverse
 function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     let html = '';
     for (let i = 0; i < count; i++) {
         html += `<div class="crystal-column">`;
-        // Проверяем, является ли текущий столбик тем самым новым округлённым десятком
         let isLastColumn = (i === count - 1) && (borrowCount > 0);
         
-        // Цикл идет снизу вверх: от 1-го кубика на полу до 10-го на вершине
+        // Цикл идет от 1 (пол) до 10 (вершина). Благодаря column-reverse первый элемент кода встанет на пол.
         for (let j = 1; j <= 10; j++) {
             let extraClass = '';
-            // Если это последний столбик и мы дошли до вершины (последние borrowCount штук),
-            // красим их в цвет соседа. Например, если прилетело 3 кубика, это будут j = 8, 9, 10.
+            // Заимствованные кубики ложатся в самом конце генерации (на верхушку стопки)
+            // Например, еслиborrowCount = 3, то кубики 8, 9 и 10 станут противоположного цвета
             if (isLastColumn && j > (10 - borrowCount)) {
                 extraClass = isOrangeTheme ? 'borrow-blue' : 'borrow-orange';
             }
