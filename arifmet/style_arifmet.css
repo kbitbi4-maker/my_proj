@@ -49,3 +49,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 /* ФАЗА ПОБЕДЫ: Красивое бесшовное соединение платформ в центре */
 .win-layout .crystal-deck:first-of-type { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
 .win-layout .orange-theme.crystal-deck { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none; }
+/* Специальные классы для заимствованных кубиков на этапе упрощения */
+.borrow-orange { background: #fb923c !important; border-color: #ea580c !important; }
+.borrow-blue { background: #38bdf8 !important; border-color: #0284c7 !important; }
+
