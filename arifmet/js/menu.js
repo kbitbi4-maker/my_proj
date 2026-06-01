@@ -10,6 +10,7 @@ function setMode(mode) {
     if (mode === 'hundreds' || mode === 'thousands') { alert("Режим в разработке 🛠️"); return; }
     window.currentMode = mode;
     window.examplesHistory = [];
+    window.usedExamples = []; // ИСПРАВЛЕНО: Полная очистка истории уникальности сессии
     window.activeIndex = -1;
     window.mixStep = 0;
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
