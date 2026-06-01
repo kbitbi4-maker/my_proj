@@ -60,3 +60,13 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .sub-robot-label { font-size: 13px; margin-top: 1px; }
 .sub-drive-away { animation: robotDriveAway 1.2s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; }
 .sub-win-text { color: #22c55e; font-size: 14px; margin-top: 8px; }
+@keyframes robotDriveRight {
+    0% { transform: translateX(-150px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes robotDriveLeft {
+    0% { transform: translateX(150px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+.add-robot-left-drive { animation: robotDriveRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+.add-robot-right-drive { animation: robotDriveLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
