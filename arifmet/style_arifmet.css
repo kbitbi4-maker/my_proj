@@ -39,7 +39,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .crystal-column { display: flex; flex-direction: column-reverse; gap: 1px; }
 .crystal-item { width: 12px; height: 7px; background: #38bdf8; border: 1px solid #0284c7; border-radius: 1px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
 /* Пробел 5+5: увеличиваем отступ над пятым кубиком снизу */
-.crystal-column .crystal-item:nth-child(5) { margin-bottom: 4px; }
+.crystal-column .crystal-item:nth-last-child(5) { margin-bottom: 5px; }
 .orange-theme .crystal-item { background: #fb923c; border: 1px solid #ea580c; }
 .glow-tens .crystal-column { filter: drop-shadow(0 0 6px #4ade80); border-color: #22c55e; }
 .glow-ones .crystal-item { filter: drop-shadow(0 0 4px #facc15); }
