@@ -16,16 +16,10 @@ function setMode(mode) {
     window.examplesHistory = [];
     window.activeIndex = -1;
     window.mixStep = 0;
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
-    simWinSoundPlayed = false;
-    finWinSoundPlayed = false;
+    simFailSoundPlayed = false; finFailSoundPlayed = false; simWinSoundPlayed = false; finWinSoundPlayed = false;
     if (examplesList) examplesList.innerHTML = '';
     const gameZone = document.getElementById('game-zone');
-    if (gameZone) {
-        gameZone.innerHTML = '';
-        gameZone.removeAttribute('data-current-example');
-    }
+    if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
     if (mode === 'tens') { initTensMode(); } 
     else if (mode === 'multiplication') { initMultiplicationMode(); } 
     else if (mode === 'mix') { initMixMode(); }
@@ -73,8 +67,9 @@ function renderAllLines() {
         if (!line) return;
         if (index === window.activeIndex) { line.classList.add('active'); } else { line.classList.remove('active'); }
         const partsArr = item.currentInput.split('=');
-        const simText = (partsArr.length > 0) ? partsArr : '';
-        const finText = (partsArr.length > 1) ? partsArr : '';
+        // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Вернули точные квадратные скобки индексов массивов [0] и [1]
+        const simText = (partsArr.length > 0) ? partsArr[0] : '';
+        const finText = (partsArr.length > 1) ? partsArr[1] : '';
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
         const targetLength = String(item.correctValue).length;
@@ -84,7 +79,7 @@ function renderAllLines() {
             let simCorrect = (simVal === item.correctValue);
             if (isMultiplicationLine && simCorrect && simText) {
                 let checkParts = simText.split('+');
-                let monsterCountFromText = parseInt(item.exampleText.split('×'), 10);
+                let monsterCountFromText = parseInt(item.exampleText.split('×')[1], 10);
                 if (checkParts.length !== monsterCountFromText) simCorrect = false;
             }
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
@@ -121,10 +116,7 @@ function renderAllLines() {
 }
 function selectExample(index) {
     window.activeIndex = index;
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
-    simWinSoundPlayed = false;
-    finWinSoundPlayed = false;
+    simFailSoundPlayed = false; finFailSoundPlayed = false; simWinSoundPlayed = false; finWinSoundPlayed = false;
     renderAllLines();
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) { if (typeof syncMonsterGame === 'function') syncMonsterGame(); } 
