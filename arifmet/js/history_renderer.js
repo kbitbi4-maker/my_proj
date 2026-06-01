@@ -18,6 +18,8 @@ function renderAllLines() {
         const line = examplesList.querySelector(`[data-index="${index}"]`);
         if (!line) return;
         if (index === window.activeIndex) { line.classList.add('active'); } else { line.classList.remove('active'); }
+        
+        let isScales = (window.currentMode === 'scales'); // Флаг режима весов
         const partsArr = item.currentInput.split('=');
         const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
         const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
@@ -25,6 +27,10 @@ function renderAllLines() {
         const finWrapper = line.querySelector('.fin-block-wrapper');
         const targetLength = String(item.correctValue).length;
         let isMultiplicationLine = item.exampleText.includes('×');
+        
+        // Префикс для вывода ответа (для обычных примеров " = ", для весов " ➔ X = ")
+        let prefix = isScales ? ' ➔ X = ' : ' = ';
+
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
@@ -33,20 +39,23 @@ function renderAllLines() {
                 let monsterCountFromText = parseInt(item.exampleText.split('×').at(1), 10);
                 if (checkParts.length !== monsterCountFromText) simCorrect = false;
             }
-            simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
+            simWrapper.innerHTML = prefix + '<span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             if (index === window.activeIndex && typeof triggerFailFeedback === 'function') {
                 if (!simCorrect && !window.simFailSoundPlayed) { triggerFailFeedback(); window.simFailSoundPlayed = true; }
                 if (simCorrect && !window.simWinSoundPlayed) { triggerTensWinSound(); window.simWinSoundPlayed = true; }
                 if (simCorrect) window.simFailSoundPlayed = false;
                 if (!simCorrect) window.simWinSoundPlayed = false;
             }
-        } else { simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>'; }
+        } else { 
+            // Если ребенок еще ничего не ввел, для весов пишем аккуратное суффикс-окошко
+            simWrapper.innerHTML = isScales ? ' ➔ X = <span class="block">?</span>' : ' = <span class="block">' + (simText || '_') + '</span>'; 
+        }
         if (partsArr.length > 1) {
             let finVal = evaluateExpr(finText);
             let finCorrect = (finVal === item.correctValue);
             let trimmedFinText = String(finText).trim();
             if (trimmedFinText.length >= targetLength) {
-                finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
+                finWrapper.innerHTML = prefix + '<span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 if (index === window.activeIndex && typeof triggerFailFeedback === 'function') {
                     if (!finCorrect && !window.finFailSoundPlayed) { triggerFailFeedback(); window.finFailSoundPlayed = true; }
                     if (finCorrect && !isMultiplicationLine && !window.finWinSoundPlayed) { triggerTensWinSound(); window.finWinSoundPlayed = true; }
@@ -54,10 +63,10 @@ function renderAllLines() {
                     if (!finCorrect) window.finWinSoundPlayed = false;
                 }
             } else if (trimmedFinText.length > 0) {
-                finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
+                finWrapper.innerHTML = prefix + '<span class="block">' + finText + '</span>';
                 if (index === window.activeIndex) { window.finFailSoundPlayed = false; window.finWinSoundPlayed = false; }
             } else {
-                finWrapper.innerHTML = ' = <span class="block">_</span>';
+                finWrapper.innerHTML = prefix + '<span class="block">_</span>';
                 if (index === window.activeIndex) { window.finFailSoundPlayed = false; window.finWinSoundPlayed = false; }
             }
         } else { finWrapper.innerHTML = ''; }
@@ -67,7 +76,7 @@ function renderAllLines() {
         let nums = cur.exampleText.split('-');
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
     }
-    if (cur && window.currentMode === 'scales' && typeof renderScalesVisual === 'function') { // ИСПРАВЛЕНО: Реактивный запуск уменьшенных весов без проверки на знак "="
+    if (cur && window.currentMode === 'scales' && typeof renderScalesVisual === 'function') {
         renderScalesVisual(cur.correctValue, cur.correctValue, cur.currentInput);
     }
     const activeElem = examplesList.querySelector('.active');
