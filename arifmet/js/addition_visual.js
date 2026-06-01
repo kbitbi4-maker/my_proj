@@ -175,7 +175,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
 
                 </div>
                 <b style="color:#22c55e; font-size:14px; margin-top:8px;">
-                    ${isFullyCorrect ? 'Ура! Ответ верный! История цветов сохранена! 🎉' : 'Проверяем ответ... 👀'}
+                    ${isFullyCorrect ? 'Ура! Ответ верный! Ты гений! 🎉' : 'Проверяем ответ... 👀'}
                 </b>
             </div>`;
     }
