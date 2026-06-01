@@ -10,7 +10,7 @@ function setMode(mode) {
     if (mode === 'hundreds' || mode === 'thousands') { alert("Режим в разработке 🛠️"); return; }
     window.currentMode = mode;
     window.examplesHistory = [];
-    window.usedExamples = []; // ИСПРАВЛЕНО: Полная очистка истории уникальности сессии
+    window.usedExamples = []; // Полная очистка истории уникальности сессии
     window.activeIndex = -1;
     window.mixStep = 0;
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
@@ -73,7 +73,7 @@ function renderAllLines() {
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             if (index === window.activeIndex && typeof triggerFailFeedback === 'function') {
                 if (!simCorrect && !window.simFailSoundPlayed) { triggerFailFeedback(); window.simFailSoundPlayed = true; }
-                if (simCorrect && !isMultiplicationLine && !window.simWinSoundPlayed) { triggerTensWinSound(); window.simWinSoundPlayed = true; }
+                if (simCorrect && !window.simWinSoundPlayed) { triggerTensWinSound(); window.simWinSoundPlayed = true; } // ИСПРАВЛЕНО: звук играет для всех режимов, включая умножение
                 if (simCorrect) window.simFailSoundPlayed = false;
                 if (!simCorrect) window.simWinSoundPlayed = false;
             }
@@ -101,7 +101,7 @@ function renderAllLines() {
     });
     let cur = window.examplesHistory[window.activeIndex];
     if (cur && cur.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = cur.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
+        let nums = cur.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
     }
     const activeElem = examplesList.querySelector('.active');
@@ -114,7 +114,7 @@ function selectExample(index) {
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) { 
         if (typeof syncMonsterGame === 'function') syncMonsterGame();
-        if (typeof renderMonsterGame === 'function') renderMonsterGame(); // ИСПРАВЛЕНО: принудительный рендер умножения из истории
+        if (typeof renderMonsterGame === 'function') renderMonsterGame(); // Принудительный рендер инопланетян из истории
     } else if (activeItem && activeItem.exampleText.includes('+')) {
         if (typeof renderAdditionVisual === 'function') {
             let nums = activeItem.exampleText.split('+');
@@ -122,7 +122,7 @@ function selectExample(index) {
         }
     } else if (activeItem && activeItem.exampleText.includes('-')) {
         if (typeof renderSubtractionVisual === 'function') {
-            let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
+            let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива
             renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
         }
     } else {
@@ -147,7 +147,7 @@ function pressNum(n) {
         renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
     if (activeItem.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
+        let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
