@@ -98,6 +98,11 @@ function renderAllLines() {
             }
         } else { finWrapper.innerHTML = ''; }
     });
+    let cur = window.examplesHistory[window.activeIndex]; // Синхронизация вычитания при вводе
+    if (cur && cur.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
+        let nums = cur.exampleText.split('-');
+        renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
+    }
     const activeElem = examplesList.querySelector('.active');
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -111,6 +116,11 @@ function selectExample(index) {
         if (typeof renderAdditionVisual === 'function') {
             let nums = activeItem.exampleText.split('+');
             renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
+        }
+    } else if (activeItem && activeItem.exampleText.includes('-')) { // Отрисовка вычитания при клике по истории
+        if (typeof renderSubtractionVisual === 'function') {
+            let nums = activeItem.exampleText.split('-');
+            renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
         }
     } else {
         const gameZone = document.getElementById('game-zone');
@@ -133,11 +143,15 @@ function pressNum(n) {
         let nums = activeItem.exampleText.split('+');
         renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
+    if (activeItem.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') { // Отрисовка вычитания при кликах по нумпаду
+        let nums = activeItem.exampleText.split('-');
+        renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
+    }
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
 }
 function confirmAndNext() {
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
     if (window.currentMode === 'tens') generateExample();
     else if (window.currentMode === 'multiplication') generateMultiExample();
-    else if (window.currentMode === 'mix') generateMixExample();
+    else if (window.currentMode === 'mix') generateMixExample(); // Исправлен обрыв ветки микса
 }
