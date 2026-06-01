@@ -270,7 +270,6 @@ function renderAllLines() {
             finWrapper.innerHTML = '';
         }
     });
-
     const activeElem = examplesList.querySelector('.active');
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -282,4 +281,68 @@ function selectExample(index) {
     simWinSoundPlayed = false;
     finWinSoundPlayed = false;
     renderAllLines();
+
+    // Проверяем, на какой тип примера кликнули в истории
+    const activeItem = window.examplesHistory[index];
+    if (activeItem && activeItem.exampleText.includes('×')) {
+        // Если это умножение — показываем пришельцев для этого примера
+        if (typeof syncMonsterGame === 'function') syncMonsterGame();
+    } else {
+        // Если это сложение или вычитание — очищаем нижний этаж от монстров
+        const gameZone = document.getElementById('game-zone');
+        if (gameZone) {
+            gameZone.innerHTML = '';
+            gameZone.removeAttribute('data-current-example');
+        }
+    }
+}
+
+// Единая логика для кнопок нумпада
+function pressNum(n) {
+    if (window.activeIndex === -1) return;
+    
+    let activeItem = window.examplesHistory[window.activeIndex];
+    
+    if (n === 'C') {
+        activeItem.currentInput = '';
+        simFailSoundPlayed = false;
+        finFailSoundPlayed = false;
+        simWinSoundPlayed = false;
+        finWinSoundPlayed = false;
+    } else if (n === 'D') {
+        activeItem.currentInput = activeItem.currentInput.slice(0, -1);
+        simFailSoundPlayed = false;
+        finFailSoundPlayed = false;
+        simWinSoundPlayed = false;
+        finWinSoundPlayed = false;
+    } else {
+        let partsArr = activeItem.currentInput.split('=');
+        if (n === '=' && partsArr.length >= 2) return;
+        activeItem.currentInput += n;
+    }
+    
+    renderAllLines();
+
+    // Перерисовываем монстров при вводе только если текущий активный пример — это умножение
+    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') {
+        renderMonsterGame();
+    }
+}
+
+// Обработка кнопки "Следующий пример"
+function confirmAndNext() {
+    simFailSoundPlayed = false;
+    finFailSoundPlayed = false;
+    simWinSoundPlayed = false;
+    finWinSoundPlayed = false;
+    
+    if (window.currentMode === 'tens') {
+        generateExample();
+    } else if (window.currentMode === 'multiplication') {
+        generateMultiExample();
+    } else if (window.currentMode === 'mix') {
+        generateMixExample();
+    }
+}
+
 
