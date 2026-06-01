@@ -40,6 +40,20 @@ function generateExample() {
     });
     
     window.activeIndex = window.examplesHistory.length - 1;
+    
+    // ИНТЕГРАЦИЯ ВИЗУАЛИЗАЦИИ: Проверяем, какой пример был сгенерирован
+    if (isAddition) {
+        // Если у вас в addition_visual.js функция называется render, вызываем её:
+        if (typeof AdditionVisual !== 'undefined' && AdditionVisual.render) {
+            AdditionVisual.render('game-zone', num1, num2);
+        }
+    } else {
+        // Если это вычитание, инициализируем сцену с роботами и кубиками
+        if (typeof SubtractionVisual !== 'undefined' && SubtractionVisual.init) {
+            SubtractionVisual.init('game-zone', num1, num2);
+        }
+    }
+    
     isAddition = !isAddition;
     
     renderAllLines();
