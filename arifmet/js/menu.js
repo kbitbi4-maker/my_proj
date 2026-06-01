@@ -109,19 +109,19 @@ function renderAllLines() {
 
         const partsArr = item.currentInput.split('=');
         
-        // БЕЗОПАСНОЕ ИЗВЛЕЧЕНИЕ: без использования квадратных скобок в коде
+        // Безопасное извлечение элементов массива без квадратных скобок в коде
         const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
         const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
 
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
+        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Двухуровневый ввод со знаком "=")
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
             
-            // Педагогическая проверка: совпадает ли количество слагаемых с числом монстров
+            // Педагогическая проверка для умножения: совпадает ли количество слагаемых с числом монстров
             if (window.currentMode === 'multiplication' && simCorrect && simText) {
                 let checkParts = simText.split('+');
                 let monsterCountFromText = parseInt(item.exampleText.split('×').at(1), 10);
@@ -165,6 +165,7 @@ function selectExample(index) {
     }
 }
 
+// Единая логика для кнопок нумпада
 function pressNum(n) {
     if (window.activeIndex === -1) return;
     
@@ -180,7 +181,13 @@ function pressNum(n) {
         activeItem.currentInput += n;
     }
     
+    // 1. Обновляем текстовые блоки на экране
     renderAllLines();
+
+    // 2. Безопасное удержание монстриков при наборе примера без его перерисовки
+    if (window.currentMode === 'multiplication' && typeof renderMonsterGame === 'function') {
+        renderMonsterGame();
+    }
 }
 
 function confirmAndNext() {
