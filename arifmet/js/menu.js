@@ -119,14 +119,16 @@ function renderAllLines() {
 
         const partsArr = item.currentInput.split('=');
         
-        // Перешли на классические безопасные индексы массивов
         const simText = (partsArr.length > 0) ? partsArr[0] : '';
         const finText = (partsArr.length > 1) ? partsArr[1] : '';
 
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
+        // Вычисляем длину строки правильного ответа (например, для 12 длина равна 2)
+        const targetLength = String(item.correctValue).length;
+
+        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
@@ -144,15 +146,17 @@ function renderAllLines() {
             simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
         }
 
-        // РЕНДЕРИНГ БЛОКА ОТВЕТА
+        // 2. РЕНДЕРИНГ БЛОКА ОТВЕТА (Доработан с отложенной проверкой по длине строки)
         if (partsArr.length > 1) {
             let finVal = evaluateExpr(finText);
             let finCorrect = (finVal === item.correctValue);
-            let isValidLength = /^[0-9]{1,}$/.test(String(finText).trim());
-
-            if (isValidLength || String(finText).trim() === String(item.correctValue)) {
+            let trimmedFinText = String(finText).trim();
+            
+            // Запускаем цветную валидацию, только если количество символов совпало или превысило эталон
+            if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
-            } else if (String(finText).length > 0) {
+            } else if (trimmedFinText.length > 0) {
+                // Если символы есть, но их меньше нужного количества знаков — блок остается нейтрально серым
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
