@@ -22,7 +22,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
     let html = '';
 
     if (!hasPressedEqual) {
-        // ФАЗА 1: Исходный пример. Роботы держат руками свои стартовые грузы.
+        // ФАЗА 1: Стартовое состояние (например, 14 и 28)
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 10px; box-sizing:border-box; height:100%;">
                 <div style="display:flex; align-items:center;">
@@ -44,50 +44,71 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 </div>
             </div>`;
     } else if (hasPressedEqual && !hasFinalAnswer) {
-        // ФАЗА 2: ЭТАП УПРОЩЕНИЯ. Отрисовка ГРУЗА СТРОГО в зависимости от того, что НАПИСАЛ РЕБЁНОК!
-        let userTens = 0;
-        let userOnes = 0;
+        // ФАЗА 2: ЭТАП УПРОЩЕНИЯ. Полная динамика ввода ребенка (например, 12 + 30)
+        let leftTens = 0, leftOnes = 0;
+        let rightTens = 0, rightOnes = 0;
+        let leftLabel = '0', rightLabel = '0';
 
-        // Если в строке есть плюс, бьём её на левую и правую части ввода ребёнка
         if (simText.includes('+')) {
             const userParts = simText.split('+');
             let leftNum = parseInt(userParts[0], 10);
             let rightNum = parseInt(userParts[1], 10);
 
-            if (!isNaN(leftNum)) userTens = Math.floor(leftNum / 10);
-            if (!isNaN(rightNum)) userOnes = rightNum;
+            if (!isNaN(leftNum)) {
+                leftTens = Math.floor(leftNum / 10);
+                leftOnes = leftNum % 10;
+                leftLabel = String(leftNum);
+            }
+            if (!isNaN(rightNum)) {
+                rightTens = Math.floor(rightNum / 10);
+                rightOnes = rightNum % 10;
+                rightLabel = String(rightNum);
+            }
         } else if (simText.length > 0) {
-            // Ребёнок набрал число, но ещё не нажал плюс — выводим десятки в левый отсек
             let singleNum = parseInt(simText, 10);
-            if (!isNaN(singleNum)) userTens = Math.floor(singleNum / 10);
+            if (!isNaN(singleNum)) {
+                leftTens = Math.floor(singleNum / 10);
+                leftOnes = singleNum % 10;
+                leftLabel = String(singleNum);
+            }
         }
 
-        // Проверяем промежуточную правильность для включения сияния (светится, только если введено верно 60 и 12)
+        // Проверяем промежуточную правильность (для сияния)
         let simVal = evaluateExpr(simText);
-        let simCorrect = (simVal === (num1 + num2)) && (userTens === (tens1 + tens2)) && (userOnes === (ones1 + ones2));
+        let simCorrect = (simVal === (num1 + num2));
 
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 10px; box-sizing:border-box; height:100%; animation:fadeIn 0.3s;">
+                <!-- ЛЕВЫЙ РОБОТ: Честно раскладывает левое число ввода на десятки и единицы -->
                 <div style="display:flex; align-items:center;">
                     <div style="display:flex; flex-direction:column; align-items:center; z-index:3;">
                         <span style="font-size:36px;">🤖</span>
-                        <b style="color:#22c55e; font-size:14px; margin-top:2px;">${userTens * 10}</b>
+                        <b style="color:#22c55e; font-size:14px; margin-top:2px;">${leftLabel}</b>
                     </div>
                     <span class="robot-hand-left">🦾</span>
-                    <div class="crystal-deck ${simCorrect ? 'glow-tens' : ''}">${generateCrystalColumnsHTML(userTens)}</div>
+                    <div class="crystal-deck ${simCorrect ? 'glow-tens' : ''}">
+                        ${generateCrystalColumnsHTML(leftTens)}
+                        ${generateOnesHTML(leftOnes)}
+                    </div>
                 </div>
+
                 <div style="font-size:24px; font-weight:bold; color:#22c55e;">+</div>
+
+                <!-- ПРАВЫЙ РОБОТ: Честно раскладывает правое число ввода на десятки и единицы -->
                 <div style="display:flex; align-items:center;" class="orange-theme">
-                    <div class="crystal-deck ${simCorrect ? 'glow-ones' : ''}">${generateOnesHTML(userOnes, true)}</div>
+                    <div class="crystal-deck ${simCorrect ? 'glow-ones' : ''}">
+                        ${generateCrystalColumnsHTML(rightTens)}
+                        ${generateOnesHTML(rightOnes)}
+                    </div>
                     <span class="robot-hand-right">🦾</span>
                     <div style="display:flex; flex-direction:column; align-items:center; z-index:3;">
                         <span style="font-size:36px;">🤖</span>
-                        <b style="color:#eab308; font-size:14px; margin-top:2px;">${userOnes}</b>
+                        <b style="color:#ea580c; font-size:14px; margin-top:2px;">${rightLabel}</b>
                     </div>
                 </div>
             </div>`;
     } else {
-        // ФАЗА 3: ФИНАЛЬНЫЙ ОТВЕТ. Роботы обняли общую платформу руками с двух сторон.
+        // ФАЗА 3: ФИНАЛЬНЫЙ ОТВЕТ. Слияние в центре.
         let totalTens = tens1 + tens2;
         let totalOnes = ones1 + ones2;
 
@@ -130,26 +151,12 @@ function generateCrystalColumnsHTML(count) {
     return html;
 }
 
-function generateOnesHTML(count, isSimplificationStage = false) {
+function generateOnesHTML(count) {
     if (count === 0) return '';
-    let html = '';
-    if (isSimplificationStage) {
-        let remaining = count;
-        while (remaining > 0) {
-            let currentColumnHeight = Math.min(remaining, 5);
-            html += `<div class="crystal-column" style="margin-left:4px; padding-left:2px;">`;
-            for (let i = 0; i < currentColumnHeight; i++) {
-                html += `<div class="crystal-item" style="background:#facc15; border-color:#ca8a04;"></div>`;
-            }
-            html += `</div>`;
-            remaining -= currentColumnHeight;
-        }
-    } else {
-        html += `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
-        for (let i = 0; i < count; i++) {
-            html += `<div class="crystal-item" style="background:#facc15; border-color:#ca8a04;"></div>`;
-        }
-        html += `</div>`;
+    let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
+    for (let i = 0; i < count; i++) {
+        html += `<div class="crystal-item" style="background:#facc15; border-color:#ca8a04;"></div>`;
     }
+    html += `</div>`;
     return html;
 }
