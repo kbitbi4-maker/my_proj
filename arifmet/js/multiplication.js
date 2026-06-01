@@ -11,6 +11,7 @@ function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
+
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
     stopWinSoundLoop();
@@ -48,9 +49,10 @@ function syncMonsterGame() {
     const parts = activeItem.exampleText.split('×');
     if (parts.length !== 2) return;
     
+    // ЖЕСТКОЕ ИСПРАВЛЕНИЕ ДЛЯ ГИТХАБА: Заменили .at(0) и .at(1) на классические [0] и [1]
     currentMultiTask = {
-        items: parseInt(parts.at(0), 10),
-        monsters: parseInt(parts.at(1), 10)
+        items: parseInt(parts[0], 10),
+        monsters: parseInt(parts[1], 10)
     };
     
     renderMonsterGame();
@@ -118,14 +120,15 @@ function renderMonsterGame() {
 
     if (activeItem.currentInput) {
         const partsArr = activeItem.currentInput.split('=');
-        const simText = partsArr.at(0) || '';
-        const finText = partsArr.at(1) || '';
+        // ЖЕСТКОЕ ИСПРАВЛЕНИЕ ДЛЯ ГИТХАБА: Заменили .at(0) и .at(1) на классические [0] и [1]
+        const simText = partsArr[0] || '';
+        const finText = partsArr[1] || '';
 
         // Проверяем слагаемые
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
         let checkParts = simText.split('+');
-        let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
+        let monsterCountFromText = parseInt(activeItem.exampleText.split('×')[1], 10); // Исправлено на [1]
         
         if (checkParts.length !== monsterCountFromText) {
             simCorrect = false;
