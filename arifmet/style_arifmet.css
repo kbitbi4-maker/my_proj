@@ -50,3 +50,13 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .win-layout .orange-theme.crystal-deck { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none; }
 .borrow-orange { background: #fb923c !important; border-color: #ea580c !important; }
 .borrow-blue { background: #38bdf8 !important; border-color: #0284c7 !important; }
+
+@keyframes robotDriveAway {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(400px); opacity: 0; }
+}
+.sub-scene-container { display: flex; justify-content: center; width: 100%; align-items: center; padding: 0 15px; box-sizing: border-box; height: 100%; gap: 20px; }
+.sub-empty-deck { border: 2px dashed #ef4444; background: rgba(254,226,226,0.2); }
+.sub-robot-label { font-size: 13px; margin-top: 1px; }
+.sub-drive-away { animation: robotDriveAway 1.2s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; }
+.sub-win-text { color: #22c55e; font-size: 14px; margin-top: 8px; }
