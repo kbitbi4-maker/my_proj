@@ -4,13 +4,6 @@ let currentMultiTask = null;
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
-    
-    // Опечатка полностью исправлена, код теперь работает безошибочно
-    const gameZone = document.getElementById('game-zone');
-    if (gameZone) {
-        gameZone.style.display = 'flex'; 
-    }
-    
     generateMultiExample();
 }
 
@@ -54,7 +47,7 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц в выделенной области
+// 4. Отрисовка монстриков и пицц в панорамной нижней области
 function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
@@ -77,9 +70,9 @@ function renderMonsterGame() {
 
     let html = '';
     
-    // Генерируем карточки монстриков
+    // Генерируем карточки монстриков (увеличили размеры под широкую зону)
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        const pizzasHTML = '<span style="font-size: 20px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        const pizzasHTML = '<span style="font-size: 24px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         
         html += `
             <div style="
@@ -88,22 +81,22 @@ function renderMonsterGame() {
                 align-items: center;
                 justify-content: center;
                 background: #ffffff;
-                padding: 12px;
-                border: 1px solid #e2e8f0;
-                border-radius: 10px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                min-width: 90px;
+                padding: 15px;
+                border: 2px solid #e2e8f0;
+                border-radius: 14px;
+                box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.04);
+                min-width: 110px;
             ">
-                <span style="font-size: 42px; margin-bottom: 8px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
+                <span style="font-size: 52px; margin-bottom: 10px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.1));">👾</span>
                 <div style="
                     display: flex;
-                    gap: 4px;
+                    gap: 5px;
                     justify-content: center;
                     flex-wrap: wrap;
-                    max-width: 75px;
+                    max-width: 90px;
                     background: #fff7ed;
-                    padding: 4px 8px;
-                    border-radius: 6px;
+                    padding: 6px 10px;
+                    border-radius: 8px;
                     border: 1px dashed #fed7aa;
                 ">
                     ${pizzasHTML}
