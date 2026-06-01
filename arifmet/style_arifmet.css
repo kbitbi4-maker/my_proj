@@ -33,17 +33,32 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 @keyframes monsterShaking { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); border-color: #60a5fa !important; box-shadow: 0 4px 10px rgba(96, 165, 250, 0.15); } }
 .tears-animation { animation: tearDrop 0.6s ease-in infinite; display: inline-block; }
 @keyframes tearDrop { 0% { transform: translateY(-5px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(12px); opacity: 0; } }
-/* НАСТРОЙКИ КРИСТАЛЛОВ И РУК РОБОТОВ */
-.crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 6px; min-height: 95px; align-items: flex-end; box-sizing: border-box; position: relative; z-index: 2; }
-.crystal-column { display: flex; flex-direction: column-reverse; gap: 1px; }
+/* НАСТРОЙКИ КРИСТАЛЛОВ С ПРАВИЛЬНЫМ СЧЁТОМ 5 СНИЗУ */
+.crystal-truck { display: flex; align-items: center; position: relative; }
+.crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 6px; min-height: 95px; align-items: flex-end; box-sizing: border-box; position: relative; z-index: 2; margin: 0 10px; }
+.crystal-column { display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; height: 100%; }
 .crystal-item { width: 12px; height: 7px; background: #38bdf8; border: 1px solid #0284c7; border-radius: 1px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
-.crystal-column .crystal-item:nth-last-child(5) { margin-bottom: 4px; }
+/* ЖЁСТКИЙ ЗАЗОР 5+5: отсчитываем ровно 5 кубиков снизу (с конца списка) */
+.crystal-column .crystal-item:nth-last-child(5) { margin-top: 4px; }
 .orange-theme .crystal-item { background: #fb923c; border: 1px solid #ea580c; }
 .glow-tens .crystal-column { filter: drop-shadow(0 0 6px #4ade80); border-color: #22c55e; }
 .glow-ones .crystal-item { filter: drop-shadow(0 0 4px #facc15); }
-/* Анимированные механические руки */
-.robot-hand-left { font-size: 26px; transform: translateX(5px) scaleX(-1); margin-top: 10px; transition: all 0.3s ease; }
-.robot-hand-right { font-size: 26px; transform: translateX(-5px); margin-top: 10px; transition: all 0.3s ease; }
-.monster-happy .robot-hand-left, .monster-happy .robot-hand-right { animation: handWave 0.3s ease infinite alternate; }
-@keyframes handWave { 0% { transform: translateY(0) scaleX(-1); } 100% { transform: translateY(-5px) scaleX(-1); } }
 
+/* ДЛИННЫЕ СЕГМЕНТНЫЕ РУКИ БЕНДЕРА НА CSS */
+.bender-arm-container { position: absolute; top: 10px; width: 45px; height: 80px; pointer-events: none; z-index: 1; }
+.left-arm-pos { left: 32px; }
+.right-arm-pos { right: 32px; transform: scaleX(-1); }
+
+/* Дуга руки */
+.bender-arm-arc { position: absolute; top: 0; left: 0; width: 35px; height: 70px; border: 6px solid #94a3b8; border-bottom: none; border-left: none; border-radius: 0 40px 0 0; box-sizing: border-box; }
+/* Клешня верхняя */
+.bender-claw-top { position: absolute; top: 64px; left: 24px; width: 14px; height: 6px; background: #64748b; border: 1px solid #475569; border-radius: 3px 3px 0 0; transform: rotate(-25deg); }
+/* Клешня нижняя */
+.bender-claw-bottom { position: absolute; top: 76px; left: 16px; width: 14px; height: 6px; background: #64748b; border: 1px solid #475569; border-radius: 0 0 3px 3px; transform: rotate(25deg); }
+
+/* Весёлое размахивание клешнями при победе */
+.monster-happy .bender-arm-arc { animation: benderWave 0.3s ease infinite alternate; }
+@keyframes benderWave {
+    0% { transform: skewY(0deg); }
+    100% { transform: skewY(-8deg); }
+}
