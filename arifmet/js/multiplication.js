@@ -11,7 +11,6 @@ function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
-
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
     // Перед генерацией нового примера железно останавливаем и сбрасываем плеер
