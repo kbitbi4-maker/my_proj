@@ -20,7 +20,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 </div>
                 <div style="font-size:28px; font-weight:bold; color:#94a3b8;">+</div>
                 <div class="crystal-truck">
-                    <div class="crystal-deck orange-theme" style="margin-right:10px;">${generateCrystalColumnsHTML(tens2, true, 0)}${generateOnesHTML(ones2, true)}</div>
+                    <div class="crystal-deck orange-theme" style="margin-left:10px;">${generateCrystalColumnsHTML(tens2, true, 0)}${generateOnesHTML(ones2, true)}</div>
                     <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b style="color:#ea580c; font-size:13px; margin-top:1px;">${num2}</b></div>
                 </div>
             </div>`;
@@ -49,29 +49,29 @@ function renderAdditionVisual(num1, num2, currentInput) {
                     <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b style="color:#ea580c; font-size:13px; margin-top:1px;">${rightLabel}</b></div>
                 </div>
             </div>`;
-    } else { // ФАЗА 3: ОТВЕТ
+    } else { // ФАЗА 3: ОТВЕТ. Плавное съезжание роботов по бокам зеленой платформы
         let totalOnes = ones1 + ones2, leftBorrowCount = 0, rightBorrowCount = 0;
         if (totalOnes >= 10) {
             if (simText.includes('+')) {
                 const userParts = simText.split('+');
                 let leftNum = parseInt(userParts.at(0), 10), rightNum = parseInt(userParts.at(1), 10);
-                if (!isNaN(leftNum) && Math.floor(leftNum / 10) > tens1) leftBorrowCount = 10 - ones1; // Занял левый робот
-                else if (!isNaN(rightNum) && Math.floor(rightNum / 10) > tens2) rightBorrowCount = 10 - ones2; // Занял правый робот
-            } else { leftBorrowCount = 10 - ones1; } // Предохранитель
+                if (!isNaN(leftNum) && Math.floor(leftNum / 10) > tens1) leftBorrowCount = 10 - ones1;
+                else if (!isNaN(rightNum) && Math.floor(rightNum / 10) > tens2) rightBorrowCount = 10 - ones2;
+            } else { leftBorrowCount = 10 - ones1; }
             totalOnes -= 10;
         }
         let deckContentHTML = '';
-        if (rightBorrowCount > 0) { // Сценарий А (Упрощалось второе число)
+        if (rightBorrowCount > 0) {
             deckContentHTML += generateOnesHTML(totalOnes, false);
             deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
             deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
             deckContentHTML += generateCrystalColumnsHTML(1, true, rightBorrowCount);
-        } else if (leftBorrowCount > 0) { // Сценарий Б (Упрощалось первое число)
+        } else if (leftBorrowCount > 0) {
             deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
             deckContentHTML += generateCrystalColumnsHTML(1, false, leftBorrowCount);
             deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
             deckContentHTML += generateOnesHTML(totalOnes, true);
-        } else { // Сценарий без перехода через разряд
+        } else {
             deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0);
             deckContentHTML += generateOnesHTML(ones1, false);
             deckContentHTML += generateCrystalColumnsHTML(tens2, true, 0);
@@ -79,9 +79,13 @@ function renderAdditionVisual(num1, num2, currentInput) {
         }
         html = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; animation:fadeIn 0.4s;">
                 <div class="win-layout" style="display:flex; align-items:center; justify-content:center; position:relative;">
-                    <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}"><span style="font-size:36px; line-height:1;">🤖</span></div>
-                    <div class="crystal-deck" style="background:#f0fdf4; border-color:#4ade80;">${deckContentHTML}</div>
-                    <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}"><span style="font-size:36px; line-height:1;">🤖</span></div>
+                    <div class="${isFullyCorrect ? 'add-robot-left-drive' : ''}" style="display:flex; flex-direction:column; align-items:center;">
+                        <div style="${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}"><span style="font-size:36px; line-height:1;">🤖</span></div>
+                    </div>
+                    <div class="crystal-deck" style="background:#f0fdf4; border-color:#4ade80; margin: 0 10px;">${deckContentHTML}</div>
+                    <div class="${isFullyCorrect ? 'add-robot-right-drive' : ''}" style="display:flex; flex-direction:column; align-items:center;">
+                        <div style="${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}"><span style="font-size:36px; line-height:1;">🤖</span></div>
+                    </div>
                 </div>
                 <b style="color:#22c55e; font-size:14px; margin-top:8px;">${isFullyCorrect ? 'Ура! Ответ верный! Ты гений! 🎉' : 'Проверяем ответ... 👀'}</b>
             </div>`;
@@ -106,10 +110,10 @@ function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
 function generateOnesHTML(count, isOrangeTheme) {
     if (count === 0) return '';
     let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
-    for (let j = 1; j <= 10; j++) { // Всегда создаем 10 элементов для корректного зазора 5+5
-        if (j <= count) { // Нижние кубики окрашиваем по теме
+    for (let j = 1; j <= 10; j++) {
+        if (j <= count) {
             html += `<div class="crystal-item ${isOrangeTheme ? 'borrow-orange' : 'borrow-blue'}"></div>`;
-        } else { // Верхние ячейки делаем прозрачными заглушками
+        } else {
             html += `<div class="crystal-item" style="background:transparent; border-color:transparent; box-shadow:none;"></div>`;
         }
     }
