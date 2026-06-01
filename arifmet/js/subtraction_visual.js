@@ -11,7 +11,7 @@ function renderSubtractionVisual(num1, num2, currentInput) {
     if (hasFinalAnswer && evaluateExpr(finText) === (num1 - num2)) isFullyCorrect = true;
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
     let html = '';
-    if (!hasPressedEqual) { // ФАЗА 1: СТАРТ. Базовый синий груз Л, белые кубики П
+    if (!hasPressedEqual) { // ФАЗА 1: СТАРТ
         html = `<div class="sub-scene-container">
             <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л (${num1})</b></div>
             <div class="crystal-deck" style="border-color:#0284c7;">${generateSubCargoHTML(tens1, ones1, 0, 0)}</div>
@@ -56,27 +56,30 @@ function renderSubtractionVisual(num1, num2, currentInput) {
     gameZone.innerHTML = html;
 }
 function generateSubCargoHTML(tens, ones, added, subtracted) {
-    let html = '', totalCubes = (tens * 10) + ones + added, activeCubes = totalCubes - subtracted;
+    let html = '', baseCubes = (tens * 10) + ones; // Исходное синее количество груза
+    let totalCubes = baseCubes + added, activeCubes = totalCubes - subtracted;
     let fullColumns = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
-    for (let i = 0; i < fullColumns; i++) { // ИСПРАВЛЕНО: Чистые синие столбики по 10 штук без инлайн конфликтов
+    for (let i = 0; i < fullColumns; i++) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) {
             globalCounter++;
-            if (globalCounter <= activeCubes) { // Если кубик активен — выводим ваш стандартный синий элемент
-                html += `<div class="crystal-item"></div>`;
-            } else { // Если потерял цвет при упрощении — становится белым с черным контуром
+            if (globalCounter <= activeCubes) { // ИСПРАВЛЕНО: кубики до baseCubes красятся в синий, свыше — в оранжевый
+                let cls = (globalCounter <= baseCubes) ? 'crystal-item' : 'crystal-item borrow-orange';
+                html += `<div class="${cls}"></div>`;
+            } else { // Если кубик потерян при убавлении — пустой контур
                 html += `<div class="crystal-item" style="border:1px solid #000; background:#fff; box-shadow:none;"></div>`;
             }
         }
         html += `</div>`;
     }
-    if (remOnes > 0) { // ИСПРАВЛЕНО: Неполный столбец единиц с прозрачным верхом как в сложении
+    if (remOnes > 0) {
         html += `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
         for (let j = 1; j <= 10; j++) {
             if (j <= remOnes) {
                 globalCounter++;
-                if (globalCounter <= activeCubes) {
-                    html += `<div class="crystal-item"></div>`;
+                if (globalCounter <= activeCubes) { // ИСПРАВЛЕНО: единицы тоже разделяются на синие и оранжевые
+                    let cls = (globalCounter <= baseCubes) ? 'crystal-item' : 'crystal-item borrow-orange';
+                    html += `<div class="${cls}"></div>`;
                 } else {
                     html += `<div class="crystal-item" style="border:1px solid #000; background:#fff; box-shadow:none;"></div>`;
                 }
