@@ -4,6 +4,13 @@ let currentMultiTask = null;
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
+    
+    // Показываем выделенную область монстров на экране
+    const gameZone = document.getElementById('game-zone');
+    if (gameZone) {
+        gameZone.style.style.display = 'flex';
+    }
+    
     generateMultiExample();
 }
 
@@ -47,46 +54,14 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц строго ВНИЗУ левой области
+// 4. Отрисовка монстриков и пицц в выделенной области
 function renderMonsterGame() {
-    const leftArea = document.getElementById('examples-list');
-    if (!leftArea) return;
-
-    // Ищем, нет ли уже созданной игровой зоны на странице
-    let gameZone = document.getElementById('game-zone');
-    
-    if (!gameZone) {
-        gameZone = document.createElement('div');
-        gameZone.id = 'game-zone';
-        
-        // Оптимизировали CSS: добавили margin-top: auto для прижатия к полу
-        gameZone.style.cssText = `
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: auto;
-            padding: 20px;
-            background-color: #f0fdf4;
-            border: 2px dashed #4ade80;
-            border-radius: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-            width: 90%;
-            margin-left: auto;
-            margin-right: auto;
-        `;
-        
-        // Принудительно задаем левой панели блочную структуру вертикального флекса,
-        // чтобы margin-top: auto у лужайки сработал идеально
-        leftArea.style.display = 'flex';
-        leftArea.style.flexDirection = 'column';
-        leftArea.style.minHeight = 'calc(100vh - 120px)'; // Адаптивная высота под размер экрана
-        
-        leftArea.appendChild(gameZone);
-    }
+    const gameZone = document.getElementById('game-zone');
+    if (!gameZone) return;
 
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
+        gameZone.style.display = 'none'; // Скрываем область, если нет активной задачи
         gameZone.removeAttribute('data-current-example');
         return;
     }
@@ -94,7 +69,7 @@ function renderMonsterGame() {
     const activeItem = window.examplesHistory[window.activeIndex];
     const exampleText = activeItem.exampleText;
 
-    // Удержание графики при редактировании примера (защита от моргания)
+    // Удержание графики при редактировании примера (блокируем мерцание)
     if (gameZone.getAttribute('data-current-example') === exampleText) {
         return;
     }
