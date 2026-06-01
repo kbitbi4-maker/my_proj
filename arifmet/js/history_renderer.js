@@ -64,10 +64,10 @@ function renderAllLines() {
     });
     let cur = window.examplesHistory[window.activeIndex];
     if (cur && cur.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = cur.exampleText.split('-');
+        let nums = cur.exampleText.split('-'); // Исправленные индексы массивов
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
     }
-    if (cur && window.currentMode === 'scales') { // Поддержка новых весов
+    if (cur && window.currentMode === 'scales') {
         const gameZone = document.getElementById('game-zone');
         if (gameZone) gameZone.innerHTML = '<div style="color:#94a3b8; font-size:14px;">[Визуал весов: ' + cur.currentInput + ']</div>';
     }
