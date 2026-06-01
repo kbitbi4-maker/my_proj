@@ -35,7 +35,7 @@ function renderSubtractionVisual(num1, num2, currentInput) {
             <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div>
             <div class="crystal-deck" style="border:2px solid #000;">${generateSubEmptyCubesHTML(num2 - subtractedAmount, addedAmount)}</div>
         </div>`;
-    } else { // ФАЗА 3: ОТВЕТ. Контур уносимого груза изменен на красный
+    } else { // ФАЗА 3: ОТВЕТ
         let currentSubtrahend = num2, addedAmount = 0;
         if (simText.includes('-')) {
             let userSub = parseInt(simText.split('-').at(1), 10);
@@ -58,16 +58,16 @@ function renderSubtractionVisual(num1, num2, currentInput) {
 function generateSubCargoHTML(tens, ones, added, subtracted) {
     let html = '', totalCubes = (tens * 10) + ones + added, activeCubes = totalCubes - subtracted;
     let fullColumns = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
-    for (let i = 0; i < fullColumns; i++) {
+    for (let i = 0; i < fullColumns; i++) { // ИСПРАВЛЕНО: Полные десятки теперь генерируются строго по 10 ячеек снизу вверх
         html += `<div class="crystal-column">`;
-        for (let j = 0; j < 10; j++) {
+        for (let j = 1; j <= 10; j++) {
             globalCounter++;
             let styleAttr = (globalCounter > activeCubes) ? 'style="border:1px solid #000; background:#fff; box-shadow:none;"' : '';
             html += `<div class="${(globalCounter <= activeCubes) ? 'borrow-blue' : 'crystal-item'}" ${styleAttr}></div>`;
         }
         html += `</div>`;
     }
-    if (remOnes > 0) {
+    if (remOnes > 0) { // Неполный столбец единиц строго по 10 ячеек снизу вверх
         html += `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
         for (let j = 1; j <= 10; j++) {
             if (j <= remOnes) {
@@ -85,9 +85,9 @@ function generateSubCargoHTML(tens, ones, added, subtracted) {
 function generateSubEmptyCubesHTML(emptyCount, addedOrangeCount) {
     let html = '', totalCubes = emptyCount + addedOrangeCount;
     let fullColumns = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
-    for (let i = 0; i < fullColumns; i++) { // Полные столбики пустых кубиков по 10 штук
+    for (let i = 0; i < fullColumns; i++) {
         html += `<div class="crystal-column">`;
-        for (let j = 0; j < 10; j++) {
+        for (let j = 1; j <= 10; j++) {
             globalCounter++;
             if (globalCounter <= emptyCount) {
                 html += `<div class="crystal-item" style="border: 1px solid #000; background: #fff; box-shadow: none;"></div>`;
@@ -97,7 +97,7 @@ function generateSubEmptyCubesHTML(emptyCount, addedOrangeCount) {
         }
         html += `</div>`;
     }
-    if (remOnes > 0) { // Неполный столбец единиц с зазором 5+5 и прозрачным верхом
+    if (remOnes > 0) {
         html += `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
         for (let j = 1; j <= 10; j++) {
             if (j <= remOnes) {
@@ -120,7 +120,7 @@ function generateSubFinalCubesHTML(blueCount, orangeCount) {
     let fullColumns = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
     for (let i = 0; i < fullColumns; i++) {
         html += `<div class="crystal-column">`;
-        for (let j = 0; j < 10; j++) {
+        for (let j = 1; j <= 10; j++) {
             globalCounter++;
             html += `<div class="crystal-item ${(globalCounter <= blueCount) ? 'borrow-blue' : 'borrow-orange'}"></div>`;
         }
