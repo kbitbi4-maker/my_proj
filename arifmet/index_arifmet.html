@@ -11,7 +11,7 @@
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="header-title" onclick="toggleMenu()">Режим: Выбрать ▼</div>
-        <div class="version">arifmet_035</div>
+        <div class="version">arifmet_032</div>
     </div>
 
     <div id="menu" class="dropdown">
@@ -22,40 +22,42 @@
         <div class="dropdown-item" onclick="setMode('multiplication')">Умножение 🍕</div>
     </div>
 
-    <div class="main-container">
-        <!-- Левая колонка разделена на два независимых этажа через вертикальный Flexbox -->
-        <div class="left-area" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; min-height: calc(100vh - 120px); box-sizing: border-box;">
+    <!-- Перестроили контейнер в вертикальную структуру Flexbox -->
+    <div class="main-container" style="display: flex; flex-direction: column; gap: 20px; min-height: calc(100vh - 80px); box-sizing: border-box; padding: 15px;">
+        
+        <!-- ВЕРХНИЙ ЭТАЖ: Примеры слева, Нумпад справа -->
+        <div style="display: flex; gap: 20px; flex: 1;">
             
-            <!-- ВЕРХНИЙ ЭТАЖ: Только для математических строк (со скроллом, если примеров много) -->
-            <div id="examples-list" style="flex: 1; overflow-y: auto; padding-bottom: 15px; width: 100%;">
+            <!-- ЛЕВАЯ ОБЛАСТЬ: Только чистый список примеров -->
+            <div class="left-area" id="examples-list" style="flex: 1; overflow-y: auto;">
                 <div style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
             </div>
             
-            <!-- НИЖНИЙ ЭТАЖ: Постоянно открытая выделенная область, куда садятся монстры -->
-            <div id="game-zone" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; padding: 15px; background-color: #f0fdf4; border: 2px dashed #4ade80; border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01); width: 95%; margin: 15px auto 0 auto; box-sizing: border-box;"></div>
-            
-        </div>
-        
-        <div class="right-area">
-            <div class="numpad">
-                <button class="num-btn" onclick="pressNum('1')">1</button>
-                <button class="num-btn" onclick="pressNum('2')">2</button>
-                <button class="num-btn" onclick="pressNum('3')">3</button>
-                <button class="num-btn" onclick="pressNum('4')">4</button>
-                <button class="num-btn" onclick="pressNum('5')">5</button>
-                <button class="num-btn" onclick="pressNum('6')">6</button>
-                <button class="num-btn" onclick="pressNum('7')">7</button>
-                <button class="num-btn" onclick="pressNum('8')">8</button>
-                <button class="num-btn" onclick="pressNum('9')">9</button>
-                <button class="num-btn clear" onclick="pressNum('C')">C</button>
-                <button class="num-btn" onclick="pressNum('0')">0</button>
-                <button class="num-btn clear" onclick="pressNum('D')">←</button>
-                <button class="num-btn op" onclick="pressNum('+')">+</button>
-                <button class="num-btn op" onclick="pressNum('-')">-</button>
-                <button class="num-btn op" onclick="pressNum('=')">=</button>
-                <button class="num-btn next" onclick="confirmAndNext()">Следующий пример</button>
+            <!-- ПРАВАЯ ОБЛАСТЬ: Нумпад -->
+            <div class="right-area" style="box-sizing: border-box;">
+                <div class="numpad">
+                    <button class="num-btn" onclick="pressNum('1')">1</button>
+                    <button class="num-btn" onclick="pressNum('2')">2</button>
+                    <button class="num-btn" onclick="pressNum('3')">3</button>
+                    <button class="num-btn" onclick="pressNum('4')">4</button>
+                    <button class="num-btn" onclick="pressNum('5')">5</button>
+                    <button class="num-btn" onclick="pressNum('6')">6</button>
+                    <button class="num-btn" onclick="pressNum('7')">7</button>
+                    <button class="num-btn" onclick="pressNum('8')">8</button>
+                    <button class="num-btn" onclick="pressNum('9')">9</button>
+                    <button class="num-btn clear" onclick="pressNum('C')">C</button>
+                    <button class="num-btn" onclick="pressNum('0')">0</button>
+                    <button class="num-btn clear" onclick="pressNum('D')">←</button>
+                    <button class="num-btn op" onclick="pressNum('+')">+</button>
+                    <button class="num-btn op" onclick="pressNum('-')">-</button>
+                    <button class="num-btn op" onclick="pressNum('=')">=</button>
+                    <button class="num-btn next" onclick="confirmAndNext()">Следующий пример</button>
+                </div>
             </div>
         </div>
+
+        <!-- НИЖНИЙ ЭТАЖ: Огромная выделенная область для игры, отличная по фону -->
+        <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; padding: 25px; background-color: #f0fdf4; border: 3px dashed #4ade80; border-radius: 16px; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); min-height: 160px; width: 100%; box-sizing: border-box;"></div>
     </div>
 
     <!-- Подключаем логику в правильном порядке перед закрытием body -->
