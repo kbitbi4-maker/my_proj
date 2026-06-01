@@ -4,7 +4,7 @@ let currentMultiTask = null;
 // Переменная для хранения ID зацикленного таймера звука
 let winSoundIntervalId = null;
 
-// Счетчики для создания ритма мелодии
+// Счетчик для создания ритма мелодии
 let melodyStep = 0;
 
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
@@ -66,7 +66,7 @@ function stopWinSoundLoop() {
     melodyStep = 0;
 }
 
-// ВЕСЕЛАЯ МЕЛОДИЯ ИЗ "НЯМОВ" И "ХРУМОВ"
+// РИТМИЧНЫЙ ХОР "НЯМ" И "ХРУМ" (БЕЗ БУЛЬКАНЬЯ)
 function startWinSoundLoop() {
     if (winSoundIntervalId) return;
 
@@ -75,49 +75,63 @@ function startWinSoundLoop() {
         if (!AudioContext) return;
         const ctx = new AudioContext();
 
-        // Скорость мелодии: шаг каждые 300 миллисекунд (веселый бодрый темп)
+        // Скорость шага — 320 миллисекунд для бодрой детской песенки
         winSoundIntervalId = setInterval(() => {
             let now = ctx.currentTime;
             
-            // Базовые ноты для веселой мелодии (До, Ре, Ми, Соль)
-            const scale = [261.63, 293.66, 329.63, 392.00];
-            // Меняем ноту каждые два шага, чтобы получилась песенка
+            // Веселая мажорная лесенка нот для мелодии
+            const scale = [293.66, 329.63, 392.00, 440.00]; // Ре, Ми, Соль, Ля
             let baseFreq = scale[Math.floor(melodyStep / 2) % scale.length]; 
             
-            // РИТМИЧЕСКИЙ РИСУНОК: Шаг 0 - Ням, Шаг 1 - Хрум, Шаг 2 - Ням, Шаг 3 - Хрум-Хрум
+            // Чередуем: четный шаг - Ням, нечетный шаг - Хрум
             let isHrum = (melodyStep % 2 === 1);
-            
-            // Если шаг №3, с вероятностью 50% делаем двойной хруст
-            if (melodyStep % 4 === 3 && Math.random() > 0.5) isHrum = true;
 
             if (!isHrum) {
                 // ----------------------------------------------------
-                // СИНТЕЗ ЗВУКА "НЯМ" (Мягкий гласный звук)
+                // ФОРМАНТНЫЙ СИНТЕЗ ЗВУКА "НЯМ" (Двухголосый мультяшный звук)
                 // ----------------------------------------------------
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
+                // Осциллятор 1: отвечает за гласную "Ня-" (высокий тон)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(baseFreq * 1.5, now);
+                osc1.frequency.exponentialRampToValueAtTime(baseFreq * 1.1, now + 0.08);
                 
-                // Прямоугольная волна ближе всего к мультяшному голосу
-                osc.type = 'triangle'; 
+                // Осциллятор 2: падает глубоко вниз, имитируя закрытие губ на "-М"
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sawtooth'; // добавляет речевой текстуры
+                osc2.frequency.setValueAtTime(baseFreq * 0.9, now);
+                osc2.frequency.linearRampToValueAtTime(120, now + 0.14); // резкий уход в бас на согласную М
+
+                // Пропускаем через фильтр, чтобы убрать лишний гул и сделать звук "носовым"
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(baseFreq * 1.2, now);
+
+                gain1.gain.setValueAtTime(0.12, now);
+                gain1.gain.linearRampToValueAtTime(0.001, now + 0.14);
                 
-                // "Ня-" (высокий старт) -> "-м" (резкое падение частоты вниз)
-                osc.frequency.setValueAtTime(baseFreq * 1.4, now);
-                osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.6, now + 0.12);
-                
-                gain.gain.setValueAtTime(0.15, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.16);
+                gain2.gain.setValueAtTime(0.06, now);
+                gain2.gain.linearRampToValueAtTime(0.001, now + 0.14);
+
+                osc1.connect(gain1);
+                osc2.connect(gain2);
+                gain1.connect(filter);
+                gain2.connect(filter);
+                filter.connect(ctx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + 0.15);
+                osc2.stop(now + 0.15);
                 
             } else {
                 // ----------------------------------------------------
-                // СИНТЕЗ ЗВУКА "ХРУМ" (Шум + Низкий тон чавканья)
+                // СУХОЙ СИНТЕЗ ЗВУКА "ХРУМ" (Фильтрованный треск + глухой удар)
                 // ----------------------------------------------------
-                // 1. Создаем хрустящий белый шум
-                const bufferSize = ctx.sampleRate * 0.05; // очень короткий всплеск (0.05 сек)
+                // 1. Имитация сухого хруста (Высокочастотный отсеченный шум)
+                const bufferSize = ctx.sampleRate * 0.04; 
                 const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
@@ -127,34 +141,38 @@ function startWinSoundLoop() {
                 const noise = ctx.createBufferSource();
                 noise.buffer = buffer;
                 
+                const noiseFilter = ctx.createBiquadFilter();
+                noiseFilter.type = 'highpass'; // Отсекаем весь низ, убирая "бульканье"
+                noiseFilter.frequency.setValueAtTime(4000, now); // Оставляем только сухой шорох и треск
+
                 const noiseGain = ctx.createGain();
-                noiseGain.gain.setValueAtTime(0.08, now); // громкость хруста
+                noiseGain.gain.setValueAtTime(0.18, now); 
                 noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
                 
-                noise.connect(noiseGain);
+                noise.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
                 noiseGain.connect(ctx.destination);
                 noise.start(now);
                 
-                // 2. Добавляем к шуму основу звука "-ум"
+                // 2. Глухой короткий удар "-УМ" в конце хруста
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(baseFreq * 0.8, now);
-                osc.frequency.linearRampToValueAtTime(baseFreq * 0.4, now + 0.12);
+                osc.frequency.setValueAtTime(180, now); // низкая глухая частота закрытого рта
+                osc.frequency.linearRampToValueAtTime(90, now + 0.08);
                 
-                gain.gain.setValueAtTime(0.12, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.14);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
                 
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.start(now);
-                osc.stop(now + 0.15);
+                osc.stop(now + 0.11);
             }
 
-            melodyStep++; // Переходим к следующему такту песенки
+            melodyStep++; // Шаг вперед по тактам песенки
             
-        }, 300);
+        }, 320);
 
     } catch (e) {
         console.log("Аудио-контекст заблокирован браузером");
@@ -206,16 +224,17 @@ function renderMonsterGame() {
     }
     
     if (isFullySolved) {
-        startWinSoundLoop(); // Запускаем зацикленный оркестр нямов и хрумов
+        startWinSoundLoop(); 
     } else {
         stopWinSoundLoop();
     }
     
-    gameZone.setAttribute('data-current-example', cacheKey);
+       gameZone.setAttribute('data-current-example', cacheKey);
 
     let html = '';
     
     for (let i = 0; i < currentMultiTask.monsters; i++) {
+        // Если пример полностью решен — пиццы исчезают, иначе — рисуем пиццы
         const pizzasHTML = isFullySolved 
             ? '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>' 
             : '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
