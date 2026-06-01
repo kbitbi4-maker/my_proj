@@ -5,11 +5,18 @@ function initMultiplicationMode() {
 }
 function generateMultiExample() {
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    const num1 = Math.floor(Math.random() * 4) + 2; 
-    const num2 = Math.floor(Math.random() * 4) + 2; 
+    if (!window.usedExamples) window.usedExamples = []; // Инициализация массива уникальности
+    let num1, num2, text;
+    while (true) { // Цикл поиска уникальной математической комбинации
+        num1 = Math.floor(Math.random() * 4) + 2; 
+        num2 = Math.floor(Math.random() * 4) + 2; 
+        text = num1 + '×' + num2;
+        if (!window.usedExamples.includes(text)) break; // Выходим, если пример новый
+    }
+    window.usedExamples.push(text); // Логируем пример в базу сессии
     currentMultiTask = { items: num1, monsters: num2 };
     window.examplesHistory.push({
-        exampleText: num1 + '×' + num2,
+        exampleText: text,
         correctValue: num1 * num2,
         currentInput: ''
     });
@@ -24,7 +31,7 @@ function syncMonsterGame() {
     const parts = window.examplesHistory[window.activeIndex].exampleText.split('×');
     currentMultiTask = { items: parseInt(parts.at(0), 10), monsters: parseInt(parts.at(1), 10) };
     const gameZone = document.getElementById('game-zone');
-    if (gameZone) gameZone.removeAttribute('data-current-example'); // ИСПРАВЛЕНО: Сбрасываем кэш, чтобы принудительно стереть роботов и нарисовать монстров
+    if (gameZone) gameZone.removeAttribute('data-current-example'); // Сбрасываем кэш при клике на историю
     renderMonsterGame();
 }
 function renderMonsterGame() {
