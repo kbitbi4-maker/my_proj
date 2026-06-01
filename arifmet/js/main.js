@@ -43,14 +43,14 @@ function generateExample() {
     
     // ИНТЕГРАЦИЯ ВИЗУАЛИЗАЦИИ: Проверяем, какой пример был сгенерирован
     if (isAddition) {
-        // Если у вас в addition_visual.js функция называется render, вызываем её:
-        if (typeof AdditionVisual !== 'undefined' && AdditionVisual.render) {
-            AdditionVisual.render('game-zone', num1, num2);
+        // Вызов вашего оригинального движка сложения для первой фазы
+        if (typeof renderAdditionVisual === 'function') {
+            renderAdditionVisual(num1, num2, '');
         }
     } else {
-        // Если это вычитание, инициализируем сцену с роботами и кубиками
-        if (typeof SubtractionVisual !== 'undefined' && SubtractionVisual.init) {
-            SubtractionVisual.init('game-zone', num1, num2);
+        // Вызов нашего нового движка вычитания для первой фазы
+        if (typeof renderSubtractionVisual === 'function') {
+            renderSubtractionVisual(num1, num2, '');
         }
     }
     
