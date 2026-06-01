@@ -4,6 +4,7 @@ let currentMultiTask = null;
 // Глобальные переменные для контроля проигрывания аудиофайла
 let winSoundIntervalId = null;
 let currentAudioPlayer = null;
+let audioRepeatCount = 0; // Счётчик для ограничения повторов звука
 
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
@@ -50,8 +51,8 @@ function syncMonsterGame() {
     if (parts.length !== 2) return;
     
     currentMultiTask = {
-        items: parseInt(parts[0], 10),
-        monsters: parseInt(parts[1], 10)
+        items: parseInt(parts.at(0), 10),
+        monsters: parseInt(parts.at(1), 10)
     };
     
     renderMonsterGame();
@@ -60,30 +61,46 @@ function syncMonsterGame() {
 // ФУНКЦИЯ ОСТАНОВКИ И ГЛУШЕНИЯ ЗВУКА
 function stopWinSoundLoop() {
     if (currentAudioPlayer) {
+        currentAudioPlayer.onended = null; // Отвязываем событие, чтобы не зацикливалось при принудительном сбросе
         currentAudioPlayer.pause(); // Ставим плеер на паузу
         currentAudioPlayer.currentTime = 0; // Сбрасываем звуковую дорожку в самое начало
         currentAudioPlayer = null;
     }
     winSoundIntervalId = null;
+    audioRepeatCount = 0; // Обнуляем счётчик повторений
 }
 
-// ФУНКЦИЯ ЗАПУСКА ВАШЕГО ГОТОВОГО MP3 ФАЙЛА
+// ФУНКЦИЯ ЗАПУСКА АУДИО С ОГРАНИЧЕНИЕМ В 3 ПОВТОРЕНИЯ
 function startWinSoundLoop() {
     // Защита: если звук уже играет — не запускаем параллельный плеер
     if (winSoundIntervalId) return;
 
     try {
-        // Создаем встроенный HTML5 аудио-объект и указываем путь к вашему файлу
         currentAudioPlayer = new Audio('audio/alien_win.mp3');
         currentAudioPlayer.volume = 0.25; // Настраиваем комфортную громкость (25%)
-        currentAudioPlayer.loop = true;   // Включаем автоматическое бесконечное зацикливание звука
+        currentAudioPlayer.loop = false;  // ОТКЛЮЧИЛИ встроенное бесконечное зацикливание
+        audioRepeatCount = 1;             // Первый запуск пошёл
+        
+        // Умный обработчик окончания трека
+        currentAudioPlayer.onended = function() {
+            if (audioRepeatCount < 3) {
+                audioRepeatCount++;
+                if (currentAudioPlayer) {
+                    currentAudioPlayer.play(); // Запускаем на 2-й и 3-й круг
+                }
+            } else {
+                // После 3-го проигрывания аккуратно очищаем плеер, но метку победы оставляем, чтобы монстры продолжали прыгать
+                if (currentAudioPlayer) {
+                    currentAudioPlayer.onended = null;
+                    currentAudioPlayer = null;
+                }
+            }
+        };
         
         currentAudioPlayer.play();
-        
-        // Ставим техническую метку, что звук активен
-        winSoundIntervalId = true;
+        winSoundIntervalId = true; // Ставим техническую метку, что звук активен
     } catch (e) {
-        console.log("Аудио заблокировано политикой браузера до первого клика");
+        console.log("Аудио заблокировано политикой браузера");
     }
 }
 
@@ -106,14 +123,14 @@ function renderMonsterGame() {
     let isFullySolved = false;
     if (activeItem.currentInput && activeItem.currentInput.includes('=')) {
         const partsArr = activeItem.currentInput.split('=');
-        const simText = partsArr[0] || '';
-        const finText = partsArr[1] || '';
+        const simText = partsArr.at(0) || '';
+        const finText = partsArr.at(1) || '';
 
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
         
         let checkParts = simText.split('+');
-        let monsterCountFromText = parseInt(activeItem.exampleText.split('×')[1], 10);
+        let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
         if (checkParts.length !== monsterCountFromText) {
             simCorrect = false;
         }
@@ -131,7 +148,7 @@ function renderMonsterGame() {
         return;
     }
     
-    // Если зафиксирована победа — включаем ваш плеер, иначе — глушим
+    // Если зафиксирована победа — включаем плеер, иначе — глушим
     if (isFullySolved) {
         startWinSoundLoop(); 
     } else {
