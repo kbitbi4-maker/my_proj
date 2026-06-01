@@ -11,9 +11,9 @@ function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
+
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
-    // Перед генерацией нового примера железно останавливаем и сбрасываем плеер
     stopWinSoundLoop();
 
     const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
@@ -60,35 +60,30 @@ function syncMonsterGame() {
 // ФУНКЦИЯ ОСТАНОВКИ И ГЛУШЕНИЯ ЗВУКА
 function stopWinSoundLoop() {
     if (currentAudioPlayer) {
-        currentAudioPlayer.onended = null; // Отвязываем событие, чтобы не зацикливалось при принудительном сбросе
-        currentAudioPlayer.pause(); // Ставим плеер на паузу
-        currentAudioPlayer.currentTime = 0; // Сбрасываем звуковую дорожку в самое начало
+        currentAudioPlayer.onended = null;
+        currentAudioPlayer.pause();
+        currentAudioPlayer.currentTime = 0;
         currentAudioPlayer = null;
     }
     winSoundIntervalId = null;
-    audioRepeatCount = 0; // Обнуляем счётчик повторений
+    audioRepeatCount = 0;
 }
 
 // ФУНКЦИЯ ЗАПУСКА АУДИО С ОГРАНИЧЕНИЕМ В 3 ПОВТОРЕНИЯ
 function startWinSoundLoop() {
-    // Защита: если звук уже играет — не запускаем параллельный плеер
     if (winSoundIntervalId) return;
 
     try {
         currentAudioPlayer = new Audio('audio/alien_win.mp3');
-        currentAudioPlayer.volume = 0.25; // Настраиваем комфортную громкость (25%)
-        currentAudioPlayer.loop = false;  // ОТКЛЮЧИЛИ встроенное бесконечное зацикливание
-        audioRepeatCount = 1;             // Первый запуск пошёл
+        currentAudioPlayer.volume = 0.25;
+        currentAudioPlayer.loop = false;
+        audioRepeatCount = 1;
         
-        // Умный обработчик окончания трека
         currentAudioPlayer.onended = function() {
             if (audioRepeatCount < 3) {
                 audioRepeatCount++;
-                if (currentAudioPlayer) {
-                    currentAudioPlayer.play(); // Запускаем на 2-й и 3-й круг
-                }
+                if (currentAudioPlayer) currentAudioPlayer.play();
             } else {
-                // После 3-го проигрывания аккуратно очищаем плеер, но метку победы оставляем, чтобы монстры продолжали прыгать
                 if (currentAudioPlayer) {
                     currentAudioPlayer.onended = null;
                     currentAudioPlayer = null;
@@ -97,13 +92,13 @@ function startWinSoundLoop() {
         };
         
         currentAudioPlayer.play();
-        winSoundIntervalId = true; // Ставим техническую метку, что звук активен
+        winSoundIntervalId = true;
     } catch (e) {
         console.log("Аудио заблокировано политикой браузера");
     }
 }
 
-// 4. Отрисовка монстриков и пицц в панорамной нижней области
+// 4. Отрисовка монстриков, пицц, слёз и анимаций
 function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
@@ -118,36 +113,57 @@ function renderMonsterGame() {
     const activeItem = window.examplesHistory[window.activeIndex];
     if (!activeItem || !activeItem.exampleText) return;
 
-    // ПРОВЕРКА НА ПОЛНУЮ ПОБЕДУ
-    let isFullySolved = false;
-    if (activeItem.currentInput && activeItem.currentInput.includes('=')) {
+    // ПЕРЕМЕННЫЕ СОСТОЯНИЯ ИГРЫ
+    let isFullySolved = false; // Флаг победы
+    let isWrongAnswer = false; // Флаг ошибки
+
+    if (activeItem.currentInput) {
         const partsArr = activeItem.currentInput.split('=');
         const simText = partsArr.at(0) || '';
         const finText = partsArr.at(1) || '';
 
+        // Проверяем слагаемые
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
-        
         let checkParts = simText.split('+');
         let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
+        
         if (checkParts.length !== monsterCountFromText) {
             simCorrect = false;
         }
 
+        // Проверяем финальный ответ
         let finVal = evaluateExpr(finText);
         let finCorrect = (finVal === activeItem.correctValue);
+        let targetLength = String(activeItem.correctValue).length;
 
-        if (simCorrect && finCorrect) {
+        // Если введён знак равенства, но слагаемые уже неверны — фиксируем ошибку
+        if (activeItem.currentInput.includes('=') && !simCorrect) {
+            isWrongAnswer = true;
+        }
+
+        // Если введён финальный ответ (длина совпала), но он неверный — фиксируем ошибку
+        if (partsArr.length > 1 && finText.trim().length >= targetLength && !finCorrect) {
+            isWrongAnswer = true;
+        }
+
+        // Чистая победа
+        if (activeItem.currentInput.includes('=') && simCorrect && finCorrect) {
             isFullySolved = true;
         }
     }
 
-    const cacheKey = activeItem.exampleText + "_" + (isFullySolved ? "win" : "play");
+    // Сохраняем состояние в кэш-ключ, включая ошибку
+    let status = "play";
+    if (isFullySolved) status = "win";
+    if (isWrongAnswer) status = "sad";
+
+    const cacheKey = activeItem.exampleText + "_" + status;
     if (gameZone.getAttribute('data-current-example') === cacheKey) {
         return;
     }
     
-    // Если зафиксирована победа — включаем плеер, иначе — глушим
+    // Управление звуком победы
     if (isFullySolved) {
         startWinSoundLoop(); 
     } else {
@@ -159,12 +175,29 @@ function renderMonsterGame() {
     let html = '';
     
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        const pizzasHTML = isFullySolved 
-            ? '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>' 
-            : '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        let contentHTML = '';
+        let bgBox = '#fff7ed';
+        let borderBox = '1px dashed #fed7aa';
+        let monsterClass = '';
+
+        if (isFullySolved) {
+            contentHTML = '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>';
+            bgBox = '#dcfce7';
+            borderBox = '1px dashed #22c55e';
+            monsterClass = 'monster-happy';
+        } else if (isWrongAnswer) {
+            // Если ошибка — пиццы пропадают, капают анимированные слёзы
+            contentHTML = '<span class="tears-animation" style="font-size: 22px;">💦</span>';
+            bgBox = '#eff6ff'; // нежно-голубой цвет грусти
+            borderBox = '1px dashed #60a5fa';
+            monsterClass = 'monster-sad';
+        } else {
+            // Обычное состояние игры — раскладываем пиццы
+            contentHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        }
         
         html += `
-            <div class="${isFullySolved ? 'monster-happy' : ''}" style="
+            <div class="${monsterClass}" style="
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -185,14 +218,14 @@ function renderMonsterGame() {
                     justify-content: center;
                     flex-wrap: wrap;
                     max-width: 80px;
-                    background: ${isFullySolved ? '#dcfce7' : '#fff7ed'};
+                    background: ${bgBox};
                     padding: 4px 6px;
                     border-radius: 6px;
-                    border: 1px dashed ${isFullySolved ? '#22c55e' : '#fed7aa'};
+                    border: ${borderBox};
                     min-height: 32px;
                     align-items: center;
                 ">
-                    ${pizzasHTML}
+                    ${contentHTML}
                 </div>
             </div>
         `;
