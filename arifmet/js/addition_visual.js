@@ -106,8 +106,12 @@ function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
 function generateOnesHTML(count, isOrangeTheme) {
     if (count === 0) return '';
     let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
-    for (let i = 0; i < count; i++) { // Вывод строго реального количества кубиков без пустых заглушек
-        html += `<div class="crystal-item ${isOrangeTheme ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+    for (let j = 1; j <= 10; j++) { // Всегда создаем 10 элементов для корректного зазора 5+5
+        if (j <= count) { // Нижние кубики окрашиваем по теме
+            html += `<div class="crystal-item ${isOrangeTheme ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+        } else { // Верхние ячейки делаем прозрачными заглушками
+            html += `<div class="crystal-item" style="background:transparent; border-color:transparent; box-shadow:none;"></div>`;
+        }
     }
     return html + `</div>`;
 }
