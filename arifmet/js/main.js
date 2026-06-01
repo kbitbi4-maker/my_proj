@@ -7,7 +7,8 @@ function initTensMode() {
 }
 
 function generateExample() {
-    if (currentMode !== 'tens') return;
+    // ИСПРАВЛЕНО: Добавлена приставка window. к глобальным переменным состояния
+    if (window.currentMode !== 'tens') return;
     let num1, num2, correctValue, text;
     
     if (isAddition) {
@@ -32,13 +33,14 @@ function generateExample() {
         }
     }
     
-    examplesHistory.push({
+    // ИСПРАВЛЕНО: Запись идет строго в window.examplesHistory
+    window.examplesHistory.push({
         exampleText: text,
         correctValue: correctValue,
         currentInput: ''
     });
     
-    activeIndex = examplesHistory.length - 1;
+    window.activeIndex = window.examplesHistory.length - 1;
     isAddition = !isAddition;
     
     renderAllLines();
