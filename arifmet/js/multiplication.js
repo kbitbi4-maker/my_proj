@@ -1,6 +1,9 @@
 // Переменная для хранения текущего игрового задания (сколько монстров и пицц)
 let currentMultiTask = null;
 
+// Переменная для хранения ID зацикленного таймера звука
+let winSoundIntervalId = null;
+
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
@@ -9,6 +12,9 @@ function initMultiplicationMode() {
 
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
+    // Перед генерацией нового примера железно останавливаем старый зацикленный звук
+    stopWinSoundLoop();
+
     const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
     const num2 = Math.floor(Math.random() * 4) + 2; // количество монстров (2-5)
     
@@ -50,46 +56,74 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// ОБНОВЛЕННАЯ ФУНКЦИЯ: Повторяющийся забавный "клич" пришельцев
-function playWinSound() {
+// Функция остановки бесконечного звука
+function stopWinSoundLoop() {
+    if (winSoundIntervalId) {
+        clearInterval(winSoundIntervalId);
+        winSoundIntervalId = null;
+    }
+}
+
+// ЗАЦИКЛЕННЫЙ И РАЗНООБРАЗНЫЙ ЗВУК ХОРА ПРИШЕЛЬЦЕВ
+function startWinSoundLoop() {
+    // Защита: если звук уже вовсю играет — не запускаем еще один параллельно
+    if (winSoundIntervalId) return;
+
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext || !currentMultiTask) return;
+        if (!AudioContext) return;
         const ctx = new AudioContext();
-        
-        // Количество повторений звука равно количеству монстров на экране
-        const repeatCount = currentMultiTask.monsters;
-        let startTime = ctx.currentTime;
-        
-        for (let i = 0; i < repeatCount; i++) {
-            // Каждое следующее "повторение" звучит с небольшой задержкой (0.18 сек)
-            let noteTime = startTime + (i * 0.18);
+
+        // Запускаем бесконечный цикл возгласов, который срабатывает каждые 450 миллисекунд
+        winSoundIntervalId = setInterval(() => {
+            // Забавный случайный выбор одного из трех типов инопланетных возгласов
+            const soundType = Math.floor(Math.random() * 3);
             
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            
-            // Используем "пилообразную" (sawtooth) или "синусоидальную" волну для забавного космического эффекта
-            osc.type = 'sine'; 
-            
-            // Стартовая частота звука ("голос" пришельца)
-            let baseFreq = 300 + (Math.random() * 100); // Слегка рандомизируем тон, чтобы пришельцы звучали по-разному
-            osc.frequency.setValueAtTime(baseFreq, noteTime);
-            
-            // Эффект "виу-виу" — частота резко улетает вверх за долю секунды
-            osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.5, noteTime + 0.12);
-            
-            // Настройка громкости и плавного затухания
-            gain.gain.setValueAtTime(0.12, noteTime);
-            gain.gain.linearRampToValueAtTime(0.01, noteTime + 0.15);
-            
+            let now = ctx.currentTime;
+
+            // Рандомизируем базовый голос (высокий или низкий пришелец кричит)
+            let baseFreq = 250 + Math.random() * 350; 
+
+            switch (soundType) {
+                case 0: // Возглас 1: Резкий испуганный "ПИУ!" вверх
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 3, now + 0.15);
+                    break;
+                case 1: // Возглас 2: Булькающий прыгающий "УИ-УИ" вниз-вверх
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(baseFreq * 1.5, now);
+                    osc.frequency.linearRampToValueAtTime(baseFreq * 0.7, now + 0.08);
+                    osc.frequency.linearRampToValueAtTime(baseFreq * 2, now + 0.18);
+                    break;
+                case 2: // Возглас 3: Дрожащий космический крик радости (вибрато)
+                    osc.type = 'sawtooth'; // более яркий праздничный звук
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    // Быстрое раскачивание частоты туда-сюда
+                    for (let i = 0; i < 6; i++) {
+                        let modTime = now + (i * 0.03);
+                        let offset = (i % 2 === 0) ? 40 : -40;
+                        osc.frequency.setValueAtTime(baseFreq + offset, modTime);
+                    }
+                    break;
+            }
+
+            // Мягкая комфортная громкость, чтобы не раздражать при долгом звучании
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
+
             osc.connect(gain);
             gain.connect(ctx.destination);
-            
-            osc.start(noteTime);
-            osc.stop(noteTime + 0.15);
-        }
+
+            osc.start(now);
+            osc.stop(now + 0.25);
+
+        }, 450);
+
     } catch (e) {
-        console.log("Звук заблокирован политикой браузера");
+        console.log("Аудио-контекст заблокирован браузером");
     }
 }
 
@@ -101,6 +135,7 @@ function renderMonsterGame() {
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
+        stopWinSoundLoop(); // Останавливаем звук, если ушли с примера
         return;
     }
 
@@ -139,9 +174,12 @@ function renderMonsterGame() {
         return;
     }
     
-    // Если зафиксирована победа — включаем космический хор монстров
+    // Если зафиксирована победа — запускаем бесконечный разнообразный хор пришельцев
     if (isFullySolved) {
-        playWinSound();
+        startWinSoundLoop();
+    } else {
+        // Если ребенок стер ответ или пример сменился — глушим звук
+        stopWinSoundLoop();
     }
     
     gameZone.setAttribute('data-current-example', cacheKey);
