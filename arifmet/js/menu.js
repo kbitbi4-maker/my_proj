@@ -107,7 +107,12 @@ function selectExample(index) {
     renderAllLines();
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) { if (typeof syncMonsterGame === 'function') syncMonsterGame(); } 
-    else {
+    else if (activeItem && activeItem.exampleText.includes('+')) {
+        if (typeof renderAdditionVisual === 'function') {
+            let nums = activeItem.exampleText.split('+');
+            renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
+        }
+    } else {
         const gameZone = document.getElementById('game-zone');
         if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
     }
@@ -124,6 +129,10 @@ function pressNum(n) {
         activeItem.currentInput += n;
     }
     renderAllLines();
+    if (activeItem.exampleText.includes('+') && typeof renderAdditionVisual === 'function') {
+        let nums = activeItem.exampleText.split('+');
+        renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
+    }
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
 }
 function confirmAndNext() {
