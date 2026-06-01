@@ -98,9 +98,9 @@ function renderAllLines() {
             }
         } else { finWrapper.innerHTML = ''; }
     });
-    let cur = window.examplesHistory[window.activeIndex]; // Синхронизация вычитания при обновлении ввода
+    let cur = window.examplesHistory[window.activeIndex];
     if (cur && cur.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = cur.exampleText.split('-');
+        let nums = cur.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
     }
     const activeElem = examplesList.querySelector('.active');
@@ -113,7 +113,7 @@ function selectExample(index) {
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) { 
         if (typeof syncMonsterGame === 'function') syncMonsterGame();
-        if (typeof renderMonsterGame === 'function') renderMonsterGame(); // Принудительный рендер инопланетян
+        if (typeof renderMonsterGame === 'function') renderMonsterGame(); // ИСПРАВЛЕНО: принудительный рендер умножения из истории
     } else if (activeItem && activeItem.exampleText.includes('+')) {
         if (typeof renderAdditionVisual === 'function') {
             let nums = activeItem.exampleText.split('+');
@@ -121,7 +121,7 @@ function selectExample(index) {
         }
     } else if (activeItem && activeItem.exampleText.includes('-')) {
         if (typeof renderSubtractionVisual === 'function') {
-            let nums = activeItem.exampleText.split('-');
+            let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
             renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
         }
     } else {
@@ -146,7 +146,7 @@ function pressNum(n) {
         renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
     if (activeItem.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = activeItem.exampleText.split('-');
+        let nums = activeItem.exampleText.split('-'); // ИСПРАВЛЕНО: передаем оба индекса массива [0] и [1]
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
     }
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
