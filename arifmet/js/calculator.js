@@ -3,7 +3,6 @@
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
-    
     // 1. Обработка умножения
     if (cleaned.includes('*')) {
         let partsArr = cleaned.split('*');
