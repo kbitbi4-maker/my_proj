@@ -1,99 +1,34 @@
-// Переменная для хранения текущего игрового задания (сколько монстров и пицц)
 let currentMultiTask = null;
 
-// Глобальные переменные для контроля проигрывания аудиофайла
-let winSoundIntervalId = null;
-let currentAudioPlayer = null;
-let audioRepeatCount = 0; // Счётчик для ограничения повторов звука
-
-// 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
 
-// 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
-    stopWinSoundLoop();
-    const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
-    const num2 = Math.floor(Math.random() * 4) + 2; // количество монстров (2-5)
-    
-    const text = num1 + '×' + num2;
-    const correctValue = num1 * num2;
-
+    if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
+    const num1 = Math.floor(Math.random() * 4) + 2; 
+    const num2 = Math.floor(Math.random() * 4) + 2; 
     currentMultiTask = { items: num1, monsters: num2 };
 
     window.examplesHistory.push({
-        exampleText: text,
-        correctValue: correctValue,
+        exampleText: num1 + '×' + num2,
+        correctValue: num1 * num2,
         currentInput: ''
     });
-    
     window.activeIndex = window.examplesHistory.length - 1;
     renderAllLines();
     renderMonsterGame(); 
 }
 
-// 3. Функция синхронизации при клике на старые примеры в левой колонке
 function syncMonsterGame() {
     if (window.activeIndex === -1) return;
-    
-    const activeItem = window.examplesHistory[window.activeIndex];
-    if (!activeItem || !activeItem.exampleText) return;
-    
-    const parts = activeItem.exampleText.split('×');
-    if (parts.length !== 2) return;
-    
-    currentMultiTask = {
-        items: parseInt(parts[0], 10),
-        monsters: parseInt(parts[1], 10)
-    };
-    
+    const parts = window.examplesHistory[window.activeIndex].exampleText.split('×');
+    currentMultiTask = { items: parseInt(parts.at(0), 10), monsters: parseInt(parts.at(1), 10) };
     renderMonsterGame();
 }
 
-// ФУНКЦИЯ ОСТАНОВКИ И ГЛУШЕНИЯ ЗВУКА
-function stopWinSoundLoop() {
-    if (currentAudioPlayer) {
-        currentAudioPlayer.onended = null;
-        currentAudioPlayer.pause();
-        currentAudioPlayer.currentTime = 0;
-        currentAudioPlayer = null;
-    }
-    winSoundIntervalId = null;
-    audioRepeatCount = 0;
-}
-
-// ФУНКЦИЯ ЗАПУСКА АУДИО С ОГРАНИЧЕНИЕМ В 3 ПОВТОРЕНИЯ
-function startWinSoundLoop() {
-    if (winSoundIntervalId) return; // Предохранитель от двойного наслоения звука
-
-    try {
-        currentAudioPlayer = new Audio('audio/alien_win.mp3');
-        currentAudioPlayer.volume = 0.25;
-        currentAudioPlayer.loop = false;
-        audioRepeatCount = 1;
-        
-        currentAudioPlayer.onended = function() {
-            if (audioRepeatCount < 3) {
-                audioRepeatCount++;
-                if (currentAudioPlayer) currentAudioPlayer.play();
-            } else {
-                if (currentAudioPlayer) {
-                    currentAudioPlayer.onended = null;
-                    currentAudioPlayer = null;
-                }
-            }
-        };
-        
-        currentAudioPlayer.play();
-        winSoundIntervalId = true;
-    } catch (e) {
-        console.log("Аудио заблокировано политикой браузера");
-    }
-}
-
-// 4. Отрисовка монстриков, пицц, слёз и анимаций
+/* Отрисовка монстриков, пицц, слёз и анимаций */
 function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
@@ -101,30 +36,26 @@ function renderMonsterGame() {
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
-        stopWinSoundLoop(); 
         return;
     }
 
     const activeItem = window.examplesHistory[window.activeIndex];
     if (!activeItem || !activeItem.exampleText) return;
 
-    // ПЕРЕМЕННЫЕ СОСТОЯНИЯ ИГРЫ
     let isFullySolved = false; 
     let isWrongAnswer = false; 
 
     if (activeItem.currentInput) {
         const partsArr = activeItem.currentInput.split('=');
-        const simText = partsArr[0] || '';
-        const finText = partsArr[1] || '';
+        const simText = partsArr.at(0) || '';
+        const finText = partsArr.at(1) || '';
 
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
         let checkParts = simText.split('+');
-        let monsterCountFromText = parseInt(activeItem.exampleText.split('×')[1], 10);
+        let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
         
-        if (checkParts.length !== monsterCountFromText) {
-            simCorrect = false;
-        }
+        if (checkParts.length !== monsterCountFromText) simCorrect = false;
 
         let finVal = evaluateExpr(finText);
         let finCorrect = (finVal === activeItem.correctValue);
@@ -135,25 +66,19 @@ function renderMonsterGame() {
         if (activeItem.currentInput.includes('=') && simCorrect && finCorrect) isFullySolved = true;
     }
 
-    // ИСПРАВЛЕНИЕ СБРОСА ЗВУКА: Управляем аудио-плеером ДО проверки кэша отрисовки HTML
+    // УПРАВЛЕНИЕ ЗВУКОМ ЧЕРЕЗ ЕДИНЫЙ FEEDBACK ДИСПЕТЧЕР
     if (isFullySolved) {
-        if (!winSoundIntervalId) startWinSoundLoop(); // Запускаем, только если плеер молчит
-    } else {
-        stopWinSoundLoop(); // Глушим звук мгновенно при ошибке или новой строке
+        if (typeof triggerWinFeedback === 'function') triggerWinFeedback(); 
     }
 
-    // КЭШ-ФИЛЬТР: Теперь он управляет ТОЛЬКО перерисовкой картинок
     let status = "play";
     if (isFullySolved) status = "win";
     if (isWrongAnswer) status = "sad";
 
     const cacheKey = activeItem.exampleText + "_" + status;
-    if (gameZone.getAttribute('data-current-example') === cacheKey) {
-        return; // Картинки не перерисовываем, но звук выше уже успешно обработан!
-    }
+    if (gameZone.getAttribute('data-current-example') === cacheKey) return; 
     
     gameZone.setAttribute('data-current-example', cacheKey);
-
     let html = '';
     
     for (let i = 0; i < currentMultiTask.monsters; i++) {
@@ -184,6 +109,5 @@ function renderMonsterGame() {
                 </div>
             </div>`;
     }
-    
     gameZone.innerHTML = html;
 }
