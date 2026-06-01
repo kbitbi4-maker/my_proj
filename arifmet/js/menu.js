@@ -24,7 +24,7 @@ function setMode(mode) {
     
     if (examplesList) examplesList.innerHTML = '';
     
-    // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Больше не удаляем блок через .remove(), а просто очищаем из него монстров!
+    // Очищаем монстров, не ломая структуру страницы
     const gameZone = document.getElementById('game-zone');
     if (gameZone) {
         gameZone.innerHTML = '';
@@ -38,7 +38,7 @@ function setMode(mode) {
     }
 }
 
-// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
+// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР (С полной защитой от NaN)
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -46,17 +46,20 @@ function evaluateExpr(str) {
     // 1. Обработка умножения
     if (cleaned.includes('*')) {
         let partsArr = cleaned.split('*');
-        if (partsArr.length === 2) {
-            return parseInt(partsArr.at(0), 10) * parseInt(partsArr.at(1), 10);
+        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
+            let n1 = parseInt(partsArr[0], 10);
+            let n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 * n2;
         }
+        return null;
     }
     // 2. Обработка сложения (цепочки любой длины)
     if (cleaned.includes('+')) {
         let partsArr = cleaned.split('+');
         let sum = 0;
         for (let i = 0; i < partsArr.length; i++) {
-            let num = parseInt(partsArr.at(i), 10);
-            if (isNaN(num)) return null;
+            let num = parseInt(partsArr[i], 10);
+            if (isNaN(num)) return null; // Защита от незавершенного ввода ("3+3+")
             sum += num;
         }
         return sum;
@@ -64,9 +67,12 @@ function evaluateExpr(str) {
     // 3. Обработка вычитания
     if (cleaned.includes('-')) {
         let partsArr = cleaned.split('-');
-        if (partsArr.length === 2) {
-            return parseInt(partsArr.at(0), 10) - parseInt(partsArr.at(1), 10);
+        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
+            let n1 = parseInt(partsArr[0], 10);
+            let n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 - n2;
         }
+        return null;
     }
     
     let num = parseInt(cleaned, 10);
@@ -113,20 +119,21 @@ function renderAllLines() {
 
         const partsArr = item.currentInput.split('=');
         
-        const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
-        const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
+        // Перешли на классические безопасные индексы массивов
+        const simText = (partsArr.length > 0) ? partsArr[0] : '';
+        const finText = (partsArr.length > 1) ? partsArr[1] : '';
 
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Двухуровневый ввод со знаком "=")
+        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
             
             if (window.currentMode === 'multiplication' && simCorrect && simText) {
                 let checkParts = simText.split('+');
-                let monsterCountFromText = parseInt(item.exampleText.split('×').at(1), 10);
+                let monsterCountFromText = parseInt(item.exampleText.split('×')[1], 10);
                 if (checkParts.length !== monsterCountFromText) {
                     simCorrect = false;
                 }
@@ -159,6 +166,7 @@ function renderAllLines() {
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+// Выделение примера мышкой
 function selectExample(index) {
     window.activeIndex = index;
     renderAllLines();
