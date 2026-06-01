@@ -67,9 +67,9 @@ function renderAllLines() {
         if (!line) return;
         if (index === window.activeIndex) { line.classList.add('active'); } else { line.classList.remove('active'); }
         const partsArr = item.currentInput.split('=');
-        // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Вернули точные квадратные скобки индексов массивов [0] и [1]
-        const simText = (partsArr.length > 0) ? partsArr[0] : '';
-        const finText = (partsArr.length > 1) ? partsArr[1] : '';
+        // СТОП-БАГ: Заменили квадратные скобки на пуленепробиваемые методы .at()
+        const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
+        const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
         const targetLength = String(item.correctValue).length;
@@ -79,7 +79,7 @@ function renderAllLines() {
             let simCorrect = (simVal === item.correctValue);
             if (isMultiplicationLine && simCorrect && simText) {
                 let checkParts = simText.split('+');
-                let monsterCountFromText = parseInt(item.exampleText.split('×')[1], 10);
+                let monsterCountFromText = parseInt(item.exampleText.split('×').at(1), 10);
                 if (checkParts.length !== monsterCountFromText) simCorrect = false;
             }
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
