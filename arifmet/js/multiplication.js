@@ -42,10 +42,9 @@ function syncMonsterGame() {
     const parts = activeItem.exampleText.split('×');
     if (parts.length !== 2) return;
     
-    // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Перешли на классические и безопасные индексы массивов [0] и [1]
     currentMultiTask = {
-        items: parseInt(parts[0], 10),
-        monsters: parseInt(parts[1], 10)
+        items: parseInt(parts.at(0), 10),
+        monsters: parseInt(parts.at(1), 10)
     };
     
     renderMonsterGame();
@@ -64,24 +63,53 @@ function renderMonsterGame() {
 
     const activeItem = window.examplesHistory[window.activeIndex];
     if (!activeItem || !activeItem.exampleText) return;
-    
-    const exampleText = activeItem.exampleText;
 
-    // Удержание графики при редактировании примера (блокируем мерцание)
-    if (gameZone.getAttribute('data-current-example') === exampleText) {
-        return;
+    // ПРОВЕРКА НА ПОЛНУЮ ПОБЕДУ
+    let isFullySolved = false;
+    if (activeItem.currentInput && activeItem.currentInput.includes('=')) {
+        const partsArr = activeItem.currentInput.split('=');
+        const simText = partsArr.at(0) || '';
+        const finText = partsArr.at(1) || '';
+
+        // Проверяем промежуточную сумму слагаемых
+        let simVal = evaluateExpr(simText);
+        let simCorrect = (simVal === activeItem.correctValue);
+        
+        // Проверяем количество слагаемых
+        let checkParts = simText.split('+');
+        let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
+        if (checkParts.length !== monsterCountFromText) {
+            simCorrect = false;
+        }
+
+        // Проверяем финальный ответ
+        let finVal = evaluateExpr(finText);
+        let finCorrect = (finVal === activeItem.correctValue);
+
+        // Если и слагаемые, и ответ верны — победа!
+        if (simCorrect && finCorrect) {
+            isFullySolved = true;
+        }
     }
 
-    gameZone.setAttribute('data-current-example', exampleText);
+    // Кэш-ключ теперь отслеживает и текст примера, и статус победы
+    const cacheKey = activeItem.exampleText + "_" + (isFullySolved ? "win" : "play");
+    if (gameZone.getAttribute('data-current-example') === cacheKey) {
+        return;
+    }
+    gameZone.setAttribute('data-current-example', cacheKey);
 
     let html = '';
     
     // Генерируем карточки монстриков
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        const pizzasHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        // Если пример решен — пиццы превращаются в текст "Ням-ням!"
+        const pizzasHTML = isFullySolved 
+            ? '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>' 
+            : '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         
         html += `
-            <div style="
+            <div class="${isFullySolved ? 'monster-happy' : ''}" style="
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -93,6 +121,7 @@ function renderMonsterGame() {
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
                 min-width: 85px;
                 box-sizing: border-box;
+                transition: all 0.3s ease;
             ">
                 <span style="font-size: 46px; margin-bottom: 6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
                 <div style="
@@ -101,10 +130,12 @@ function renderMonsterGame() {
                     justify-content: center;
                     flex-wrap: wrap;
                     max-width: 80px;
-                    background: #fff7ed;
+                    background: ${isFullySolved ? '#dcfce7' : '#fff7ed'};
                     padding: 4px 6px;
                     border-radius: 6px;
-                    border: 1px dashed #fed7aa;
+                    border: 1px dashed ${isFullySolved ? '#22c55e' : '#fed7aa'};
+                    min-height: 32px;
+                    align-items: center;
                 ">
                     ${pizzasHTML}
                 </div>
