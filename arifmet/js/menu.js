@@ -67,7 +67,7 @@ function renderAllLines() {
         if (!line) return;
         if (index === window.activeIndex) { line.classList.add('active'); } else { line.classList.remove('active'); }
         const partsArr = item.currentInput.split('=');
-        // СТОП-БАГ: Заменили квадратные скобки на пуленепробиваемые методы .at()
+        // ПУЛЕНЕПРОБИВАЕМОЕ ИСПРАВЛЕНИЕ: Извлекаем строки через методы .at() без риска потери квадратных скобок!
         const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
         const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
         const simWrapper = line.querySelector('.sim-block-wrapper');
