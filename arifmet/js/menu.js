@@ -25,7 +25,15 @@ function initMixMode() {
     window.mixStep = 0;
     generateMixExample();
 }
-/* Универсальный рендеринг строк для ВСЕХ режимов */
+function generateMixExample() {
+    if (window.currentMode !== 'mix') return;
+    let type = window.mixStep % 3;
+    if (type === 0) { isAddition = true; generateExample(); } 
+    else if (type === 1) { isAddition = false; generateExample(); } 
+    else if (type === 2) { generateMultiExample(); }
+    document.querySelector('.header-title').innerText = 'Режим: Микс 🎰 ▼';
+    window.mixStep++;
+}
 function renderAllLines() {
     if (!examplesList) return;
     const placeholder = examplesList.querySelector('div[style*="color: #999"]');
@@ -64,7 +72,7 @@ function renderAllLines() {
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             if (index === window.activeIndex && typeof triggerFailFeedback === 'function') {
                 if (!simCorrect && !window.simFailSoundPlayed) { triggerFailFeedback(); window.simFailSoundPlayed = true; }
-                if (simCorrect && !isMultiplicationLine && !window.simWinSoundPlayed) { triggerWinFeedback(); window.simWinSoundPlayed = true; }
+                if (simCorrect && !isMultiplicationLine && !window.simWinSoundPlayed) { triggerTensWinSound(); window.simWinSoundPlayed = true; }
                 if (simCorrect) window.simFailSoundPlayed = false;
                 if (!simCorrect) window.simWinSoundPlayed = false;
             }
@@ -77,7 +85,7 @@ function renderAllLines() {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 if (index === window.activeIndex && typeof triggerFailFeedback === 'function') {
                     if (!finCorrect && !window.finFailSoundPlayed) { triggerFailFeedback(); window.finFailSoundPlayed = true; }
-                    if (finCorrect && !isMultiplicationLine && !window.finWinSoundPlayed) { triggerWinFeedback(); window.finWinSoundPlayed = true; }
+                    if (finCorrect && !isMultiplicationLine && !window.finWinSoundPlayed) { triggerTensWinSound(); window.finWinSoundPlayed = true; }
                     if (finCorrect) window.finFailSoundPlayed = false;
                     if (!finCorrect) window.finWinSoundPlayed = false;
                 }
@@ -117,15 +125,6 @@ function pressNum(n) {
     }
     renderAllLines();
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
-}
-function generateMixExample() {
-    if (window.currentMode !== 'mix') return;
-    let type = window.mixStep % 3;
-    if (type === 0) { isAddition = true; generateExample(); } 
-    else if (type === 1) { isAddition = false; generateExample(); } 
-    else if (type === 2) { generateMultiExample(); }
-    document.querySelector('.header-title').innerText = 'Режим: Микс 🎰 ▼';
-    window.mixStep++;
 }
 function confirmAndNext() {
     if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
