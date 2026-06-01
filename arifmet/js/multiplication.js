@@ -15,17 +15,13 @@ function initMultiplicationMode() {
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
     stopWinSoundLoop();
-
     const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
     const num2 = Math.floor(Math.random() * 4) + 2; // количество монстров (2-5)
     
     const text = num1 + '×' + num2;
     const correctValue = num1 * num2;
 
-    currentMultiTask = {
-        items: num1,
-        monsters: num2
-    };
+    currentMultiTask = { items: num1, monsters: num2 };
 
     window.examplesHistory.push({
         exampleText: text,
@@ -34,7 +30,6 @@ function generateMultiExample() {
     });
     
     window.activeIndex = window.examplesHistory.length - 1;
-    
     renderAllLines();
     renderMonsterGame(); 
 }
@@ -49,7 +44,6 @@ function syncMonsterGame() {
     const parts = activeItem.exampleText.split('×');
     if (parts.length !== 2) return;
     
-    // ЖЕСТКОЕ ИСПРАВЛЕНИЕ ДЛЯ ГИТХАБА: Заменили .at(0) и .at(1) на классические [0] и [1]
     currentMultiTask = {
         items: parseInt(parts[0], 10),
         monsters: parseInt(parts[1], 10)
@@ -72,7 +66,7 @@ function stopWinSoundLoop() {
 
 // ФУНКЦИЯ ЗАПУСКА АУДИО С ОГРАНИЧЕНИЕМ В 3 ПОВТОРЕНИЯ
 function startWinSoundLoop() {
-    if (winSoundIntervalId) return;
+    if (winSoundIntervalId) return; // Предохранитель от двойного наслоения звука
 
     try {
         currentAudioPlayer = new Audio('audio/alien_win.mp3');
@@ -115,61 +109,47 @@ function renderMonsterGame() {
     if (!activeItem || !activeItem.exampleText) return;
 
     // ПЕРЕМЕННЫЕ СОСТОЯНИЯ ИГРЫ
-    let isFullySolved = false; // Флаг победы
-    let isWrongAnswer = false; // Флаг ошибки
+    let isFullySolved = false; 
+    let isWrongAnswer = false; 
 
     if (activeItem.currentInput) {
         const partsArr = activeItem.currentInput.split('=');
-        // ЖЕСТКОЕ ИСПРАВЛЕНИЕ ДЛЯ ГИТХАБА: Заменили .at(0) и .at(1) на классические [0] и [1]
         const simText = partsArr[0] || '';
         const finText = partsArr[1] || '';
 
-        // Проверяем слагаемые
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
         let checkParts = simText.split('+');
-        let monsterCountFromText = parseInt(activeItem.exampleText.split('×')[1], 10); // Исправлено на [1]
+        let monsterCountFromText = parseInt(activeItem.exampleText.split('×')[1], 10);
         
         if (checkParts.length !== monsterCountFromText) {
             simCorrect = false;
         }
 
-        // Проверяем финальный ответ
         let finVal = evaluateExpr(finText);
         let finCorrect = (finVal === activeItem.correctValue);
         let targetLength = String(activeItem.correctValue).length;
 
-        // Если введён знак равенства, но слагаемые уже неверны — фиксируем ошибку
-        if (activeItem.currentInput.includes('=') && !simCorrect) {
-            isWrongAnswer = true;
-        }
-
-        // Если введён финальный ответ (длина совпала), но он неверный — фиксируем ошибку
-        if (partsArr.length > 1 && finText.trim().length >= targetLength && !finCorrect) {
-            isWrongAnswer = true;
-        }
-
-        // Чистая победа
-        if (activeItem.currentInput.includes('=') && simCorrect && finCorrect) {
-            isFullySolved = true;
-        }
+        if (activeItem.currentInput.includes('=') && !simCorrect) isWrongAnswer = true;
+        if (partsArr.length > 1 && finText.trim().length >= targetLength && !finCorrect) isWrongAnswer = true;
+        if (activeItem.currentInput.includes('=') && simCorrect && finCorrect) isFullySolved = true;
     }
 
-    // Сохраняем состояние в кэш-ключ, включая ошибку
+    // ИСПРАВЛЕНИЕ СБРОСА ЗВУКА: Управляем аудио-плеером ДО проверки кэша отрисовки HTML
+    if (isFullySolved) {
+        if (!winSoundIntervalId) startWinSoundLoop(); // Запускаем, только если плеер молчит
+    } else {
+        stopWinSoundLoop(); // Глушим звук мгновенно при ошибке или новой строке
+    }
+
+    // КЭШ-ФИЛЬТР: Теперь он управляет ТОЛЬКО перерисовкой картинок
     let status = "play";
     if (isFullySolved) status = "win";
     if (isWrongAnswer) status = "sad";
 
     const cacheKey = activeItem.exampleText + "_" + status;
     if (gameZone.getAttribute('data-current-example') === cacheKey) {
-        return;
-    }
-    
-    // Управление звуком победы
-    if (isFullySolved) {
-        startWinSoundLoop(); 
-    } else {
-        stopWinSoundLoop();
+        return; // Картинки не перерисовываем, но звук выше уже успешно обработан!
     }
     
     gameZone.setAttribute('data-current-example', cacheKey);
@@ -188,49 +168,21 @@ function renderMonsterGame() {
             borderBox = '1px dashed #22c55e';
             monsterClass = 'monster-happy';
         } else if (isWrongAnswer) {
-            // Если ошибка — пиццы пропадают, капают анимированные слёзы
             contentHTML = '<span class="tears-animation" style="font-size: 22px;">💦</span>';
-            bgBox = '#eff6ff'; // нежно-голубой цвет грусти
+            bgBox = '#eff6ff'; 
             borderBox = '1px dashed #60a5fa';
             monsterClass = 'monster-sad';
         } else {
-            // Обычное состояние игры — раскладываем пиццы
             contentHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         }
         
         html += `
-            <div class="${monsterClass}" style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                background: #ffffff;
-                padding: 10px 15px;
-                border: 2px solid #e2e8f0;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-                min-width: 85px;
-                box-sizing: border-box;
-                transition: all 0.3s ease;
-            ">
+            <div class="${monsterClass}" style="display:flex; flex-direction:column; align-items:center; justify-content:center; background:#ffffff; padding:10px 15px; border:2px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); min-width:85px; box-sizing:border-box; transition:all 0.3s ease;">
                 <span style="font-size: 46px; margin-bottom: 6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
-                <div style="
-                    display: flex;
-                    gap: 4px;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                    max-width: 80px;
-                    background: ${bgBox};
-                    padding: 4px 6px;
-                    border-radius: 6px;
-                    border: ${borderBox};
-                    min-height: 32px;
-                    align-items: center;
-                ">
+                <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap; max-width:80px; background:${bgBox}; padding:4px 6px; border-radius:6px; border:${borderBox}; min-height:32px; align-items:center;">
                     ${contentHTML}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
     
     gameZone.innerHTML = html;
