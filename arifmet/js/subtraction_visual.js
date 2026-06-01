@@ -11,7 +11,7 @@ function renderSubtractionVisual(num1, num2, currentInput) {
     if (hasFinalAnswer && evaluateExpr(finText) === (num1 - num2)) isFullyCorrect = true;
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
     let html = '';
-    if (!hasPressedEqual) { // ФАЗА 1: СТАРТ
+    if (!hasPressedEqual) { // ФАЗА 1: СТАРТ. Базовый синий груз Л, белые кубики П
         html = `<div class="sub-scene-container">
             <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л (${num1})</b></div>
             <div class="crystal-deck" style="border-color:#0284c7;">${generateSubCargoHTML(tens1, ones1, 0, 0)}</div>
@@ -58,22 +58,28 @@ function renderSubtractionVisual(num1, num2, currentInput) {
 function generateSubCargoHTML(tens, ones, added, subtracted) {
     let html = '', totalCubes = (tens * 10) + ones + added, activeCubes = totalCubes - subtracted;
     let fullColumns = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
-    for (let i = 0; i < fullColumns; i++) { // ИСПРАВЛЕНО: Полные десятки теперь генерируются строго по 10 ячеек снизу вверх
+    for (let i = 0; i < fullColumns; i++) { // ИСПРАВЛЕНО: Чистые синие столбики по 10 штук без инлайн конфликтов
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) {
             globalCounter++;
-            let styleAttr = (globalCounter > activeCubes) ? 'style="border:1px solid #000; background:#fff; box-shadow:none;"' : '';
-            html += `<div class="${(globalCounter <= activeCubes) ? 'borrow-blue' : 'crystal-item'}" ${styleAttr}></div>`;
+            if (globalCounter <= activeCubes) { // Если кубик активен — выводим ваш стандартный синий элемент
+                html += `<div class="crystal-item"></div>`;
+            } else { // Если потерял цвет при упрощении — становится белым с черным контуром
+                html += `<div class="crystal-item" style="border:1px solid #000; background:#fff; box-shadow:none;"></div>`;
+            }
         }
         html += `</div>`;
     }
-    if (remOnes > 0) { // Неполный столбец единиц строго по 10 ячеек снизу вверх
+    if (remOnes > 0) { // ИСПРАВЛЕНО: Неполный столбец единиц с прозрачным верхом как в сложении
         html += `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
         for (let j = 1; j <= 10; j++) {
             if (j <= remOnes) {
                 globalCounter++;
-                let styleAttr = (globalCounter > activeCubes) ? 'style="border:1px solid #000; background:#fff; box-shadow:none;"' : '';
-                html += `<div class="crystal-item ${(globalCounter <= activeCubes) ? 'borrow-blue' : ''}" ${styleAttr}></div>`;
+                if (globalCounter <= activeCubes) {
+                    html += `<div class="crystal-item"></div>`;
+                } else {
+                    html += `<div class="crystal-item" style="border:1px solid #000; background:#fff; box-shadow:none;"></div>`;
+                }
             } else {
                 html += `<div class="crystal-item" style="background:transparent; border-color:transparent; box-shadow:none;"></div>`;
             }
@@ -122,7 +128,7 @@ function generateSubFinalCubesHTML(blueCount, orangeCount) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) {
             globalCounter++;
-            html += `<div class="crystal-item ${(globalCounter <= blueCount) ? 'borrow-blue' : 'borrow-orange'}"></div>`;
+            html += `<div class="crystal-item ${(globalCounter <= blueCount) ? '' : 'borrow-orange'}"></div>`;
         }
         html += `</div>`;
     }
@@ -131,7 +137,7 @@ function generateSubFinalCubesHTML(blueCount, orangeCount) {
         for (let j = 1; j <= 10; j++) {
             if (j <= remOnes) {
                 globalCounter++;
-                html += `<div class="crystal-item ${(globalCounter <= blueCount) ? 'borrow-blue' : 'borrow-orange'}"></div>`;
+                html += `<div class="crystal-item ${(globalCounter <= blueCount) ? '' : 'borrow-orange'}"></div>`;
             } else {
                 html += `<div class="crystal-item" style="background:transparent; border-color:transparent; box-shadow:none;"></div>`;
             }
