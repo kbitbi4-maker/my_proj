@@ -1,56 +1,63 @@
 // Глобальные плееры и флаги контроля звуков/эффектов
 let currentWinPlayer = null;
+let currentAlienPlayer = null;
 let currentFailPlayer = null;
-let winRepeatCount = 0;
+let alienRepeatCount = 0; // Счётчик только для 3 повторов пришельцев
 
-// Флаги-предохранители для блоков (чтобы не заикалось при вводе)
+// Флаги-предохранители для блоков десятков (чтобы не заикалось при вводе цифр)
 window.simFailSoundPlayed = false;
 window.finFailSoundPlayed = false;
 window.simWinSoundPlayed = false;
 window.finWinSoundPlayed = false;
 
-// 1. Функция полного сброса всех эффектов (вызывается при генерации нового примера)
+// 1. Полный сброс всех звуков (при переходе на новый пример или по истории)
 function resetAllFeedbacks() {
-    if (currentWinPlayer) {
-        currentWinPlayer.onended = null;
-        currentWinPlayer.pause();
-    }
-    if (currentFailPlayer) currentFailPlayer.pause();
+    if (currentWinPlayer) { currentWinPlayer.pause(); currentWinPlayer = null; }
+    if (currentAlienPlayer) { currentAlienPlayer.onended = null; currentAlienPlayer.pause(); currentAlienPlayer = null; }
+    if (currentFailPlayer) { currentFailPlayer.pause(); currentFailPlayer = null; }
     
-    currentWinPlayer = null;
-    currentFailPlayer = null;
-    winRepeatCount = 0;
-    
+    alienRepeatCount = 0;
     window.simFailSoundPlayed = false;
     window.finFailSoundPlayed = false;
     window.simWinSoundPlayed = false;
     window.finWinSoundPlayed = false;
 }
 
-// 2. Функция триггера УСПЕХА (Воспроизведение win.mp3 ровно 3 раза)
-function triggerWinFeedback() {
-    if (currentWinPlayer) return; // Если уже поёт — не наслаиваем
+// 2. ЗВУК ДЛЯ ДЕСЯТКОВ: Воспроизведение обычного win.mp3 ровно 1 раз
+function triggerTensWinSound() {
+    if (currentWinPlayer) return; 
     try {
         currentWinPlayer = new Audio('audio/win.mp3');
         currentWinPlayer.volume = 0.25;
-        winRepeatCount = 1;
-        
-        currentWinPlayer.onended = function() {
-            if (winRepeatCount < 3) {
-                winRepeatCount++;
-                if (currentWinPlayer) currentWinPlayer.play();
-            } else {
-                if (currentWinPlayer) {
-                    currentWinPlayer.onended = null;
-                    currentWinPlayer = null;
-                }
-            }
-        };
+        currentWinPlayer.onended = function() { currentWinPlayer = null; };
         currentWinPlayer.play();
     } catch (e) { console.log("Audio blocked"); }
 }
 
-// 3. Функция триггера ОШИБКИ (Воспроизведение fail.mp3 ровно 1 раз)
+// 3. ЗВУК ДЛЯ УМНОЖЕНИЯ: Воспроизведение космического alien_win.mp3 ровно 3 раза
+function triggerWinFeedback() {
+    if (currentAlienPlayer) return; 
+    try {
+        currentAlienPlayer = new Audio('audio/alien_win.mp3');
+        currentAlienPlayer.volume = 0.25;
+        alienRepeatCount = 1; // Первый круг пошёл
+        
+        currentAlienPlayer.onended = function() {
+            if (alienRepeatCount < 3) {
+                alienRepeatCount++;
+                if (currentAlienPlayer) currentAlienPlayer.play(); // 2-й и 3-й круги
+            } else {
+                if (currentAlienPlayer) {
+                    currentAlienPlayer.onended = null;
+                    currentAlienPlayer = null;
+                }
+            }
+        };
+        currentAlienPlayer.play();
+    } catch (e) { console.log("Audio blocked"); }
+}
+
+// 4. ЗВУК ОШИБКИ: Воспроизведение fail.mp3 ровно 1 раз для всех режимов
 function triggerFailFeedback() {
     try {
         if (currentFailPlayer) {
@@ -63,4 +70,3 @@ function triggerFailFeedback() {
         }
     } catch (e) { console.log("Audio blocked"); }
 }
-
