@@ -67,7 +67,7 @@ function renderAllLines() {
         let nums = cur.exampleText.split('-');
         renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), cur.currentInput);
     }
-    if (cur && window.currentMode === 'scales' && typeof renderScalesVisual === 'function') { // ИСПРАВЛЕНО: Реактивный вызов визуала балансировки весов
+    if (cur && window.currentMode === 'scales' && typeof renderScalesVisual === 'function') { // ИСПРАВЛЕНО: Реактивный запуск уменьшенных весов без проверки на знак "="
         renderScalesVisual(cur.correctValue, cur.correctValue, cur.currentInput);
     }
     const activeElem = examplesList.querySelector('.active');
