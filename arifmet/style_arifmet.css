@@ -1,3 +1,7 @@
+---
+---
+/* Эти три строчки выше обязательны для правильной сборки на GitHub Pages */
+
 html, body { 
     height: 100%; 
     margin: 0; 
@@ -113,7 +117,7 @@ body {
     background: #ffffff; 
     padding: 20px; 
     box-sizing: border-box; 
-    overflow-y: auto; /* Жестко фиксирует внутренний скролл примеров */
+    overflow-y: auto; 
 }
 
 .right-area { 
