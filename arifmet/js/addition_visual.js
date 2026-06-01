@@ -18,51 +18,62 @@ function renderAdditionVisual(num1, num2, currentInput) {
     let html = '';
 
     if (!hasPressedEqual) {
-        // ФАЗА 1: Роботы разделены.
+        // ФАЗА 1: Роботы разделены и стоят СБОКУ от своего груза
         html = `
-            <div style="display:flex; justify-content:space-between; width:100%; align-items:flex-end; padding:0 40px;">
-                <div class="crystal-truck">
-                    <span style="font-size:42px; margin-bottom:5px;">🤖</span>
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 10px; box-sizing:border-box; height:100%;">
+                
+                <!-- ЛЕВЫЙ РОБОТ И ЕГО ГРУЗ -->
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <span style="font-size:36px;">🤖</span>
+                        <b style="color:#0284c7; font-size:14px; margin-top:2px;">${num1}</b>
+                    </div>
                     <div class="crystal-deck">${generateCrystalColumnsHTML(tens1)}${generateOnesHTML(ones1)}</div>
-                    <b style="color:#0284c7; margin-top:5px;">${num1}</b>
                 </div>
-                <div style="font-size:32px; font-weight:bold; color:#94a3b8; margin-bottom:50px;">+</div>
-                <div class="crystal-truck orange-theme">
-                    <span style="font-size:42px; margin-bottom:5px;">🤖</span>
+
+                <div style="font-size:28px; font-weight:bold; color:#94a3b8;">+</div>
+
+                <!-- ПРАВЫЙ РОБОТ И ЕГО ГРУЗ -->
+                <div style="display:flex; align-items:center; gap:8px;" class="orange-theme">
                     <div class="crystal-deck">${generateCrystalColumnsHTML(tens2)}${generateOnesHTML(ones2)}</div>
-                    <b style="color:#ea580c; margin-top:5px;">${num2}</b>
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <span style="font-size:36px;">🤖</span>
+                        <b style="color:#ea580c; font-size:14px; margin-top:2px;">${num2}</b>
+                    </div>
                 </div>
+
             </div>`;
     } else {
-        // ФАЗА 2 и 3: Объединение с обязательным разделением на полные десятки
+        // ФАЗА 2 и 3: Объединение груза в центре
         let totalTens = tens1 + tens2;
         let totalOnes = ones1 + ones2;
 
-        // Если единиц 10 или больше — превращаем их в полноценный ровный десяток
         if (totalOnes >= 10) {
             totalTens += 1;
             totalOnes -= 10;
         }
 
         html = `
-            <div style="display:flex; flex-direction:column; align-items:center; width:100%; animation:fadeIn 0.4s;">
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <span style="font-size:42px; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}">🤖</span>
-                    <span style="font-size:42px; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}">🤖</span>
+            <div style="display:flex; align-items:center; justify-content:center; gap:15px; width:100%; height:100%; animation:fadeIn 0.4s;">
+                <!-- Роботы стоят по бокам от общей кучи -->
+                <span style="font-size:36px; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}">🤖</span>
+                
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                    <div class="crystal-deck ${isFullyCorrect ? '' : 'glow-tens glow-ones'}" style="min-width:160px; background:#f0fdf4; border-color:#4ade80;">
+                        ${generateCrystalColumnsHTML(totalTens)}
+                        ${generateOnesHTML(totalOnes)}
+                    </div>
+                    <b style="color:#22c55e; font-size:14px;">
+                        ${isFullyCorrect ? 'Ура! ' + (num1 + num2) : 'Объединяем груз... 📦'}
+                    </b>
                 </div>
-                <div class="crystal-deck ${isFullyCorrect ? '' : 'glow-tens glow-ones'}" style="min-width:220px; background:#f0fdf4; border-color:#4ade80;">
-                    ${generateCrystalColumnsHTML(totalTens)}
-                    ${generateOnesHTML(totalOnes)}
-                </div>
-                <b style="color:#22c55e; margin-top:5px; font-size:20px;">
-                    ${isFullyCorrect ? 'Ура! ' + (num1 + num2) : 'Объединяем груз... 📦'}
-                </b>
+
+                <span style="font-size:36px; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}">🤖</span>
             </div>`;
     }
     gameZone.innerHTML = html;
 }
 
-// Генерирует столбики десятков: СТРОГО 10 кубиков. Пробел добавится автоматически через CSS
 function generateCrystalColumnsHTML(count) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -73,10 +84,9 @@ function generateCrystalColumnsHTML(count) {
     return html;
 }
 
-// Генерирует единицы: никогда не превышает 9 кубиков в высоту
 function generateOnesHTML(count) {
     if (count === 0) return '';
-    let html = `<div class="crystal-column" style="margin-left:10px; border-left:1px dashed #cbd5e1; padding-left:6px;">`;
+    let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
     for (let i = 0; i < count; i++) {
         html += `<div class="crystal-item" style="background:#facc15; border-color:#ca8a04;"></div>`;
     }
