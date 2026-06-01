@@ -6,7 +6,7 @@ window.activeIndex = -1;
 const menu = document.getElementById('menu');
 const examplesList = document.getElementById('examples-list');
 
-// Флаги, чтобы звуки ошибки не частили и не тарахтели при вводе каждой неверной цифры
+// Флаги, чтобы звуки ошибки не тарахтели при вводе каждой неверной цифры
 let simFailSoundPlayed = false;
 let finFailSoundPlayed = false;
 
@@ -85,35 +85,14 @@ function evaluateExpr(str) {
     return isNaN(num) ? null : num;
 }
 
-// МЯГКИЙ СИНТЕЗ ЗВУКА РАЗОЧАРОВАНИЯ (Мультяшный съезжающий вниз тон "оу-у...")
+// ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ВАШЕГО ГОТОВОГО ФАЙЛА ОШИБКИ
 function playFailSound() {
     try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        let now = ctx.currentTime;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        // Мягкая синусоидальная волна, чтобы звук не резал слух
-        osc.type = 'sine'; 
-        
-        // Стартуем с грустной низкой ноты (180 Гц) и плавно съезжаем еще ниже (90 Гц)
-        osc.frequency.setValueAtTime(180, now);
-        osc.frequency.linearRampToValueAtTime(90, now + 0.35);
-
-        // Настройка деликатной громкости (10%), чтобы не напугать ребенка
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.36);
+        const audio = new Audio('audio/fail.mp3');
+        audio.volume = 0.25; // Устанавливаем комфортную громкость (25%)
+        audio.play();
     } catch (e) {
-        console.log("Звук заблокирован политикой браузера");
+        console.log("Звук заблокирован политикой браузера до первого клика");
     }
 }
 
@@ -180,13 +159,13 @@ function renderAllLines() {
 
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             
-            // Включаем звук грусти, если слагаемые неверны и звук еще не проигрывался для этого шага
+            // Триггер запуска вашего MP3 при ошибке в слагаемых
             if (!simCorrect && index === window.activeIndex && !simFailSoundPlayed) {
                 playFailSound();
-                simFailSoundPlayed = true; // Блокируем повтор до исправления
+                simFailSoundPlayed = true; 
             }
             if (simCorrect && index === window.activeIndex) {
-                simFailSoundPlayed = false; // Сбрасываем блокировку при исправлении
+                simFailSoundPlayed = false; 
             }
 
         } else {
@@ -202,7 +181,7 @@ function renderAllLines() {
             if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 
-                // Включаем звук грусти, если итоговый ответ неверный
+                // Триггер запуска вашего MP3 при ошибке в финальном ответе
                 if (!finCorrect && index === window.activeIndex && !finFailSoundPlayed) {
                     playFailSound();
                     finFailSoundPlayed = true;
@@ -213,7 +192,7 @@ function renderAllLines() {
 
             } else if (trimmedFinText.length > 0) {
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
-                finFailSoundPlayed = false; // Сбрасываем флаг, пока ребенок вводит новые цифры
+                finFailSoundPlayed = false; 
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
                 finFailSoundPlayed = false;
@@ -229,7 +208,6 @@ function renderAllLines() {
 
 function selectExample(index) {
     window.activeIndex = index;
-    // При переключении примеров обнуляем звуковые предохранители
     simFailSoundPlayed = false;
     finFailSoundPlayed = false;
     renderAllLines();
