@@ -22,7 +22,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
     let html = '';
 
     if (!hasPressedEqual) {
-        // ФАЗА 1: СТАРТ. Роботы разделены, каждый со своим чистым цветом
+        // ФАЗА 1: СТАРТ. Роботы разделены, груз базовых цветов
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%;">
                 <div class="crystal-truck">
@@ -48,7 +48,7 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 </div>
             </div>`;
     } else if (hasPressedEqual && !hasFinalAnswer) {
-        // ФАЗА 2: УПРОЩЕНИЕ. Расчёт заимствования кубиков на верхушку стопки
+        // ФАЗА 2: УПРОЩЕНИЕ. Добавление кубиков соседа на самый верх стопки
         let leftTens = 0, leftOnes = 0;
         let rightTens = 0, rightOnes = 0;
         let leftLabel = '0', rightLabel = '0';
@@ -68,20 +68,14 @@ function renderAdditionVisual(num1, num2, currentInput) {
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === (num1 + num2));
 
-        // Вычисляем заимствование (сколько кубиков доложили СВЕРХУ до круглого десятка)
         let leftBorrowCount = 0;
-        if (leftTens > tens1 && leftOnes === 0 && ones1 > 0) {
-            leftBorrowCount = 10 - ones1; 
-        }
+        if (leftTens > tens1 && leftOnes === 0 && ones1 > 0) { leftBorrowCount = 10 - ones1; }
 
         let rightBorrowCount = 0;
-        if (rightTens > tens2 && rightOnes === 0 && ones2 > 0) {
-            rightBorrowCount = 10 - ones2; 
-        }
+        if (rightTens > tens2 && rightOnes === 0 && ones2 > 0) { rightBorrowCount = 10 - ones2; }
 
         html = `
             <div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%; animation:fadeIn 0.3s;">
-                <!-- ЛЕВЫЙ РОБОТ -->
                 <div class="crystal-truck">
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <span style="font-size:36px; line-height:1;">🤖</span>
@@ -93,12 +87,8 @@ function renderAdditionVisual(num1, num2, currentInput) {
                     </div>
                 </div>
                 <div style="font-size:24px; font-weight:bold; color:#22c55e;">+</div>
-                <!-- ПРАВЫЙ РОБОТ -->
                 <div class="crystal-truck">
-                    <div class="crystal-deck orange-theme" style="margin-right:10px; ${simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : ''}">
-                        ${generateCrystalColumnsHTML(rightTens, true, rightBorrowCount)}
-                        ${generateOnesHTML(rightOnes, true)}
-                    </div>
+                    <div class="crystal-deck orange-theme" style="margin-right:10px; ${simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : ''}">${generateCrystalColumnsHTML(rightTens, true, rightBorrowCount)} ${generateOnesHTML(rightOnes, true)}</div>
                     <div style="display:flex; flex-direction:column; align-items:center;">
                         <span style="font-size:36px; line-height:1;">🤖</span>
                         <b style="color:#ea580c; font-size:13px; margin-top:1px;">${rightLabel}</b>
@@ -106,29 +96,48 @@ function renderAdditionVisual(num1, num2, currentInput) {
                 </div>
             </div>`;
     } else {
-        // ФАЗА 3: ОТВЕТ. Слияние платформ
-        let totalTens = tens1 + tens2;
+        // ФАЗА 3: ОТВЕТ. Умное сохранение цветов истории примера при слиянии
         let totalOnes = ones1 + ones2;
+        let leftBorrowCount = 0;
+        let rightBorrowCount = 0;
 
+        // Фиксируем, был ли размен. Если да, вычисляем количество кубиков соседа на вершине
         if (totalOnes >= 10) {
-            totalTens += 1;
+            leftBorrowCount = 10 - ones1; 
             totalOnes -= 10;
         }
-
-        let leftDisplayTens = Math.min(totalTens, 4);
-        let rightDisplayTens = totalTens - leftDisplayTens;
 
         html = `
             <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; animation:fadeIn 0.4s;">
                 <div class="win-layout" style="display:flex; align-items:center; justify-content:center; position:relative;">
+                    
+                    <!-- ГОЛОВА ЛЕВОГО РОБОТА -->
                     <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate;' : ''}">
                         <span style="font-size:36px; line-height:1;">🤖</span>
                     </div>
-                    <div class="crystal-deck">${generateCrystalColumnsHTML(leftDisplayTens, false, 0)}</div>
-                    <div class="crystal-deck orange-theme">${generateCrystalColumnsHTML(rightDisplayTens, true, 0)}${generateOnesHTML(totalOnes, true)}</div>
+
+                    <!-- ЛЕВАЯ ПЛАТФОРМА: Несет только чистые синие базовые десятки левого робота -->
+                    <div class="crystal-deck">
+                        ${generateCrystalColumnsHTML(tens1, false, 0)}
+                    </div>
+
+                    <!-- ПРАВАЯ ПЛАТФОРМА: Берет на себя гибридный столбик, чистые оранжевые десятки и остаток единиц -->
+                    <div class="crystal-deck orange-theme">
+                        <!-- 1. Тот самый гибридный столбик (передаем левый заем, чтобы он раскрасился снизу синим, сверху оранжевым) -->
+                        ${leftBorrowCount > 0 ? generateCrystalColumnsHTML(1, false, leftBorrowCount) : ''}
+                        
+                        <!-- 2. Чистые оранжевые десятки правого робота -->
+                        ${generateCrystalColumnsHTML(tens2, true, 0)}
+                        
+                        <!-- 3. Оставшиеся неполные оранжевые единицы -->
+                        ${generateOnesHTML(totalOnes, true)}
+                    </div>
+
+                    <!-- ГОЛОВА ПРАВОГО РОБОТА -->
                     <div style="display:flex; flex-direction:column; align-items:center; ${isFullyCorrect ? 'animation: monsterJump 0.5s infinite alternate-reverse;' : ''}">
                         <span style="font-size:36px; line-height:1;">🤖</span>
                     </div>
+
                 </div>
                 <b style="color:#22c55e; font-size:14px; margin-top:8px;">
                     ${isFullyCorrect ? 'Ура! Ответ верный! Платформы соединены! 🎉' : 'Проверяем ответ... 👀'}
@@ -138,18 +147,14 @@ function renderAdditionVisual(num1, num2, currentInput) {
     gameZone.innerHTML = html;
 }
 
-// ПУЛЕНЕПРОБИВАЕМЫЙ ЦИКЛ: Генерирует кубики от пола к потолку под управлением column-reverse
 function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     let html = '';
     for (let i = 0; i < count; i++) {
         html += `<div class="crystal-column">`;
         let isLastColumn = (i === count - 1) && (borrowCount > 0);
         
-        // Цикл идет от 1 (пол) до 10 (вершина). Благодаря column-reverse первый элемент кода встанет на пол.
         for (let j = 1; j <= 10; j++) {
             let extraClass = '';
-            // Заимствованные кубики ложатся в самом конце генерации (на верхушку стопки)
-            // Например, еслиborrowCount = 3, то кубики 8, 9 и 10 станут противоположного цвета
             if (isLastColumn && j > (10 - borrowCount)) {
                 extraClass = isOrangeTheme ? 'borrow-blue' : 'borrow-orange';
             }
