@@ -47,12 +47,13 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// 4. Отрисовка монстриков и пицц в панорамной нижней области
+// 4. Отрисовка монстриков и пицц в панорамной нижней области (высота 32%)
 function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
 
-    if (!currentMultiTask || window.activeIndex === -1) {
+    // Если режим сменился или нет активной задачи — просто очищаем нижний этаж
+    if (!currentMultiTask || window.activeIndex === -1 || window.currentMode !== 'multiplication') {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
         return;
@@ -61,7 +62,7 @@ function renderMonsterGame() {
     const activeItem = window.examplesHistory[window.activeIndex];
     const exampleText = activeItem.exampleText;
 
-    // Удержание графики при редактировании примера (блокируем мерцание)
+    // Удержание графики при редактировании примера (защита от моргания и вылетов)
     if (gameZone.getAttribute('data-current-example') === exampleText) {
         return;
     }
@@ -70,9 +71,9 @@ function renderMonsterGame() {
 
     let html = '';
     
-    // Генерируем карточки монстриков (увеличили размеры под широкую зону)
+    // Генерируем карточки монстриков (оптимизировали размеры под 32% высоты экрана)
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        const pizzasHTML = '<span style="font-size: 24px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+        const pizzasHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         
         html += `
             <div style="
@@ -81,22 +82,23 @@ function renderMonsterGame() {
                 align-items: center;
                 justify-content: center;
                 background: #ffffff;
-                padding: 15px;
+                padding: 10px 15px;
                 border: 2px solid #e2e8f0;
-                border-radius: 14px;
-                box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.04);
-                min-width: 110px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+                min-width: 85px;
+                box-sizing: border-box;
             ">
-                <span style="font-size: 52px; margin-bottom: 10px; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.1));">👾</span>
+                <span style="font-size: 46px; margin-bottom: 6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
                 <div style="
                     display: flex;
-                    gap: 5px;
+                    gap: 4px;
                     justify-content: center;
                     flex-wrap: wrap;
-                    max-width: 90px;
+                    max-width: 80px;
                     background: #fff7ed;
-                    padding: 6px 10px;
-                    border-radius: 8px;
+                    padding: 4px 6px;
+                    border-radius: 6px;
                     border: 1px dashed #fed7aa;
                 ">
                     ${pizzasHTML}
