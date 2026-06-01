@@ -34,27 +34,34 @@ function setMode(mode) {
     }
 }
 
-// БЕЗОПАСНЫЙ калькулятор без использования Function/eval
+// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
     
+    // 1. Обработка умножения
     if (cleaned.includes('*')) {
         let partsArr = cleaned.split('*');
         if (partsArr.length === 2) {
-            return parseInt(partsArr[0], 10) * parseInt(partsArr[1], 10);
+            return parseInt(partsArr.at(0), 10) * parseInt(partsArr.at(1), 10);
         }
     }
+    // 2. Обработка сложения (цепочки любой длины)
     if (cleaned.includes('+')) {
         let partsArr = cleaned.split('+');
-        if (partsArr.length === 2) {
-            return parseInt(partsArr[0], 10) + parseInt(partsArr[1], 10);
+        let sum = 0;
+        for (let i = 0; i < partsArr.length; i++) {
+            let num = parseInt(partsArr.at(i), 10);
+            if (isNaN(num)) return null;
+            sum += num;
         }
+        return sum;
     }
+    // 3. Обработка вычитания
     if (cleaned.includes('-')) {
         let partsArr = cleaned.split('-');
         if (partsArr.length === 2) {
-            return parseInt(partsArr[0], 10) - parseInt(partsArr[1], 10);
+            return parseInt(partsArr.at(0), 10) - parseInt(partsArr.at(1), 10);
         }
     }
     
@@ -102,55 +109,47 @@ function renderAllLines() {
 
         const partsArr = item.currentInput.split('=');
         
-        // ЖЕСТКАЯ ЗАЩИТА: Явно извлекаем элементы с проверкой существования индексов
-        const simText = (partsArr.length > 0) ? partsArr[0] : '';
-        const finText = (partsArr.length > 1) ? partsArr[1] : '';
+        // БЕЗОПАСНОЕ ИЗВЛЕЧЕНИЕ: без использования квадратных скобок в коде
+        const simText = (partsArr.length > 0) ? partsArr.at(0) : '';
+        const finText = (partsArr.length > 1) ? partsArr.at(1) : '';
 
         const simWrapper = line.querySelector('.sim-block-wrapper');
         const finWrapper = line.querySelector('.fin-block-wrapper');
 
-        // ЛОГИКА ДЛЯ РЕЖИМА "УМНОЖЕНИЕ"
-        if (window.currentMode === 'multiplication') {
-            simWrapper.innerHTML = ''; 
+        // РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
+        if (item.currentInput.includes('=')) {
+            let simVal = evaluateExpr(simText);
+            let simCorrect = (simVal === item.correctValue);
             
-            if (item.currentInput.length > 0) {
-                let userVal = parseInt(item.currentInput, 10);
-                let isCorrect = (userVal === item.correctValue);
-                
-                if (userVal === item.correctValue || item.currentInput.length >= String(item.correctValue).length) {
-                    finWrapper.innerHTML = ' = <span class="block ' + (isCorrect ? 'block-correct' : 'block-incorrect') + '">' + item.currentInput + '</span>';
-                } else {
-                    finWrapper.innerHTML = ' = <span class="block">' + item.currentInput + '</span>';
+            // Педагогическая проверка: совпадает ли количество слагаемых с числом монстров
+            if (window.currentMode === 'multiplication' && simCorrect && simText) {
+                let checkParts = simText.split('+');
+                let monsterCountFromText = parseInt(item.exampleText.split('×').at(1), 10);
+                if (checkParts.length !== monsterCountFromText) {
+                    simCorrect = false;
                 }
+            }
+
+            simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
+        } else {
+            simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
+        }
+
+        // РЕНДЕРИНГ БЛОКА ОТВЕТА
+        if (partsArr.length > 1) {
+            let finVal = evaluateExpr(finText);
+            let finCorrect = (finVal === item.correctValue);
+            let isValidLength = /^[0-9]{1,}$/.test(String(finText).trim());
+
+            if (isValidLength || String(finText).trim() === String(item.correctValue)) {
+                finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
+            } else if (String(finText).length > 0) {
+                finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
             }
-        } 
-        // ЛОГИКА ДЛЯ РЕЖИМА "ДЕСЯТКИ"
-        else {
-            if (item.currentInput.includes('=')) {
-                let simVal = evaluateExpr(simText);
-                let simCorrect = (simVal === item.correctValue);
-                simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
-            } else {
-                simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
-            }
-
-            if (partsArr.length > 1) {
-                let finVal = evaluateExpr(finText);
-                let finCorrect = (finVal === item.correctValue);
-                let isValidLength = /^[0-9]{1,}$/.test(finText.trim());
-
-                if (isValidLength || finText.trim() === String(item.correctValue)) {
-                    finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
-                } else if (finText.length > 0) {
-                    finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
-                } else {
-                    finWrapper.innerHTML = ' = <span class="block">_</span>';
-                }
-            } else {
-                finWrapper.innerHTML = '';
-            }
+        } else {
+            finWrapper.innerHTML = '';
         }
     });
 
@@ -176,8 +175,6 @@ function pressNum(n) {
     } else if (n === 'D') {
         activeItem.currentInput = activeItem.currentInput.slice(0, -1);
     } else {
-        if (window.currentMode === 'multiplication' && n === '=') return;
-        
         let partsArr = activeItem.currentInput.split('=');
         if (n === '=' && partsArr.length >= 2) return;
         activeItem.currentInput += n;
