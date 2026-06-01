@@ -3,12 +3,11 @@ window.currentMode = '';
 window.examplesHistory = [];
 window.activeIndex = -1;
 
+// Шаг для чередования в режиме Микс (0 - плюс, 1 - минус, 2 - умножение)
+window.mixStep = 0;
+
 const menu = document.getElementById('menu');
 const examplesList = document.getElementById('examples-list');
-
-// Флаги, чтобы звуки ошибки не тарахтели при вводе каждой неверной цифры
-let simFailSoundPlayed = false;
-let finFailSoundPlayed = false;
 
 function toggleMenu() { 
     menu.classList.toggle('active'); 
@@ -25,26 +24,61 @@ function setMode(mode) {
     window.currentMode = mode;
     window.examplesHistory = [];
     window.activeIndex = -1;
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
+    window.mixStep = 0; // Сбрасываем счётчик микса при старте режима
     
     if (examplesList) examplesList.innerHTML = '';
     
-    // Очищаем монстров, не ломая структуру страницы
+    // Мягко очищаем область монстров
     const gameZone = document.getElementById('game-zone');
     if (gameZone) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
     }
 
+    // Диспетчер запуска режимов
     if (mode === 'tens') {
         initTensMode(); 
     } else if (mode === 'multiplication') {
         initMultiplicationMode(); 
+    } else if (mode === 'mix') {
+        initMixMode(); // Запуск нового режима
     }
 }
 
-// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
+// Функция старта режима МИКС
+function initMixMode() {
+    document.querySelector('.header-title').innerText = 'Режим: Микс 🎰 ▼';
+    window.mixStep = 0; // Начинаем со сложения
+    generateMixExample();
+}
+
+// Генератор примеров для режима МИКС с умным переключением графики
+function generateMixExample() {
+    if (window.currentMode !== 'mix') return;
+
+    // Считаем остаток от деления, определяя тип примера
+    let type = window.mixStep % 3;
+
+    if (type === 0) {
+        // 1. Очередь СЛОЖЕНИЯ (вызываем генератор из main.js, принудительно включив плюс)
+        isAddition = true;
+        generateExample();
+    } else if (type === 1) {
+        // 2. Очередь ВЫЧИТАНИЯ (вызываем генератор из main.js, принудительно включив минус)
+        isAddition = false;
+        generateExample();
+    } else if (type === 2) {
+        // 3. Очередь УМНОЖЕНИЯ (вызываем генератор из multiplication.js)
+        generateMultiExample();
+    }
+
+    // Синхронизируем заголовок активного примера в истории, чтобы вернуть правильный текст режима в шапку
+    document.querySelector('.header-title').innerText = 'Режим: Микс 🎰 ▼';
+
+    window.mixStep++; // Двигаем очередь на следующий шаг
+}
+
+// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР (С полной защитой от NaN)
 function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -83,17 +117,6 @@ function evaluateExpr(str) {
     
     let num = parseInt(cleaned, 10);
     return isNaN(num) ? null : num;
-}
-
-// ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ВАШЕГО ГОТОВОГО ФАЙЛА ОШИБКИ
-function playFailSound() {
-    try {
-        const audio = new Audio('audio/fail.mp3');
-        audio.volume = 0.25; // Устанавливаем комфортную громкость (25%)
-        audio.play();
-    } catch (e) {
-        console.log("Звук заблокирован политикой браузера до первого клика");
-    }
 }
 
 // Универсальный рендеринг строк для ВСЕХ режимов
@@ -144,12 +167,16 @@ function renderAllLines() {
 
         const targetLength = String(item.correctValue).length;
 
-        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Слагаемые)
+        // Определяем, является ли проверяемая строка умножением
+        let isMultiplicationLine = item.exampleText.includes('×');
+
+        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
         if (item.currentInput.includes('=')) {
             let simVal = evaluateExpr(simText);
             let simCorrect = (simVal === item.correctValue);
             
-            if (window.currentMode === 'multiplication' && simCorrect && simText) {
+            // Запускаем проверку слагаемых только если это строка умножения
+            if (isMultiplicationLine && simCorrect && simText) {
                 let checkParts = simText.split('+');
                 let monsterCountFromText = parseInt(item.exampleText.split('×')[1], 10);
                 if (checkParts.length !== monsterCountFromText) {
@@ -158,16 +185,6 @@ function renderAllLines() {
             }
 
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
-            
-            // Триггер запуска вашего MP3 при ошибке в слагаемых
-            if (!simCorrect && index === window.activeIndex && !simFailSoundPlayed) {
-                playFailSound();
-                simFailSoundPlayed = true; 
-            }
-            if (simCorrect && index === window.activeIndex) {
-                simFailSoundPlayed = false; 
-            }
-
         } else {
             simWrapper.innerHTML = ' = <span class="block">' + (simText || '_') + '</span>';
         }
@@ -180,22 +197,10 @@ function renderAllLines() {
             
             if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
-                
-                // Триггер запуска вашего MP3 при ошибке в финальном ответе
-                if (!finCorrect && index === window.activeIndex && !finFailSoundPlayed) {
-                    playFailSound();
-                    finFailSoundPlayed = true;
-                }
-                if (finCorrect && index === window.activeIndex) {
-                    finFailSoundPlayed = false;
-                }
-
             } else if (trimmedFinText.length > 0) {
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
-                finFailSoundPlayed = false; 
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
-                finFailSoundPlayed = false;
             }
         } else {
             finWrapper.innerHTML = '';
@@ -206,16 +211,26 @@ function renderAllLines() {
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+// Клик по старым примерам в истории
 function selectExample(index) {
     window.activeIndex = index;
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
     renderAllLines();
-    if (window.currentMode === 'multiplication' && typeof syncMonsterGame === 'function') {
-        syncMonsterGame();
+
+    // Умное переключение монстров при клике по истории в режиме Микс
+    const activeItem = window.examplesHistory[index];
+    if (activeItem && activeItem.exampleText.includes('×')) {
+        if (typeof syncMonsterGame === 'function') syncMonsterGame();
+    } else {
+        // Если кликнули на плюс или минус — очищаем нижний этаж от монстров
+        const gameZone = document.getElementById('game-zone');
+        if (gameZone) {
+            gameZone.innerHTML = '';
+            gameZone.removeAttribute('data-current-example');
+        }
     }
 }
 
+// Единая логика для кнопок нумпада
 function pressNum(n) {
     if (window.activeIndex === -1) return;
     
@@ -223,12 +238,8 @@ function pressNum(n) {
     
     if (n === 'C') {
         activeItem.currentInput = '';
-        simFailSoundPlayed = false;
-        finFailSoundPlayed = false;
     } else if (n === 'D') {
         activeItem.currentInput = activeItem.currentInput.slice(0, -1);
-        simFailSoundPlayed = false;
-        finFailSoundPlayed = false;
     } else {
         let partsArr = activeItem.currentInput.split('=');
         if (n === '=' && partsArr.length >= 2) return;
@@ -237,17 +248,19 @@ function pressNum(n) {
     
     renderAllLines();
 
-    if (window.currentMode === 'multiplication' && typeof renderMonsterGame === 'function') {
+    // Перерисовываем монстров при вводе только если текущий активный пример — это умножение
+    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') {
         renderMonsterGame();
     }
 }
 
+// Кнопка "Следующий пример"
 function confirmAndNext() {
-    simFailSoundPlayed = false;
-    finFailSoundPlayed = false;
     if (window.currentMode === 'tens') {
         generateExample();
     } else if (window.currentMode === 'multiplication') {
         generateMultiExample();
+    } else if (window.currentMode === 'mix') {
+        generateMixExample(); // Вызов генерации микса по кругу
     }
 }
