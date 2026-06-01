@@ -13,7 +13,7 @@ const examplesList = document.getElementById('examples-list');
 let simFailSoundPlayed = false;
 let finFailSoundPlayed = false;
 
-// НОВЫЕ ФЛАГИ: Чтобы победные звуки в десятках срабатывали ровно по одному разу
+// Флаги, чтобы победные звуки в десятках срабатывали ровно по одному разу
 let simWinSoundPlayed = false;
 let finWinSoundPlayed = false;
 
@@ -80,47 +80,6 @@ function generateMixExample() {
     window.mixStep++;
 }
 
-// УНИВЕРСАЛЬНЫЙ БЕЗОПАСНЫЙ КАЛЬКУЛЯТОР
-function evaluateExpr(str) {
-    if (!str) return null;
-    let cleaned = str.replace(/×/g, '*').trim();
-    
-    // 1. Обработка умножения
-    if (cleaned.includes('*')) {
-        let partsArr = cleaned.split('*');
-        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
-            let n1 = parseInt(partsArr[0], 10);
-            let n2 = parseInt(partsArr[1], 10);
-            return (isNaN(n1) || isNaN(n2)) ? null : n1 * n2;
-        }
-        return null;
-    }
-    // 2. Обработка сложения (цепочки любой длины)
-    if (cleaned.includes('+')) {
-        let partsArr = cleaned.split('+');
-        let sum = 0;
-        for (let i = 0; i < partsArr.length; i++) {
-            let num = parseInt(partsArr[i], 10);
-            if (isNaN(num)) return null; 
-            sum += num;
-        }
-        return sum;
-    }
-    // 3. Обработка вычитания
-    if (cleaned.includes('-')) {
-        let partsArr = cleaned.split('-');
-        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
-            let n1 = parseInt(partsArr[0], 10);
-            let n2 = parseInt(partsArr[1], 10);
-            return (isNaN(n1) || isNaN(n2)) ? null : n1 - n2;
-        }
-        return null;
-    }
-    
-    let num = parseInt(cleaned, 10);
-    return isNaN(num) ? null : num;
-}
-
 // ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ЗВУКА ОШИБКИ
 function playFailSound() {
     try {
@@ -132,10 +91,9 @@ function playFailSound() {
     }
 }
 
-// НОВАЯ ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ЗВУКА УСПЕХА ДЛЯ ДЕСЯТКОВ
+// ФУНКЦИЯ ВОСПРОИЗВЕДЕНИЯ ЗВУКА УСПЕХА ДЛЯ ДЕСЯТКОВ
 function playTensWinSound() {
     try {
-        // Запускаем ваш скачанный win.mp3
         const audio = new Audio('audio/win.mp3');
         audio.volume = 0.25;
         audio.play();
@@ -194,9 +152,9 @@ function renderAllLines() {
 
         let isMultiplicationLine = item.exampleText.includes('×');
 
-        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ (Слагаемые или Промежуточное вычисление)
+        // 1. РЕНДЕРИНГ БЛОКА УПРОЩЕНИЯ
         if (item.currentInput.includes('=')) {
-            let simVal = evaluateExpr(simText);
+            let simVal = evaluateExpr(simText); // Вызов внешней функции из calculator.js
             let simCorrect = (simVal === item.correctValue);
             
             if (isMultiplicationLine && simCorrect && simText) {
@@ -209,18 +167,15 @@ function renderAllLines() {
 
             simWrapper.innerHTML = ' = <span class="block ' + (simCorrect ? 'block-correct' : 'block-incorrect') + '">' + (simText || '?') + '</span>';
             
-            // Логика звуков для Блока Упрощения
             if (index === window.activeIndex) {
                 if (!simCorrect && !simFailSoundPlayed) {
                     playFailSound();
                     simFailSoundPlayed = true; 
                 }
-                // ЗВУК ТРИУМФА: Если это ПЛЮС или МИНУС (не умножение) и блок стал зеленым
                 if (simCorrect && !isMultiplicationLine && !simWinSoundPlayed) {
                     playTensWinSound();
-                    simWinSoundPlayed = true; // Блокируем повтор
+                    simWinSoundPlayed = true; 
                 }
-                // Сброс флагов при исправлении ошибок
                 if (simCorrect) simFailSoundPlayed = false;
                 if (!simCorrect) simWinSoundPlayed = false;
             }
@@ -231,20 +186,18 @@ function renderAllLines() {
 
         // 2. РЕНДЕРИНГ БЛОКА ОТВЕТА
         if (partsArr.length > 1) {
-            let finVal = evaluateExpr(finText);
+            let finVal = evaluateExpr(finText); // Вызов внешней функции из calculator.js
             let finCorrect = (finVal === item.correctValue);
             let trimmedFinText = String(finText).trim();
             
             if (trimmedFinText.length >= targetLength) {
                 finWrapper.innerHTML = ' = <span class="block ' + (finCorrect ? 'block-correct' : 'block-incorrect') + '">' + finText + '</span>';
                 
-                // Логика звуков для Финального Ответа
                 if (index === window.activeIndex) {
                     if (!finCorrect && !finFailSoundPlayed) {
                         playFailSound();
                         finFailSoundPlayed = true;
                     }
-                    // ЗВУК ТРИУМФА: Если ответ верный и это ПЛЮС или МИНУС (у умножения свой плеер в multiplication.js)
                     if (finCorrect && !isMultiplicationLine && !finWinSoundPlayed) {
                         playTensWinSound();
                         finWinSoundPlayed = true;
@@ -257,7 +210,7 @@ function renderAllLines() {
                 finWrapper.innerHTML = ' = <span class="block">' + finText + '</span>';
                 if (index === window.activeIndex) {
                     finFailSoundPlayed = false; 
-                    finWinSoundPlayed = false; // Сбрасываем флаг, пока ребенок дописывает число
+                    finWinSoundPlayed = false; 
                 }
             } else {
                 finWrapper.innerHTML = ' = <span class="block">_</span>';
@@ -270,6 +223,7 @@ function renderAllLines() {
             finWrapper.innerHTML = '';
         }
     });
+
     const activeElem = examplesList.querySelector('.active');
     if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -282,13 +236,10 @@ function selectExample(index) {
     finWinSoundPlayed = false;
     renderAllLines();
 
-    // Проверяем, на какой тип примера кликнули в истории
     const activeItem = window.examplesHistory[index];
     if (activeItem && activeItem.exampleText.includes('×')) {
-        // Если это умножение — показываем пришельцев для этого примера
         if (typeof syncMonsterGame === 'function') syncMonsterGame();
     } else {
-        // Если это сложение или вычитание — очищаем нижний этаж от монстров
         const gameZone = document.getElementById('game-zone');
         if (gameZone) {
             gameZone.innerHTML = '';
@@ -297,7 +248,6 @@ function selectExample(index) {
     }
 }
 
-// Единая логика для кнопок нумпада
 function pressNum(n) {
     if (window.activeIndex === -1) return;
     
@@ -323,19 +273,16 @@ function pressNum(n) {
     
     renderAllLines();
 
-    // Перерисовываем монстров при вводе только если текущий активный пример — это умножение
     if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') {
         renderMonsterGame();
     }
 }
 
-// Обработка кнопки "Следующий пример"
 function confirmAndNext() {
     simFailSoundPlayed = false;
     finFailSoundPlayed = false;
     simWinSoundPlayed = false;
     finWinSoundPlayed = false;
-    
     if (window.currentMode === 'tens') {
         generateExample();
     } else if (window.currentMode === 'multiplication') {
@@ -344,5 +291,3 @@ function confirmAndNext() {
         generateMixExample();
     }
 }
-
-
