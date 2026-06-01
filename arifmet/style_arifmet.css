@@ -42,28 +42,36 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .glow-tens .crystal-column { filter: drop-shadow(0 0 6px #4ade80); border-color: #22c55e; }
 .glow-ones .crystal-item { filter: drop-shadow(0 0 4px #facc15); }
 
-/* СЕГМЕНТНЫЕ РУКИ ДЛЯ ОБХВАТА ОБЩЕГО ГРУЗА */
-.bender-capsule { display: flex; align-items: center; position: relative; padding: 12px 0; }
+/* НАСТРОЙКИ ПЛАТФОРМЫ КРИСТАЛЛОВ С РУКАМИ ВНУТРИ */
+.crystal-truck { display: flex; align-items: center; position: relative; }
+.crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px 10px 6px 30px; min-height: 95px; align-items: flex-end; box-sizing: border-box; position: relative; z-index: 2; }
+.crystal-column { display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; height: 100%; z-index: 2; }
+.crystal-item { width: 12px; height: 7px; background: #38bdf8; border: 1px solid #0284c7; border-radius: 1px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
+.crystal-column .crystal-item:nth-last-child(5) { margin-top: 4px; }
+.orange-theme .crystal-item { background: #fb923c; border: 1px solid #ea580c; }
+.glow-tens .crystal-column { filter: drop-shadow(0 0 6px #4ade80); border-color: #22c55e; }
+.glow-ones .crystal-item { filter: drop-shadow(0 0 4px #facc15); }
+
+/* ОДИНАКОВЫЕ СКВОЗНЫЕ МЕХАНИЧЕСКИЕ РУКИ */
+.bender-arm-top { position: absolute; top: 0; left: 0; right: 0; height: 35px; border: 6px solid #94a3b8; border-bottom: none; border-radius: 16px 16px 0 0; z-index: 1; pointer-events: none; }
+.bender-arm-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 35px; border: 6px solid #94a3b8; border-top: none; border-radius: 0 0 16px 16px; z-index: 1; pointer-events: none; }
+
+/* Настройки цвета рук для оранжевого робота */
 .orange-theme .bender-arm-top, .orange-theme .bender-arm-bottom { border-color: #ea580c; }
 
-/* Верхняя рука (огибает груз сверху) */
-.bender-arm-top { position: absolute; top: 0; left: 24px; right: 0; height: 35px; border: 6px solid #94a3b8; border-bottom: none; border-radius: 20px 20px 0 0; z-index: 3; pointer-events: none; }
-/* Нижняя рука (огибает груз снизу) */
-.bender-arm-bottom { position: absolute; bottom: 0; left: 24px; right: 0; height: 35px; border: 6px solid #94a3b8; border-top: none; border-radius: 0 0 20px 20px; z-index: 3; pointer-events: none; }
+/* Зеркальное отображение правого робота во всех фазах */
+.orange-theme.crystal-deck { transform: scaleX(-1); padding: 12px 30px 6px 10px; }
+.orange-theme.crystal-deck .crystal-column { transform: scaleX(-1); }
 
-/* Зеркальное отображение для правого оранжевого робота */
-.orange-theme.bender-capsule { transform: scaleX(-1); }
-.orange-theme .robot-label-fix { transform: scaleX(-1); }
+/* ФАЗА ПОБЕДЫ: Убираем закругления на стыке платформ в центре, чтобы руки слились в единый замок */
+.win-layout .crystal-deck:first-of-type { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; padding-right: 0; }
+.win-layout .crystal-deck:first-of-type .bender-arm-top { border-top-right-radius: 0; border-right: none; right: -2px; }
+.win-layout .crystal-deck:first-of-type .bender-arm-bottom { border-bottom-right-radius: 0; border-right: none; right: -2px; }
 
-/* ФАЗА СОЕДИНЕНИЯ: руки левого робота тянутся вправо, правого — влево, перекрывая общий груз */
-.joint-layout { display: flex; align-items: center; position: relative; padding: 12px 0; }
-.joint-layout .bender-arm-top { left: 24px; width: calc(50% + 12px); border-right: 3px solid #64748b; border-radius: 20px 0 0 0; right: auto; }
-.joint-layout .bender-arm-bottom { left: 24px; width: calc(50% + 12px); border-right: 3px solid #64748b; border-radius: 0 0 0 20px; right: auto; }
+.win-layout .orange-theme.crystal-deck { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; padding-right: 0; }
+.win-layout .orange-theme.crystal-deck .bender-arm-top { border-top-right-radius: 0; border-right: none; right: -2px; }
+.win-layout .orange-theme.crystal-deck .bender-arm-bottom { border-bottom-right-radius: 0; border-right: none; right: -2px; }
 
-/* Правый робот в общем замке зеркален левому, поэтому его руки сомкнутся в центре */
-.joint-layout .orange-theme .bender-arm-top { left: 24px; width: calc(50% + 12px); border-right: 3px solid #475569; border-radius: 20px 0 0 0; right: auto; }
-.joint-layout .orange-theme .bender-arm-bottom { left: 24px; width: calc(50% + 12px); border-right: 3px solid #475569; border-radius: 0 0 0 20px; right: auto; }
-
-/* Анимация радостного танца соединённых рук при победе */
-.monster-happy .bender-arm-top, .monster-happy .bender-arm-bottom { animation: armDance 0.3s ease infinite alternate; }
+/* Анимация радостной тряски соединённых рук при победе */
+.monster-happy .bender-arm-top, .monster-happy .bender-arm-bottom { animation: armDance 0.2s ease infinite alternate; }
 @keyframes armDance { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
