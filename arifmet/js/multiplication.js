@@ -4,6 +4,9 @@ let currentMultiTask = null;
 // Переменная для хранения ID зацикленного таймера звука
 let winSoundIntervalId = null;
 
+// Счетчики для создания ритма мелодии
+let melodyStep = 0;
+
 // 1. Функция инициализации режима (вызывается из menu.js при клике на меню)
 function initMultiplicationMode() {
     document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
@@ -12,7 +15,6 @@ function initMultiplicationMode() {
 
 // 2. Настоящая генерация примера на умножение
 function generateMultiExample() {
-    // Перед генерацией нового примера железно останавливаем старый зацикленный звук
     stopWinSoundLoop();
 
     const num1 = Math.floor(Math.random() * 4) + 2; // размер порции пиццы (2-5)
@@ -56,17 +58,16 @@ function syncMonsterGame() {
     renderMonsterGame();
 }
 
-// Функция остановки бесконечного звука
 function stopWinSoundLoop() {
     if (winSoundIntervalId) {
         clearInterval(winSoundIntervalId);
         winSoundIntervalId = null;
     }
+    melodyStep = 0;
 }
 
-// ЗАЦИКЛЕННЫЙ И РАЗНООБРАЗНЫЙ ЗВУК ХОРА ПРИШЕЛЬЦЕВ
+// ВЕСЕЛАЯ МЕЛОДИЯ ИЗ "НЯМОВ" И "ХРУМОВ"
 function startWinSoundLoop() {
-    // Защита: если звук уже вовсю играет — не запускаем еще один параллельно
     if (winSoundIntervalId) return;
 
     try {
@@ -74,53 +75,86 @@ function startWinSoundLoop() {
         if (!AudioContext) return;
         const ctx = new AudioContext();
 
-        // Запускаем бесконечный цикл возгласов, который срабатывает каждые 450 миллисекунд
+        // Скорость мелодии: шаг каждые 300 миллисекунд (веселый бодрый темп)
         winSoundIntervalId = setInterval(() => {
-            // Забавный случайный выбор одного из трех типов инопланетных возгласов
-            const soundType = Math.floor(Math.random() * 3);
-            
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
             let now = ctx.currentTime;
+            
+            // Базовые ноты для веселой мелодии (До, Ре, Ми, Соль)
+            const scale = [261.63, 293.66, 329.63, 392.00];
+            // Меняем ноту каждые два шага, чтобы получилась песенка
+            let baseFreq = scale[Math.floor(melodyStep / 2) % scale.length]; 
+            
+            // РИТМИЧЕСКИЙ РИСУНОК: Шаг 0 - Ням, Шаг 1 - Хрум, Шаг 2 - Ням, Шаг 3 - Хрум-Хрум
+            let isHrum = (melodyStep % 2 === 1);
+            
+            // Если шаг №3, с вероятностью 50% делаем двойной хруст
+            if (melodyStep % 4 === 3 && Math.random() > 0.5) isHrum = true;
 
-            // Рандомизируем базовый голос (высокий или низкий пришелец кричит)
-            let baseFreq = 250 + Math.random() * 350; 
-
-            switch (soundType) {
-                case 0: // Возглас 1: Резкий испуганный "ПИУ!" вверх
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(baseFreq, now);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 3, now + 0.15);
-                    break;
-                case 1: // Возглас 2: Булькающий прыгающий "УИ-УИ" вниз-вверх
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(baseFreq * 1.5, now);
-                    osc.frequency.linearRampToValueAtTime(baseFreq * 0.7, now + 0.08);
-                    osc.frequency.linearRampToValueAtTime(baseFreq * 2, now + 0.18);
-                    break;
-                case 2: // Возглас 3: Дрожащий космический крик радости (вибрато)
-                    osc.type = 'sawtooth'; // более яркий праздничный звук
-                    osc.frequency.setValueAtTime(baseFreq, now);
-                    // Быстрое раскачивание частоты туда-сюда
-                    for (let i = 0; i < 6; i++) {
-                        let modTime = now + (i * 0.03);
-                        let offset = (i % 2 === 0) ? 40 : -40;
-                        osc.frequency.setValueAtTime(baseFreq + offset, modTime);
-                    }
-                    break;
+            if (!isHrum) {
+                // ----------------------------------------------------
+                // СИНТЕЗ ЗВУКА "НЯМ" (Мягкий гласный звук)
+                // ----------------------------------------------------
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                // Прямоугольная волна ближе всего к мультяшному голосу
+                osc.type = 'triangle'; 
+                
+                // "Ня-" (высокий старт) -> "-м" (резкое падение частоты вниз)
+                osc.frequency.setValueAtTime(baseFreq * 1.4, now);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.6, now + 0.12);
+                
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.16);
+                
+            } else {
+                // ----------------------------------------------------
+                // СИНТЕЗ ЗВУКА "ХРУМ" (Шум + Низкий тон чавканья)
+                // ----------------------------------------------------
+                // 1. Создаем хрустящий белый шум
+                const bufferSize = ctx.sampleRate * 0.05; // очень короткий всплеск (0.05 сек)
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.08, now); // громкость хруста
+                noiseGain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                
+                noise.connect(noiseGain);
+                noiseGain.connect(ctx.destination);
+                noise.start(now);
+                
+                // 2. Добавляем к шуму основу звука "-ум"
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(baseFreq * 0.8, now);
+                osc.frequency.linearRampToValueAtTime(baseFreq * 0.4, now + 0.12);
+                
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.14);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
             }
 
-            // Мягкая комфортная громкость, чтобы не раздражать при долгом звучании
-            gain.gain.setValueAtTime(0.08, now);
-            gain.gain.linearRampToValueAtTime(0.001, now + 0.22);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 0.25);
-
-        }, 450);
+            melodyStep++; // Переходим к следующему такту песенки
+            
+        }, 300);
 
     } catch (e) {
         console.log("Аудио-контекст заблокирован браузером");
@@ -135,7 +169,7 @@ function renderMonsterGame() {
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
-        stopWinSoundLoop(); // Останавливаем звук, если ушли с примера
+        stopWinSoundLoop(); 
         return;
     }
 
@@ -149,18 +183,15 @@ function renderMonsterGame() {
         const simText = partsArr.at(0) || '';
         const finText = partsArr.at(1) || '';
 
-        // Проверяем промежуточную сумму слагаемых
         let simVal = evaluateExpr(simText);
         let simCorrect = (simVal === activeItem.correctValue);
         
-        // Проверяем количество слагаемых
         let checkParts = simText.split('+');
         let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
         if (checkParts.length !== monsterCountFromText) {
             simCorrect = false;
         }
 
-        // Проверяем финальный ответ
         let finVal = evaluateExpr(finText);
         let finCorrect = (finVal === activeItem.correctValue);
 
@@ -174,11 +205,9 @@ function renderMonsterGame() {
         return;
     }
     
-    // Если зафиксирована победа — запускаем бесконечный разнообразный хор пришельцев
     if (isFullySolved) {
-        startWinSoundLoop();
+        startWinSoundLoop(); // Запускаем зацикленный оркестр нямов и хрумов
     } else {
-        // Если ребенок стер ответ или пример сменился — глушим звук
         stopWinSoundLoop();
     }
     
@@ -186,7 +215,6 @@ function renderMonsterGame() {
 
     let html = '';
     
-    // Генерируем карточки монстриков
     for (let i = 0; i < currentMultiTask.monsters; i++) {
         const pizzasHTML = isFullySolved 
             ? '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>' 
