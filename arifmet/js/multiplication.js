@@ -42,9 +42,10 @@ function syncMonsterGame() {
     const parts = activeItem.exampleText.split('×');
     if (parts.length !== 2) return;
     
+    // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Перешли на классические и безопасные индексы массивов [0] и [1]
     currentMultiTask = {
-        items: parseInt(parts.at(0), 10),
-        monsters: parseInt(parts.at(1), 10)
+        items: parseInt(parts[0], 10),
+        monsters: parseInt(parts[1], 10)
     };
     
     renderMonsterGame();
@@ -55,7 +56,6 @@ function renderMonsterGame() {
     const gameZone = document.getElementById('game-zone');
     if (!gameZone) return;
 
-    // ОЧИЩЕНО: Убрана конфликтная проверка window.currentMode, которая стирала монстров
     if (!currentMultiTask || window.activeIndex === -1) {
         gameZone.innerHTML = '';
         gameZone.removeAttribute('data-current-example');
