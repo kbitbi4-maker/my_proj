@@ -19,6 +19,7 @@ function setMode(mode) {
     if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
     if (mode === 'tens') { initTensMode(); } 
     else if (mode === 'multiplication') { initMultiplicationMode(); } 
+    else if (mode === 'scales') { initScalesMode(); } // ДОБАВЛЕНО
     else if (mode === 'mix') { initMixMode(); }
 }
 function initMixMode() {
