@@ -1,46 +1,71 @@
-let currentWinPlayer = null, currentAlienPlayer = null, currentFailPlayer = null, alienRepeatCount = 0;
-window.simFailSoundPlayed = false;
-window.finFailSoundPlayed = false;
-window.simWinSoundPlayed = false;
-window.finWinSoundPlayed = false;
-function resetAllFeedbacks() {
+let currentWinPlayer = null;
+let currentAlienPlayer = null;
+let currentFailPlayer = null;
+let alienRepeatCount = 0;
+
+// Локальный объект флагов, защищенный от внешнего вмешательства
+export const soundFlags = {
+    simFailSoundPlayed: false,
+    finFailSoundPlayed: false,
+    simWinSoundPlayed: false,
+    finWinSoundPlayed: false
+};
+
+/**
+ * Полный сброс всех аудиоплееров и флагов при смене примера или режима
+ */
+export function resetAllFeedbacks() {
     if (currentWinPlayer) { currentWinPlayer.pause(); currentWinPlayer = null; }
     if (currentAlienPlayer) { currentAlienPlayer.onended = null; currentAlienPlayer.pause(); currentAlienPlayer = null; }
     if (currentFailPlayer) { currentFailPlayer.pause(); currentFailPlayer = null; }
+    
     alienRepeatCount = 0;
-    window.simFailSoundPlayed = false;
-    window.finFailSoundPlayed = false;
-    window.simWinSoundPlayed = false;
-    window.finWinSoundPlayed = false;
+    
+    soundFlags.simFailSoundPlayed = false;
+    soundFlags.finFailSoundPlayed = false;
+    soundFlags.simWinSoundPlayed = false;
+    soundFlags.finWinSoundPlayed = false;
 }
-function triggerTensWinSound() { // Обычный победный звук упрощения (win.mp3)
+
+/**
+ * Обычный победный звук для режима десятков (win.mp3)
+ */
+export function triggerTensWinSound() {
     if (currentWinPlayer) return; 
     try {
         currentWinPlayer = new Audio('audio/win.mp3');
         currentWinPlayer.volume = 0.25;
-        currentWinPlayer.onended = function() { currentWinPlayer = null; };
+        currentWinPlayer.onended = () => { currentWinPlayer = null; };
         currentWinPlayer.play();
-    } catch (e) { console.log("Audio blocked"); }
+    } catch (e) { console.warn("Audio blocked:", e); }
 }
-function triggerWinFeedback() { // Финальный космический звук для умножения (alien_win.mp3 на 3 круга)
+
+/**
+ * Финальный космический звук для умножения (alien_win.mp3 на 3 круга)
+ */
+export function triggerWinFeedback() {
     if (currentAlienPlayer) return; 
     try {
         currentAlienPlayer = new Audio('audio/alien_win.mp3');
         currentAlienPlayer.volume = 0.25;
         alienRepeatCount = 1;
-        currentAlienPlayer.onended = function() {
+        currentAlienPlayer.onended = () => {
             if (alienRepeatCount < 3) {
                 alienRepeatCount++;
-                if (currentAlienPlayer) currentAlienPlayer.play();
+                currentAlienPlayer?.play();
             } else if (currentAlienPlayer) {
                 currentAlienPlayer.onended = null;
                 currentAlienPlayer = null;
             }
         };
         currentAlienPlayer.play();
-    } catch (e) { console.log("Audio blocked"); }
+    } catch (e) { console.warn("Audio blocked:", e); }
 }
-function triggerFailFeedback() { // Звук ошибки для всех режимов (fail.mp3)
+
+/**
+ * Звук ошибки для всех режимов (fail.mp3)
+ */
+export function triggerFailFeedback() {
     try {
         if (currentFailPlayer) {
             currentFailPlayer.currentTime = 0;
@@ -50,5 +75,5 @@ function triggerFailFeedback() { // Звук ошибки для всех реж
             currentFailPlayer.volume = 0.25;
             currentFailPlayer.play();
         }
-    } catch (e) { console.log("Audio blocked"); }
+    } catch (e) { console.warn("Audio blocked:", e); }
 }
