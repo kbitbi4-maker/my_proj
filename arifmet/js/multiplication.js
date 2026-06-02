@@ -1,91 +1,114 @@
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+
 let currentMultiTask = null;
-function initMultiplicationMode() {
-    document.querySelector('.header-title').innerText = 'Режим: Умножение 🍕 ▼';
+
+/**
+ * Инициализация режима умножения
+ */
+export function initMultiplicationMode() {
+    document.querySelector('.header-menu-btn').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
-function generateMultiExample() {
-    if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    if (!window.usedExamples) window.usedExamples = []; // Инициализация массива уникальности
+
+/**
+ * Генерация нового уникального примера на умножение
+ */
+export function generateMultiExample() {
+    if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, text;
-    while (true) { // Цикл поиска уникальной математической комбинации
-        num1 = Math.floor(Math.random() * 4) + 2; 
-        num2 = Math.floor(Math.random() * 4) + 2; 
-        text = num1 + '×' + num2;
-        if (!window.usedExamples.includes(text)) break; // Выходим, если пример новый
+    
+    while (true) {
+        num1 = Math.floor(Math.random() * 4) + 2; // от 2 до 5
+        num2 = Math.floor(Math.random() * 4) + 2; // от 2 до 5
+        text = `${num1}×${num2}`;
+        if (!state.usedExamples.includes(text)) break;
     }
-    window.usedExamples.push(text); // Логируем пример в базу сессии
+    
+    state.usedExamples.push(text);
     currentMultiTask = { items: num1, monsters: num2 };
-    window.examplesHistory.push({
+    
+    state.addExample({
         exampleText: text,
         correctValue: num1 * num2,
         currentInput: ''
     });
-    window.activeIndex = window.examplesHistory.length - 1;
-    const gameZone = document.getElementById('game-zone');
-    if (gameZone) gameZone.removeAttribute('data-current-example'); // Очистка кэша перед генерацией
-    renderAllLines();
+
+    GameCanvas.clearZone();
+    // Обновляем левую панель и рисуем голодных монстров
+    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);
     renderMonsterGame(); 
 }
-function syncMonsterGame() {
-    if (window.activeIndex === -1) return;
-    const parts = window.examplesHistory[window.activeIndex].exampleText.split('×');
+
+/**
+ * Синхронизация данных при клике на пример из истории
+ */
+export function syncMonsterGame() {
+    if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
+    const parts = state.examplesHistory[state.activeIndex].exampleText.split('×');
     currentMultiTask = { items: parseInt(parts.at(0), 10), monsters: parseInt(parts.at(1), 10) };
-    const gameZone = document.getElementById('game-zone');
-    if (gameZone) gameZone.removeAttribute('data-current-example'); // Сбрасываем кэш при клике на историю
+    GameCanvas.clearZone();
     renderMonsterGame();
 }
-function renderMonsterGame() {
-    const gameZone = document.getElementById('game-zone');
-    if (!gameZone) return;
-    if (!currentMultiTask || window.activeIndex === -1) {
-        gameZone.innerHTML = '';
-        gameZone.removeAttribute('data-current-example');
-        return;
-    }
-    const activeItem = window.examplesHistory[window.activeIndex];
-    if (!activeItem || !activeItem.exampleText) return;
-    let isFullySolved = false, isWrongAnswer = false; 
-    if (activeItem.currentInput) {
-        const partsArr = activeItem.currentInput.split('=');
-        const simText = partsArr.at(0) || '', finText = partsArr.at(1) || '';
-        let simVal = evaluateExpr(simText);
-        let simCorrect = (simVal === activeItem.correctValue);
-        let checkParts = simText.split('+');
-        let monsterCountFromText = parseInt(activeItem.exampleText.split('×').at(1), 10);
-        if (checkParts.length !== monsterCountFromText) simCorrect = false;
-        let finVal = evaluateExpr(finText);
-        let finCorrect = (finVal === activeItem.correctValue);
-        let targetLength = String(activeItem.correctValue).length;
-        if (activeItem.currentInput.includes('=') && !simCorrect) isWrongAnswer = true;
-        if (partsArr.length > 1 && finText.trim().length >= targetLength && !finCorrect) isWrongAnswer = true;
-        if (activeItem.currentInput.includes('=') && simCorrect && finCorrect) isFullySolved = true;
-    }
-    if (isFullySolved && typeof triggerWinFeedback === 'function') triggerWinFeedback(); 
-    let status = "play";
-    if (isFullySolved) status = "win";
-    if (isWrongAnswer) status = "sad";
-    const cacheKey = activeItem.exampleText + "_" + status;
-    if (gameZone.getAttribute('data-current-example') === cacheKey) return; 
-    gameZone.setAttribute('data-current-example', cacheKey);
-    let html = '';
+
+/**
+ * Отрисовка монстров через графический движок GameCanvas
+ */
+export function renderMonsterGame() {
+    if (!currentMultiTask || state.activeIndex === -1) return GameCanvas.clearZone();
+    
+    const report = state.validateCurrentInput();
+    const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');
+    const cacheKey = `${state.examplesHistory[state.activeIndex].exampleText}_${status}`;
+
+    let actorsHTML = '';
     for (let i = 0; i < currentMultiTask.monsters; i++) {
-        let contentHTML = '', bgBox = '#fff7ed', borderBox = '1px dashed #fed7aa', monsterClass = '';
-        if (isFullySolved) {
-            contentHTML = '<span style="font-size: 14px; color: #22c55e; font-weight: bold; animation: fadeIn 0.3s;">Ням-ням! 😋</span>';
-            bgBox = '#dcfce7'; borderBox = '1px dashed #22c55e'; monsterClass = 'monster-happy';
-        } else if (isWrongAnswer) {
-            contentHTML = '<span class="tears-animation" style="font-size: 22px;">💦</span>';
-            bgBox = '#eff6ff'; borderBox = '1px dashed #60a5fa'; monsterClass = 'monster-sad';
+        let contentHTML = '', bg = '#fff7ed', border = '1px dashed #fed7aa', mClass = '';
+        if (status === 'win') {
+            contentHTML = '<span style="font-size:14px;color:#22c55e;font-weight:bold;animation:fadeIn 0.3s;">Ням-ням! 😋</span>';
+            bg = '#dcfce7'; border = '1px dashed #22c55e'; mClass = 'monster-happy';
+        } else if (status === 'sad') {
+            contentHTML = '<span class="tears-animation" style="font-size:22px;">💦</span>';
+            bg = '#eff6ff'; border = '1px dashed #60a5fa'; mClass = 'monster-sad';
         } else {
-            contentHTML = '<span style="font-size: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
+            contentHTML = '<span style="font-size:22px;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         }
-        html += `
-            <div class="${monsterClass}" style="display:flex; flex-direction:column; align-items:center; justify-content:center; background:#ffffff; padding:10px 15px; border:2px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); min-width:85px; box-sizing:border-box; transition:all 0.3s ease;">
-                <span style="font-size: 46px; margin-bottom: 6px; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));">👾</span>
-                <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap; max-width:80px; background:${bgBox}; padding:4px 6px; border-radius:6px; border:${borderBox}; min-height:32px; align-items:center;">
-                    ${contentHTML}
-                </div>
-            </div>`;
+        
+        const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:80px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;
+        actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });
     }
-    gameZone.innerHTML = html;
+    
+    GameCanvas.renderZoneScene(actorsHTML, cacheKey);
 }
+
+/**
+ * Кастомный генератор HTML-блоков ответов специально для режима умножения
+ */
+export function getMultiplicationHistoryHTML(item, index, mode) {
+    const parts = item.currentInput.split('=');
+    const simText = parts.at(0) || '', finText = parts.at(1) || '';
+    const report = state.validateCurrentInput(); // получаем флаги валидации для этого индекса
+    
+    let simHTML = ` = <span class="block">${simText || '_'}</span>`;
+    if (item.currentInput.includes('=')) {
+        simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+    }
+    
+    let finHTML = '';
+    if (parts.length > 1) {
+        const targetLen = String(item.correctValue).length;
+        if (finText.trim().length >= targetLen) {
+            finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        } else if (finText.trim().length > 0) {
+            finHTML = ` = <span class="block">${finText}</span>`;
+        } else {
+            finHTML = ` = <span class="block">_</span>`;
+        }
+    }
+    return { simHTML, finHTML };
+}
+
+// Пробросы в window для совместимости с временными вызовами из numpad.js
+window.initMultiplicationMode = initMultiplicationMode;
+window.generateMultiExample = generateMultiExample;
+window.renderMonsterGame = renderMonsterGame;
