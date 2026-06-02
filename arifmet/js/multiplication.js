@@ -3,46 +3,29 @@ import { GameCanvas } from './game_canvas.js';
 
 let currentMultiTask = null;
 
-/**
- * Инициализация режима умножения
- */
 export function initMultiplicationMode() {
     document.querySelector('.header-menu-btn').innerText = 'Режим: Умножение 🍕 ▼';
     generateMultiExample();
 }
 
-/**
- * Генерация нового уникального примера на умножение
- */
 export function generateMultiExample() {
     if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, text;
-    
     while (true) {
-        num1 = Math.floor(Math.random() * 4) + 2; // от 2 до 5
-        num2 = Math.floor(Math.random() * 4) + 2; // от 2 до 5
+        num1 = Math.floor(Math.random() * 4) + 2; 
+        num2 = Math.floor(Math.random() * 4) + 2; 
         text = `${num1}×${num2}`;
         if (!state.usedExamples.includes(text)) break;
     }
-    
     state.usedExamples.push(text);
     currentMultiTask = { items: num1, monsters: num2 };
-    
-    state.addExample({
-        exampleText: text,
-        correctValue: num1 * num2,
-        currentInput: ''
-    });
+    state.addExample({ exampleText: text, correctValue: num1 * num2, currentInput: '' });
 
     GameCanvas.clearZone();
-    // Обновляем левую панель и рисуем голодных монстров
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);
     renderMonsterGame(); 
 }
 
-/**
- * Синхронизация данных при клике на пример из истории
- */
 export function syncMonsterGame() {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
     const parts = state.examplesHistory[state.activeIndex].exampleText.split('×');
@@ -51,12 +34,8 @@ export function syncMonsterGame() {
     renderMonsterGame();
 }
 
-/**
- * Отрисовка монстров через графический движок GameCanvas
- */
 export function renderMonsterGame() {
     if (!currentMultiTask || state.activeIndex === -1) return GameCanvas.clearZone();
-    
     const report = state.validateCurrentInput();
     const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');
     const cacheKey = `${state.examplesHistory[state.activeIndex].exampleText}_${status}`;
@@ -73,21 +52,16 @@ export function renderMonsterGame() {
         } else {
             contentHTML = '<span style="font-size:22px;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(currentMultiTask.items);
         }
-        
         const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:80px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;
         actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });
     }
-    
     GameCanvas.renderZoneScene(actorsHTML, cacheKey);
 }
 
-/**
- * Кастомный генератор HTML-блоков ответов специально для режима умножения
- */
 export function getMultiplicationHistoryHTML(item, index, mode) {
     const parts = item.currentInput.split('=');
     const simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput(); // получаем флаги валидации для этого индекса
+    const report = state.validateCurrentInput();
     
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) {
@@ -99,16 +73,9 @@ export function getMultiplicationHistoryHTML(item, index, mode) {
         const targetLen = String(item.correctValue).length;
         if (finText.trim().length >= targetLen) {
             finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
-        } else if (finText.trim().length > 0) {
-            finHTML = ` = <span class="block">${finText}</span>`;
         } else {
-            finHTML = ` = <span class="block">_</span>`;
+            finHTML = ` = <span class="block">${finText || '_'}</span>`;
         }
     }
     return { simHTML, finHTML };
 }
-
-// Пробросы в window для совместимости с временными вызовами из numpad.js
-window.initMultiplicationMode = initMultiplicationMode;
-window.generateMultiExample = generateMultiExample;
-window.renderMonsterGame = renderMonsterGame;
