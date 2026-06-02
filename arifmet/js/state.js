@@ -7,7 +7,7 @@ export const state = {
     activeIndex: -1,
     mixStep: 0,
 
-    // Полный сброс состояния при смене игрового режима
+    // Сброс данных сессии при переключении игры
     reset(mode) {
         this.currentMode = mode;
         this.examplesHistory = [];
@@ -16,13 +16,13 @@ export const state = {
         this.mixStep = (mode === 'mix') ? 0 : this.mixStep;
     },
 
-    // Добавление нового примера в историю сессии
+    // Добавление новой задачи в историю
     addExample(exampleObj) {
         this.examplesHistory.push(exampleObj);
         this.activeIndex = this.examplesHistory.length - 1;
     },
 
-    // Универсальный валидатор ввода пользователя (возвращает чистые флаги для движка и звуков)
+    // Валидатор ввода пользователя (возвращает чистые логические флаги для движка)
     validateCurrentInput() {
         if (this.activeIndex === -1 || !this.examplesHistory[this.activeIndex]) {
             return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '' };
@@ -30,39 +30,33 @@ export const state = {
         
         const item = this.examplesHistory[this.activeIndex];
         const parts = item.currentInput.split('=');
-        const simText = parts[0] || '';
-        const finText = parts[1] || '';
+        const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
         const hasPressedEqual = item.currentInput.includes('=');
         const targetLength = String(item.correctValue).length;
         const hasFinalAnswer = parts.length > 1 && finText.trim().length >= targetLength;
 
-        // 1. Валидация фазы упрощения (до знака равенства)
         let simCorrect = false;
         if (hasPressedEqual) {
             let simVal = evaluateExpr(simText);
             simCorrect = (simVal === item.correctValue);
             
-            // Специфический хак для умножения: проверяем корректность количества слагаемых
+            // Валидация количества слагаемых для режима умножения
             if (item.exampleText.includes('×') && simCorrect && simText) {
                 const checkParts = simText.split('+');
-                const expectedCount = parseInt(item.exampleText.split('×')[1], 10);
+                const expectedCount = parseInt(item.exampleText.split('×').at(1), 10);
                 if (checkParts.length !== expectedCount) simCorrect = false;
             }
         }
 
-        // 2. Валидация финального ответа
         let finCorrect = false;
         if (hasFinalAnswer) {
             let finVal = evaluateExpr(finText);
             finCorrect = (finVal === item.correctValue);
         }
 
-        // Вычисляем статус и текущую фазу для визуальных движков
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
-        let isWrongAnswer = false;
-        if (hasPressedEqual && !simCorrect) isWrongAnswer = true;
-        if (parts.length > 1 && finText.trim().length >= targetLength && !finCorrect) isWrongAnswer = true;
+        let isWrongAnswer = (hasPressedEqual && !simCorrect) || (parts.length > 1 && finText.trim().length >= targetLength && !finCorrect);
 
         let phase = 1;
         if (hasPressedEqual && !hasFinalAnswer) phase = 2;
@@ -71,7 +65,3 @@ export const state = {
         return { isFullySolved, isWrongAnswer, phase, simText, finText, simCorrect, finCorrect };
     }
 };
-
-// Временный проброс для совместимости со старыми компонентами, пока идет рефакторинг
-window.state = state;
-
