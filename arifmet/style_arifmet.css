@@ -2,13 +2,9 @@ html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Robot
 body { display: flex; flex-direction: column; background: #f0f2f5; }
 .header { display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; }
-.header-title { font-size: 2.3vh; font-weight: bold; flex-grow: 1; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-.version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; }
-.dropdown { position: absolute; top: 9.6vh; left: 50%; transform: translateX(-50%); background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; width: 150px; z-index: 1001; }
-.dropdown.active { display: flex; }
-.dropdown-item { padding: 12px; color: #333; text-align: center; cursor: pointer; font-size: 16px; border-bottom: 1px solid #eee; }
-.dropdown-item:last-child { border-bottom: none; }
-.dropdown-item:hover { background: #f0f2f5; }
+.version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; margin-right: 15px; }
+.header-menu-btn { width: 100%; max-width: 280px; background: #2c387e; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
+.header-menu-btn:hover { background: #1a237e; }
 .main-container { display: flex; flex-direction: column; height: calc(100vh - 9.6vh); width: 100%; }
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
 .right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; }
@@ -19,18 +15,15 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .block-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .block-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
-.num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; }
+.numpad.menu-mode { grid-template-columns: repeat(2, 1fr); }
+.num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 55px; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
 .num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 12px 0; font-size: 2.2vh; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .monster-happy { animation: monsterJump 0.5s ease infinite alternate; }
-@keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
 .monster-sad { animation: monsterShaking 0.4s ease-in-out infinite alternate; }
-@keyframes monsterShaking { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); border-color: #60a5fa !important; box-shadow: 0 4px 10px rgba(96, 165, 250, 0.15); } }
 .tears-animation { animation: tearDrop 0.6s ease-in infinite; display: inline-block; }
-@keyframes tearDrop { 0% { transform: translateY(-5px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(12px); opacity: 0; } }
 .crystal-truck { display: flex; align-items: center; position: relative; }
 .crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 6px; min-height: 95px; align-items: flex-end; box-sizing: border-box; }
 .crystal-column { display: flex; flex-direction: column-reverse; gap: 1px; }
@@ -43,20 +36,16 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .win-layout .orange-theme.crystal-deck { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none; }
 .borrow-orange { background: #fb923c !important; border-color: #ea580c !important; }
 .borrow-blue { background: #38bdf8 !important; border-color: #0284c7 !important; }
-@keyframes robotDriveAway { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(400px); opacity: 0; } }
 .sub-scene-container { display: flex; justify-content: center; width: 100%; align-items: center; padding: 0 15px; box-sizing: border-box; height: 100%; gap: 20px; }
-.sub-empty-deck { border: 2px dashed #ef4444; background: rgba(254,226,226,0.2); }
 .sub-robot-label { font-size: 13px; margin-top: 1px; }
 .sub-drive-away { animation: robotDriveAway 1.2s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; }
 .sub-win-text { color: #22c55e; font-size: 14px; margin-top: 8px; }
-@keyframes robotDriveRight { 0% { transform: translateX(-150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-@keyframes robotDriveLeft { 0% { transform: translateX(150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 .add-robot-left-drive { animation: robotDriveRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 .add-robot-right-drive { animation: robotDriveLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-.scales-board { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 100%; height: 100%; position: relative; padding: 5px; box-sizing: border-box; overflow: hidden; }
-.scales-beam { display: flex; justify-content: space-between; align-items: flex-end; width: 45%; height: 4px; background: #64748b; border-radius: 2px; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: center bottom; }
-.scales-base { width: 24px; height: 35px; background: #475569; clip-path: polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%); margin-top: -2px; z-index: 2; }
-.scales-pan { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: 90px; min-height: 55px; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: center top; }
-.scales-plate { width: 100%; height: 4px; background: #475569; border-radius: 2px; margin-top: 2px; }
-.scales-box-secret { width: 20px; height: 18px; background: #ff9800; border: 1px solid #e65100; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); animation: pulse 1.5s infinite alternate; }
-@keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.08); box-shadow: 0 0 8px rgba(255,152,0,0.6); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
+@keyframes monsterShaking { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); border-color: #60a5fa !important; box-shadow: 0 4px 10px rgba(96, 165, 250, 0.15); } }
+@keyframes tearDrop { 0% { transform: translateY(-5px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(12px); opacity: 0; } }
+@keyframes robotDriveAway { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(400px); opacity: 0; } }
+@keyframes robotDriveRight { 0% { transform: translateX(-150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes robotDriveLeft { 0% { transform: translateX(150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
