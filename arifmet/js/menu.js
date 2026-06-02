@@ -1,75 +1,63 @@
-window.currentMode = ''; window.examplesHistory = []; window.activeIndex = -1; window.mixStep = 0;
-const menu = document.getElementById('menu'); const examplesList = document.getElementById('examples-list');
-function toggleMenu() { menu.classList.toggle('active'); }
-function setMode(mode) {
-    menu.classList.remove('active');
-    if (mode === 'hundreds' || mode === 'thousands') { alert("Режим в разработке 🛠️"); return; }
-    window.currentMode = mode; window.examplesHistory = []; window.usedExamples = []; window.activeIndex = -1; window.mixStep = 0;
-    if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    if (examplesList) examplesList.innerHTML = '';
-    const gameZone = document.getElementById('game-zone');
-    if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
-    if (mode === 'tens' && typeof initTensMode === 'function') { initTensMode(); } 
-    else if (mode === 'multiplication' && typeof initMultiplicationMode === 'function') { initMultiplicationMode(); } 
-    else if (mode === 'scales' && typeof initScalesMode === 'function') { initScalesMode(); }
-    else if (mode === 'mix' && typeof initMixMode === 'function') { initMixMode(); }
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { resetAllFeedbacks } from './feedback.js';
+import { initTensMode } from './tens.js';
+import { initMultiplicationMode } from './multiplication.js';
+import { initMixMode } from './mix.js';
+
+const numpadContainer = document.getElementById('main-numpad');
+const menuButton = document.querySelector('.header-menu-btn');
+let isMenuOpen = false;
+
+/**
+ * Переключает отображение нумпада между калькулятором и выбором режимов
+ */
+export function toggleMenuMode() {
+    if (!numpadContainer) return;
+    isMenuOpen = !isMenuOpen;
+
+    const calcButtons = numpadContainer.querySelectorAll('.calc-btn');
+    const modeButtons = numpadContainer.querySelectorAll('.mode-btn');
+
+    // Переключаем сетку гридов (для режимов удобнее 2 колонки, для цифр — 3)
+    numpadContainer.classList.toggle('menu-mode', isMenuOpen);
+    menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
+
+    // Переключаем видимость элементов
+    calcButtons.forEach(btn => btn.style.display = isMenuOpen ? 'none' : 'flex');
+    modeButtons.forEach(btn => btn.style.display = isMenuOpen ? 'flex' : 'none');
 }
-function selectExample(index) {
-    window.activeIndex = index;
-    if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    renderAllLines();
-    const activeItem = window.examplesHistory[index];
-    if (activeItem && activeItem.exampleText.includes('×')) { 
-        if (typeof syncMonsterGame === 'function') syncMonsterGame();
-        if (typeof renderMonsterGame === 'function') renderMonsterGame();
-    } else if (activeItem && activeItem.exampleText.includes('+')) {
-        if (typeof renderAdditionVisual === 'function') {
-            let nums = activeItem.exampleText.split('+');
-            renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
-        }
-    } else if (activeItem && activeItem.exampleText.includes('-')) {
-        if (typeof renderSubtractionVisual === 'function') {
-            let nums = activeItem.exampleText.split('-'); // Исправленные индексы массивов
-            renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
-        }
-    } else if (window.currentMode === 'scales') {
-        const gameZone = document.getElementById('game-zone');
-        if (gameZone) gameZone.innerHTML = '<div style="color:#94a3b8; font-size:14px;">[Визуал весов будет здесь ⚖️]</div>';
-    } else {
-        const gameZone = document.getElementById('game-zone');
-        if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
+
+/**
+ * Активирует выбранный игровой режим и возвращает нумпад в рабочий вид
+ */
+export function changeMode(mode) {
+    if (mode === 'hundreds' || mode === 'thousands') {
+        alert("Режим в разработке 🛠️");
+        return;
     }
+
+    // Сбрасываем стейт, звуки и экраны через движок
+    state.reset(mode);
+    resetAllFeedbacks();
+    GameCanvas.clearZone();
+    
+    // Переключаем интерфейс обратно на цифровой нумпад
+    toggleMenuMode();
+
+    // Инициализируем выбранную фичу
+    if (mode === 'tens') initTensMode();
+    else if (mode === 'multiplication') initMultiplicationMode();
+    else if (mode === 'mix') initMixMode();
 }
-function pressNum(n) {
-    if (window.activeIndex === -1) return;
-    let activeItem = window.examplesHistory[window.activeIndex];
-    if (n === 'C' || n === 'D') {
-        if (n === 'C') activeItem.currentInput = ''; else activeItem.currentInput = activeItem.currentInput.slice(0, -1);
-        if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    } else {
-        let totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
-        if (n === '=' && totalEquals >= 2) return;
-        activeItem.currentInput += n;
-    }
-    renderAllLines();
-    if (activeItem.exampleText.includes('+') && typeof renderAdditionVisual === 'function') {
-        let nums = activeItem.exampleText.split('+');
-        renderAdditionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
-    }
-    if (activeItem.exampleText.includes('-') && typeof renderSubtractionVisual === 'function') {
-        let nums = activeItem.exampleText.split('-'); // Исправленные индексы массивов
-        renderSubtractionVisual(parseInt(nums[0], 10), parseInt(nums[1], 10), activeItem.currentInput);
-    }
-    if (activeItem.exampleText.includes('×') && typeof renderMonsterGame === 'function') renderMonsterGame();
-    if (window.currentMode === 'scales') {
-        const gameZone = document.getElementById('game-zone');
-        if (gameZone) gameZone.innerHTML = '<div style="color:#94a3b8; font-size:14px;">[Визуал весов: ' + activeItem.currentInput + ']</div>';
-    }
+
+function getModeLabel(mode) {
+    if (mode === 'tens') return 'Режим: Десятки ▼';
+    if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
+    if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
+    return 'Режим: Выбрать ▼';
 }
-function confirmAndNext() {
-    if (typeof resetAllFeedbacks === 'function') resetAllFeedbacks();
-    if (window.currentMode === 'tens' && typeof generateExample === 'function') generateExample();
-    else if (window.currentMode === 'multiplication' && typeof generateMultiExample === 'function') generateMultiExample();
-    else if (window.currentMode === 'scales' && typeof generateScalesExample === 'function') generateScalesExample();
-    else if (window.currentMode === 'mix' && typeof generateMixExample === 'function') generateMixExample();
-}
+
+// Привязка к window для поддержки инлайновых onclick в HTML-каркасе
+window.toggleMenuMode = toggleMenuMode;
+window.changeMode = changeMode;
