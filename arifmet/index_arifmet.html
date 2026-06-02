@@ -10,58 +10,49 @@
 
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
-        <div class="header-title" onclick="toggleMenu()">Режим: Выбрать ▼</div>
         <div class="version">arifmet_054</div>
+        <div class="header-menu-btn" onclick="toggleMenuMode()">Режим: Выбрать ▼</div>
     </div>
 
-    <div id="menu" class="dropdown">
-        <div class="dropdown-item" onclick="setMode('tens')">Десятки</div>
-        <div class="dropdown-item" onclick="setMode('hundreds')">Сотни</div>
-        <div class="dropdown-item" onclick="setMode('thousands')">Тысячи</div>
-        <div class="dropdown-item" onclick="setMode('scales')">Весы ⚖️</div>
-        <div class="dropdown-item" onclick="setMode('multiplication')">Умножение 🍕</div>
-        <div class="dropdown-item" onclick="setMode('mix')">Микс 🎰</div>
-    </div>
-
-    <!-- Перестраиваем главный контейнер в относительный вертикальный flex-стек -->
     <div class="main-container" style="display: flex; flex-direction: column; position: relative; height: calc(100vh - 9.6vh); width: 100%;">
-        
-        <!-- ВЕРХНИЙ ЭТАЖ: Занимает 70% высоты. Слева - примеры, справа - нумпад -->
         <div style="display: flex; width: 100%; height: 68%;">
-            <!-- ЛЕВАЯ ОБЛАСТЬ: Только чистый список примеров -->
             <div class="left-area" id="examples-list" style="width: 66.6%; height: 100%;">
                 <div style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
             </div>
             
-            <!-- ПРАВАЯ ОБЛАСТЬ: Нумпад -->
             <div class="right-area" style="width: 33.4%; height: 100%;">
-                <div class="numpad">
-                    <button class="num-btn" onclick="pressNum('1')">1</button>
-                    <button class="num-btn" onclick="pressNum('2')">2</button>
-                    <button class="num-btn" onclick="pressNum('3')">3</button>
-                    <button class="num-btn" onclick="pressNum('4')">4</button>
-                    <button class="num-btn" onclick="pressNum('5')">5</button>
-                    <button class="num-btn" onclick="pressNum('6')">6</button>
-                    <button class="num-btn" onclick="pressNum('7')">7</button>
-                    <button class="num-btn" onclick="pressNum('8')">8</button>
-                    <button class="num-btn" onclick="pressNum('9')">9</button>
-                    <button class="num-btn clear" onclick="pressNum('C')">C</button>
-                    <button class="num-btn" onclick="pressNum('0')">0</button>
-                    <button class="num-btn clear" onclick="pressNum('D')">←</button>
-                    <button class="num-btn op" onclick="pressNum('+')">+</button>
-                    <button class="num-btn op" onclick="pressNum('-')">-</button>
-                    <button class="num-btn op" onclick="pressNum('=')">=</button>
-                    <button class="num-btn next" onclick="confirmAndNext()">Следующий пример</button>
+                <div class="numpad" id="main-numpad">
+                    <!-- Кнопки выбора режимов -->
+                    <button class="num-btn mode-btn" style="display:none;" onclick="changeMode('tens')">Десятки</button>
+                    <button class="num-btn mode-btn" style="display:none;" onclick="changeMode('multiplication')">Умножение 🍕</button>
+                    <button class="num-btn mode-btn" style="display:none;" onclick="changeMode('mix')">Микс 🎰</button>
+                    <button class="num-btn mode-btn" style="display:none; background:#bcaaa4;" onclick="changeMode('hundreds')">Сотни 🛠️</button>
+
+                    <!-- Цифровой калькулятор -->
+                    <button class="num-btn calc-btn" onclick="pressNum('1')">1</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('2')">2</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('3')">3</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('4')">4</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('5')">5</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('6')">6</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('7')">7</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('8')">8</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('9')">9</button>
+                    <button class="num-btn calc-btn clear" onclick="pressNum('C')">C</button>
+                    <button class="num-btn calc-btn" onclick="pressNum('0')">0</button>
+                    <button class="num-btn calc-btn clear" onclick="pressNum('D')">←</button>
+                    <button class="num-btn calc-btn op" onclick="pressNum('+')">+</button>
+                    <button class="num-btn calc-btn op" onclick="pressNum('-')">-</button>
+                    <button class="num-btn calc-btn op" onclick="pressNum('=')">=</button>
+                    <button class="num-btn calc-btn next" onclick="confirmAndNext()">Следующий пример</button>
                 </div>
             </div>
         </div>
 
-        <!-- НИЖНИЙ ЭТАЖ: Выделенная панорамная область для монстров на 32% высоты во всю ширину экрана -->
         <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; width: 100%; height: 32%; background-color: #f0fdf4; border-top: 2px dashed #4ade80; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); box-sizing: border-box; padding: 10px; overflow-y: auto;"></div>
     </div>
-    
- <!-- Единственная точка входа в приложение (Браузер сам загрузит остальные модули) -->
+
+    <!-- Единственная точка входа (Браузер сам раскрутит дерево зависимостей) -->
     <script type="module" src="js/menu.js"></script>
-    
 </body>
 </html>
