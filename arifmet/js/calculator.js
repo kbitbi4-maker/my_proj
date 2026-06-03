@@ -1,18 +1,17 @@
-// version: v1.1
+// version: v1.3
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
     if (cleaned.includes('*')) {
         let partsArr = cleaned.split('*');
-        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
+        if (partsArr.length === 2) {
             let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
             return (isNaN(n1) || isNaN(n2)) ? null : n1 * n2;
         }
         return null;
     }
     if (cleaned.includes('+')) {
-        let partsArr = cleaned.split('+');
-        let sum = 0;
+        let partsArr = cleaned.split('+'), sum = 0;
         for (let i = 0; i < partsArr.length; i++) {
             let num = parseInt(partsArr[i], 10);
             if (isNaN(num)) return null; 
@@ -22,7 +21,7 @@ export function evaluateExpr(str) {
     }
     if (cleaned.includes('-')) {
         let partsArr = cleaned.split('-');
-        if (partsArr.length === 2 && partsArr[0] && partsArr[1]) {
+        if (partsArr.length === 2) {
             let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
             return (isNaN(n1) || isNaN(n2)) ? null : n1 - n2;
         }
@@ -56,22 +55,22 @@ export function parseSubtractionData(exampleText, report) {
     const nums = exampleText.split('-'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
     let currentSubtrahend = num2, addedAmount = 0, subtractedAmount = 0;
+    
     if (report.simText.includes('-')) {
         let userSub = parseInt(report.simText.split('-').at(1), 10);
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
+            // ИСПРАВЛЕНО: Теперь калькулятор четко различает округление вверх и вниз!
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
             else if (currentSubtrahend < num2) subtractedAmount = num2 - currentSubtrahend;
         }
     }
-    let finalAddedAmount = report.simText.includes('-') ? parseInt(report.simText.split('-').at(1), 10) - num2 : 0;
-    return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount: isNaN(finalAddedAmount) || finalAddedAmount < 0 ? 0 : finalAddedAmount };
-}
-
-/**
- * Рассчитывает математику для УМНОЖЕНИЯ
- */
-export function parseMultiplicationData(exampleText) {
-    const parts = exampleText.split('×');
-    return { items: parseInt(parts[0], 10), monsters: parseInt(parts[1], 10) };
+    
+    let finalAddedAmount = 0;
+    if (report.simText.includes('-')) {
+        let userSub = parseInt(report.simText.split('-').at(1), 10);
+        if (!isNaN(userSub) && userSub > num2) finalAddedAmount = userSub - num2;
+    }
+    
+    return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount };
 }
