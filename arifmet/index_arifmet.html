@@ -21,14 +21,16 @@
             </div>
             
             <div class="right-area">
-                <div class="numpad" id="main-numpad">
-                    <!-- Кнопки выбора режимов -->
-                    <button class="num-btn mode-btn" style="display:none;" data-mode="tens">Десятки 🟢</button>
-                    <button class="num-btn mode-btn" style="display:none;" data-mode="multiplication">Умножение 🍕 🟡</button>
-                    <button class="num-btn mode-btn" style="display:none;" data-mode="mix">Микс 🎰 🍒</button>
-                    <button class="num-btn mode-btn" style="display:none;" data-mode="hundreds">Сотни 🛠️ 🔵</button>
+                <!-- Контейнер Выбора Режимов (Excel-таблица во всю ширину, изначально скрыт) -->
+                <div id="modes-menu-container" style="display: none;">
+                    <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
+                    <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
+                    <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
+                    <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
+                </div>
 
-                    <!-- Цифровой калькулятор -->
+                <!-- Контейнер Цифрового Нумпада -->
+                <div class="numpad" id="calc-numpad-container">
                     <button class="num-btn calc-btn" data-key="1">1</button>
                     <button class="num-btn calc-btn" data-key="2">2</button>
                     <button class="num-btn calc-btn" data-key="3">3</button>
