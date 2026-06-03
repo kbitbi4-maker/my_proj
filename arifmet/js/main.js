@@ -1,3 +1,4 @@
+// version: v1.1
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 
