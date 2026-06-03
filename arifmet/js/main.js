@@ -1,6 +1,12 @@
 // version: v1.1
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
+import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
+
+// Навешиваем клики для управления модальным окном карты проекта
+document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
+document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
+document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
 
 // Навешиваем клик на кнопку меню в шапке
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
