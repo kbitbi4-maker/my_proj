@@ -1,3 +1,4 @@
+<!-- version: v1.0 -->
 let currentWinPlayer = null;
 let currentAlienPlayer = null;
 let currentFailPlayer = null;
