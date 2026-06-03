@@ -5,6 +5,7 @@ export function renderSubtractionVisual() {
     const item = state.examplesHistory[state.activeIndex];
     if (!item) return;
 
+    // ИСПРАВЛЕНО: Теперь num1 и num2 парсятся строго по своим индексам [0] и [1]!
     const nums = item.exampleText.split('-');
     const num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
@@ -17,7 +18,7 @@ export function renderSubtractionVisual() {
     if (report.phase === 1) { // ФАЗА 1: СТАРТ
         html = `<div class="sub-scene-container"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л (${num1})</b></div><div class="crystal-deck" style="border-color:#0284c7;">${generateSubCargoHTML(tens1, ones1, 0, 0)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П (${num2})</b></div><div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${generateSubEmptyCubesHTML(num2, 0)}</div></div>`;
     } 
-    else if (report.phase === 2) { // ФАЗА 2: УПРОЩЕНИЕ
+    else if (report.phase === 2) { // ФАЗА 2: УПРОЩЕНИЕ (ПОЛНОСТЬЮ ВОССТАНОВЛЕНА ВАША ЛОГИКА)
         let currentSubtrahend = num2, addedAmount = 0, subtractedAmount = 0;
         if (report.simText.includes('-')) {
             let userSub = parseInt(report.simText.split('-').at(1), 10);
@@ -33,7 +34,7 @@ export function renderSubtractionVisual() {
 
         html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${generateSubCargoHTML(tens1, ones1, addedAmount, subtractedAmount)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div><div class="crystal-deck" style="border:2px solid #000;">${generateSubEmptyCubesHTML(num2 - subtractedAmount, addedAmount)}</div></div>`;
     } 
-    else { // ФАЗА 3: ОТВЕТ
+    else { // ФАЗА 3: ОТВЕТ (ПОЛНОСТЬЮ ВОССТАНОВЛЕНА ВАША ЛОГИКА)
         let currentSubtrahend = num2, addedAmount = 0;
         if (report.simText.includes('-')) {
             let userSub = parseInt(report.simText.split('-').at(1), 10);
@@ -51,38 +52,64 @@ export function renderSubtractionVisual() {
 
 function generateSubCargoHTML(tens, ones, added, subtracted) {
     let baseCubes = (tens * 10) + ones, totalCubes = baseCubes + added, activeCubes = totalCubes - subtracted;
-    let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10;
+    let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0;
     
     let html = '';
     for (let i = 0; i < fullCols; i++) {
-        html += GameCanvas.createColumnHTML({ totalCount: 10, filledCount: activeCubes - (i * 10), blueCount: baseCubes - (i * 10) });
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) {
+            globalCounter++;
+            html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`;
+        }
+        html += `</div>`;
     }
     if (remOnes > 0) {
-        html += GameCanvas.createColumnHTML({ totalCount: remOnes, filledCount: activeCubes - (fullCols * 10), blueCount: baseCubes - (fullCols * 10), dashedBorder: true });
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) {
+            if (j <= remOnes) {
+                globalCounter++;
+                html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`;
+            } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        }
+        html += `</div>`;
     }
     return html;
 }
 
 function generateSubEmptyCubesHTML(emptyCount, addedOrange) {
-    let total = emptyCount + addedOrange, fullCols = Math.floor(total / 10), remOnes = total % 10;
+    let total = emptyCount + addedOrange, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0;
     let html = '';
     for (let i = 0; i < fullCols; i++) {
-        html += GameCanvas.createColumnHTML({ totalCount: 10, filledCount: 10, blueCount: -addedOrange });
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; }
+        html += `</div>`;
     }
     if (remOnes > 0) {
-        html += GameCanvas.createColumnHTML({ totalCount: remOnes, filledCount: remOnes, blueCount: -addedOrange, dashedBorder: true });
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) {
+            if (j <= remOnes) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; }
+            else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        }
+        html += `</div>`;
     }
     return html;
 }
 
 function generateSubFinalCubesHTML(blueCount, orangeCount) {
-    let total = blueCount + orangeCount, fullCols = Math.floor(total / 10), remOnes = total % 10;
+    let total = blueCount + orangeCount, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0;
     let html = '';
     for (let i = 0; i < fullCols; i++) {
-        html += GameCanvas.createColumnHTML({ totalCount: 10, filledCount: 10, blueCount: blueCount - (i * 10) });
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>`; }
+        html += `</div>`;
     }
     if (remOnes > 0) {
-        html += GameCanvas.createColumnHTML({ totalCount: remOnes, filledCount: remOnes, blueCount: blueCount - (fullCols * 10), dashedBorder: true });
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) {
+            if (j <= remOnes) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>`; }
+            else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        }
+        html += `</div>`;
     }
     return html;
 }
