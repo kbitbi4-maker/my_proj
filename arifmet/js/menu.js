@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
@@ -24,7 +24,8 @@ export function toggleMenuMode() {
 }
 
 export function handleModeSelection(mode) {
-    if (mode === 'hundreds' || mode === 'thousands') {
+    // ЗАДЕЛ ПОД СОТНИ: Активируем режим сотен, убрав старое ограничение-алерт
+    if (mode === 'thousands') {
         alert("Режим в разработке 🛠️");
         return;
     }
@@ -32,16 +33,17 @@ export function handleModeSelection(mode) {
     state.reset(mode);
     resetAllFeedbacks();
     GameCanvas.clearZone();
-    GameCanvas.clearHistory(); // ИСПРАВЛЕНО: Полностью выметаем старые строки из DOM левой панели
+    GameCanvas.clearHistory();
     toggleMenuMode();
 
-    if (mode === 'tens') initTensMode();
+    if (mode === 'tens' || mode === 'hundreds') initTensMode(); // Режим сотен запускает тот же умный код десятков!
     else if (mode === 'multiplication') initMultiplicationMode();
     else if (mode === 'mix') initMixMode();
 }
 
 function getModeLabel(mode) {
     if (mode === 'tens') return 'Режим: Десятки ▼';
+    if (mode === 'hundreds') return 'Режим: Сотни 🛠️ ▼';
     if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
     if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
     return 'Режим: Выбрать ▼';
