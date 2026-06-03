@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { state } from './state.js';
 
 const projectStructure = [
@@ -7,7 +7,7 @@ const projectStructure = [
     'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 
     'js/multiplication.js', 'js/addition_visual.js', 'js/subtraction_visual.js',
     'js/project_map.js',
-    'js/hundreds_visual.js' // ИСПРАВЛЕНО: Новый файл сотен добавлен в карту проекта!
+    'js/addition_hundreds_visual.js', 'js/subtraction_hundreds_visual.js' // Новые файлы сотен зарегистрированы!
 ];
 
 export async function openProjectMap() {
