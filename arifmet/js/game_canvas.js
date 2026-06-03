@@ -7,7 +7,7 @@ export const GameCanvas = {
     // === СЛОЙ 1: ЛЕВАЯ ПАНЕЛЬ (ИСТОРИЯ ПРИМЕРОВ) ===
     renderHistory(examplesHistory, activeIndex, currentMode, getBlocksHTML) {
         if (!examplesList) return;
-        const placeholder = examplesList.querySelector('div[style*="color: #999"]');
+        const placeholder = document.getElementById('history-placeholder');
         if (placeholder) placeholder.remove();
 
         // 1. Быстрая синхронизация количества строк в DOM и привязка чистых кликов
@@ -28,15 +28,20 @@ export const GameCanvas = {
             if (!line) return;
             line.classList.toggle('active', index === activeIndex);
             
-            // Запрашиваем структуру блоков у конкретного игрового режима
             const { simHTML, finHTML } = getBlocksHTML(item, index, currentMode);
             line.querySelector('.sim-block-wrapper').innerHTML = simHTML;
             line.querySelector('.fin-block-wrapper').innerHTML = finHTML;
         });
 
-        // Плавный автоматический скролл к активному примеру
         const activeElem = examplesList.querySelector('.active');
         if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    },
+
+    // Метод принудительной очистки левой панели при смене режимов игры
+    clearHistory() {
+        if (examplesList) {
+            examplesList.innerHTML = '<div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>';
+        }
     },
 
     // === СЛОЙ 2: НИЖНЯЯ ПАНЕЛЬ (ИГРОВАЯ ЗОНА) ===
@@ -46,7 +51,7 @@ export const GameCanvas = {
     
     renderZoneScene(html, cacheKey) {
         if (!gameZone) return;
-        if (cacheKey && gameZone.getAttribute('data-current-example') === cacheKey) return;
+        if (cacheKey && gameZone.getAttribute('data-current-example'] === cacheKey) return;
         if (cacheKey) gameZone.setAttribute('data-current-example', cacheKey);
         gameZone.innerHTML = html;
     },
