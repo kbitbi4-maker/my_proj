@@ -51,7 +51,7 @@ export const GameCanvas = {
     
     renderZoneScene(html, cacheKey) {
         if (!gameZone) return;
-        if (cacheKey && gameZone.getAttribute('data-current-example'] === cacheKey) return;
+        if (cacheKey && gameZone.getAttribute('data-current-example') === cacheKey) return;
         if (cacheKey) gameZone.setAttribute('data-current-example', cacheKey);
         gameZone.innerHTML = html;
     },
