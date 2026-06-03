@@ -3,7 +3,8 @@ import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
-import { renderHundredsVisual } from './hundreds_visual.js'; // Импортируем новый визуал сотен!
+import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
+import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
 
 let isAddition = true;
 
@@ -50,11 +51,15 @@ export function generateExample() {
 
 export function renderTensVisual() {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
+    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
     
-    // ВЕТВЛЕНИЕ НА СОТНИ: Если активен режим сотен — вызываем его специализированный визуал!
-    if (state.currentMode === 'hundreds') return renderHundredsVisual();
+    // ВЕТВЛЕНИЕ НА СОТНИ
+    if (state.currentMode === 'hundreds') {
+        if (isAdd) return renderAdditionHundredsVisual();
+        else return renderSubtractionHundredsVisual();
+    }
     
-    if (state.examplesHistory[state.activeIndex].exampleText.includes('+')) renderAdditionVisual();
+    if (isAdd) renderAdditionVisual();
     else renderSubtractionVisual();
 }
 
