@@ -1,4 +1,5 @@
-// js/game_canvas.js
+import { selectExample } from './view_dispatcher.js';
+
 const gameZone = document.getElementById('game-zone');
 const examplesList = document.getElementById('examples-list');
 
@@ -9,30 +10,31 @@ export const GameCanvas = {
         const placeholder = examplesList.querySelector('div[style*="color: #999"]');
         if (placeholder) placeholder.remove();
 
-        // 1. Синхронизация количества строк в DOM
+        // 1. Быстрая синхронизация количества строк в DOM и привязка чистых кликов
         if (examplesList.children.length < examplesHistory.length) {
             for (let i = examplesList.children.length; i < examplesHistory.length; i++) {
                 const line = document.createElement('div');
                 line.className = 'example-line';
                 line.setAttribute('data-index', i);
+                line.addEventListener('click', () => selectExample(i));
                 line.innerHTML = `<span class="example-text">${examplesHistory[i].exampleText}</span><span class="sim-block-wrapper"></span><span class="fin-block-wrapper"></span>`;
                 examplesList.appendChild(line);
             }
         } else if (examplesList.children.length > examplesHistory.length) examplesList.innerHTML = '';
 
-        // 2. Обновление содержимого и классов активных строк
+        // 2. Обновление содержимого блоков ответов и классов активных строк
         examplesHistory.forEach((item, index) => {
             const line = examplesList.querySelector(`[data-index="${index}"]`);
             if (!line) return;
             line.classList.toggle('active', index === activeIndex);
             
-            // Запрашиваем у конкретного режима HTML-код для блоков ответов
+            // Запрашиваем структуру блоков у конкретного игрового режима
             const { simHTML, finHTML } = getBlocksHTML(item, index, currentMode);
             line.querySelector('.sim-block-wrapper').innerHTML = simHTML;
             line.querySelector('.fin-block-wrapper').innerHTML = finHTML;
         });
 
-        // Скролл к активной строке
+        // Плавный автоматический скролл к активному примеру
         const activeElem = examplesList.querySelector('.active');
         if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     },
@@ -68,4 +70,3 @@ export const GameCanvas = {
         return html + `</div>`;
     }
 };
-
