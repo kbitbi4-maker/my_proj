@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -26,7 +26,8 @@ export function pressNum(n) {
 
 export function confirmAndNext() {
     resetAllFeedbacks();
-    if (state.currentMode === 'tens') generateExample();
+    // ИСПРАВЛЕНО ДЛЯ СОТЕН: Добавлена поддержка режима hundreds для генерации следующей задачи
+    if (state.currentMode === 'tens' || state.currentMode === 'hundreds') generateExample();
     else if (state.currentMode === 'multiplication') generateMultiExample();
     else if (state.currentMode === 'mix') generateMixExample();
 }
@@ -39,13 +40,13 @@ function handleInputSounds(report, exampleText) {
             if (isMulti) triggerWinFeedback();
             else triggerTensWinSound();
             soundFlags.finWinSoundPlayed = true;
-            soundFlags.simWinSoundPlayed = true; // блокируем промежуточный
+            soundFlags.simWinSoundPlayed = true;
             soundFlags.simFailSoundPlayed = false;
             soundFlags.finFailSoundPlayed = false;
         }
     } else if (report.simCorrect && report.phase === 2) {
         if (!soundFlags.simWinSoundPlayed) {
-            triggerTensWinSound(); // Обычный win.mp3 для всех режимов на этапе упрощения!
+            triggerTensWinSound();
             soundFlags.simWinSoundPlayed = true;
             soundFlags.simFailSoundPlayed = false;
         }
