@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseSubtractionData } from './calculator.js';
@@ -10,14 +10,15 @@ export function renderSubtractionHundredsVisual() {
     const cacheKey = `${item.exampleText}_sub_hundreds_phase${report.phase}_${report.isFullySolved}`;
     let html = '', h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100);
 
-    // Очищаем хвосты чисел от сотен разряда для нижнего этажа кубиков (ИСПРАВЛЕНО!)
     const cleanNum2 = data.num2 % 100;
-    const cleanSubtrahend = data.currentSubtrahend % 100;
+    const robotL = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div>`;
+    const robotR = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div>`;
 
     if (report.phase === 1) {
-        const content1 = buildSubHLayout(h1, 0, genSubCargo(data.tens1, data.ones1, 0, 0), false);
-        const content2 = buildSubHLayout(0, h2, genSubEmpty(cleanNum2, 0), true);
-        html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${content1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${content2}</div>`;
+        const deck1 = `<div class="crystal-deck" style="border-color:#0284c7;">${buildSubHLayout(h1, 0, 0, genSubCargo(data.tens1, data.ones1, 0, 0))}</div>`;
+        // ИСПРАВЛЕНО: Правый убавляемый груз сотен рендерится пустыми кристаллами!
+        const deck2 = `<div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${buildSubHLayout(0, 0, h2, genSubEmpty(cleanNum2, 0))}</div>`;
+        html = `<div class="sub-scene-container">${robotL}${deck1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${deck2}${robotR}</div>`;
     } 
     else if (report.phase === 2) {
         let curH1 = h1, curH2 = Math.floor(data.currentSubtrahend / 100);
@@ -26,27 +27,31 @@ export function renderSubtractionHundredsVisual() {
             if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
         }
         const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
-        html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount), false, true)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, curH2, genSubEmpty(cleanNum2 - data.subtractedAmount, data.addedAmount), true, true)}</div></div>`;
+        const deck1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, 0, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
+        const deck2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, genSubEmpty(cleanNum2 - data.subtractedAmount, data.addedAmount))}</div>`;
+        html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;">${robotL}${deck1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${deck2}${robotR}</div>`;
     } 
     else {
-        let deckHTML = genSubCargo(data.tens1, data.ones1, 0, cleanSubtrahend);
+        let deckHTML = genSubCargo(data.tens1, data.ones1, 0, data.currentSubtrahend % 100);
         let finalH1 = Math.floor((data.num1 - data.num2) / 100);
         let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
         for (let i = 0; i < finalH1; i++) hCrystals += '<div class="hundred-crystal"></div>';
         hCrystals += '</div>';
-        const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '', rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
-        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;display:flex;flex-direction:column;gap:5px;min-width:140px;align-items:flex-start;padding:8px;">${hCrystals}<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div></div><div class="${rAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Сотни покорены! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
+        
+        const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '', labelText = report.isFullySolved ? 'Ура! Робот П уехал с правильным грузом! 🎉' : 'Проверяем answer... 👀';
+        const finalDeck = `<div class="crystal-deck" style="background:#e0f2fe;border-color:#ef4444;">${hCrystals}<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div></div>`;
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;position:relative;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${robotL}<div class="crystal-deck" style="border-color:#22c55e;">${buildSubHLayout(h1, 0, 0, genSubCargo(data.tens1, data.ones1, 0, data.currentSubtrahend % 100))}</div><div class="${driveAwayClass}" style="display:flex;align-items:center;gap:20px;">${robotR}${finalDeck}</div></div><b class="sub-win-text">${labelText}</b></div>`;
     }
     GameCanvas.renderZoneScene(html, cacheKey);
 }
 
-function buildSubHLayout(purple, crimson, sub, isO = false, flat = false) {
+function buildSubHLayout(purple, crimson, emptyCount, sub) {
     let h = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
     for (let i = 0; i < purple; i++) h += '<div class="hundred-crystal"></div>';
     for (let i = 0; i < crimson; i++) h += '<div class="hundred-crystal crimson"></div>';
-    h += '</div>'; if (flat) return `${h}<div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div>`;
-    const deck = `<div class="crystal-deck ${isO ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;">${h}<div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div></div>`;
-    return `<div class="crystal-truck">${isO ? deck + '🤖' : '🤖' + deck}</div>`;
+    // Навешиваем класс пустых ультракристаллов
+    for (let i = 0; i < emptyCount; i++) h += '<div class="hundred-crystal empty"></div>';
+    return h + `</div><div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div>`;
 }
 function genSubCargo(t, o, a, s) { let base = (t * 10) + o, total = base + a, active = total - s, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
 function genSubEmpty(e, a) { let total = e + a, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
