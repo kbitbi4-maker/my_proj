@@ -4,30 +4,28 @@ import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.
 import { renderTensVisual, getTensHistoryHTML } from './tens.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks } from './feedback.js';
 
-/**
- * Переключает активный пример при клике пользователя на строку истории
- */
 export function selectExample(index) {
     state.activeIndex = index;
-    resetAllFeedbacks(); // Сбрасываем аудио, чтобы звуки не накладывались
+    resetAllFeedbacks();
 
-    // 1. Проверяем стадию решения примера и подтягиваем нужные «дофаминовые плюшки»
-    const report = state.validateCurrentInput();
+    const item = state.examplesHistory[index];
+    const report = state.validateCurrentInput(index);
+    const isMulti = item.exampleText.includes('×');
+
+    // Распределяем звуки стадий строго по математическому знаку примера
     if (report.isFullySolved) {
-        if (state.currentMode === 'multiplication' || state.currentMode === 'mix') triggerWinFeedback();
+        if (isMulti) triggerWinFeedback();
         else triggerTensWinSound();
+    } else if (report.simCorrect && report.phase === 2) {
+        if (!isMulti) triggerTensWinSound();
     } else if (report.isWrongAnswer) {
         triggerFailFeedback();
     }
 
-    // 2. Принудительно заставляем GameCanvas обновить синий пунктир и блоки в левой панели
-    const isMulti = state.currentMode === 'multiplication' || (state.currentMode === 'mix' && state.examplesHistory[index].exampleText.includes('×'));
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
-    
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
 
-    // 3. Синхронизируем интерфейс и включаем нижний визуал
-    if (isMulti) {
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) {
         syncMonsterGame();
     } else {
         renderTensVisual();
