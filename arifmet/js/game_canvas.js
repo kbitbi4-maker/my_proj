@@ -1,3 +1,4 @@
+// version: v1.1
 import { selectExample } from './view_dispatcher.js';
 
 const gameZone = document.getElementById('game-zone');
