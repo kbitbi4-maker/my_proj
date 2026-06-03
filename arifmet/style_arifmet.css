@@ -61,3 +61,4 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 @keyframes robotDriveRight { 0% { transform: translateX(-150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes robotDriveLeft { 0% { transform: translateX(150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes crystalGlow { 0% { filter: drop-shadow(0 0 2px rgba(254,240,138,0.3)); } 100% { filter: drop-shadow(0 0 14px rgba(254,240,138,0.95)); } }
+.hundred-crystal.empty { background: #fff; border: 1px solid #000; box-shadow: none; animation: none; opacity: 0.6; }
