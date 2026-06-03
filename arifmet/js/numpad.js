@@ -19,7 +19,7 @@ export function pressNum(n) {
     }
 
     const report = state.validateCurrentInput();
-    handleInputSounds(report);
+    handleInputSounds(report, activeItem.exampleText);
     refreshUI();
 }
 
@@ -30,21 +30,28 @@ export function confirmAndNext() {
     else if (state.currentMode === 'mix') generateMixExample();
 }
 
-function handleInputSounds(report) {
+function handleInputSounds(report, exampleText) {
+    const isMultiplicationLine = exampleText.includes('×');
+    
     if (report.isFullySolved) {
-        if (state.currentMode === 'multiplication' || state.currentMode === 'mix') triggerWinFeedback();
+        if (isMultiplicationLine) triggerWinFeedback();
         else triggerTensWinSound();
+    } else if (report.simCorrect && report.phase === 2) {
+        // Запуск звука win.mp3 на промежуточной стадии упрощения для плюса и минуса
+        if (!isMultiplicationLine) triggerTensWinSound();
     } else if (report.isWrongAnswer) {
         triggerFailFeedback();
     }
 }
 
 export function refreshUI() {
-    const isMulti = state.currentMode === 'multiplication';
+    if (state.activeIndex === -1) return;
+    const activeItem = state.examplesHistory[state.activeIndex];
+    const isMulti = activeItem.exampleText.includes('×');
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    if (isMulti) renderMonsterGame();
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) renderMonsterGame();
     else renderTensVisual();
 }
