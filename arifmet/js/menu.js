@@ -15,12 +15,9 @@ export function toggleMenuMode() {
     if (!numpadContainer || !modesMenuContainer || !rightArea) return;
     isMenuOpen = !isMenuOpen;
 
-    // Переключаем класс правой панели для обнуления паддингов
     rightArea.classList.toggle('menu-active', isMenuOpen);
-    
     if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
 
-    // Прячем калькулятор, показываем таблицу Excel (и наоборот)
     numpadContainer.style.display = isMenuOpen ? 'none' : 'grid';
     modesMenuContainer.style.display = isMenuOpen ? 'flex' : 'none';
 }
@@ -34,6 +31,7 @@ export function handleModeSelection(mode) {
     state.reset(mode);
     resetAllFeedbacks();
     GameCanvas.clearZone();
+    GameCanvas.clearHistory(); // ИСПРАВЛЕНО: Полностью выметаем старые строки из DOM левой панели
     toggleMenuMode();
 
     if (mode === 'tens') initTensMode();
