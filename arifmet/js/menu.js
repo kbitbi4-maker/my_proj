@@ -5,24 +5,24 @@ import { initTensMode } from './tens.js';
 import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
 
-const numpadContainer = document.getElementById('main-numpad');
+const numpadContainer = document.getElementById('calc-numpad-container');
+const modesMenuContainer = document.getElementById('modes-menu-container');
+const rightArea = document.querySelector('.right-area');
 const menuButton = document.getElementById('menu-toggle-btn');
 let isMenuOpen = false;
 
 export function toggleMenuMode() {
-    if (!numpadContainer) return;
+    if (!numpadContainer || !modesMenuContainer || !rightArea) return;
     isMenuOpen = !isMenuOpen;
 
-    const calcButtons = numpadContainer.querySelectorAll('.calc-btn');
-    const modeButtons = numpadContainer.querySelectorAll('.mode-btn');
-
-    // Переключаем класс контейнера с сетки калькулятора на вертикальный стек меню
-    numpadContainer.classList.toggle('menu-mode', isMenuOpen);
+    // Переключаем класс правой панели для обнуления паддингов
+    rightArea.classList.toggle('menu-active', isMenuOpen);
+    
     if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
 
-    // Управляем видимостью кнопок
-    calcButtons.forEach(btn => btn.style.display = isMenuOpen ? 'none' : 'flex');
-    modeButtons.forEach(btn => btn.style.display = isMenuOpen ? 'flex' : 'none');
+    // Прячем калькулятор, показываем таблицу Excel (и наоборот)
+    numpadContainer.style.display = isMenuOpen ? 'none' : 'grid';
+    modesMenuContainer.style.display = isMenuOpen ? 'flex' : 'none';
 }
 
 export function handleModeSelection(mode) {
