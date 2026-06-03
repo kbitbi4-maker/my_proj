@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData } from './calculator.js';
@@ -10,12 +10,12 @@ export function renderAdditionHundredsVisual() {
     const cacheKey = `${item.exampleText}_add_hundreds_phase${report.phase}_${report.isFullySolved}`;
     let html = '', h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100);
 
-    if (report.phase === 1) {
+    if (report.phase === 1) { // ФАЗА 1: СТАРТ
         const content1 = buildHLayout(h1, 0, 0, genCols(data.tens1, false, 0) + genOnes(data.ones1, false), false);
         const content2 = buildHLayout(0, h2, 0, genCols(data.tens2, true, 0) + genOnes(data.ones2, true), true);
         html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${content1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>${content2}</div>`;
     } 
-    else if (report.phase === 2) {
+    else if (report.phase === 2) { // ФАЗА 2: УПРОЩЕНИЕ (Сотни стоят на местах, меняются только кубики!)
         const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
         let curH1 = h1, curH2 = h2, leftCrimson = 0, rightPurple = 0, mixedH = 0;
         
@@ -23,42 +23,26 @@ export function renderAdditionHundredsVisual() {
             const parts = report.simText.split('+'), leftNum = parseInt(parts[0], 10), rightNum = parseInt(parts[1], 10);
             if (!isNaN(leftNum) && !isNaN(rightNum)) {
                 curH1 = Math.floor(leftNum / 100); curH2 = Math.floor(rightNum / 100);
-                
-                // Расчёт заимствования целых сотен и задел под смешанные кристаллы сотен
+                // Настоящий заём сотен сработает, ТОЛЬКО если левые сотни РЕАЛЬНО превысили стартовые (например, было 600, стало 700)
                 if (curH1 > h1) leftCrimson = curH1 - h1;
                 if (curH2 > h2) rightPurple = curH2 - h2;
-                
-                // Если при упрощении возник переход через сотню в десятках (например, десятков стало > 9)
-                if (Math.floor(leftNum / 10) % 10 < data.tens1 && leftCrimson === 0 && data.tens1 > 0) {
-                    mixedH = 1; if (leftCrimson > 0) leftCrimson--; else if (curH1 > 0) curH1--;
-                }
                 if (leftCrimson > 0) curH1 = h1; if (rightPurple > 0) curH2 = h2;
             }
         }
         const content1 = buildHLayout(curH1, leftCrimson, mixedH, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false), false);
-        const content2 = buildHLayout(rightPurple, curH2, 0, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
+        const content2 = buildHLayout(rightPurple, curH2, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
         html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;animation:fadeIn 0.3s;${borderGlow}">${content1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>${content2}</div>`;
     } 
-    else {
-        let deckHTML = '', finalH1 = h1, finalH2 = h2, finalMixed = 0;
-        if (report.simText.includes('+')) {
-            const parts = report.simText.split('+'), leftNum = parseInt(parts[0], 10), rightNum = parseInt(parts[1], 10);
-            if (!isNaN(leftNum) && !isNaN(rightNum)) { 
-                finalH1 = Math.floor(leftNum / 100); finalH2 = Math.floor(rightNum / 100); 
-                if (finalH1 > h1) { finalH2 = h2 - (finalH1 - h1); finalH1 = h1; }
-            }
-        }
-        if (data.rightBorrowCount > 0) {
-            deckHTML += genOnes(data.totalOnes, false) + genCols(data.tens1, false, 0) + genCols(data.tens2, true, 0) + genCols(1, true, data.rightBorrowCount);
-            if (data.tens2 === 9 && data.rightBorrowCount > 0) finalMixed = 1;
-        }
+    else { // ФАЗА 3: ОТВЕТ (Объединение в общую кучу с сохранением цветов)
+        let deckHTML = '';
+        if (data.rightBorrowCount > 0) deckHTML += genOnes(data.totalOnes, false) + genCols(data.tens1, false, 0) + genCols(data.tens2, true, 0) + genCols(1, true, data.rightBorrowCount);
         else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0) + genCols(1, false, data.leftBorrowCount) + genCols(data.tens2, true, 0) + genOnes(data.totalOnes, true);
         else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
         
+        // Честно выводим в финальный поддон h1 фиолетовых кристаллов и h2 алых
         let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
-        for (let i = 0; i < (finalH1 - finalMixed); i++) hCrystals += '<div class="hundred-crystal"></div>';
-        for (let i = 0; i < finalMixed; i++) hCrystals += '<div class="hundred-crystal mixed"></div>';
-        for (let i = 0; i < finalH2; i++) hCrystals += '<div class="hundred-crystal crimson"></div>';
+        for (let i = 0; i < h1; i++) hCrystals += '<div class="hundred-crystal"></div>';
+        for (let i = 0; i < h2; i++) hCrystals += '<div class="hundred-crystal crimson"></div>';
         hCrystals += '</div>';
         
         const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '', rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
