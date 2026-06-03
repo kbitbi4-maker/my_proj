@@ -1,3 +1,4 @@
+/* version: v1.3 */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; }
 .header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
@@ -51,6 +52,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .add-robot-right-drive { animation: robotDriveLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 .hundred-crystal { width: 12px; height: 105px; background: linear-gradient(180deg, #f3e8ff 0%, #c084fc 40%, #7e22ce 100%); border: 1px solid #6b21a8; clip-path: polygon(50% 0%, 100% 12%, 100% 88%, 50% 100%, 0% 88%, 0% 12%); display: inline-block; animation: crystalGlow 2.5s ease-in-out infinite alternate; }
 .hundred-crystal.crimson { background: linear-gradient(180deg, #ffe4e6 0%, #fb7185 40%, #be123c 100%); border-color: #9f1239; }
+.hundred-crystal.mixed { background: linear-gradient(180deg, #fb7185 0%, #be123c 45%, #c084fc 55%, #7e22ce 100%); border-color: #4a044e; }
 #modes-menu-container { display: flex; flex-direction: column; width: 100%; height: auto; margin: 0; padding: 0; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
