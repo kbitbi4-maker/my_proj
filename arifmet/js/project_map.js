@@ -1,11 +1,12 @@
-// version: v1.2
+// version: v1.3
 import { state } from './state.js';
 
 const projectStructure = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js', 
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js', 
     'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 
-    'js/multiplication.js', 'js/addition_visual.js', 'js/subtraction_visual.js'
+    'js/multiplication.js', 'js/addition_visual.js', 'js/subtraction_visual.js',
+    'js/project_map.js' // ИСПРАВЛЕНО: Скрипт теперь сканирует и учитывает сам себя!
 ];
 
 export async function openProjectMap() {
@@ -26,7 +27,6 @@ export async function openProjectMap() {
                 linesCount = text.split('\n').length;
                 hash = text.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
                 
-                // Ищем версию vX.X в коде всего файла, игнорируя любые символы переноса строк
                 const match = text.match(/v\d+\.\d+/);
                 if (match) version = match[0];
             } else {
