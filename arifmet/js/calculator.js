@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -60,7 +60,6 @@ export function parseSubtractionData(exampleText, report) {
         let userSub = parseInt(report.simText.split('-').at(1), 10);
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
-            // ИСПРАВЛЕНО: Теперь калькулятор четко различает округление вверх и вниз!
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
             else if (currentSubtrahend < num2) subtractedAmount = num2 - currentSubtrahend;
         }
@@ -73,4 +72,12 @@ export function parseSubtractionData(exampleText, report) {
     }
     
     return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount };
+}
+
+/**
+ * Рассчитывает математику для УМНОЖЕНИЯ (ИСПРАВЛЕНО: ЭКСПОРТ ВОЗВРАЩЕН В СТРОЙ!)
+ */
+export function parseMultiplicationData(exampleText) {
+    const parts = exampleText.split('×');
+    return { items: parseInt(parts[0], 10), monsters: parseInt(parts[1], 10) };
 }
