@@ -7,7 +7,6 @@ export const state = {
     activeIndex: -1,
     mixStep: 0,
 
-    // Сброс данных сессии при переключении игры
     reset(mode) {
         this.currentMode = mode;
         this.examplesHistory = [];
@@ -16,19 +15,19 @@ export const state = {
         this.mixStep = (mode === 'mix') ? 0 : this.mixStep;
     },
 
-    // Добавление новой задачи в историю
     addExample(exampleObj) {
         this.examplesHistory.push(exampleObj);
         this.activeIndex = this.examplesHistory.length - 1;
     },
 
-    // Валидатор ввода пользователя (возвращает чистые логические флаги для движка)
-    validateCurrentInput() {
-        if (this.activeIndex === -1 || !this.examplesHistory[this.activeIndex]) {
-            return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '' };
+    // Расширенная валидация: теперь умеет проверять любой конкретный пример по индексу
+    validateCurrentInput(targetIndex = null) {
+        const idx = (targetIndex !== null) ? targetIndex : this.activeIndex;
+        if (idx === -1 || !this.examplesHistory[idx]) {
+            return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '', simCorrect: false, finCorrect: false };
         }
         
-        const item = this.examplesHistory[this.activeIndex];
+        const item = this.examplesHistory[idx];
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
@@ -41,7 +40,6 @@ export const state = {
             let simVal = evaluateExpr(simText);
             simCorrect = (simVal === item.correctValue);
             
-            // Валидация количества слагаемых для режима умножения
             if (item.exampleText.includes('×') && simCorrect && simText) {
                 const checkParts = simText.split('+');
                 const expectedCount = parseInt(item.exampleText.split('×').at(1), 10);
