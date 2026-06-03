@@ -20,7 +20,6 @@ export const state = {
         this.activeIndex = this.examplesHistory.length - 1;
     },
 
-    // Расширенная валидация: теперь умеет проверять любой конкретный пример по индексу
     validateCurrentInput(targetIndex = null) {
         const idx = (targetIndex !== null) ? targetIndex : this.activeIndex;
         if (idx === -1 || !this.examplesHistory[idx]) {
@@ -35,6 +34,7 @@ export const state = {
         const targetLength = String(item.correctValue).length;
         const hasFinalAnswer = parts.length > 1 && finText.trim().length >= targetLength;
 
+        // 1. Проверка промежуточной стадии (упрощения)
         let simCorrect = false;
         if (hasPressedEqual) {
             let simVal = evaluateExpr(simText);
@@ -47,6 +47,7 @@ export const state = {
             }
         }
 
+        // 2. Проверка финального ответа
         let finCorrect = false;
         if (hasFinalAnswer) {
             let finVal = evaluateExpr(finText);
@@ -54,7 +55,17 @@ export const state = {
         }
 
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
-        let isWrongAnswer = (hasPressedEqual && !simCorrect) || (parts.length > 1 && finText.trim().length >= targetLength && !finCorrect);
+        
+        // Жёсткое исправление: ошибка засчитывается только если промежуточный неверный ИЛИ финальный ответ ДОСТИГ нужной длины и он неверный
+        let isWrongAnswer = false;
+        if (hasPressedEqual && !simCorrect) {
+            isWrongAnswer = true;
+        }
+        if (parts.length > 1 && finText.trim().length > 0) {
+            if (finText.trim().length >= targetLength && !finCorrect) {
+                isWrongAnswer = true;
+            }
+        }
 
         let phase = 1;
         if (hasPressedEqual && !hasFinalAnswer) phase = 2;
