@@ -61,7 +61,10 @@ export function renderMonsterGame() {
 export function getMultiplicationHistoryHTML(item, index, mode) {
     const parts = item.currentInput.split('=');
     const simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput();
+    
+    // ПРЯМОЕ ИСПРАВЛЕНИЕ: Передаем индекс строки в валидатор!
+    const report = state.validateCurrentInput(index);
+    const targetLen = String(item.correctValue).length;
     
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) {
@@ -70,11 +73,12 @@ export function getMultiplicationHistoryHTML(item, index, mode) {
     
     let finHTML = '';
     if (parts.length > 1) {
-        const targetLen = String(item.correctValue).length;
         if (finText.trim().length >= targetLen) {
             finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        } else if (finText.trim().length > 0) {
+            finHTML = ` = <span class="block">${finText}</span>`; // Ждем полный ответ
         } else {
-            finHTML = ` = <span class="block">${finText || '_'}</span>`;
+            finHTML = ` = <span class="block">_</span>`;
         }
     }
     return { simHTML, finHTML };
