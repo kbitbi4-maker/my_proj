@@ -31,9 +31,6 @@ export function evaluateExpr(str) {
     return isNaN(num) ? null : num;
 }
 
-/**
- * Рассчитывает математику заимствований для СЛОЖЕНИЯ
- */
 export function parseAdditionData(exampleText, report) {
     const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10, tens2 = Math.floor(num2 / 10), ones2 = num2 % 10;
@@ -54,9 +51,6 @@ export function parseAdditionData(exampleText, report) {
     };
 }
 
-/**
- * Рассчитывает математику заимствований для ВЫЧИТАНИЯ
- */
 export function parseSubtractionData(exampleText, report) {
     const nums = exampleText.split('-'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
@@ -71,4 +65,12 @@ export function parseSubtractionData(exampleText, report) {
     }
     let finalAddedAmount = report.simText.includes('-') ? parseInt(report.simText.split('-').at(1), 10) - num2 : 0;
     return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount: isNaN(finalAddedAmount) || finalAddedAmount < 0 ? 0 : finalAddedAmount };
+}
+
+/**
+ * Рассчитывает математику для УМНОЖЕНИЯ
+ */
+export function parseMultiplicationData(exampleText) {
+    const parts = exampleText.split('×');
+    return { items: parseInt(parts[0], 10), monsters: parseInt(parts[1], 10) };
 }
