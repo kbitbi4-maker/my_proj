@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { state } from './state.js';
 
 const projectStructure = [
@@ -18,7 +18,7 @@ export async function openProjectMap() {
     textOutput += `HISTORY_COUNT: ${state.examplesHistory.length}\n\n`;
 
     for (const path of projectStructure) {
-        let linesCount = 'N/A', hash = 'N/A', version = 'v1.0';
+        let linesCount = 'N/A', hash = 'N/A', version = 'no_version_found';
         try {
             const response = await fetch(path);
             if (response.ok) {
@@ -26,12 +26,14 @@ export async function openProjectMap() {
                 linesCount = text.split('\n').length;
                 hash = text.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
                 
-                // Извлекаем версию из первой строчки файла (из комментария)
-                const firstLine = text.split('\n')[0] || '';
+                // Извлекаем чистую первую строчку без символов возврата каретки (\r)
+                const firstLine = text.split('\n')[0].replace(/\r/g, '');
                 const match = firstLine.match(/v\d+\.\d+/);
                 if (match) version = match[0];
+            } else {
+                version = 'FILE_NOT_FOUND';
             }
-        } catch (e) { linesCount = 'FETCH_ERR'; }
+        } catch (e) { linesCount = 'FETCH_ERR'; version = 'FETCH_ERR'; }
 
         textOutput += `[FILE]: ${path}\n`;
         textOutput += `  VERSION: ${version}\n`;
@@ -47,4 +49,3 @@ export function copyProjectMap() {
     const area = document.getElementById('map-text-area'); if (!area) return;
     area.select(); document.execCommand('copy'); alert('Карта проекта скопирована! 📋');
 }
-
