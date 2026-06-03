@@ -1,8 +1,8 @@
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
-import { initTensMode, renderTensVisual } from './tens.js';
-import { initMultiplicationMode, renderMonsterGame } from './multiplication.js';
+import { initTensMode } from './tens.js';
+import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
 
 const numpadContainer = document.getElementById('main-numpad');
@@ -16,9 +16,11 @@ export function toggleMenuMode() {
     const calcButtons = numpadContainer.querySelectorAll('.calc-btn');
     const modeButtons = numpadContainer.querySelectorAll('.mode-btn');
 
+    // Переключаем класс контейнера с сетки калькулятора на вертикальный стек меню
     numpadContainer.classList.toggle('menu-mode', isMenuOpen);
     if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
 
+    // Управляем видимостью кнопок
     calcButtons.forEach(btn => btn.style.display = isMenuOpen ? 'none' : 'flex');
     modeButtons.forEach(btn => btn.style.display = isMenuOpen ? 'flex' : 'none');
 }
