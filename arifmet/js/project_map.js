@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 import { state } from './state.js';
 
 const projectStructure = [
@@ -6,7 +6,8 @@ const projectStructure = [
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js', 
     'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 
     'js/multiplication.js', 'js/addition_visual.js', 'js/subtraction_visual.js',
-    'js/project_map.js' // ИСПРАВЛЕНО: Скрипт теперь сканирует и учитывает сам себя!
+    'js/project_map.js',
+    'js/hundreds_visual.js' // ИСПРАВЛЕНО: Новый файл сотен добавлен в карту проекта!
 ];
 
 export async function openProjectMap() {
@@ -26,12 +27,8 @@ export async function openProjectMap() {
                 const text = await response.text();
                 linesCount = text.split('\n').length;
                 hash = text.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-                
-                const match = text.match(/v\d+\.\d+/);
-                if (match) version = match[0];
-            } else {
-                version = 'FILE_NOT_FOUND';
-            }
+                const match = text.match(/v\d+\.\d+/); if (match) version = match;
+            } else version = 'FILE_NOT_FOUND';
         } catch (e) { linesCount = 'FETCH_ERR'; version = 'FETCH_ERR'; }
 
         textOutput += `[FILE]: ${path}\n`;
@@ -39,7 +36,6 @@ export async function openProjectMap() {
         textOutput += `  METRICS: LINES=${linesCount} | HASH_ID=${hash}\n`;
         textOutput += `--------------------------------------------------\n`;
     }
-
     area.value = textOutput; modal.style.display = 'flex';
 }
 
