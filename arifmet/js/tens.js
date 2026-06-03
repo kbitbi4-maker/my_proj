@@ -3,7 +3,7 @@ import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
 
-let isAddition = true;
+let isAddition = true; 
 
 export function initTensMode() {
     document.querySelector('.header-menu-btn').innerText = 'Режим: Десятки ▼';
