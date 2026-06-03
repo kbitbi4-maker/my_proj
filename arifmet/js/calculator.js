@@ -1,4 +1,5 @@
-function evaluateExpr(str) {
+// Обязательно добавляем слово export в самое начало!
+export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
     if (cleaned.includes('*')) {
