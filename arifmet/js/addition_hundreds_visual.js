@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData } from './calculator.js';
@@ -27,18 +27,23 @@ export function renderAdditionHundredsVisual() {
             }
         }
         const content1 = buildHLayout(curH1, 0, leftMixed, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false), false);
-        const content2 = buildHLayout(rightMixed, curH2, 0, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
+        // ИСПРАВЛЕНО ДЛЯ ФАЗЫ 2: Правый робот правильно принимает rightMixed на позицию смешанных ультраблоков!
+        const content2 = buildHLayout(0, curH2, rightMixed, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
         html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;animation:fadeIn 0.3s;${borderGlow}">${content1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>${content2}</div>`;
     } 
     else {
         let deckHTML = '', finalMixed = 0;
-        // ИСПРАВЛЕНО: Сквозной автоматический расчёт склеивания смешанной сотни из неполных десятков!
         const tailSum = (data.tens1 * 10 + data.ones1) + (data.tens2 * 10 + data.ones2);
-        if (tailSum >= 100) finalMixed = 1;
-
-        if (data.rightBorrowCount > 0) deckHTML += genOnes(data.totalOnes, false) + genCols(data.tens1, false, 0) + genCols(data.tens2, true, 0) + genCols(1, true, data.rightBorrowCount);
-        else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0) + genCols(1, false, data.leftBorrowCount) + genCols(data.tens2, true, 0) + genOnes(data.totalOnes, true);
-        else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
+        
+        // ИСПРАВЛЕНО ДЛЯ ФАЗЫ 3: Если кубики склеились в сотню, они убираются из нижнего поддона!
+        if (tailSum >= 100) {
+            finalMixed = 1;
+            deckHTML = ''; // Кубики полностью поглощены ультраблоком сотен!
+        } else {
+            if (data.rightBorrowCount > 0) deckHTML += genOnes(data.totalOnes, false) + genCols(data.tens1, false, 0) + genCols(data.tens2, true, 0) + genCols(1, true, data.rightBorrowCount);
+            else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0) + genCols(1, false, data.leftBorrowCount) + genCols(data.tens2, true, 0) + genOnes(data.totalOnes, true);
+            else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
+        }
         
         let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
         for (let i = 0; i < h1; i++) hCrystals += '<div class="hundred-crystal"></div>';
