@@ -57,3 +57,4 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 @keyframes robotDriveAway { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(400px); opacity: 0; } }
 @keyframes robotDriveRight { 0% { transform: translateX(-150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
 @keyframes robotDriveLeft { 0% { transform: translateX(150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+.hundred-crystal { width: 10px; height: 110px; background: linear-gradient(180deg, #e9d5ff 0%, #c084fc 40%, #9333ea 100%); border: 1px solid #7e22ce; border-radius: 4px; box-shadow: 0 0 10px #c084fc, inset 0 0 4px #f3e8ff; display: inline-block; animation: cyberFloat 2s ease-in-out infinite alternate; }
