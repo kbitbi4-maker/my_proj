@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData, parseSubtractionData } from './calculator.js';
@@ -20,8 +20,7 @@ export function renderHundredsVisual() {
         let currentH1 = h1, currentH2 = h2;
         if (report.simText.includes(isAdd ? '+' : '-')) {
             const parts = report.simText.split(isAdd ? '+' : '-'), leftNum = parseInt(parts[0], 10), rightNum = parseInt(parts[1], 10);
-            if (!isNaN(leftNum)) currentH1 = Math.floor(leftNum / 100);
-            if (!isNaN(rightNum)) currentH2 = Math.floor(rightNum / 100);
+            if (!isNaN(leftNum)) currentH1 = Math.floor(leftNum / 100); if (!isNaN(rightNum)) currentH2 = Math.floor(rightNum / 100);
         }
         if (isAdd) {
             const content1 = buildHundredsLayoutHTML(currentH1, 0, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false), false);
@@ -44,7 +43,7 @@ export function renderHundredsVisual() {
             else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
         } else { deckHTML += genSubCargo(data.tens1, data.ones1, 0, data.currentSubtrahend); finalH1 = Math.floor((data.num1 - data.num2) / 100); finalH2 = 0; }
         
-        // ФАЗА 3 ФИНАЛ: Идеальное сохранение исходных цветов ультракристаллов сотен (ИСПРАВЛЕНО!)
+        // ФАЗА 3: Сквозное сохранение цветов ультракристаллов в финальной общей платформе
         let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
         for (let i = 0; i < finalH1; i++) hCrystals += '<div class="hundred-crystal"></div>';
         for (let i = 0; i < finalH2; i++) hCrystals += '<div class="hundred-crystal crimson"></div>';
@@ -67,6 +66,7 @@ function buildHundredsLayoutHTML(purpleCount, crimsonCount, subDeckHTML, isOrang
 }
 
 function genCols(c, o, b) { let html = ''; for (let i = 0; i < c; i++) { html += `<div class="crystal-column">`; let last = (i === c - 1) && (b > 0); for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${(last && j > (10 - b)) ? (o ? 'borrow-blue' : 'borrow-orange') : (o ? 'borrow-orange' : 'borrow-blue')}"></div>`; html += `</div>`; } return html; }
+// ИСПРАВЛЕНО ДЛЯ СОТЕН: Метод genOnes теперь корректно пробрасывает класс заимствования
 function genOnes(c, o) { if (c === 0) return ''; let html = `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) html += (j <= c) ? `<div class="crystal-item ${o ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; return html + `</div>`; }
 function genSubCargo(t, o, a, s) { let base = (t * 10) + o, total = base + a, active = total - s, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
 function genSubEmpty(e, a) { let total = e + a, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
