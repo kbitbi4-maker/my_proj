@@ -3,7 +3,7 @@ import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
 
-let isAddition = true; 
+let isAddition = true;
 
 export function initTensMode() {
     document.querySelector('.header-menu-btn').innerText = 'Режим: Десятки ▼';
@@ -55,7 +55,10 @@ export function renderTensVisual() {
 export function getTensHistoryHTML(item, index, mode) {
     const parts = item.currentInput.split('=');
     const simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput();
+    
+    // ПРЯМОЕ ИСПРАВЛЕНИЕ: Передаем индекс строки в валидатор!
+    const report = state.validateCurrentInput(index);
+    const targetLen = String(item.correctValue).length;
     
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) {
@@ -64,13 +67,14 @@ export function getTensHistoryHTML(item, index, mode) {
     
     let finHTML = '';
     if (parts.length > 1) {
-        const targetLen = String(item.correctValue).length;
+        // Красим блок в зависимости от длины ответа (выжидаем ввод нужного количества символов!)
         if (finText.trim().length >= targetLen) {
             finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        } else if (finText.trim().length > 0) {
+            finHTML = ` = <span class="block">${finText}</span>`; // Желтеет/остается нейтральным пока пишем
         } else {
-            finHTML = ` = <span class="block">${finText || '_'}</span>`;
+            finHTML = ` = <span class="block">_</span>`;
         }
     }
     return { simHTML, finHTML };
 }
-
