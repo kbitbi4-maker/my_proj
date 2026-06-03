@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks } from './feedback.js';
+import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
 import { generateExample, renderTensVisual, getTensHistoryHTML } from './tens.js';
 import { generateMultiExample, renderMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
 import { generateMixExample } from './mix.js';
@@ -31,16 +31,32 @@ export function confirmAndNext() {
 }
 
 function handleInputSounds(report, exampleText) {
-    const isMultiplicationLine = exampleText.includes('×');
+    const isMulti = exampleText.includes('×');
     
     if (report.isFullySolved) {
-        if (isMultiplicationLine) triggerWinFeedback();
-        else triggerTensWinSound();
+        if (!soundFlags.finWinSoundPlayed) {
+            if (isMulti) triggerWinFeedback();
+            else triggerTensWinSound();
+            soundFlags.finWinSoundPlayed = true;
+            soundFlags.simWinSoundPlayed = true; // блокируем промежуточный
+            soundFlags.simFailSoundPlayed = false;
+            soundFlags.finFailSoundPlayed = false;
+        }
     } else if (report.simCorrect && report.phase === 2) {
-        // Запуск звука win.mp3 на промежуточной стадии упрощения для плюса и минуса
-        if (!isMultiplicationLine) triggerTensWinSound();
+        if (!soundFlags.simWinSoundPlayed) {
+            triggerTensWinSound(); // Обычный win.mp3 для всех режимов на этапе упрощения!
+            soundFlags.simWinSoundPlayed = true;
+            soundFlags.simFailSoundPlayed = false;
+        }
     } else if (report.isWrongAnswer) {
-        triggerFailFeedback();
+        const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
+        const hasFin = parts.length > 1 && parts.at(1).trim().length > 0;
+        
+        if (hasFin && !soundFlags.finFailSoundPlayed) {
+            triggerFailFeedback(); soundFlags.finFailSoundPlayed = true;
+        } else if (!hasFin && !soundFlags.simFailSoundPlayed) {
+            triggerFailFeedback(); soundFlags.simFailSoundPlayed = true;
+        }
     }
 }
 
