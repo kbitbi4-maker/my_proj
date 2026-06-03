@@ -1,20 +1,15 @@
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-
 export function renderAdditionVisual() {
     const item = state.examplesHistory[state.activeIndex];
     if (!item) return;
-
     const nums = item.exampleText.split('+');
     const num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10), ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10), ones2 = num2 % 10;
-
     const report = state.validateCurrentInput();
     const cacheKey = `${item.exampleText}_phase${report.phase}_${report.isFullySolved}`;
-
     let html = '';
-
     if (report.phase === 1) { // ФАЗА 1: СТАРТ (Чистые раздельные грузы)
         html = `<div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%;">
                 <div class="crystal-truck">
@@ -39,12 +34,9 @@ export function renderAdditionVisual() {
             let singleNum = parseInt(report.simText, 10);
             if (!isNaN(singleNum)) { leftTens = Math.floor(singleNum / 10); leftOnes = singleNum % 10; leftLabel = String(singleNum); }
         }
-        
         let leftBorrowCount = (leftTens > tens1 && leftOnes === 0 && ones1 > 0) ? 10 - ones1 : 0;
-        let rightBorrowCount = (rightTens > tens2 && rightOnes === 0 && ones2 > 0) ? 10 - ones2 : 0;
-        
+        let rightBorrowCount = (rightTens > tens2 && rightOnes === 0 && ones2 > 0) ? 10 - ones2 : 0;        
         const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
-
         html = `<div style="display:flex; justify-content:space-between; width:100%; align-items:center; padding:0 15px; box-sizing:border-box; height:100%; animation:fadeIn 0.3s;">
                 <div class="crystal-truck">
                     <div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:36px; line-height:1;">🤖</span><b style="color:#22c55e; font-size:13px; margin-top:1px;">${leftLabel}</b></div>
@@ -67,8 +59,7 @@ export function renderAdditionVisual() {
                 else if (!isNaN(rightNum) && Math.floor(rightNum / 10) > tens2) rightBorrowCount = 10 - ones2;
             } else { leftBorrowCount = 10 - ones1; }
             totalOnes -= 10;
-        }
-        
+        }        
         let deckContentHTML = '';
         if (rightBorrowCount > 0) { // Правый забрал у левого (например, 23+19 -> 22+20)
             deckContentHTML += generateOnesHTML(totalOnes, false); // 2 синих единицы слева
@@ -82,19 +73,15 @@ export function renderAdditionVisual() {
             deckContentHTML += generateOnesHTML(totalOnes, true); // Неполный десяток у правого ложится в самый правый край
         } else { // Без заимствования (если такое будет)
             deckContentHTML += generateCrystalColumnsHTML(tens1, false, 0) + generateOnesHTML(ones1, false) + generateCrystalColumnsHTML(tens2, true, 0) + generateOnesHTML(ones2, true);
-        }
-        
+        }        
         const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '';
         const rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
         const jumpL = report.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate;' : '';
         const jumpR = report.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate-reverse;' : '';
-
         html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div style="${jumpL}"><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;">${deckContentHTML}</div><div class="${rAnim}"><div style="${jumpR}"><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Ответ верный! Ты гений! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
     }
-
     GameCanvas.renderZoneScene(html, cacheKey);
 }
-
 function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -114,7 +101,6 @@ function generateCrystalColumnsHTML(count, isOrangeTheme, borrowCount) {
     }
     return html;
 }
-
 function generateOnesHTML(count, isOrangeTheme) {
     if (count === 0) return '';
     let html = `<div class="crystal-column" style="margin-left:6px; border-left:1px dashed #cbd5e1; padding-left:4px;">`;
