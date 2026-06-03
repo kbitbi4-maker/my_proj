@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData, parseSubtractionData } from './calculator.js';
@@ -10,25 +10,23 @@ export function renderHundredsVisual() {
     const cacheKey = `${item.exampleText}_hundreds_phase${report.phase}_${report.isFullySolved}`;
     let html = '';
 
+    const h1 = Math.floor(data.num1 / 100);
+    const h2 = isAdd ? Math.floor(data.num2 / 100) : Math.floor(data.currentSubtrahend / 100);
+
     if (report.phase === 1) {
-        const hundreds1 = Math.floor(data.num1 / 100), hundreds2 = Math.floor(data.num2 / 100);
-        const content1 = buildHundredsLayoutHTML(hundreds1, genCols(data.tens1, false, 0) + genOnes(data.ones1, false));
-        const content2 = buildHundredsLayoutHTML(hundreds2, genCols(data.tens2, true, 0) + genOnes(data.ones2, true), true);
+        const content1 = buildHundredsLayoutHTML(h1, genCols(data.tens1, false, 0) + genOnes(data.ones1, false), false);
+        const content2 = buildHundredsLayoutHTML(h2, genCols(data.tens2, true, 0) + genOnes(data.ones2, true), true);
         html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${content1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">${isAdd ? '+' : '-'}</div>${content2}</div>`;
     } 
     else if (report.phase === 2) {
         const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
         if (isAdd) {
-            const h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100);
-            const content1 = buildHundredsLayoutHTML(h1, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false));
+            const content1 = buildHundredsLayoutHTML(h1, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false), false);
             const content2 = buildHundredsLayoutHTML(h2, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
             html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;animation:fadeIn 0.3s;${borderGlow}">${content1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>${content2}</div>`;
         } else {
-            const uParts = report.simText.split('-'), uLeft = parseInt(uParts[0], 10);
-            const h1 = !isNaN(uLeft) ? Math.floor(uLeft / 100) : Math.floor(data.num1 / 100);
-            const h2 = Math.floor(data.currentSubtrahend / 100);
             const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
-            html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildHundredsLayoutHTML(h1, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border:2px solid #000;">${buildHundredsLayoutHTML(h2, genSubEmpty(data.num2 - data.subtractedAmount, data.addedAmount))}</div></div>`;
+            html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildHundredsLayoutHTML(h1, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount), false, true)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div><div class="crystal-deck" style="border:2px solid #000;">${buildHundredsLayoutHTML(h2, genSubEmpty(data.num2 - data.subtractedAmount, data.addedAmount), true, true)}</div></div>`;
         }
     } 
     else {
@@ -38,17 +36,20 @@ export function renderHundredsVisual() {
             else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0) + genCols(1, false, data.leftBorrowCount) + genCols(data.tens2, true, 0) + genOnes(data.totalOnes, true);
             else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
         } else deckHTML += genSubCargo(data.tens1, data.ones1, 0, data.currentSubtrahend);
-        const combined = buildHundredsLayoutHTML(finalH, deckHTML);
+        
+        const hCrystals = `<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">${'<div class="hundred-crystal"></div>'.repeat(finalH)}</div>`;
         const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '', rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
-        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;display:flex;flex-direction:column;gap:10px;">${combined}</div><div class="${rAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Сотни покорены! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;display:flex;flex-direction:column;gap:5px;min-width:140px;align-items:flex-start;padding:8px;">${hCrystals}<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div></div><div class="${rAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Сотни покорены! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
     }
     GameCanvas.renderZoneScene(html, cacheKey);
 }
 
-function buildHundredsLayoutHTML(count, subDeckHTML, isOrange = false) {
-    let hHTML = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
-    for (let i = 0; i < count; i++) hHTML += `<div class="hundred-crystal"></div>`;
-    const deck = `<div class="crystal-deck ${isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;">${hHTML}</div><div style="display:flex;gap:4px;align-items:flex-end;">${subDeckHTML}</div></div>`;
+function buildHundredsLayoutHTML(count, subDeckHTML, isOrange = false, flatMode = false) {
+    let hHTML = `<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">`;
+    for (let i = 0; i < count; i++) hHTML += `<div class="hundred-crystal ${isOrange ? 'crimson' : ''}"></div>`;
+    hHTML += '</div>';
+    if (flatMode) return `${hHTML}<div style="display:flex;gap:4px;align-items:flex-end;">${subDeckHTML}</div>`;
+    const deck = `<div class="crystal-deck ${isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;">${hHTML}<div style="display:flex;gap:4px;align-items:flex-end;">${subDeckHTML}</div></div>`;
     return `<div class="crystal-truck">${isOrange ? deck + `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div>` : `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div>` + deck}</div>`;
 }
 
