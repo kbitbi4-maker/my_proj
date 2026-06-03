@@ -15,7 +15,8 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 .block-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
 .block-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
-.numpad.menu-mode { grid-template-columns: repeat(2, 1fr); }
+.numpad.menu-mode { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+.numpad.menu-mode .mode-btn { width: 100%; height: 9.6vh; min-height: 60px; font-size: 2.2vh; border-radius: 12px; }
 .num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 55px; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
