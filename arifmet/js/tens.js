@@ -17,21 +17,13 @@ export function generateExample() {
 
     if (isAddition) {
         while (true) {
-            num1 = Math.floor(Math.random() * 90) + 10;
-            num2 = Math.floor(Math.random() * 90) + 10;
-            if ((num1 % 10 + num2 % 10) > 10 && (num1 + num2) < 100) {
-                text = `${num1}+${num2}`;
-                if (!state.usedExamples.includes(text)) { correctValue = num1 + num2; break; }
-            }
+            num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
+            if ((num1 % 10 + num2 % 10) > 10 && (num1 + num2) < 100) { text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 + num2; break; } }
         }
     } else {
         while (true) {
-            num1 = Math.floor(Math.random() * 90) + 10;
-            num2 = Math.floor(Math.random() * 90) + 10;
-            if (num1 > num2 && (num2 % 10) >= (num1 % 10 + 1) && (num1 - num2) >= 1) {
-                text = `${num1}-${num2}`;
-                if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; }
-            }
+            num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
+            if (num1 > num2 && (num2 % 10) >= (num1 % 10 + 1) && (num1 - num2) >= 1) { text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } }
         }
     }
 
@@ -46,35 +38,19 @@ export function generateExample() {
 
 export function renderTensVisual() {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
-    const item = state.examplesHistory[state.activeIndex];
-    
-    if (item.exampleText.includes('+')) renderAdditionVisual();
-    else if (item.exampleText.includes('-')) renderSubtractionVisual();
+    if (state.examplesHistory[state.activeIndex].exampleText.includes('+')) renderAdditionVisual();
+    else renderSubtractionVisual();
 }
 
 export function getTensHistoryHTML(item, index, mode) {
-    const parts = item.currentInput.split('=');
-    const simText = parts.at(0) || '', finText = parts.at(1) || '';
-    
-    // ПРЯМОЕ ИСПРАВЛЕНИЕ: Передаем индекс строки в валидатор!
-    const report = state.validateCurrentInput(index);
-    const targetLen = String(item.correctValue).length;
-    
+    const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
+    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
-    if (item.currentInput.includes('=')) {
-        simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
-    }
-    
+    if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
     let finHTML = '';
     if (parts.length > 1) {
-        // Красим блок в зависимости от длины ответа (выжидаем ввод нужного количества символов!)
-        if (finText.trim().length >= targetLen) {
-            finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
-        } else if (finText.trim().length > 0) {
-            finHTML = ` = <span class="block">${finText}</span>`; // Желтеет/остается нейтральным пока пишем
-        } else {
-            finHTML = ` = <span class="block">_</span>`;
-        }
+        if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        else finHTML = ` = <span class="block">${finText || '_'}</span>`;
     }
     return { simHTML, finHTML };
 }
