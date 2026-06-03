@@ -26,13 +26,9 @@ export async function openProjectMap() {
                 linesCount = text.split('\n').length;
                 hash = text.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
                 
-                // ИСПРАВЛЕНО: Сначала очищаем текст строки от \r, а затем парсим версию
-                const lines = text.split('\n');
-                if (lines.length > 0) {
-                    const firstLine = lines[0].replace(/\r/g, '');
-                    const match = firstLine.match(/v\d+\.\d+/);
-                    if (match) version = match[0];
-                }
+                // Ищем версию vX.X в коде всего файла, игнорируя любые символы переноса строк
+                const match = text.match(/v\d+\.\d+/);
+                if (match) version = match[0];
             } else {
                 version = 'FILE_NOT_FOUND';
             }
