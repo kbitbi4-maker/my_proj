@@ -1,4 +1,4 @@
-// version: v2.1
+// version: v2.2
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -18,11 +18,16 @@ export function parseAdditionData(exampleText) {
     const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
-    let totalOnes = ones1 + ones2; const hasTens = totalOnes >= 10;
+    
+    // Вычисляем заимствование в обе стороны (зеркально)
+    let leftBorrow = (ones1 > 0 && ones1 + ones2 >= 10) ? 10 - ones1 : 0;
+    let rightBorrow = (ones2 > 0 && ones1 + ones2 >= 10) ? 10 - ones2 : 0;
+    
     return {
-        num1, num2, tens1, ones1, tens2, ones2, totalOnes: hasTens ? totalOnes - 10 : totalOnes,
-        leftBorrowCount: hasTens ? 10 - ones1 : 0, rightBorrowCount: hasTens ? 10 - ones2 : 0,
-        leftLabel: String(num1), rightLabel: String(num2), leftTens: tens1, leftOnes: ones1, rightTens: tens2, rightOnes: ones2
+        num1, num2, tens1, ones1, tens2, ones2,
+        leftBorrowCount: leftBorrow,
+        rightBorrowCount: rightBorrow,
+        leftLabel: String(num1), rightLabel: String(num2)
     };
 }
 
@@ -33,7 +38,7 @@ export function parseSubtractionData(exampleText, report) {
     
     if (report && report.simText && report.simText.includes('-')) {
         let p = report.simText.split('-');
-        let userSub = parseInt(p[1], 10); // ИСПРАВЛЕНО: строго берем индекс 1 (введенное вычитаемое)
+        let userSub = parseInt(p[1], 10);
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
