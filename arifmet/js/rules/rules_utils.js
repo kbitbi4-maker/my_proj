@@ -1,65 +1,80 @@
-// version: v4.0
-
-/**
- * Универсальный генератор мега-кристаллов (сотни, тысячи, миллионы)
- */
-export function genMegaCrystals(count, className = '') {
-    let html = '';
-    for (let i = 0; i < count; i++) html += `<div class="hundred-crystal ${className}"></div>`;
-    return html;
-}
-
-/**
- * Универсальный поштучный отрисовщик кузова для абсолютно любого числа
- * @param {Object} v - Вектор: { baseColor, borrowColor, mega, tens, ones, getOnes, giveOnes }
- */
-export function drawGenericNumber(v) {
-    let html = '';
-    
-    // 1. Ряд мега-кристаллов (сотни/тысячи) со своими классами цветов
-    if (v.mega > 0) {
-        html += `<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">`;
-        html += genMegaCrystals(v.mega, v.megaClass || '');
-        html += `</div>`;
-    }
-
-    let deckHTML = '';
-    // 2. Ряд чистых монолитных столбиков десятков
-    for (let i = 0; i < v.tens; i++) {
-        deckHTML += `<div class="crystal-column">`;
-        for (let j = 1; j <= 10; j++) deckHTML += `<div class="crystal-item ${v.baseColor}"></div>`;
-        deckHTML += `</div>`;
-    }
-
-    // 3. Выделенный правый столбец единиц (Хвостик) с поштучной раскраской обмена
-    if (v.ones > 0 || v.getOnes > 0 || v.giveOnes > 0) {
-        deckHTML += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        let activeOnes = v.ones - v.giveOnes; // Сколько родных осталось после отдачи
-        let totalOnes = activeOnes + v.getOnes; // Всего кубиков в хвостике с учетом прилетевших
-        let gridCeil = (v.getOnes > 0 || v.giveOnes > 0) ? 10 : totalOnes; // В фазе обмена достраиваем рамку до 10
-
-        for (let j = 1; j <= 10; j++) {
-            if (j <= activeOnes) {
-                deckHTML += `<div class="crystal-item ${v.baseColor}"></div>`;
-            } else if (j <= totalOnes) {
-                // Кубики, которые прилетели от соседа, красятся в ЕГО цвет
-                deckHTML += `<div class="crystal-item ${v.borrowColor}"></div>`;
-            } else if (j <= gridCeil) {
-                // Пустые контуры-ячейки резерва
-                deckHTML += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
-            } else {
-                deckHTML += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
-            }
-        }
-        deckHTML += `</div>`;
-    }
-
-    html += `<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div>`;
-    return html;
+// version: v4.1
+export function genHundreds(p, c, m, e) {
+    let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
+    for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
+    for (let i = 0; i < c; i++) h += '<div class="hundred-crystal crimson"></div>';
+    for (let i = 0; i < m; i++) h += '<div class="hundred-crystal mixed"></div>';
+    for (let i = 0; i < e; i++) h += '<div class="hundred-crystal empty"></div>';
+    return h ? h + '</div>' : '';
 }
 
 export function buildTruckHTML(t) {
-    const r = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${t.textColor};font-size:13px;margin-top:2px;">${t.label}</b></div>`;
-    const d = `<div class="crystal-deck ${t.themeClass || ''}" style="display:flex;flex-direction:column;gap:5px;${t.style || ''}">${drawGenericNumber(t.vector)}</div>`;
-    return t.isLeftRobot ? `<div class="crystal-truck">${r}${d}</div>` : `<div class="crystal-truck">${d}${r}</div>`;
+    let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '';
+    
+    // 1. Отрисовываем чистые полные десятки (монолитные столбцы)
+    for (let i = 0; i < t.tens; i++) {
+        dC += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+        dC += `</div>`;
+    }
+    
+    // 2. Отрисовываем хвостик единичных кубиков строго в отдельном столбце справа
+    if (t.ones > 0 || t.borrow !== 0) {
+        dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        
+        // Если borrow < 0 (робот отдал кубики), активных кубиков становится меньше.
+        // Если borrow > 0 (робот принял кубики), сетка расширяется вверх.
+        let activeOnes = t.borrow < 0 ? t.ones + t.borrow : t.ones;
+        let totalOnes = t.borrow > 0 ? t.ones + t.borrow : t.ones;
+        let gridCeil = t.borrow !== 0 ? 10 : totalOnes; // В фазе обмена достраиваем рамку до 10 кубиков
+
+        for (let j = 1; j <= 10; j++) {
+            if (j <= activeOnes) {
+                dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+            } else if (j <= totalOnes) {
+                // Кубики заимствования красятся в цвет соседа (инверсия)
+                dC += `<div class="crystal-item ${t.isOrange ? 'borrow-blue' : 'borrow-orange'}"></div>`;
+            } else if (j <= gridCeil) {
+                // Пустые контуры ячеек обмена
+                dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
+            } else {
+                dC += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+            }
+        }
+        dC += `</div>`;
+    }
+    
+    const r = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${t.color};font-size:13px;margin-top:2px;">${t.label}</b></div>`;
+    const d = `<div class="crystal-deck ${t.isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;${t.style || ''}">${hC}<div style="display:flex;gap:4px;align-items:flex-end;">${dC}</div></div>`;
+    return t.isOrange ? `<div class="crystal-truck">${d}${r}</div>` : `<div class="crystal-truck">${r}${d}</div>`;
+}
+
+export function buildMergedDeckHTML(d) {
+    let html = '';
+    for (let i = 0; i < d.tens1; i++) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) html += `<div class="crystal-item borrow-blue"></div>`;
+        html += `</div>`;
+    }
+    if (d.leftBorrowCount > 0) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= d.ones1 ? 'borrow-blue' : 'borrow-orange'}"></div>`;
+        html += `</div>`;
+    } else if (d.rightBorrowCount > 0) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= d.ones2 ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+        html += `</div>`;
+    }
+    for (let i = 0; i < d.tens2; i++) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) html += `<div class="crystal-item borrow-orange"></div>`;
+        html += `</div>`;
+    }
+    let rem = d.leftBorrowCount > 0 ? d.ones2 - d.leftBorrowCount : d.ones1 - d.rightBorrowCount;
+    if (rem > 0) {
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) html += (j <= rem) ? `<div class="crystal-item ${d.leftBorrowCount > 0 ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        html += `</div>`;
+    }
+    return html;
 }
