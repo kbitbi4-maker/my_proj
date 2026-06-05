@@ -1,12 +1,12 @@
-// version: v2.0
+// version: v2.1
 export const ADDITION_RULES = [
     {
         id: "add_p1",
         match: (ctx) => ctx.operation === '+' && ctx.phase === 1,
         config: (ctx) => ({
             layout: "split-trucks", sound: null, phase: 1,
-            leftTruck: { label: String(ctx.math.num1), color: "#0284c7", isOrange: false, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num1 / 100) : 0, tens: ctx.math.tens1, ones: ctx.math.ones1, isRightRound: false, isLeftRound: false },
-            rightTruck: { label: String(ctx.math.num2), color: "#ea580c", isOrange: true, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num2 / 100) : 0, tens: ctx.math.tens2, ones: ctx.math.ones2, isRightRound: false, isLeftRound: false },
+            leftTruck: { label: String(ctx.math.num1), color: "#0284c7", isOrange: false, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num1 / 100) : 0, tens: ctx.math.tens1, ones: ctx.math.ones1, isRightRound: false, isLeftRound: false, needOnes: 0 },
+            rightTruck: { label: String(ctx.math.num2), color: "#ea580c", isOrange: true, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num2 / 100) : 0, tens: ctx.math.tens2, ones: ctx.math.ones2, isRightRound: false, isLeftRound: false, needOnes: 0 },
             operatorHTML: `<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>`
         })
     },
@@ -19,15 +19,15 @@ export const ADDITION_RULES = [
             let lH = isH ? Math.floor(d.num1 / 100) : 0, rH = isH ? Math.floor(d.num2 / 100) : 0, lM = 0, rM = 0;
             const simPart = ctx.currentInput.split('=').at(0) || '';
             const p = simPart.split('+');
-            let uL = parseInt(p[0], 10) || d.num1, uR = parseInt(p[1], 10) || d.num2;
+            let uL = parseInt(p, 10) || d.num1, uR = parseInt(p, 10) || d.num2;
             
             let isLeftRound = ctx.simCorrect && (uL > d.num1);
             let isRightRound = ctx.simCorrect && (uR > d.num2);
 
             return {
                 layout: "split-trucks", style: glow, sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null), phase: 2,
-                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: d.tens1, ones: d.ones1, isLeftRound, isRightRound, needOnes: d.leftBorrowCount },
-                rightTruck: { label: String(uR), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.tens2, ones: d.ones2, isLeftRound, isRightRound, needOnes: d.rightBorrowCount },
+                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: d.tens1, ones: d.ones1, isLeftRound, isRightRound, needOnes: isLeftRound ? d.leftBorrowCount : d.rightBorrowCount },
+                rightTruck: { label: String(uR), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.tens2, ones: d.ones2, isLeftRound, isRightRound, needOnes: isLeftRound ? d.leftBorrowCount : d.rightBorrowCount },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
@@ -39,7 +39,7 @@ export const ADDITION_RULES = [
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             const simPart = ctx.currentInput.split('=').at(0) || '';
             const p = simPart.split('+');
-            let uL = parseInt(p[0], 10) || d.num1;
+            let uL = parseInt(p, 10) || d.num1;
             return {
                 layout: "merged-deck", isFullySolved: ctx.isFullySolved, sound: ctx.isWrongAnswer ? "fail" : (ctx.isFullySolved ? "win" : null), phase: 3,
                 leftTruck: { tens: d.tens1, ones: d.ones1, isLeftRound: uL > d.num1, isRightRound: uL <= d.num1, needOnes: uL > d.num1 ? d.leftBorrowCount : d.rightBorrowCount },
