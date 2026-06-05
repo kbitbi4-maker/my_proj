@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
