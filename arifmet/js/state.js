@@ -1,4 +1,4 @@
-// version: v1.7
+// version: v1.9
 import { evaluateExpr, parseAdditionData, parseSubtractionData, parseMultiplicationData } from './calculator.js';
 
 export const state = {
@@ -34,21 +34,23 @@ export const state = {
         if (idx === -1 || !this.examplesHistory[idx]) return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '', simCorrect: false, finCorrect: false };
         
         const item = this.examplesHistory[idx]; const parts = item.currentInput.split('=');
-        const simText = parts[0] || '', finText = parts[1] || '';
+        // ИСПРАВЛЕНО: simText — это строго введенное ребенком решение после первого знака равенства!
+        const simText = parts[1] || ''; 
+        const finText = parts[2] || '';
         const hasPressedEqual = item.currentInput.includes('=');
         const targetLength = String(item.correctValue).length;
-        const hasFinalAnswer = parts.length > 1 && finText.trim().length >= targetLength;
+        const hasFinalAnswer = parts.length > 2 && finText.trim().length >= targetLength;
 
         let simCorrect = false;
         if (hasPressedEqual) {
             simCorrect = (evaluateExpr(simText) === item.correctValue);
             if (item.exampleText.includes('×') && simCorrect && simText) {
-                if (simText.split('+').length !== parseInt(item.exampleText.split('×')[0], 10)) simCorrect = false;
+                if (simText.split('+').length !== parseInt(item.exampleText.split('×'), 10)) simCorrect = false;
             }
         }
         let finCorrect = hasFinalAnswer && (evaluateExpr(finText) === item.correctValue);
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
-        let isWrongAnswer = (hasPressedEqual && !simCorrect) || (parts.length > 1 && finText.trim().length >= targetLength && !finCorrect);
+        let isWrongAnswer = (hasPressedEqual && !simCorrect) || (parts.length > 2 && finText.trim().length >= targetLength && !finCorrect);
         let phase = hasFinalAnswer ? 3 : (hasPressedEqual ? 2 : 1);
 
         return { isFullySolved, isWrongAnswer, phase, simText, finText, simCorrect, finCorrect };
