@@ -3,7 +3,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Сложение и вычитание</title>
     <link rel="stylesheet" href="style_arifmet.css">
 </head>
@@ -12,23 +12,27 @@
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="version">arifmet_054</div>
+        <!-- Встраиваем кнопку карты ровно перед кнопкой переключения режимов -->
+        <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:1.6vh; margin-left:15px;">Карта 🗺️</button>
         <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
     </div>
 
-    <div class="main-container">
-        <div class="workspace-area">
-            <div class="left-area" id="examples-list">
-                <div id="history-placeholder" class="placeholder">Выберите режим в меню для начала игры</div>
+    <div class="main-container" style="display: flex; flex-direction: column; position: relative; height: calc(100vh - 9.6vh); width: 100%;">
+        <div style="display: flex; width: 100%; height: 68%;">
+            <div class="left-area" id="examples-list" style="width: 66.6%; height: 100%;">
+                <div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
             </div>
             
             <div class="right-area">
-                <div id="modes-menu-container">
+                <!-- Контейнер Выбора Режимов (Excel-таблица во всю ширину, изначально скрыт) -->
+                <div id="modes-menu-container" style="display: none;">
                     <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
                     <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
                     <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
                     <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
                 </div>
 
+                <!-- Контейнер Цифрового Нумпада -->
                 <div class="numpad" id="calc-numpad-container">
                     <button class="num-btn calc-btn" data-key="1">1</button>
                     <button class="num-btn calc-btn" data-key="2">2</button>
@@ -50,21 +54,19 @@
             </div>
         </div>
 
-        <div id="game-zone"></div>
+        <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; width: 100%; height: 32%; background-color: #f0fdf4; border-top: 2px dashed #4ade80; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); box-sizing: border-box; padding: 10px; overflow-y: auto;"></div>
     </div>
 
-    <!-- 🗺️ ОРИГИНАЛЬНОЕ МОДАЛЬНОЕ ОКНО КАРТЫ ПРОЕКТА -->
-    <div id="map-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; justify-content:center; align-items:center;">
-        <div style="background:#1e293b; padding:20px; border-radius:12px; width:90%; max-width:600px; display:flex; flex-direction:column; gap:10px; border:1px solid #334155;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b style="color:#38bdf8; font-family:monospace; font-size:16px;">Карта репозитория 🗺️</b>
-                <button id="close-map-btn" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-weight:bold;">X</button>
-            </div>
-            <textarea id="map-text-area" readonly style="width:100%; height:300px; background:#0f172a; color:#cbd5e1; font-family:monospace; font-size:11px; padding:10px; box-sizing:border-box; border:1px solid #334155; border-radius:6px; resize:none;"></textarea>
+    <!-- Модальное окно текстовой карты проекта -->
+    <div id="map-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; box-sizing:border-box; padding:20px;">
+        <div style="background:white; padding:20px; border-radius:12px; width:100%; max-width:650px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">🗺️ Текстовая карта проекта arifmet</b><button id="close-map-btn" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:6px; cursor:pointer;">Закрыть</button></div>
+            <p style="margin:0; font-size:13px; color:#64748b;">Скопируйте этот text целиком и вставьте ИИ-ассистенту для мгновенной синхронизации состояния проекта.</p>
+            <textarea id="map-text-area" readonly style="width:100%; height:320px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; resize:none; background:#f8fafc; box-sizing:border-box;"></textarea>
             <div style="display:flex; gap:10px;">
-                <button id="copy-map-btn" style="flex:1; background:#3b82f6; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Копировать карту 📋</button>
-                <!-- ИСПРАВЛЕНО: Добавлена штатная кнопка перехода на страницу синхронизации для ИИ -->
-                <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
+                <button id="copy-map-btn" style="flex:1; background:#3f51b5; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Копировать карту 📋</button>
+                <!-- Добавлена оригинальная кнопка для безопасного перехода на страницу синхронизации для ИИ -->
+                <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
             </div>
         </div>
     </div>
