@@ -1,4 +1,4 @@
-// version: v2.3
+// version: v2.5
 export const ADDITION_RULES = [
     {
         id: "add_p1",
@@ -20,14 +20,15 @@ export const ADDITION_RULES = [
             const simPart = ctx.currentInput.split('=').at(0) || '';
             const p = simPart.split('+');
             let uL = parseInt(p, 10) || d.num1;
+            let uR = parseInt(p, 10) || d.num2;
             
             let isLeftRound = ctx.simCorrect && (uL > d.num1);
             let isRightRound = ctx.simCorrect && (uL <= d.num1);
 
             return {
                 layout: "split-trucks", style: glow, sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null), phase: 2,
-                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: d.leftTens, ones: d.leftOnes, borrow: isLeftRound ? d.leftBorrowCount : -d.rightBorrowCount },
-                rightTruck: { label: String(ctx.currentInput.split('=').at(0).split('+')[1] || d.num2), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.rightTens, ones: d.rightOnes, borrow: isRightRound ? d.rightBorrowCount : -d.leftBorrowCount },
+                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: d.tens1, ones: d.ones1, borrow: isLeftRound ? d.leftBorrowCount : -d.rightBorrowCount },
+                rightTruck: { label: String(uR), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.tens2, ones: d.ones2, borrow: isRightRound ? d.rightBorrowCount : -d.leftBorrowCount },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
