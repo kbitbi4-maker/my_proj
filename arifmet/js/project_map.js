@@ -1,4 +1,4 @@
-// version: v3.6
+// version: v3.7
 
 if (typeof window !== 'undefined') {
     import('./state.js').then(module => {
@@ -37,7 +37,8 @@ function escapeHTML(text) {
     return text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/<\/script>/gi, '&lt;/script&gt;'); // ИСПРАВЛЕНО: Безопасно нейтрализуем закрывающие скрипты, чтобы они не ломали textarea
 }
 
 async function generateFullStaticHTMLBundle() {
