@@ -1,4 +1,4 @@
-// version: v2.2
+// version: v2.3
 export function genHundreds(p, c, m, e) {
     let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
     for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
@@ -10,23 +10,40 @@ export function genHundreds(p, c, m, e) {
 
 export function generateCrystalColumnsHTML(tens, ones, borrowCount, isOrange = false) {
     let html = '';
-    for (let i = 0; i < tens; i++) {
+    // Рассчитываем физические столбики на основе изначальной массы груза
+    let baseCubes = tens * 10 + ones;
+    let activeCubes = borrowCount < 0 ? baseCubes + borrowCount : baseCubes;
+    let totalCubes = borrowCount > 0 ? baseCubes + borrowCount : baseCubes;
+    
+    let fullCols = Math.floor(totalCubes / 10);
+    let remOnes = totalCubes % 10;
+    let globalCounter = 0;
+
+    for (let i = 0; i < fullCols; i++) {
         html += `<div class="crystal-column">`;
-        let isLastColumn = (i === tens - 1) && (borrowCount > 0);
+        let isLastColumn = (i === fullCols - 1) && (borrowCount > 0);
         for (let j = 1; j <= 10; j++) {
-            let itemClass = isOrange ? 'borrow-orange' : 'borrow-blue';
-            if (isLastColumn && j > (10 - borrowCount)) {
-                itemClass = isOrange ? 'borrow-blue' : 'borrow-orange';
+            globalCounter++;
+            if (globalCounter <= activeCubes) {
+                let itemClass = (isLastColumn && j > (10 - borrowCount)) ? (isOrange ? 'borrow-blue' : 'borrow-orange') : (isOrange ? 'borrow-orange' : 'borrow-blue');
+                html += `<div class="crystal-item ${itemClass}"></div>`;
+            } else {
+                // Если робот отдал кубики, заменяем их на пустые белые контуры ячеек
+                html += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
             }
-            html += `<div class="crystal-item ${itemClass}"></div>`;
         }
         html += `</div>`;
     }
-    if (ones > 0) {
+    if (remOnes > 0) {
         html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
         for (let j = 1; j <= 10; j++) {
-            if (j <= ones) {
-                html += `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+            if (j <= remOnes) {
+                globalCounter++;
+                if (globalCounter <= activeCubes) {
+                    html += `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+                } else {
+                    html += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
+                }
             } else {
                 html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
             }
