@@ -1,5 +1,11 @@
-// version: v3.2
-import { state } from './state.js';
+// version: v3.3
+
+// Динамический импорт state только для браузера, чтобы не ломать серверный запуск Node.js
+if (typeof window !== 'undefined') {
+    import('./state.js').then(module => {
+        window.gameStateRef = module.state;
+    });
+}
 
 export function openProjectMap() {
     const modal = document.getElementById('map-modal');
@@ -25,7 +31,6 @@ export function copyProjectMap() {
     alert('Готовый статический HTML-код для ai_sync.html скопирован! 📋');
 }
 
-// Функция для безопасного отображения HTML-кода в виде текста
 function escapeHTML(text) {
     return text
         .replace(/&/g, '&amp;')
@@ -57,7 +62,6 @@ async function generateFullStaticHTMLBundle() {
                 if (fs.existsSync(fullPath)) {
                     const t = fs.readFileSync(fullPath, 'utf-8');
                     manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-                    // ИСПРАВЛЕНО: Экранируем текст файла перед вставкой в сборку
                     sources += `=== FILE_START: "${cleanPath}" ===\n${escapeHTML(t)}\n=== FILE_END: "${cleanPath}" ===\n\n`;
                 } else {
                     manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
@@ -74,7 +78,6 @@ async function generateFullStaticHTMLBundle() {
                 const t = await r.text();
                 const cleanPath = p.replace('./', '');
                 manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-                // ИСПРАВЛЕНО: Экранируем текст файла перед вставкой в сборку
                 sources += `=== FILE_START: "${cleanPath}" ===\n${escapeHTML(t)}\n=== FILE_END: "${cleanPath}" ===\n\n`;
             } catch {
                 const cleanPath = p.replace('./', '');
