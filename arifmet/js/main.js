@@ -1,12 +1,16 @@
-// version: v1.2
+// version: v1.3
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
-import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
+// Добавили импорт функции скачивания PDF: downloadProjectMapPDF
+import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
 
 // Слушатели оригинального модального окна карты
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
 document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
+
+// НАЗНАЧАЕМ СЛУШАТЕЛЬ НА НАЖАТИЕ НОВОЙ КНОПКИ СКАЧИВАНИЯ PDF
+document.getElementById('download-pdf-btn')?.addEventListener('click', downloadProjectMapPDF);
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
