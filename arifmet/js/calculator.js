@@ -1,4 +1,4 @@
-// version: v1.8
+// version: v1.9
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -6,9 +6,7 @@ export function evaluateExpr(str) {
         let p = cleaned.split('*');
         return p.length === 2 ? parseInt(p[0], 10) * parseInt(p[1], 10) : null;
     }
-    if (cleaned.includes('+')) {
-        return cleaned.split('+').reduce((sum, p) => sum + (parseInt(p, 10) || 0), 0);
-    }
+    if (cleaned.includes('+')) return cleaned.split('+').reduce((sum, p) => sum + (parseInt(p, 10) || 0), 0);
     if (cleaned.includes('-')) {
         let p = cleaned.split('-');
         return p.length === 2 ? parseInt(p[0], 10) - parseInt(p[1], 10) : null;
@@ -46,8 +44,7 @@ export function parseSubtractionData(exampleText, report) {
     let finalAdded = (report && report.simText && report.simText.includes('-')) ? parseInt(report.simText.split('-')[1], 10) - num2 : 0;
     return { 
         num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, 
-        finalAddedAmount: finalAdded < 0 ? 0 : finalAdded,
-        leftLabel: "Л", rightLabel: "П", leftH: 0, rightEmptyH: 0, deckStyle: "", rightDeckStyle: ""
+        finalAddedAmount: finalAdded < 0 ? 0 : finalAdded, leftLabel: "Л", rightLabel: "П"
     };
 }
 
