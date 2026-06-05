@@ -3,8 +3,8 @@ import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
 
-// Подключаем оригинальные функции модального окна карты
-document.querySelector('.version')?.addEventListener('click', openProjectMap);
+// Слушатели оригинального модального окна карты
+document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
 document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
 
