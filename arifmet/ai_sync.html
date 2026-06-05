@@ -1,4 +1,4 @@
-<!-- version: v1.0 -->
+<!-- version: v1.1 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -30,9 +30,11 @@
             out += `=== GENERATED: ${new Date().toISOString()} ===\n`;
             out += `==================================================\n\n[AI RECONSTRUCTION MANIFEST]\n`;
             
+            const tStamp = Date.now(); // Уникальный штамп времени для обхода кэша
             for (const p of FILES) {
                 try {
-                    const r = await fetch(p); if (!r.ok) continue;
+                    // ИСПРАВЛЕНО: добавляем ?cb= штамп и no-store, чтобы fetch читал файлы с диска/сервера, а не из кэша
+                    const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     const t = await r.text();
                     const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
                     const v = m ? m[1].replace(/-->/g, '').trim() : 'unknown';
@@ -43,7 +45,7 @@
 
             for (const p of FILES) {
                 try {
-                    const r = await fetch(p); if (!r.ok) continue;
+                    const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     out += `=== FILE_START: "${p}" ===\n${await r.text()}\n=== FILE_END: "${p}" ===\n\n`;
                 } catch { out += `=== FILE_START: "${p}" ===\n// NOT_FOUND\n=== FILE_END: "${p}" ===\n\n`; }
             }
@@ -54,4 +56,3 @@
     </script>
 </body>
 </html>
-
