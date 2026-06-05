@@ -1,4 +1,4 @@
-// version: v1.0
+// version: v1.1
 const FILE_PATHS = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
@@ -12,7 +12,6 @@ export async function generateDynamicMap() {
     let report = `=== DYNAMIC PROJECT ARIFMET MAP ===\nGEN_DATE: ${new Date().toISOString()}\n\n`;
     const filesData = {};
 
-    // 1. Асинхронно сканируем каждый файл
     for (const path of FILE_PATHS) {
         try {
             const res = await fetch(path);
@@ -20,8 +19,9 @@ export async function generateDynamicMap() {
             const text = await res.text();
             
             const lines = text.split('\n').length;
-            const bytes = new Blob([text]).size; // Честный вес файла в байтах
-            const verMatch = text.match(/(?:\/\/|\/\*)\s*version:\s*([^\s\*\/]+)/i);
+            const bytes = new Blob([text]).size;
+            // ИСПРАВЛЕНО: Добавлена поддержка HTML-комментариев (<!--) для считывания версии индекса
+            const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/-->]+)/i);
             const version = verMatch ? verMatch[1] : 'unknown';
 
             filesData[path] = { version, lines, bytes };
@@ -30,7 +30,6 @@ export async function generateDynamicMap() {
         }
     }
 
-    // 2. Строим красивую визуальную структуру папок и подпапок
     report += `📁 arifmet/\n`;
     report += `├── 📄 index_arifmet.html [VER: ${filesData['index_arifmet.html'].version}] (${filesData['index_arifmet.html'].lines} lines, ${filesData['index_arifmet.html'].bytes} B)\n`;
     report += `├── 🎨 style_arifmet.css [VER: ${filesData['style_arifmet.css'].version}] (${filesData['style_arifmet.css'].lines} lines, ${filesData['style_arifmet.css'].bytes} B)\n`;
@@ -51,4 +50,3 @@ export async function generateDynamicMap() {
 
     return report;
 }
-
