@@ -1,4 +1,4 @@
-// version: v1.7 - Fixed Phase 3 Remainder Logic for Accurate Ones/Tens Display
+// version: v1.8 - Fixed Absolute Global Counter Increments in Column Generation
 import { state } from './state.js'; 
 import { GameCanvas } from './game_canvas.js'; 
 import { parseSubtractionData } from './calculator.js';
@@ -19,16 +19,15 @@ export function renderSubtractionHundredsVisual() {
  if (report.simText.includes('-')) {
  const partsArr = report.simText.split('-');
  const leftNum = parseInt(partsArr, 10);
- const rightNum = parseInt(partsArr, 10);
+ const rightNum = parseInt(partsArr, 11);
  if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
- if (!isNaN(rightNum)) { userSubH = h2 - Math.floor(rightNum / 100); curH2 = Math.floor(rightNum / 100); }
+ if (!isNaN(partsArr[1])) { const rVal = parseInt(partsArr[1], 10); userSubH = h2 - Math.floor(rVal / 100); curH2 = Math.floor(rVal / 100); }
  }
  const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
  const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, userSubH, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
  const d2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount))}</div>`;
  html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;">${rL}${d1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${d2}${rR}</div>`;
  } else {
- // ИСПРАВЛЕНО: Рассчитываем точный чистый остаток ответа (десятки и единицы) напрямую из математической разницы чисел примерa
  let finalRemainder = (data.num1 - data.num2) % 100;
  let remTens = Math.floor(finalRemainder / 10);
  let remOnes = finalRemainder % 10;
@@ -55,5 +54,52 @@ function buildSubHLayout(p, c, e, sub) {
  return h + `</div><div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div>`;
 }
 
-function genSubCargo(t, o, a, s) { let base = (t * 10) + o, total = base + a, active = total - s, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
-function genSubEmpty(e, a) { let total = e + a, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
+function genSubCargo(t, o, a, s) {
+ let base = (t * 10) + o, total = base + a, active = total - s, full = Math.floor(total / 10), rem = total % 10, html = '';
+ for (let i = 0; i < full; i++) {
+ html += `<div class="crystal-column">`;
+ for (let j = 1; j <= 10; j++) {
+ let currentId = (i * 10) + j;
+ html += currentId <= active ? `<div class="${currentId <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`;
+ }
+ html += `</div>`;
+ }
+ if (rem > 0) {
+ html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+ for (let j = 1; j <= 10; j++) {
+ if (j <= rem) {
+ let currentId = (full * 10) + j;
+ html += currentId <= active ? `<div class="${currentId <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`;
+ } else {
+ html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+ }
+ }
+ html += `</div>`;
+ }
+ return html;
+}
+
+function genSubEmpty(e, a) {
+ let total = e + a, full = Math.floor(total / 10), rem = total % 10, html = '';
+ for (let i = 0; i < full; i++) {
+ html += `<div class="crystal-column">`;
+ for (let j = 1; j <= 10; j++) {
+ let currentId = (i * 10) + j;
+ html += currentId <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`;
+ }
+ html += `</div>`;
+ }
+ if (rem > 0) {
+ html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+ for (let j = 1; j <= 10; j++) {
+ if (j <= rem) {
+ let currentId = (full * 10) + j;
+ html += currentId <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`;
+ } else {
+ html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+ }
+ }
+ html += `</div>`;
+ }
+ return html;
+}
