@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 export function genCols(count, isOrange, borrow) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -32,9 +32,8 @@ export function genHundreds(p, c, m, e) {
 
 export function buildTruckHTML(t) {
     let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '', globalCounter = 0;
-    // Вычисляем общую массу кубиков с учетом заимствования
     let baseCubes = (t.tens * 10) + t.ones;
-    let activeCubes = t.borrow < 0 ? baseCubes + t.borrow : baseCubes; // Если borrow отрицательный, уменьшаем кубики
+    let activeCubes = t.borrow < 0 ? baseCubes + t.borrow : baseCubes;
     let totalCubes = baseCubes;
     
     let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10;
@@ -44,9 +43,9 @@ export function buildTruckHTML(t) {
         for (let j = 1; j <= 10; j++) {
             globalCounter++;
             if (globalCounter <= activeCubes) {
+                // Динамическая раскраска заимствованных элементов в обе стороны
                 dC += `<div class="crystal-item ${(isLast && j > (10 - t.borrow)) ? (t.isOrange ? 'borrow-blue' : 'borrow-orange') : (t.isOrange ? 'borrow-orange' : 'borrow-blue')}"></div>`;
             } else {
-                // Превращаем отданные кристаллы в пустые белые контуры ячеек!
                 dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
             }
         }
