@@ -1,8 +1,8 @@
-// version: v1.2
+// version: v1.3
 import { GameCanvas } from './game_canvas.js';
-import { ADDITION_RULES } from './rules_addition.js';
-import { SUBTRACTION_RULES } from './rules_subtraction.js';
-import { MULTIPLICATION_RULES } from './rules_multiplication.js';
+import { ADDITION_RULES } from './rules/rules_addition.js';
+import { SUBTRACTION_RULES } from './rules/rules_subtraction.js';
+import { MULTIPLICATION_RULES } from './rules/rules_multiplication.js';
 
 export const VisualEngine = {
     render(ctx) {
