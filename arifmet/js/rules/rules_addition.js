@@ -1,4 +1,4 @@
-// version: v1.7
+// version: v1.8
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
@@ -19,7 +19,7 @@ export const ADDITION_RULES = [
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             const glow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
             let lH = isH ? Math.floor(d.num1 / 100) : 0, rH = isH ? Math.floor(d.num2 / 100) : 0, lM = 0, rM = 0;
-            const simPart = ctx.currentInput.split('=')[0] || '';
+            const simPart = ctx.currentInput.split('=').at(0) || '';
             if (isH && simPart.includes('+')) {
                 const parts = simPart.split('+');
                 const n1 = parseInt(parts[0], 10), n2 = parseInt(parts[1], 10);
@@ -30,7 +30,8 @@ export const ADDITION_RULES = [
             return {
                 layout: "split-trucks", style: glow, sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null),
                 leftTruck: { label: ctx.simCorrect ? String(uL) : d.leftLabel, color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: Math.floor(uL / 10) % 10, ones: uL % 10, borrow: ctx.simCorrect ? d.leftBorrowCount : 0 },
-                rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: 0 },
+                // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Правый грузовик теперь передает свой изначальный tens2 и ones2, но указывает borrow левого робота, чтобы у него затерлись отданные кубики!
+                rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.tens2, ones: d.ones2, borrow: ctx.simCorrect ? -d.leftBorrowCount : 0 },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
