@@ -1,1 +1,38 @@
+name: Auto Sync Project Map for AI
+
+on:
+  push:
+    branches:
+      - main  # Скрипт будет запускаться автоматически при каждом push в ветку main
+
+permissions:
+  contents: write  # Разрешаем роботу изменять файлы в репозитории
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Скачиваем актуальный код репозитория
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Устанавливаем Node.js окружение
+    - name: Set up Node.js
+      uses: actions/checkout@v4
+      with:
+        node-version: '20'
+
+    # 3. Запускаем ваш генератор карты проекта
+    - name: Run project mapper
+      run: node js/project_map.js
+
+    # 4. Проверяем, изменился ли файл ai_sync.html, и сохраняем изменения
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git add ai_sync.html
+        git diff-index --quiet HEAD || git commit -m "chore: auto-update project map for AI sync [skip ci]"
+        git push
 
