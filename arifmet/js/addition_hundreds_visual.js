@@ -1,4 +1,4 @@
-// version: v2.1 - Re-engineered Phase 3 Combined Cargo Layout for Merged Tens & Ones
+// version: v2.2 - Fixed Native and Borrowed Crystal Color Assignment and Global ID Check
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData } from './calculator.js';
@@ -11,8 +11,8 @@ export function renderAdditionHundredsVisual() {
  let html = '', h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100);
  
  if (report.phase === 1) {
- const content1 = buildHLayout(h1, 0, 0, genCols(data.tens1, false, 0, (data.tens1 * 10)) + genOnes(data.ones1, false, 0, 0), false);
- const content2 = buildHLayout(0, h2, 0, genCols(data.tens2, true, 0, (data.tens2 * 10)) + genOnes(data.ones2, true, 0, 0), true);
+ const content1 = buildHLayout(h1, 0, 0, genCols(data.tens1, false, 0, (data.tens1 * 10)) + genOnes(data.ones1, false, 0, (data.tens1 * 10 + data.ones1)), false);
+ const content2 = buildHLayout(0, h2, 0, genCols(data.tens2, true, 0, (data.tens2 * 10)) + genOnes(data.ones2, true, 0, (data.tens2 * 10 + data.ones2)), true);
  html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${content1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>${content2}</div>`;
  } 
  else if (report.phase === 2) {
@@ -51,7 +51,6 @@ export function renderAdditionHundredsVisual() {
  const remTensOrange = Math.max(0, Math.floor(remSum / 10) - remTensPurple);
  deckHTML = genCols(remTensPurple, false, 0, 999) + genCols(remTensOrange, true, 0, 0) + genOnes(remSum % 10, true, 0, 0);
  } else {
- // Полная синхронизация и объединение колонок по аналогии с режимом Десятки
  let blueTotal = data.tens1 * 10 + data.ones1;
  let orangeTotal = data.tens2 * 10 + data.ones2;
  let finalTotal = blueTotal + orangeTotal;
@@ -126,10 +125,13 @@ function genOnes(c, o, b, baseCount) {
  let html = `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
  for (let j = 1; j <= 10; j++) {
  if (j <= c) {
- let currentGlobalId = j;
- let isBorrowed = false;
- if (!o && currentGlobalId > (baseCount % 10) && baseCount > 0) isBorrowed = true;
- if (o && currentGlobalId > (baseCount % 10) && baseCount > 0) isBorrowed = true;
+ // Рассчитываем точную сквозную позицию кристалла единицы
+ let currentGlobalId = (Math.floor(baseCount / 10) * 10) + (baseCount % 10 === 0 && baseCount > 0 ? -10 : 0) + j;
+ if (baseCount % 10 === 0) {
+     // Если у робота ровные десятки, то любая добавленная единица — заемная
+     currentGlobalId = baseCount + j;
+ }
+ let isBorrowed = currentGlobalId > baseCount;
  html += `<div class="crystal-item ${isBorrowed ? (o ? 'borrow-blue' : 'borrow-orange') : (o ? 'borrow-orange' : 'borrow-blue')}"></div>`;
  } else {
  html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
