@@ -1,4 +1,4 @@
-// version: v1.0
+// version: v1.1
 
 export const VISUAL_RULES = {
     // === ОБЪЕДИНЕННЫЕ ПРАВИЛА СЛОЖЕНИЯ (ДЕСЯТКИ И СОТНИ) ===
@@ -42,14 +42,14 @@ export const VISUAL_RULES = {
                 const borderGlow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
                 const rightGlow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '';
                 
-                // Вычисляем динамическое изменение сотен для фазы 2 (если пользователь их перенес)
                 let leftH = isH ? Math.floor(data.num1 / 100) : 0;
                 let rightH = isH ? Math.floor(data.num2 / 100) : 0;
                 let leftMixedH = 0;
                 let rightMixedH = 0;
 
                 if (isH && ctx.currentInput.includes('+')) {
-                    const parts = ctx.currentInput.split('=')[0].split('+');
+                    const simPart = ctx.currentInput.split('=')[0] || '';
+                    const parts = simPart.split('+');
                     const leftNum = parseInt(parts[0], 10);
                     const rightNum = parseInt(parts[1], 10);
                     if (!isNaN(leftNum) && !isNaN(rightNum)) {
@@ -102,7 +102,6 @@ export const VISUAL_RULES = {
                 let finalMixedH = 0;
                 const tailSum = (data.tens1 * 10 + data.ones1) + (data.tens2 * 10 + data.ones2);
                 
-                // Переход хвоста через сотню (только для режима сотен)
                 if (isH && tailSum >= 100) {
                     finalMixedH = 1;
                     const remSum = tailSum - 100;
@@ -131,7 +130,6 @@ export const VISUAL_RULES = {
     ]
 };
 
-// --- Вспомогательные генераторы HTML, очищенные от if-else логики экранов ---
 function genColsHTML(count, isOrange, borrow) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -153,4 +151,3 @@ function genOnesHTML(count, isOrange) {
     }
     return html + `</div>`;
 }
-
