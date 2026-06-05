@@ -1,65 +1,1246 @@
-<!-- version: v2.3 -->
+<!-- ВЕРСИЯ: СТАТИЧЕСКИЙ МОНОЛИТ -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AI Sync Panel 🤖</title>
+    <title>AI Sync Panel 🤖 (Static)</title>
     <style>
         body { margin: 0; padding: 20px; background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 13px; line-height: 1.5; }
-        .status { color: #f59e0b; margin-bottom: 20px; font-weight: bold; }
         pre { white-space: pre-wrap; word-break: break-all; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; color: #cbd5e1; }
     </style>
 </head>
 <body>
-    <div id="status" class="status">⏳ Сборка репозитория для ИИ... Пожалуйста, подождите.</div>
-    <pre id="output">Сканирование файлов проекта...</pre>
+    <div style="color: #22c55e; margin-bottom: 20px; font-weight: bold;">✅ Статическая сборка завершена! Страница мгновенно готова для чтения ИИ.</div>
+    <pre>
+==================================================
+=== ARIFMET FULL REPOSITORY SOURCE BUNDLE (STATIC) ===
+==================================================
 
-    <script type="module">
-        const FILES = [
-            './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
-            './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
-            './js/menu.js', './js/numpad.js', './js/tens.js', './js/mix.js', './js/multiplication.js',
-            './js/addition_visual.js', './js/subtraction_visual.js', './js/project_map.js',
-            './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js', './ai_sync.html'
-        ];
+[AI RECONSTRUCTION MANIFEST]
+- PATH: "index_arifmet.html" | SIZE: 5697 chars
+- PATH: "style_arifmet.css" | SIZE: 8085 chars
+- PATH: "js/main.js" | SIZE: 1060 chars
+- PATH: "js/state.js" | SIZE: 2929 chars
+- PATH: "js/calculator.js" | SIZE: 3740 chars
+- PATH: "js/feedback.js" | SIZE: 2620 chars
+- PATH: "js/game_canvas.js" | SIZE: 4331 chars
+- PATH: "js/view_dispatcher.js" | SIZE: 1774 chars
+- PATH: "js/menu.js" | SIZE: 1953 chars
+- PATH: "js/numpad.js" | SIZE: 3348 chars
+- PATH: "js/tens.js" | SIZE: 3519 chars
+- PATH: "js/mix.js" | SIZE: 706 chars
+- PATH: "js/multiplication.js" | SIZE: 3654 chars
+- PATH: "js/addition_visual.js" | SIZE: 5573 chars
+- PATH: "js/subtraction_visual.js" | SIZE: 7081 chars
+- PATH: "js/project_map.js" | SIZE: 3079 chars
+- PATH: "js/addition_hundreds_visual.js" | SIZE: 6982 chars
+- PATH: "js/subtraction_hundreds_visual.js" | SIZE: 6657 chars
 
-        async function buildBundle() {
-            let out = `==================================================\n`;
-            out += `=== ARIFMET FULL REPOSITORY SOURCE BUNDLE ===\n`;
-            out += `=== GENERATED: ${new Date().toISOString()} ===\n`;
-            out += `==================================================\n\n[AI RECONSTRUCTION MANIFEST]\n`;
+=== FILE_START: "index_arifmet.html" ===
+<!-- version: v1.2 -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сложение и вычитание</title>
+    <link rel="stylesheet" href="style_arifmet.css">
+</head>
+<body>
+
+    <div class="header">
+        <a href="../index.html" title="Главное меню">←</a>
+        <div class="version">arifmet_054</div>
+        <!-- Встраиваем кнопку карты ровно перед кнопкой переключения режимов -->
+        <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:1.6vh; margin-left:15px;">Карта 🗺️</button>
+        <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
+    </div>
+
+    <div class="main-container" style="display: flex; flex-direction: column; position: relative; height: calc(100vh - 9.6vh); width: 100%;">
+        <div style="display: flex; width: 100%; height: 68%;">
+            <div class="left-area" id="examples-list" style="width: 66.6%; height: 100%;">
+                <div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
+            </div>
             
-            const tStamp = Date.now();
-            for (const p of FILES) {
-                try {
-                    const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
-                    const t = await r.text();
-                    const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-                    // Безопасное извлечение индекса совпадения без вызова методов у null
-                    const ver = m ? m[1].replace(/-->/g, '').trim() : 'unknown';
-                    const cleanPath = p.replace('./', '');
-                    out += `- PATH: "${cleanPath}" | VER: ${ver} | SIZE: ${t.length} chars\n`;
-                } catch (e) { 
-                    const cleanPath = p.replace('./', '');
-                    out += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`; 
-                }
-            }
-            out += `\n=== END OF MANIFEST ===\n\n`;
+            <div class="right-area">
+                <!-- Контейнер Выбора Режимов (Excel-таблица во всю ширину, изначально скрыт) -->
+                <div id="modes-menu-container" style="display: none;">
+                    <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
+                    <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
+                    <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
+                    <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
+                </div>
 
-            for (const p of FILES) {
-                try {
-                    const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
-                    const cleanPath = p.replace('./', '');
-                    out += `=== FILE_START: "${cleanPath}" ===\n${await r.text()}\n=== FILE_END: "${cleanPath}" ===\n\n`;
-                } catch { 
-                    const cleanPath = p.replace('./', '');
-                    out += `=== FILE_START: "${cleanPath}" ===\n// NOT_FOUND\n=== FILE_END: "${cleanPath}" ===\n\n`; 
-                }
-            }
-            document.getElementById('status').innerText = '✅ Сборка завершена! Страница готова для чтения ИИ.';
-            document.getElementById('output').innerText = out;
+                <!-- Контейнер Цифрового Нумпада -->
+                <div class="numpad" id="calc-numpad-container">
+                    <button class="num-btn calc-btn" data-key="1">1</button>
+                    <button class="num-btn calc-btn" data-key="2">2</button>
+                    <button class="num-btn calc-btn" data-key="3">3</button>
+                    <button class="num-btn calc-btn" data-key="4">4</button>
+                    <button class="num-btn calc-btn" data-key="5">5</button>
+                    <button class="num-btn calc-btn" data-key="6">6</button>
+                    <button class="num-btn calc-btn" data-key="7">7</button>
+                    <button class="num-btn calc-btn" data-key="8">8</button>
+                    <button class="num-btn calc-btn" data-key="9">9</button>
+                    <button class="num-btn calc-btn clear" data-key="C">C</button>
+                    <button class="num-btn calc-btn" data-key="0">0</button>
+                    <button class="num-btn calc-btn clear" data-key="D">←</button>
+                    <button class="num-btn calc-btn op" data-key="+">+</button>
+                    <button class="num-btn calc-btn op" data-key="-">-</button>
+                    <button class="num-btn calc-btn op" data-key="=">=</button>
+                    <button class="num-btn calc-btn next" id="next-example-btn">Следующий пример</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; width: 100%; height: 32%; background-color: #f0fdf4; border-top: 2px dashed #4ade80; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); box-sizing: border-box; padding: 10px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Модальное окно текстовой карты проекта -->
+    <div id="map-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; box-sizing:border-box; padding:20px;">
+        <div style="background:white; padding:20px; border-radius:12px; width:100%; max-width:650px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">🗺️ Текстовая карта проекта arifmet</b><button id="close-map-btn" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:6px; cursor:pointer;">Закрыть</button></div>
+            <p style="margin:0; font-size:13px; color:#64748b;">Скопируйте этот text целиком и вставьте ИИ-ассистенту для мгновенной синхронизации состояния проекта.</p>
+            <textarea id="map-text-area" readonly style="width:100%; height:320px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; resize:none; background:#f8fafc; box-sizing:border-box;"></textarea>
+            <div style="display:flex; gap:10px;">
+                <button id="copy-map-btn" style="flex:1; background:#3f51b5; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Копировать карту 📋</button>
+                <!-- Добавлена оригинальная кнопка для безопасного перехода на страницу синхронизации для ИИ -->
+                <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
+
+=== FILE_END: "index_arifmet.html" ===
+
+=== FILE_START: "style_arifmet.css" ===
+/* version: v1.5 */
+html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
+body { display: flex; flex-direction: column; background: #f0f2f5; }
+.header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+.header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding-left: 15px; }
+.version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; margin-left: auto; margin-right: 20px; }
+.header-menu-btn { width: 33.4%; min-width: 300px; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
+.header-menu-btn:hover { background: #1a237e; }
+.main-container { display: flex; flex-direction: column; height: calc(100vh - 9.6vh); width: 100%; }
+.left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+.right-area { width: 33.4%; min-width: 300px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
+#modes-menu-container { display: flex; flex-direction: column; width: 100%; height: auto; margin: 0; padding: 0; }
+#modes-menu-container .mode-btn { width: 100%; height: 9.6vh; min-height: 60px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
+#modes-menu-container .mode-btn:hover { filter: brightness(1.1); }
+#modes-menu-container .mode-btn[data-mode="tens"] { background: #86efac; color: #064e3b; }
+#modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
+#modes-menu-container .mode-btn[data-mode="mix"] { background: #fda4af; color: #4c0519; }
+#modes-menu-container .mode-btn[data-mode="hundreds"] { background: #93c5fd; color: #1e3a8a; }
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
+.num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 55px; }
+.num-btn:active { background: #ddd; transform: scale(0.95); }
+.num-btn.clear { background: #ff4b2b; color: white; }
+.num-btn.op { background: #ff9800; color: white; }
+.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 12px 0; font-size: 2.2vh; }
+.example-line { font-size: 3.2vh; font-weight: bold; color: #333; margin-bottom: 15px; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 5px; border-radius: 8px; cursor: pointer; }
+.example-line:hover { background: #f0f2f5; }
+.example-line.active { background: #e3f2fd; border: 2px dashed #2196f3; }
+.block { padding: 3px 6px; border-radius: 6px; display: inline-block; background: #e4e7eb; }
+.block-correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.block-incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.monster-happy { animation: monsterJump 0.5s ease infinite alternate; }
+.monster-sad { animation: monsterShaking 0.4s ease-in-out infinite alternate; }
+.tears-animation { animation: tearDrop 0.6s ease-in infinite; display: inline-block; }
+.crystal-truck { display: flex; align-items: center; position: relative; }
+.crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 6px; min-height: 95px; align-items: flex-end; box-sizing: border-box; }
+.crystal-column { display: flex; flex-direction: column-reverse; gap: 1px; }
+.crystal-item { width: 12px; height: 7px; background: #38bdf8; border: 1px solid #0284c7; border-radius: 1px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
+.crystal-column .crystal-item:nth-last-child(5) { margin-bottom: 4px; }
+.orange-theme .crystal-item { background: #fb923c; border: 1px solid #ea580c; }
+.glow-tens .crystal-column { filter: drop-shadow(0 0 6px #4ade80); border-color: #22c55e; }
+.glow-ones .crystal-item { filter: drop-shadow(0 0 4px #facc15); }
+.win-layout .crystal-deck:first-of-type { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+.win-layout .orange-theme.crystal-deck { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: none; }
+.borrow-orange { background: #fb923c !important; border-color: #ea580c !important; }
+.borrow-blue { background: #38bdf8 !important; border-color: #0284c7 !important; }
+.sub-scene-container { display: flex; justify-content: center; width: 100%; align-items: center; padding: 0 15px; box-sizing: border-box; height: 100%; gap: 20px; }
+.sub-robot-label { font-size: 13px; margin-top: 1px; }
+.sub-drive-away { animation: robotDriveAway 1.2s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards; }
+.sub-win-text { color: #22c55e; font-size: 14px; margin-top: 8px; }
+.add-robot-left-drive { animation: robotDriveRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+.add-robot-right-drive { animation: robotDriveLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+.hundred-crystal { width: 12px; height: 100px; background: linear-gradient(180deg, #f3e8ff 0%, #c084fc 40%, #7e22ce 100%); border: 1px solid #000; box-shadow: 0 0 0 1px #000; display: inline-block; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); animation: crystalGlow 2.5s ease-in-out infinite alternate; border-radius: 40% 40% 40% 40% / 12% 12% 12% 12%; }
+.hundred-crystal.crimson { background: linear-gradient(180deg, #ffe4e6 0%, #fb7185 40%, #be123c 100%); }
+.hundred-crystal.mixed { background: linear-gradient(180deg, #fb7185 0%, #be123c 45%, #c084fc 55%, #7e22ce 100%); }
+.hundred-crystal.empty { background: #ffffff !important; border: 1px solid #000 !important; box-shadow: 0 0 0 1px #000 !important; animation: none !important; opacity: 0.4; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
+@keyframes monsterShaking { 0% { transform: rotate(-4deg); } 100% { transform: rotate(4deg); border-color: #60a5fa !important; box-shadow: 0 4px 10px rgba(96, 165, 250, 0.15); } }
+@keyframes tearDrop { 0% { transform: translateY(-5px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(12px); opacity: 0; } }
+@keyframes robotDriveAway { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(400px); opacity: 0; } }
+@keyframes robotDriveRight { 0% { transform: translateX(-150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes robotDriveLeft { 0% { transform: translateX(150px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes crystalGlow { 0% { filter: drop-shadow(0 0 2px rgba(254,240,138,0.3)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); } 100% { filter: drop-shadow(0 0 12px rgba(254,240,138,0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); } }
+
+=== FILE_END: "style_arifmet.css" ===
+
+=== FILE_START: "js/main.js" ===
+// version: v1.2
+import { toggleMenuMode, handleModeSelection } from './menu.js';
+import { pressNum, confirmAndNext } from './numpad.js';
+import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
+
+// Слушатели оригинального модального окна карты
+document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
+document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
+document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
+
+document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => handleModeSelection(e.currentTarget.getAttribute('data-mode')));
+});
+
+document.querySelectorAll('.calc-btn:not(.next)').forEach(btn => {
+    btn.addEventListener('click', (e) => pressNum(e.currentTarget.getAttribute('data-key')));
+});
+
+document.getElementById('next-example-btn')?.addEventListener('click', confirmAndNext);
+
+=== FILE_END: "js/main.js" ===
+
+=== FILE_START: "js/state.js" ===
+// version: v1.1
+import { evaluateExpr } from './calculator.js';
+
+export const state = {
+    currentMode: '',
+    examplesHistory: [],
+    usedExamples: [],
+    activeIndex: -1,
+    mixStep: 0,
+
+    reset(mode) {
+        this.currentMode = mode;
+        this.examplesHistory = [];
+        this.usedExamples = [];
+        this.activeIndex = -1;
+        this.mixStep = (mode === 'mix') ? 0 : this.mixStep;
+    },
+
+    addExample(exampleObj) {
+        this.examplesHistory.push(exampleObj);
+        this.activeIndex = this.examplesHistory.length - 1;
+    },
+
+    validateCurrentInput(targetIndex = null) {
+        const idx = (targetIndex !== null) ? targetIndex : this.activeIndex;
+        if (idx === -1 || !this.examplesHistory[idx]) {
+            return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '', simCorrect: false, finCorrect: false };
         }
-        buildBundle();
-    </script>
+        
+        const item = this.examplesHistory[idx];
+        const parts = item.currentInput.split('=');
+        const simText = parts.at(0) || '', finText = parts.at(1) || '';
+        
+        const hasPressedEqual = item.currentInput.includes('=');
+        const targetLength = String(item.correctValue).length;
+        const hasFinalAnswer = parts.length > 1 && finText.trim().length >= targetLength;
+
+        // 1. Проверка промежуточной стадии (упрощения)
+        let simCorrect = false;
+        if (hasPressedEqual) {
+            let simVal = evaluateExpr(simText);
+            simCorrect = (simVal === item.correctValue);
+            
+            if (item.exampleText.includes('×') && simCorrect && simText) {
+                const checkParts = simText.split('+');
+                const expectedCount = parseInt(item.exampleText.split('×').at(1), 10);
+                if (checkParts.length !== expectedCount) simCorrect = false;
+            }
+        }
+
+        // 2. Проверка финального ответа
+        let finCorrect = false;
+        if (hasFinalAnswer) {
+            let finVal = evaluateExpr(finText);
+            finCorrect = (finVal === item.correctValue);
+        }
+
+        const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
+        
+        // Жёсткое исправление: ошибка засчитывается только если промежуточный неверный ИЛИ финальный ответ ДОСТИГ нужной длины и он неверный
+        let isWrongAnswer = false;
+        if (hasPressedEqual && !simCorrect) {
+            isWrongAnswer = true;
+        }
+        if (parts.length > 1 && finText.trim().length > 0) {
+            if (finText.trim().length >= targetLength && !finCorrect) {
+                isWrongAnswer = true;
+            }
+        }
+
+        let phase = 1;
+        if (hasPressedEqual && !hasFinalAnswer) phase = 2;
+        else if (hasFinalAnswer) phase = 3;
+
+        return { isFullySolved, isWrongAnswer, phase, simText, finText, simCorrect, finCorrect };
+    }
+};
+
+=== FILE_END: "js/state.js" ===
+
+=== FILE_START: "js/calculator.js" ===
+// version: v1.5
+export function evaluateExpr(str) {
+    if (!str) return null;
+    let cleaned = str.replace(/×/g, '*').trim();
+    if (cleaned.includes('*')) {
+        let partsArr = cleaned.split('*');
+        if (partsArr.length === 2) {
+            let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 * n2;
+        }
+        return null;
+    }
+    if (cleaned.includes('+')) {
+        let partsArr = cleaned.split('+'), sum = 0;
+        for (let i = 0; i < partsArr.length; i++) {
+            let num = parseInt(partsArr[i], 10);
+            if (isNaN(num)) return null; 
+            sum += num;
+        }
+        return sum;
+    }
+    if (cleaned.includes('-')) {
+        let partsArr = cleaned.split('-');
+        if (partsArr.length === 2) {
+            let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 - n2;
+        }
+        return null;
+    }
+    let num = parseInt(cleaned, 10);
+    return isNaN(num) ? null : num;
+}
+
+export function parseAdditionData(exampleText, report) {
+    const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
+    const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
+    const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
+    let leftTens = 0, leftOnes = 0, rightTens = 0, rightOnes = 0, leftLabel = '0', rightLabel = '0';
+    if (report.simText.includes('+')) {
+        const userParts = report.simText.split('+'), leftNum = parseInt(userParts[0], 10), rightNum = parseInt(userParts[1], 10);
+        if (!isNaN(leftNum)) { leftTens = Math.floor(leftNum / 10) % 10; leftOnes = leftNum % 10; leftLabel = String(leftNum); }
+        if (!isNaN(rightNum)) { rightTens = Math.floor(rightNum / 10) % 10; rightOnes = rightNum % 10; rightLabel = String(rightNum); }
+    } else if (report.simText.length > 0) {
+        let singleNum = parseInt(report.simText, 10);
+        if (!isNaN(singleNum)) { leftTens = Math.floor(singleNum / 10) % 10; leftOnes = singleNum % 10; leftLabel = String(singleNum); }
+    }
+    let totalOnes = ones1 + ones2; if (totalOnes >= 10) totalOnes -= 10;
+    return {
+        num1, num2, tens1, ones1, tens2, ones2, leftTens, leftOnes, rightTens, rightOnes, leftLabel, rightLabel, totalOnes,
+        leftBorrowCount: (leftTens > tens1 && leftOnes === 0 && ones1 > 0) ? 10 - ones1 : 0,
+        rightBorrowCount: (rightTens > tens2 && rightOnes === 0 && ones2 > 0) ? 10 - ones2 : 0
+    };
+}
+
+export function parseSubtractionData(exampleText, report) {
+    const nums = exampleText.split('-'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
+    const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
+    let currentSubtrahend = num2, addedAmount = 0, subtractedAmount = 0;
+    if (report.simText.includes('-')) {
+        let userSub = parseInt(report.simText.split('-')[1], 10);
+        if (!isNaN(userSub)) {
+            currentSubtrahend = userSub;
+            if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
+            else if (currentSubtrahend < num2) subtractedAmount = num2 - currentSubtrahend;
+        }
+    }
+    let finalAddedAmount = report.simText.includes('-') ? parseInt(report.simText.split('-')[1], 10) - num2 : 0;
+    return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount: finalAddedAmount < 0 ? 0 : finalAddedAmount };
+}
+
+export function parseMultiplicationData(exampleText) {
+    const parts = exampleText.split('×');
+    return { items: parseInt(parts[0], 10), monsters: parseInt(parts[1], 10) };
+}
+
+=== FILE_END: "js/calculator.js" ===
+
+=== FILE_START: "js/feedback.js" ===
+// version: v1.1
+let currentWinPlayer = null;
+let currentAlienPlayer = null;
+let currentFailPlayer = null;
+let alienRepeatCount = 0;
+
+// Локальный объект флагов, защищенный от внешнего вмешательства
+export const soundFlags = {
+    simFailSoundPlayed: false,
+    finFailSoundPlayed: false,
+    simWinSoundPlayed: false,
+    finWinSoundPlayed: false
+};
+
+/**
+ * Полный сброс всех аудиоплееров и флагов при смене примера или режима
+ */
+export function resetAllFeedbacks() {
+    if (currentWinPlayer) { currentWinPlayer.pause(); currentWinPlayer = null; }
+    if (currentAlienPlayer) { currentAlienPlayer.onended = null; currentAlienPlayer.pause(); currentAlienPlayer = null; }
+    if (currentFailPlayer) { currentFailPlayer.pause(); currentFailPlayer = null; }
+    
+    alienRepeatCount = 0;
+    
+    soundFlags.simFailSoundPlayed = false;
+    soundFlags.finFailSoundPlayed = false;
+    soundFlags.simWinSoundPlayed = false;
+    soundFlags.finWinSoundPlayed = false;
+}
+
+/**
+ * Обычный победный звук для режима десятков (win.mp3)
+ */
+export function triggerTensWinSound() {
+    if (currentWinPlayer) return; 
+    try {
+        currentWinPlayer = new Audio('audio/win.mp3');
+        currentWinPlayer.volume = 0.25;
+        currentWinPlayer.onended = () => { currentWinPlayer = null; };
+        currentWinPlayer.play();
+    } catch (e) { console.warn("Audio blocked:", e); }
+}
+
+/**
+ * Финальный космический звук для умножения (alien_win.mp3 на 3 круга)
+ */
+export function triggerWinFeedback() {
+    if (currentAlienPlayer) return; 
+    try {
+        currentAlienPlayer = new Audio('audio/alien_win.mp3');
+        currentAlienPlayer.volume = 0.25;
+        alienRepeatCount = 1;
+        currentAlienPlayer.onended = () => {
+            if (alienRepeatCount < 3) {
+                alienRepeatCount++;
+                currentAlienPlayer?.play();
+            } else if (currentAlienPlayer) {
+                currentAlienPlayer.onended = null;
+                currentAlienPlayer = null;
+            }
+        };
+        currentAlienPlayer.play();
+    } catch (e) { console.warn("Audio blocked:", e); }
+}
+
+/**
+ * Звук ошибки для всех режимов (fail.mp3)
+ */
+export function triggerFailFeedback() {
+    try {
+        if (currentFailPlayer) {
+            currentFailPlayer.currentTime = 0;
+            currentFailPlayer.play();
+        } else {
+            currentFailPlayer = new Audio('audio/fail.mp3');
+            currentFailPlayer.volume = 0.25;
+            currentFailPlayer.play();
+        }
+    } catch (e) { console.warn("Audio blocked:", e); }
+}
+
+=== FILE_END: "js/feedback.js" ===
+
+=== FILE_START: "js/game_canvas.js" ===
+// version: v1.1
+import { selectExample } from './view_dispatcher.js';
+
+const gameZone = document.getElementById('game-zone');
+const examplesList = document.getElementById('examples-list');
+
+export const GameCanvas = {
+    // === СЛОЙ 1: ЛЕВАЯ ПАНЕЛЬ (ИСТОРИЯ ПРИМЕРОВ) ===
+    renderHistory(examplesHistory, activeIndex, currentMode, getBlocksHTML) {
+        if (!examplesList) return;
+        const placeholder = document.getElementById('history-placeholder');
+        if (placeholder) placeholder.remove();
+
+        // 1. Быстрая синхронизация количества строк в DOM и привязка чистых кликов
+        if (examplesList.children.length < examplesHistory.length) {
+            for (let i = examplesList.children.length; i < examplesHistory.length; i++) {
+                const line = document.createElement('div');
+                line.className = 'example-line';
+                line.setAttribute('data-index', i);
+                line.addEventListener('click', () => selectExample(i));
+                line.innerHTML = `<span class="example-text">${examplesHistory[i].exampleText}</span><span class="sim-block-wrapper"></span><span class="fin-block-wrapper"></span>`;
+                examplesList.appendChild(line);
+            }
+        } else if (examplesList.children.length > examplesHistory.length) examplesList.innerHTML = '';
+
+        // 2. Обновление содержимого блоков ответов и классов активных строк
+        examplesHistory.forEach((item, index) => {
+            const line = examplesList.querySelector(`[data-index="${index}"]`);
+            if (!line) return;
+            line.classList.toggle('active', index === activeIndex);
+            
+            const { simHTML, finHTML } = getBlocksHTML(item, index, currentMode);
+            line.querySelector('.sim-block-wrapper').innerHTML = simHTML;
+            line.querySelector('.fin-block-wrapper').innerHTML = finHTML;
+        });
+
+        const activeElem = examplesList.querySelector('.active');
+        if (activeElem) activeElem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    },
+
+    // Метод принудительной очистки левой панели при смене режимов игры
+    clearHistory() {
+        if (examplesList) {
+            examplesList.innerHTML = '<div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>';
+        }
+    },
+
+    // === СЛОЙ 2: НИЖНЯЯ ПАНЕЛЬ (ИГРОВАЯ ЗОНА) ===
+    clearZone() {
+        if (gameZone) { gameZone.innerHTML = ''; gameZone.removeAttribute('data-current-example'); }
+    },
+    
+    renderZoneScene(html, cacheKey) {
+        if (!gameZone) return;
+        if (cacheKey && gameZone.getAttribute('data-current-example') === cacheKey) return;
+        if (cacheKey) gameZone.setAttribute('data-current-example', cacheKey);
+        gameZone.innerHTML = html;
+    },
+
+    createActorHTML({ emoji, label, color, animationClass = '', subtitle = '' }) {
+        const labelHTML = label ? `<b class="sub-robot-label" style="color:${color};">${label}</b>` : '';
+        return `<div class="${animationClass}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;"><span style="font-size:46px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.1));">${emoji}</span>${labelHTML}${subtitle ? `<div style="margin-top:4px;">${subtitle}</div>` : ''}</div>`;
+    },
+
+    createDeckHTML(columnsHTML, extraStyles = '') {
+        return `<div class="crystal-deck" style="${extraStyles}">${columnsHTML}</div>`;
+    },
+
+    createColumnHTML({ totalCount, filledCount, blueCount, dashedBorder = false }) {
+        let html = dashedBorder ? `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">` : `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) {
+            if (j <= totalCount) {
+                html += j <= filledCount ? `<div class="crystal-item ${j <= blueCount ? '' : 'borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`;
+            } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        }
+        return html + `</div>`;
+    }
+};
+
+=== FILE_END: "js/game_canvas.js" ===
+
+=== FILE_START: "js/view_dispatcher.js" ===
+// version: v1.1
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
+import { renderTensVisual, getTensHistoryHTML } from './tens.js';
+import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
+
+export function selectExample(index) {
+    state.activeIndex = index;
+    resetAllFeedbacks();
+
+    const item = state.examplesHistory[index];
+    const report = state.validateCurrentInput(index);
+    const isMulti = item.exampleText.includes('×');
+
+    // Настраиваем флаги, чтобы при клике звук проиграл 1 раз и затих
+    if (report.isFullySolved) {
+        if (isMulti) triggerWinFeedback(); else triggerTensWinSound();
+        soundFlags.finWinSoundPlayed = true; soundFlags.simWinSoundPlayed = true;
+    } else if (report.simCorrect && report.phase === 2) {
+        triggerTensWinSound();
+        soundFlags.simWinSoundPlayed = true;
+    } else if (report.isWrongAnswer) {
+        triggerFailFeedback();
+        if (item.currentInput.includes('=')) {
+            const parts = item.currentInput.split('=');
+            if (parts.length > 1 && parts.at(1).trim().length > 0) soundFlags.finFailSoundPlayed = true;
+            else soundFlags.simFailSoundPlayed = true;
+        }
+    }
+
+    const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
+    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
+
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) {
+        syncMonsterGame();
+    } else {
+        renderTensVisual();
+    }
+}
+
+=== FILE_END: "js/view_dispatcher.js" ===
+
+=== FILE_START: "js/menu.js" ===
+// version: v1.2
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { resetAllFeedbacks } from './feedback.js';
+import { initTensMode } from './tens.js';
+import { initMultiplicationMode } from './multiplication.js';
+import { initMixMode } from './mix.js';
+
+const numpadContainer = document.getElementById('calc-numpad-container');
+const modesMenuContainer = document.getElementById('modes-menu-container');
+const rightArea = document.querySelector('.right-area');
+const menuButton = document.getElementById('menu-toggle-btn');
+let isMenuOpen = false;
+
+export function toggleMenuMode() {
+    if (!numpadContainer || !modesMenuContainer || !rightArea) return;
+    isMenuOpen = !isMenuOpen;
+
+    rightArea.classList.toggle('menu-active', isMenuOpen);
+    if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
+
+    numpadContainer.style.display = isMenuOpen ? 'none' : 'grid';
+    modesMenuContainer.style.display = isMenuOpen ? 'flex' : 'none';
+}
+
+export function handleModeSelection(mode) {
+    // ЗАДЕЛ ПОД СОТНИ: Активируем режим сотен, убрав старое ограничение-алерт
+    if (mode === 'thousands') {
+        alert("Режим в разработке 🛠️");
+        return;
+    }
+
+    state.reset(mode);
+    resetAllFeedbacks();
+    GameCanvas.clearZone();
+    GameCanvas.clearHistory();
+    toggleMenuMode();
+
+    if (mode === 'tens' || mode === 'hundreds') initTensMode(); // Режим сотен запускает тот же умный код десятков!
+    else if (mode === 'multiplication') initMultiplicationMode();
+    else if (mode === 'mix') initMixMode();
+}
+
+function getModeLabel(mode) {
+    if (mode === 'tens') return 'Режим: Десятки ▼';
+    if (mode === 'hundreds') return 'Режим: Сотни 🛠️ ▼';
+    if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
+    if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
+    return 'Режим: Выбрать ▼';
+}
+
+=== FILE_END: "js/menu.js" ===
+
+=== FILE_START: "js/numpad.js" ===
+// version: v1.2
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
+import { generateExample, renderTensVisual, getTensHistoryHTML } from './tens.js';
+import { generateMultiExample, renderMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
+import { generateMixExample } from './mix.js';
+
+export function pressNum(n) {
+    if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
+    const activeItem = state.examplesHistory[state.activeIndex];
+
+    if (n === 'C' || n === 'D') {
+        activeItem.currentInput = (n === 'C') ? '' : activeItem.currentInput.slice(0, -1);
+        resetAllFeedbacks();
+    } else {
+        const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
+        if (n === '=' && totalEquals >= 2) return;
+        activeItem.currentInput += n;
+    }
+
+    const report = state.validateCurrentInput();
+    handleInputSounds(report, activeItem.exampleText);
+    refreshUI();
+}
+
+export function confirmAndNext() {
+    resetAllFeedbacks();
+    // ИСПРАВЛЕНО ДЛЯ СОТЕН: Добавлена поддержка режима hundreds для генерации следующей задачи
+    if (state.currentMode === 'tens' || state.currentMode === 'hundreds') generateExample();
+    else if (state.currentMode === 'multiplication') generateMultiExample();
+    else if (state.currentMode === 'mix') generateMixExample();
+}
+
+function handleInputSounds(report, exampleText) {
+    const isMulti = exampleText.includes('×');
+    
+    if (report.isFullySolved) {
+        if (!soundFlags.finWinSoundPlayed) {
+            if (isMulti) triggerWinFeedback();
+            else triggerTensWinSound();
+            soundFlags.finWinSoundPlayed = true;
+            soundFlags.simWinSoundPlayed = true;
+            soundFlags.simFailSoundPlayed = false;
+            soundFlags.finFailSoundPlayed = false;
+        }
+    } else if (report.simCorrect && report.phase === 2) {
+        if (!soundFlags.simWinSoundPlayed) {
+            triggerTensWinSound();
+            soundFlags.simWinSoundPlayed = true;
+            soundFlags.simFailSoundPlayed = false;
+        }
+    } else if (report.isWrongAnswer) {
+        const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
+        const hasFin = parts.length > 1 && parts.at(1).trim().length > 0;
+        
+        if (hasFin && !soundFlags.finFailSoundPlayed) {
+            triggerFailFeedback(); soundFlags.finFailSoundPlayed = true;
+        } else if (!hasFin && !soundFlags.simFailSoundPlayed) {
+            triggerFailFeedback(); soundFlags.simFailSoundPlayed = true;
+        }
+    }
+}
+
+export function refreshUI() {
+    if (state.activeIndex === -1) return;
+    const activeItem = state.examplesHistory[state.activeIndex];
+    const isMulti = activeItem.exampleText.includes('×');
+    const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
+    
+    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
+    
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) renderMonsterGame();
+    else renderTensVisual();
+}
+
+=== FILE_END: "js/numpad.js" ===
+
+=== FILE_START: "js/tens.js" ===
+// version: v1.3
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { renderAdditionVisual } from './addition_visual.js';
+import { renderSubtractionVisual } from './subtraction_visual.js';
+import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
+import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
+
+let isAddition = true;
+
+export function initTensMode() {
+    document.querySelector('.header-menu-btn').innerText = state.currentMode === 'hundreds' ? 'Режим: Сотни 🛠️ ▼' : 'Режим: Десятки ▼';
+    generateExample();
+}
+
+export function generateExample() {
+    if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
+    if (!state.usedExamples) state.usedExamples = [];
+    let num1, num2, correctValue, text;
+
+    const isHundreds = state.currentMode === 'hundreds';
+    const min = isHundreds ? 100 : 10;
+    const max = isHundreds ? 900 : 90;
+
+    if (isAddition) {
+        while (true) {
+            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+            let sum = num1 + num2;
+            if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
+                text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+            }
+        }
+    } else {
+        while (true) {
+            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+            let ones1 = num1 % 10, ones2 = num2 % 10;
+            if (num1 > num2 && ones2 !== 0) { 
+                text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+            }
+        }
+    }
+
+    state.usedExamples.push(text);
+    state.addExample({ exampleText: text, correctValue: correctValue, currentInput: '' });
+    isAddition = !isAddition;
+
+    GameCanvas.clearZone();
+    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
+    renderTensVisual();
+}
+
+export function renderTensVisual() {
+    if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
+    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
+    
+    // ВЕТВЛЕНИЕ НА СОТНИ
+    if (state.currentMode === 'hundreds') {
+        if (isAdd) return renderAdditionHundredsVisual();
+        else return renderSubtractionHundredsVisual();
+    }
+    
+    if (isAdd) renderAdditionVisual();
+    else renderSubtractionVisual();
+}
+
+export function getTensHistoryHTML(item, index, mode) {
+    const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
+    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
+    let simHTML = ` = <span class="block">${simText || '_'}</span>`;
+    if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+    let finHTML = '';
+    if (parts.length > 1) {
+        if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        else finHTML = ` = <span class="block">${finText || '_'}</span>`;
+    }
+    return { simHTML, finHTML };
+}
+
+=== FILE_END: "js/tens.js" ===
+
+=== FILE_START: "js/mix.js" ===
+// version: v1.1
+import { state } from './state.js';
+import { generateExample } from './tens.js';
+import { generateMultiExample } from './multiplication.js';
+
+export function initMixMode() {
+    document.querySelector('.header-menu-btn').innerText = 'Режим: Микс 🎰 ▼';
+    state.mixStep = 0;
+    generateMixExample();
+}
+
+export function generateMixExample() {
+    if (state.currentMode !== 'mix') return;
+    let type = state.mixStep % 3;
+    
+    if (type === 0 || type === 1) {
+        generateExample();
+    } else if (type === 2) {
+        generateMultiExample();
+    }
+    
+    document.querySelector('.header-menu-btn').innerText = 'Режим: Микс 🎰 ▼';
+    state.mixStep++;
+}
+
+=== FILE_END: "js/mix.js" ===
+
+=== FILE_START: "js/multiplication.js" ===
+// version: v1.1
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { parseMultiplicationData } from './calculator.js';
+
+export function initMultiplicationMode() {
+    document.querySelector('.header-menu-btn').innerText = 'Режим: Умножение 🍕 ▼';
+    generateMultiExample();
+}
+
+export function generateMultiExample() {
+    if (!state.usedExamples) state.usedExamples = [];
+    let num1, num2, text;
+    while (true) {
+        num1 = Math.floor(Math.random() * 4) + 2; 
+        num2 = Math.floor(Math.random() * 4) + 2; 
+        text = `${num1}×${num2}`;
+        if (!state.usedExamples.includes(text)) break;
+    }
+    state.usedExamples.push(text);
+    state.addExample({ exampleText: text, correctValue: num1 * num2, currentInput: '' });
+
+    GameCanvas.clearZone();
+    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);
+    renderMonsterGame(); 
+}
+
+export function syncMonsterGame() {
+    GameCanvas.clearZone();
+    renderMonsterGame();
+}
+
+export function renderMonsterGame() {
+    const activeItem = state.examplesHistory[state.activeIndex];
+    if (!activeItem) return GameCanvas.clearZone();
+    
+    // Запрашиваем чистую математику структуры задачи у калькулятора
+    const task = parseMultiplicationData(activeItem.exampleText);
+    const report = state.validateCurrentInput();
+    const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');
+    const cacheKey = `${activeItem.exampleText}_${status}`;
+
+    let actorsHTML = '';
+    for (let i = 0; i < task.monsters; i++) {
+        let contentHTML = '', bg = '#fff7ed', border = '1px dashed #fed7aa', mClass = '';
+        if (status === 'win') {
+            contentHTML = '<span style="font-size:14px;color:#22c55e;font-weight:bold;animation:fadeIn 0.3s;">Ням-ням! 😋</span>';
+            bg = '#dcfce7'; border = '1px dashed #22c55e'; mClass = 'monster-happy';
+        } else if (status === 'sad') {
+            contentHTML = '<span class="tears-animation" style="font-size:22px;">💦</span>';
+            bg = '#eff6ff'; border = '1px dashed #60a5fa'; mClass = 'monster-sad';
+        } else {
+            contentHTML = '<span style="font-size:22px;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1));">🍕</span>'.repeat(task.items);
+        }
+        const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:80px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;
+        actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });
+    }
+    GameCanvas.renderZoneScene(actorsHTML, cacheKey);
+}
+
+export function getMultiplicationHistoryHTML(item, index, mode) {
+    const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
+    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
+    let simHTML = ` = <span class="block">${simText || '_'}</span>`;
+    if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+    let finHTML = '';
+    if (parts.length > 1) {
+        if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+        else finHTML = ` = <span class="block">${finText || '_'}</span>`;
+    }
+    return { simHTML, finHTML };
+}
+
+=== FILE_END: "js/multiplication.js" ===
+
+=== FILE_START: "js/addition_visual.js" ===
+// version: v1.1
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { parseAdditionData } from './calculator.js';
+
+export function renderAdditionVisual() {
+    const item = state.examplesHistory[state.activeIndex]; if (!item) return;
+    const report = state.validateCurrentInput();
+    const data = parseAdditionData(item.exampleText, report); // Запрос к калькулятору!
+    const cacheKey = `${item.exampleText}_phase${report.phase}_${report.isFullySolved}`;
+    let html = '';
+
+    if (report.phase === 1) {
+        const truck1 = buildTruckHTML(data.num1, '#0284c7', generateCrystalColumnsHTML(data.tens1, false, 0) + generateOnesHTML(data.ones1, false), 'margin-left:10px;');
+        const truck2 = buildTruckHTML(data.num2, '#ea580c', generateCrystalColumnsHTML(data.tens2, true, 0) + generateOnesHTML(data.ones2, true), 'margin-left:10px;', true);
+        html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${truck1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>${truck2}</div>`;
+    } 
+    else if (report.phase === 2) {
+        const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
+        const truck1 = buildTruckHTML(data.leftLabel, '#22c55e', generateCrystalColumnsHTML(data.leftTens, false, data.leftBorrowCount) + generateOnesHTML(data.leftOnes, false), `margin-left:10px;${borderGlow}`);
+        const truck2 = buildTruckHTML(data.rightLabel, '#ea580c', generateCrystalColumnsHTML(data.rightTens, true, data.rightBorrowCount) + generateOnesHTML(data.rightOnes, true), `margin-right:10px;${report.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : ''}`, true);
+        html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;animation:fadeIn 0.3s;">${truck1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>${truck2}</div>`;
+    } 
+    else {
+        let deckContentHTML = '';
+        if (data.rightBorrowCount > 0) {
+            deckContentHTML += generateOnesHTML(data.totalOnes, false) + generateCrystalColumnsHTML(data.tens1, false, 0) + generateCrystalColumnsHTML(data.tens2, true, 0) + generateCrystalColumnsHTML(1, true, data.rightBorrowCount);
+        } else if (data.leftBorrowCount > 0) {
+            deckContentHTML += generateCrystalColumnsHTML(data.tens1, false, 0) + generateCrystalColumnsHTML(1, false, data.leftBorrowCount) + generateCrystalColumnsHTML(data.tens2, true, 0) + generateOnesHTML(data.totalOnes, true);
+        } else {
+            deckContentHTML += generateCrystalColumnsHTML(data.tens1, false, 0) + generateOnesHTML(data.ones1, false) + generateCrystalColumnsHTML(data.tens2, true, 0) + generateOnesHTML(data.ones2, true);
+        }        
+        const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '', rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
+        const jumpL = report.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate;' : '', jumpR = report.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate-reverse;' : '';
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div style="${jumpL}"><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;">${deckContentHTML}</div><div class="${rAnim}"><div style="${jumpR}"><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Ответ верный! Ты гений! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
+    }
+    GameCanvas.renderZoneScene(html, cacheKey);
+}
+
+function buildTruckHTML(label, color, deckHTML, deckStyle, isOrange = false) {
+    const robot = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${color};font-size:13px;margin-top:1px;">${label}</b></div>`;
+    return `<div class="crystal-truck">${isOrange ? `<div class="crystal-deck orange-theme" style="${deckStyle}">${deckHTML}</div>` + robot : robot + `<div class="crystal-deck" style="${deckStyle}">${deckHTML}</div>`}</div>`;
+}
+
+function generateCrystalColumnsHTML(count, isOrange, borrow) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `<div class="crystal-column">`; let isLast = (i === count - 1) && (borrow > 0);
+        for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${(isLast && j > (10 - borrow)) ? (isOrange ? 'borrow-blue' : 'borrow-orange') : (isOrange ? 'borrow-orange' : 'borrow-blue')}"></div>`;
+        html += `</div>`;
+    }
+    return html;
+}
+
+function generateOnesHTML(count, isOrange) {
+    if (count === 0) return '';
+    let html = `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+    for (let j = 1; j <= 10; j++) html += (j <= count) ? `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+    return html + `</div>`;
+}
+
+=== FILE_END: "js/addition_visual.js" ===
+
+=== FILE_START: "js/subtraction_visual.js" ===
+// version: v1.1
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { parseSubtractionData } from './calculator.js';
+
+export function renderSubtractionVisual() {
+    const item = state.examplesHistory[state.activeIndex]; if (!item) return;
+    const report = state.validateCurrentInput();
+    const data = parseSubtractionData(item.exampleText, report); // Запрос к калькулятору!
+    const cacheKey = `${item.exampleText}_phase${report.phase}_${report.isFullySolved}`;
+    let html = '';
+
+    if (report.phase === 1) {
+        html = `<div class="sub-scene-container"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л (${data.num1})</b></div><div class="crystal-deck" style="border-color:#0284c7;">${generateSubCargoHTML(data.tens1, data.ones1, 0, 0)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П (${data.num2})</b></div><div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${generateSubEmptyCubesHTML(data.num2, 0)}</div></div>`;
+    } 
+    else if (report.phase === 2) {
+        const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
+        html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${generateSubCargoHTML(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div><div class="crystal-deck" style="border:2px solid #000;">${generateSubEmptyCubesHTML(data.num2 - data.subtractedAmount, data.addedAmount)}</div></div>`;
+    } 
+    else {
+        const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '', labelText = report.isFullySolved ? 'Ура! Робот П уехал с правильным грузом! 🎉' : 'Проверяем ответ... 👀';
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;position:relative;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div><div class="crystal-deck" style="border-color:#22c55e;">${generateSubCargoHTML(data.tens1, data.ones1, 0, data.currentSubtrahend)}</div><div class="${driveAwayClass}" style="display:flex;align-items:center;gap:20px;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div><div class="crystal-deck" style="background:#e0f2fe;border-color:#ef4444;">${generateSubFinalCubesHTML(data.currentSubtrahend - data.finalAddedAmount, data.finalAddedAmount)}</div></div></div><b class="sub-win-text">${labelText}</b></div>`;
+    }
+    GameCanvas.renderZoneScene(html, cacheKey);
+}
+
+function generateSubCargoHTML(tens, ones, added, subtracted) {
+    let baseCubes = (tens * 10) + ones, totalCubes = baseCubes + added, activeCubes = totalCubes - subtracted;
+    let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0, html = '';
+    for (let i = 0; i < fullCols; i++) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) { globalCounter++; html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; }
+        html += `</div>`;
+    }
+    if (remOnes > 0) {
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
+        html += `</div>`;
+    }
+    return html;
+}
+
+function generateSubEmptyCubesHTML(emptyCount, addedOrange) {
+    let total = emptyCount + addedOrange, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0, html = '';
+    for (let i = 0; i < fullCols; i++) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; }
+        html += `</div>`;
+    }
+    if (remOnes > 0) {
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
+        html += `</div>`;
+    }
+    return html;
+}
+
+function generateSubFinalCubesHTML(blueCount, orangeCount) {
+    let total = blueCount + orangeCount, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0, html = '';
+    for (let i = 0; i < fullCols; i++) {
+        html += `<div class="crystal-column">`;
+        for (let j = 1; j <= 10; j++) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>`; }
+        html += `</div>`;
+    }
+    if (remOnes > 0) {
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>` ; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
+        html += `</div>`;
+    }
+    return html;
+}
+
+=== FILE_END: "js/subtraction_visual.js" ===
+
+=== FILE_START: "js/project_map.js" ===
+// version: v3.0
+import { state } from './state.js';
+
+export function openProjectMap() {
+    const modal = document.getElementById('map-modal');
+    const area = document.getElementById('map-text-area');
+    if (!modal || !area) return;
+
+    modal.style.display = 'flex';
+    area.value = '⏳ Сборка монолита проекта... Пожалуйста, подождите.';
+    generateFullStaticHTMLBundle().then(htmlBundle => {
+        area.value = htmlBundle;
+    });
+}
+
+export function closeProjectMap() {
+    const modal = document.getElementById('map-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+export function copyProjectMap() {
+    const area = document.getElementById('map-text-area');
+    if (!area) return;
+    area.select(); navigator.clipboard.writeText(area.value);
+    alert('Готовый статический HTML-код для ai_sync.html скопирован! 📋');
+}
+
+async function generateFullStaticHTMLBundle() {
+    const files = [
+        './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
+        './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
+        './js/menu.js', './js/numpad.js', './js/tens.js', './js/mix.js', './js/multiplication.js',
+        './js/addition_visual.js', './js/subtraction_visual.js', './js/project_map.js',
+        './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js'
+    ];
+    
+    let manifest = `[AI RECONSTRUCTION MANIFEST]\n`;
+    let sources = ``;
+    const tStamp = Date.now();
+
+    for (const p of files) {
+        try {
+            const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
+            const t = await r.text();
+            const cleanPath = p.replace('./', '');
+            manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
+            sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+        } catch {
+            const cleanPath = p.replace('./', '');
+            manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
+        }
+    }
+
+    // Собираем финальную чистую статическую страницу БЕЗ СКРИПТОВ СБОРКИ
+    return `<!-- ВЕРСИЯ: СТАТИЧЕСКИЙ МОНОЛИТ -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Sync Panel 🤖 (Static)</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 13px; line-height: 1.5; }
+        pre { white-space: pre-wrap; word-break: break-all; background: #1e293b; padding: 15px; border-radius: 8px; border: 1px solid #334155; color: #cbd5e1; }
+    </style>
+</head>
+<body>
+    <div style="color: #22c55e; margin-bottom: 20px; font-weight: bold;">✅ Статическая сборка завершена! Страница мгновенно готова для чтения ИИ.</div>
+    <pre>
+==================================================
+=== ARIFMET FULL REPOSITORY SOURCE BUNDLE (STATIC) ===
+==================================================
+
+${manifest}
+${sources}
+    </pre>
+</body>
+</html>`;
+}
+
+=== FILE_END: "js/project_map.js" ===
+
+=== FILE_START: "js/addition_hundreds_visual.js" ===
+// version: v1.7
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { parseAdditionData } from './calculator.js';
+
+export function renderAdditionHundredsVisual() {
+    const item = state.examplesHistory[state.activeIndex]; if (!item) return;
+    const report = state.validateCurrentInput();
+    const data = parseAdditionData(item.exampleText, report);
+    const cacheKey = `${item.exampleText}_add_hundreds_phase${report.phase}_${report.isFullySolved}`;
+    let html = '', h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100);
+
+    if (report.phase === 1) {
+        const content1 = buildHLayout(h1, 0, 0, genCols(data.tens1, false, 0) + genOnes(data.ones1, false), false);
+        const content2 = buildHLayout(0, h2, 0, genCols(data.tens2, true, 0) + genOnes(data.ones2, true), true);
+        html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;">${content1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>${content2}</div>`;
+    } 
+    else if (report.phase === 2) {
+        const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
+        let curH1 = h1, curH2 = h2, leftMixed = 0, rightMixed = 0;
+        if (report.simText.includes('+')) {
+            const parts = report.simText.split('+'), leftNum = parseInt(parts, 10), rightNum = parseInt(parts, 10);
+            if (!isNaN(leftNum) && !isNaN(rightNum)) {
+                const newH1 = Math.floor(leftNum / 100), newH2 = Math.floor(rightNum / 100);
+                if (newH1 > h1) { leftMixed = newH1 - h1; curH1 = h1; }
+                if (newH2 > h2) { rightMixed = newH2 - h2; curH2 = h2; }
+            }
+        }
+        const content1 = buildHLayout(curH1, 0, leftMixed, genCols(data.leftTens, false, data.leftBorrowCount) + genOnes(data.leftOnes, false), false);
+        const content2 = buildHLayout(0, curH2, rightMixed, genCols(data.rightTens, true, data.rightBorrowCount) + genOnes(data.rightOnes, true), true);
+        html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;animation:fadeIn 0.3s;${borderGlow}">${content1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>${content2}</div>`;
+    } 
+    else {
+        let deckHTML = '', finalMixed = 0;
+        const tailSum = (data.tens1 * 10 + data.ones1) + (data.tens2 * 10 + data.ones2);
+        
+        if (tailSum >= 100) {
+            finalMixed = 1;
+            // ИСПРАВЛЕНО: Для остатка кубиков строим оригинальный разноцветный поддон!
+            const remSum = tailSum - 100;
+            const remTensPurple = Math.min(data.tens1, Math.floor(remSum / 10));
+            const remTensOrange = Math.max(0, Math.floor(remSum / 10) - remTensPurple);
+            deckHTML = genCols(remTensPurple, false, 0) + genCols(remTensOrange, true, 0) + genOnes(remSum % 10, false);
+        } else {
+            if (data.rightBorrowCount > 0) deckHTML += genOnes(data.totalOnes, false) + genCols(data.tens1, false, 0) + genCols(data.tens2, true, 0) + genCols(1, true, data.rightBorrowCount);
+            else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0) + genCols(1, false, data.leftBorrowCount) + genCols(data.tens2, true, 0) + genOnes(data.totalOnes, true);
+            else deckHTML += genCols(data.tens1, false, 0) + genOnes(data.ones1, false) + genCols(data.tens2, true, 0) + genOnes(data.ones2, true);
+        }
+        
+        let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
+        for (let i = 0; i < h1; i++) hCrystals += '<div class="hundred-crystal"></div>';
+        for (let i = 0; i < h2; i++) hCrystals += '<div class="hundred-crystal crimson"></div>';
+        for (let i = 0; i < finalMixed; i++) hCrystals += '<div class="hundred-crystal mixed"></div>';
+        hCrystals += '</div>';
+        
+        const lAnim = report.isFullySolved ? 'add-robot-left-drive' : '', rAnim = report.isFullySolved ? 'add-robot-right-drive' : '';
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${lAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;display:flex;flex-direction:column;gap:5px;min-width:140px;align-items:flex-start;padding:8px;">${hCrystals}<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div></div><div class="${rAnim}"><div><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${report.isFullySolved ? 'Ура! Сотни покорены! 🎉' : 'Проверяем ответ... 👀'}</b></div>`;
+    }
+    GameCanvas.renderZoneScene(html, cacheKey);
+}
+
+function buildHLayout(purple, crimson, mixed, sub, isO = false) {
+    let h = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
+    for (let i = 0; i < purple; i++) h += '<div class="hundred-crystal"></div>';
+    for (let i = 0; i < crimson; i++) h += '<div class="hundred-crystal crimson"></div>';
+    for (let i = 0; i < mixed; i++) h += '<div class="hundred-crystal mixed"></div>';
+    h += '</div>';
+    const deck = `<div class="crystal-deck ${isO ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;">${h}<div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div></div>`;
+    return `<div class="crystal-truck">${isO ? deck + '<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div>' : '<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span></div>' + deck}</div>`;
+}
+function genCols(c, o, b) { let html = ''; for (let i = 0; i < c; i++) { html += `<div class="crystal-column">`; let last = (i === c - 1) && (b > 0); for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${(last && j > (10 - b)) ? (o ? 'borrow-blue' : 'borrow-orange') : (o ? 'borrow-orange' : 'borrow-blue')}"></div>`; html += `</div>`; } return html; }
+function genOnes(c, o) { if (c === 0) return ''; let html = `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) html += (j <= c) ? `<div class="crystal-item ${o ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; return html + `</div>`; }
+
+=== FILE_END: "js/addition_hundreds_visual.js" ===
+
+=== FILE_START: "js/subtraction_hundreds_visual.js" ===
+// version: v1.4
+import { state } from './state.js'; import { GameCanvas } from './game_canvas.js'; import { parseSubtractionData } from './calculator.js';
+export function renderSubtractionHundredsVisual() {
+    const item = state.examplesHistory[state.activeIndex]; if (!item) return;
+    const report = state.validateCurrentInput(), data = parseSubtractionData(item.exampleText, report), cacheKey = `${item.exampleText}_sub_hundreds_phase${report.phase}_${report.isFullySolved}`;
+    let html = '', h1 = Math.floor(data.num1 / 100), h2 = Math.floor(data.num2 / 100), cleanN2 = data.num2 % 100, cleanSub = data.currentSubtrahend % 100;
+    const rL = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div>`;
+    const rR = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div>`;
+    if (report.phase === 1) {
+        const d1 = `<div class="crystal-deck" style="border-color:#0284c7;">${buildSubHLayout(h1, 0, 0, genSubCargo(data.tens1, data.ones1, 0, 0))}</div>`;
+        const d2 = `<div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${buildSubHLayout(0, 0, h2, genSubEmpty(cleanN2, 0))}</div>`;
+        html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${d2}${rR}</div>`;
+    } else if (report.phase === 2) {
+        let curH1 = h1, curH2 = Math.floor(data.currentSubtrahend / 100), userSubH = 0;
+        if (report.simText.includes('-')) {
+            const parts = report.simText.split('-'), leftNum = parseInt(parts[0], 10), rightNum = parseInt(parts[1], 10);
+            if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
+            if (!isNaN(rightNum)) { userSubH = h2 - Math.floor(rightNum / 100); curH2 = 0; }
+        }
+        const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
+        const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, userSubH, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
+        const d2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount))}</div>`;
+        html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;">${rL}${d1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${d2}${rR}</div>`;
+    } else {
+        let deckHTML = genSubCargo(data.tens1, data.ones1, 0, cleanSub), finalH1 = Math.floor((data.num1 - data.num2) / 100);
+        let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
+        for (let i = 0; i < finalH1; i++) hCrystals += '<div class="hundred-crystal"></div>';
+        hCrystals += '</div>';
+        const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '', labelText = report.isFullySolved ? 'Ура! Робот П уехал с правильным грузом! 🎉' : 'Проверяем ответ... 👀';
+        const finalDeck = `<div class="crystal-deck" style="background:#e0f2fe;border-color:#ef4444;">${hCrystals}<div style="display:flex;gap:4px;align-items:flex-end;">${deckHTML}</div></div>`;
+        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;position:relative;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${rL}<div class="crystal-deck" style="border-color:#22c55e;">${buildSubHLayout(finalH1, 0, 0, genSubCargo(data.tens1, data.ones1, 0, cleanSub))}</div><div class="${driveAwayClass}" style="display:flex;align-items:center;gap:20px;">${rR}${finalDeck}</div></div><b class="sub-win-text">${labelText}</b></div>`;
+    }
+    GameCanvas.renderZoneScene(html, cacheKey);
+}
+function buildSubHLayout(p, c, e, sub) {
+    let h = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
+    for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
+    for (let i = 0; i < c; i++) h += '<div class="hundred-crystal crimson"></div>';
+    for (let i = 0; i < e; i++) h += '<div class="hundred-crystal empty"></div>';
+    return h + `</div><div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div>`;
+}
+function genSubCargo(t, o, a, s) { let base = (t * 10) + o, total = base + a, active = total - s, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= active ? `<div class="${g <= base ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
+function genSubEmpty(e, a) { let total = e + a, full = Math.floor(total / 10), rem = total % 10, g = 0, html = ''; for (let i = 0; i < full; i++) { html += `<div class="crystal-column">`; for (let j = 1; j <= 10; j++) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } html += `</div>`; } if (rem > 0) { html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) { if (j <= rem) { g++; html += g <= e ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; } html += `</div>`; } return html; }
+
+=== FILE_END: "js/subtraction_hundreds_visual.js" ===
+
+
+    </pre>
 </body>
 </html>
