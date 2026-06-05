@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { GameCanvas } from './game_canvas.js';
 import { ADDITION_RULES } from './rules/rules_addition.js';
 import { SUBTRACTION_RULES } from './rules/rules_subtraction.js';
@@ -18,7 +18,8 @@ export const VisualEngine = {
         let html = '';
 
         if (cfg.layout === "split-trucks") {
-            html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 15px;box-sizing:border-box;height:100%;${cfg.style || ''}">${this.bTruck(cfg.leftTruck)}${cfg.operatorHTML}${this.bTruck(cfg.rightTruck)}</div>`;
+            // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Грузовики позиционируются по краям, но внутри себя они монолитны
+            html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 5%;box-sizing:border-box;height:100%;${cfg.style || ''}">${this.bTruck(cfg.leftTruck)}${cfg.operatorHTML}${this.bTruck(cfg.rightTruck)}</div>`;
         } 
         else if (cfg.layout === "merged-deck") {
             let hCryst = this.bH(cfg.hundredsConfig?.purple, cfg.hundredsConfig?.crimson, cfg.hundredsConfig?.mixed, false);
@@ -57,8 +58,8 @@ export const VisualEngine = {
         let hC = this.bH(t.hundreds, t.mixedHundreds, 0, 0), dC = '';
         for (let i = 0; i < t.tens; i++) { dC += `<div class="crystal-column">`; let isL = (i === t.tens - 1) && (t.borrow > 0); for (let j = 1; j <= 10; j++) dC += `<div class="crystal-item ${(isL && j > (10 - t.borrow)) ? (t.isOrange ? 'borrow-blue' : 'borrow-orange') : (t.isOrange ? 'borrow-orange' : 'borrow-blue')}"></div>`; dC += `</div>`; }
         if (t.ones > 0) { dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) dC += (j <= t.ones) ? `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; dC += `</div>`; }
-        const r = `<div><span style="font-size:36px;">🤖</span><b style="color:${t.color};font-size:13px;">${t.label}</b></div>`;
+        const r = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${t.color};font-size:13px;margin-top:2px;">${t.label}</b></div>`;
         const d = `<div class="crystal-deck ${t.isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;${t.style || ''}">${hC}<div style="display:flex;gap:4px;align-items:flex-end;">${dC}</div></div>`;
-        return t.isOrange ? d + r : r + d;
+        return t.isOrange ? `<div class="crystal-truck">${d}${r}</div>` : `<div class="crystal-truck">${r}${d}</div>`;
     }
 };
