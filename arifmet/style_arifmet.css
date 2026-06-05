@@ -1,4 +1,4 @@
-/* version: v1.1 - Original Rigid Dimensions Edition */
+/* version: v1.4 - Original Rigid Layout with 20% Narrower Panel & Compact Buttons */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 .header { height: 9.6vh; display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: relative; z-index: 10; padding: 0 20px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 5vh; height: 5vh; }
@@ -7,8 +7,8 @@ html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Robot
 .header-menu-btn:hover { background: #1a237e; }
 .main-container { display: flex; flex-direction: column; position: relative; height: calc(100vh - 9.6vh); width: 100%; }
 .game-workspace { display: flex; width: 100%; height: 68%; overflow: hidden; }
-.left-area { flex: 2; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { flex: 1; min-width: 300px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.left-area { width: 73%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+.right-area { width: 27%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 #modes-menu-container { display: flex; flex-direction: column; width: 100%; height: 100%; margin: 0; padding: 0; }
 #modes-menu-container .mode-btn { width: 100%; height: 25%; font-size: 2.5vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: filter 0.2s; }
@@ -17,12 +17,12 @@ html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Robot
 #modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
 #modes-menu-container .mode-btn[data-mode="mix"] { background: #fda4af; color: #4c0519; }
 #modes-menu-container .mode-btn[data-mode="hundreds"] { background: #93c5fd; color: #1e3a8a; }
-.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh; width: 100%; max-width: 36vh; box-sizing: border-box; }
-.num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 3vh; font-weight: bold; padding: 1.5vh 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 6vh; }
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8vh; width: 100%; max-width: 25vh; box-sizing: border-box; }
+.num-btn { background: white; border: 1px solid #ccc; border-radius: 10px; font-size: 2.2vh; font-weight: bold; padding: 1vh 0; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 4.5vh; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
-.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 2vh 0; font-size: 2.2vh; }
+.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 1.4vh 0; font-size: 1.6vh; }
 .example-line { font-size: 3.2vh; font-weight: bold; color: #333; margin-bottom: 1.5vh; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5vh; padding: 0.5vh; border-radius: 8px; cursor: pointer; }
 .example-line:hover { background: #f0f2f5; }
 .example-line.active { background: #e3f2fd; border: 2px dashed #2196f3; }
