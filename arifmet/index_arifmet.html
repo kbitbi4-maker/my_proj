@@ -1,79 +1,67 @@
-<!-- version: v1.8 - Fixed Landscape Sidebar Selectors --> 
+<!-- version: v1.1 - Original Rigid Dimensions Edition --> 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Сложение и вычитание</title>
- <link rel="stylesheet" href="style_arifmet.css?v=4">
+ <link rel="stylesheet" href="style_arifmet.css?v=5">
 </head>
 <body>
  <div class="header">
-  <a href="../index.html" title="Главное menu">←</a>
-  <div class="version">arifmet_054</div>
-  <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:1.6vh; margin-left:15px;">Карта 🗺️</button>
-  <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
+ <a href="../index.html" title="Главное menu">←</a>
+ <div class="version">arifmet_054</div>
+ <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:1.6vh; margin-left:15px;">Карта 🗺️</button>
+ <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
  </div>
  
  <div class="main-container">
-  <div class="game-workspace">
-   <div class="left-area" id="examples-list">
-    <div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
-   </div>
+ <div class="game-workspace">
+ <div class="left-area" id="examples-list">
+ <div id="history-placeholder" style="color: #999; text-align: center; margin-top: 20px;">Выберите режим в меню для начала игры</div>
+ </div>
  
-   <div class="right-area">
-    <div class="numpad" id="calc-numpad-container">
-     <button class="num-btn calc-btn" data-key="1">1</button>
-     <button class="num-btn calc-btn" data-key="2">2</button>
-     <button class="num-btn calc-btn" data-key="3">3</button>
-     <button class="num-btn calc-btn" data-key="4">4</button>
-     <button class="num-btn calc-btn" data-key="5">5</button>
-     <button class="num-btn calc-btn" data-key="6">6</button>
-     <button class="num-btn calc-btn" data-key="7">7</button>
-     <button class="num-btn calc-btn" data-key="8">8</button>
-     <button class="num-btn calc-btn" data-key="9">9</button>
-     <button class="num-btn calc-btn clear" data-key="C">C</button>
-     <button class="num-btn calc-btn" data-key="0">0</button>
-     <button class="num-btn calc-btn clear" data-key="D">←</button>
-     <button class="num-btn calc-btn op" data-key="+">+</button>
-     <button class="num-btn calc-btn op" data-key="-">-</button>
-     <button class="num-btn calc-btn op" data-key="=">=</button>
-     <button class="num-btn calc-btn next" id="next-example-btn">Следующий пример</button>
-    </div>
-   </div>
-
-   <div class="header-landscape-sidebar">
-    <a href="../index.html" title="Главное menu">←</a>
-    <div class="version">arifmet_054</div>
-    <button id="project-map-btn-land">Карта 🗺️</button>
-    <div class="header-menu-btn" id="menu-toggle-btn-land">Выбрать ▼</div>
-   </div>
-  </div>
-  <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; width: 100%; background-color: #f0fdf4; border-top: 2px dashed #4ade80; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); box-sizing: border-box; padding: 10px; overflow-y: auto;"></div>
+ <div class="right-area">
+ <div id="modes-menu-container" style="display: none;">
+ <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
+ <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
+ <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
+ <button class="mode-btn" data-mode="hundreds">Сотни 🗺️ 🔵</button>
+ </div>
+ <div class="numpad" id="calc-numpad-container">
+ <button class="num-btn calc-btn" data-key="1">1</button>
+ <button class="num-btn calc-btn" data-key="2">2</button>
+ <button class="num-btn calc-btn" data-key="3">3</button>
+ <button class="num-btn calc-btn" data-key="4">4</button>
+ <button class="num-btn calc-btn" data-key="5">5</button>
+ <button class="num-btn calc-btn" data-key="6">6</button>
+ <button class="num-btn calc-btn" data-key="7">7</button>
+ <button class="num-btn calc-btn" data-key="8">8</button>
+ <button class="num-btn calc-btn" data-key="9">9</button>
+ <button class="num-btn calc-btn clear" data-key="C">C</button>
+ <button class="num-btn calc-btn" data-key="0">0</button>
+ <button class="num-btn calc-btn clear" data-key="D">←</button>
+ <button class="num-btn calc-btn op" data-key="+">+</button>
+ <button class="num-btn calc-btn op" data-key="-">-</button>
+ <button class="num-btn calc-btn op" data-key="=">=</button>
+ <button class="num-btn calc-btn next" id="next-example-btn">Следующий пример</button>
+ </div>
+ </div>
+ </div>
+ <div id="game-zone" style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px; width: 100%; height: 32%; background-color: #f0fdf4; border-top: 2px dashed #4ade80; box-shadow: inset 0 4px 6px rgba(0,0,0,0.02); box-sizing: border-box; padding: 10px; overflow-y: auto;"></div>
  </div>
 
- <div id="modes-menu-backdrop">
-  <div id="modes-menu-container">
-   <b style="text-align: center; font-size: 16px; margin-bottom: 5px; color: #333;">Выберите режим игры:</b>
-   <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
-   <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
-   <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
-   <button class="mode-btn" data-mode="hundreds">Сотни 🗺️ 🔵</button>
-   <button id="close-menu-modal-btn" style="background:#ef4444; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:5px;">Отмена ❌</button>
-  </div>
+ <div id="map-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; box-sizing:border-box; padding:20px;">
+ <div style="background:white; padding:20px; border-radius:12px; width:100%; max-width:650px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+ <div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">🗺️ Текстовая карта проекта arifmet</b><button id="close-map-btn" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:6px; cursor:pointer;">Закрыть</button></div>
+ <p style="margin:0; font-size:13px; color:#64748b;">Скачайте весь исходный код проекта в PDF для мгновенной передачи ИИ-ассистенту.</p>
+ <textarea id="map-text-area" readonly style="width:100%; height:320px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; resize:none; background:#f8fafc; box-sizing:border-box;"></textarea>
+ <div style="display:flex; gap:10px;">
+ <button id="copy-map-btn" style="flex:1; background:#3f51b5; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Копировать карту 📋</button>
+ <button id="download-pdf-btn" style="flex:1; background:#f43f5e; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Скачать PDF 📄</button>
+ <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
  </div>
-
- <div id="map-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:4000; align-items:center; justify-content:center; box-sizing:border-box; padding:20px;">
-  <div style="background:white; padding:20px; border-radius:12px; width:100%; max-width:650px; display:flex; flex-direction:column; gap:15px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
-   <div style="display:flex; justify-content:space-between; align-items:center;"><b style="font-size:18px;">🗺️ Текстовая карта проекта arifmet</b><button id="close-map-btn" style="background:#ef4444; color:white; border:none; padding:4px 10px; border-radius:6px; cursor:pointer;">Закрыть</button></div>
-   <p style="margin:0; font-size:13px; color:#64748b;">Скачайте весь исходный код проекта в PDF для мгновенной передачи ИИ-ассистенту.</p>
-   <textarea id="map-text-area" readonly style="width:100%; height:320px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; resize:none; background:#f8fafc; box-sizing:border-box;"></textarea>
-   <div style="display:flex; gap:10px;">
-    <button id="copy-map-btn" style="flex:1; background:#3f51b5; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Копировать карту 📋</button>
-    <button id="download-pdf-btn" style="flex:1; background:#f43f5e; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Скачать PDF 📄</button>
-    <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
-   </div>
-  </div>
+ </div>
  </div>
  <script type="module" src="js/main.js"></script>
 </body>
