@@ -1,4 +1,4 @@
-// version: v1.8 - Fixed Absolute Global Counter Increments in Column Generation
+// version: v1.9 - Fixed Phase 2 Clean Hundreds Cargo with Zero Remainder Condition
 import { state } from './state.js'; 
 import { GameCanvas } from './game_canvas.js'; 
 import { parseSubtractionData } from './calculator.js';
@@ -15,17 +15,27 @@ export function renderSubtractionHundredsVisual() {
  const d2 = `<div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${buildSubHLayout(0, 0, h2, genSubEmpty(cleanN2, 0))}</div>`;
  html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${d2}${rR}</div>`;
  } else if (report.phase === 2) {
- let curH1 = h1, curH2 = h2, userSubH = 0;
+ let curH1 = h1, curH2 = h2, userSubH = 0, isRightZeroRemainder = false;
  if (report.simText.includes('-')) {
  const partsArr = report.simText.split('-');
- const leftNum = parseInt(partsArr, 10);
- const rightNum = parseInt(partsArr, 11);
+ if (partsArr.length === 2) {
+ const leftNum = parseInt(partsArr[0], 10);
+ const rightNum = parseInt(partsArr[1], 10);
  if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
- if (!isNaN(partsArr[1])) { const rVal = parseInt(partsArr[1], 10); userSubH = h2 - Math.floor(rVal / 100); curH2 = Math.floor(rVal / 100); }
+ if (!isNaN(rightNum)) { 
+ userSubH = h2 - Math.floor(rightNum / 100); 
+ curH2 = Math.floor(rightNum / 100); 
+ if (rightNum % 100 === 0) { isRightZeroRemainder = true; }
+ }
+ }
  }
  const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
  const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, userSubH, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
- const d2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount))}</div>`;
+ 
+ // Условие: если у отнимателя не остается десятков и единиц, мелкие занятые/пустые блоки не дорисовываем
+ const rightSubHTML = isRightZeroRemainder ? '' : genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount);
+ const d2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, rightSubHTML)}</div>`;
+ 
  html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;">${rL}${d1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${d2}${rR}</div>`;
  } else {
  let finalRemainder = (data.num1 - data.num2) % 100;
@@ -80,6 +90,7 @@ function genSubCargo(t, o, a, s) {
 }
 
 function genSubEmpty(e, a) {
+ if (e <= 0 && a <= 0) return '';
  let total = e + a, full = Math.floor(total / 10), rem = total % 10, html = '';
  for (let i = 0; i < full; i++) {
  html += `<div class="crystal-column">`;
