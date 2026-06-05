@@ -1,4 +1,4 @@
-// version: v1.6
+// version: v1.8
 import { evaluateExpr, parseAdditionData, parseSubtractionData, parseMultiplicationData } from './calculator.js';
 
 export const state = {
@@ -18,7 +18,7 @@ export const state = {
         let operation = item.exampleText.includes('-') ? '-' : (item.exampleText.includes('×') ? '×' : '+');
 
         let mathData = {};
-        // ИСПРАВЛЕНО: Передаем report в калькулятор сложения
+        // ЖЁСТКОЕ ИСПРАВЛЕНИЕ: Передаем всегда существующий report, предотвращая падение скрипта в null
         if (operation === '+') mathData = parseAdditionData(item.exampleText, report);
         else if (operation === '-') mathData = parseSubtractionData(item.exampleText, report);
         else if (operation === '×') mathData = parseMultiplicationData(item.exampleText);
@@ -44,7 +44,7 @@ export const state = {
         if (hasPressedEqual) {
             simCorrect = (evaluateExpr(simText) === item.correctValue);
             if (item.exampleText.includes('×') && simCorrect && simText) {
-                if (simText.split('+').length !== parseInt(item.exampleText.split('×')[0], 10)) simCorrect = false;
+                if (simText.split('+').length !== parseInt(item.exampleText.split('×'), 10)) simCorrect = false;
             }
         }
         let finCorrect = hasFinalAnswer && (evaluateExpr(finText) === item.correctValue);
