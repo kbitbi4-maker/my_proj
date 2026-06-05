@@ -1,19 +1,7 @@
-// version: v1.3
+// version: v1.4
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { selectExample } from './view_dispatcher.js';
-
-// ИСПРАВЛЕНО: Кнопка на главном экране строго открывает штатную модалку карты проекта, как это и было изначально
-document.getElementById('project-map-btn')?.addEventListener('click', () => {
-    const modal = document.getElementById('map-modal');
-    if (modal) modal.style.display = 'flex';
-});
-
-// Закрытие модалки карты проекта
-document.getElementById('close-map-btn')?.addEventListener('click', () => {
-    const modal = document.getElementById('map-modal');
-    if (modal) modal.style.display = 'none';
-});
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
