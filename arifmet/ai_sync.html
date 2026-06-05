@@ -1,4 +1,4 @@
-<!-- version: v2.2 -->
+<!-- version: v2.3 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -35,11 +35,11 @@
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     const t = await r.text();
                     const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-                    // ЖЕСТКИЙ ФИКС: Проверяем m на null перед вызовом replace, защищая скрипт от падения
-                    const ver = (m && m[1]) ? m[1].replace(/-->/g, '').trim() : 'unknown';
+                    // Безопасное извлечение индекса совпадения без вызова методов у null
+                    const ver = m ? m[1].replace(/-->/g, '').trim() : 'unknown';
                     const cleanPath = p.replace('./', '');
                     out += `- PATH: "${cleanPath}" | VER: ${ver} | SIZE: ${t.length} chars\n`;
-                } catch { 
+                } catch (e) { 
                     const cleanPath = p.replace('./', '');
                     out += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`; 
                 }
