@@ -1,4 +1,4 @@
-// version: v1.1 - Original Flat Event Listeners
+// version: v1.3 - Flat Original Event Hook Up
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
