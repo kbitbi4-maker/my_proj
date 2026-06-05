@@ -1,4 +1,4 @@
-// version: v2.0 - Fixed Phase 2 Global Counter for Borrowed Crystals O/B Theme
+// version: v2.1 - Re-engineered Phase 3 Combined Cargo Layout for Merged Tens & Ones
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData } from './calculator.js';
@@ -51,9 +51,36 @@ export function renderAdditionHundredsVisual() {
  const remTensOrange = Math.max(0, Math.floor(remSum / 10) - remTensPurple);
  deckHTML = genCols(remTensPurple, false, 0, 999) + genCols(remTensOrange, true, 0, 0) + genOnes(remSum % 10, true, 0, 0);
  } else {
- if (data.rightBorrowCount > 0) deckHTML += genOnes(data.totalOnes, false, 0, 999) + genCols(data.tens1, false, 0, 999) + genCols(data.tens2, true, 0, 0) + genCols(1, true, data.rightBorrowCount, 0);
- else if (data.leftBorrowCount > 0) deckHTML += genCols(data.tens1, false, 0, 999) + genCols(1, false, data.leftBorrowCount, 999) + genCols(data.tens2, true, 0, 0) + genOnes(data.totalOnes, true, 0, 0);
- else deckHTML += genCols(data.tens1, false, 0, 999) + genOnes(data.ones1, false, 0, 999) + genCols(data.tens2, true, 0, 0) + genOnes(data.ones2, true, 0, 0);
+ // Полная синхронизация и объединение колонок по аналогии с режимом Десятки
+ let blueTotal = data.tens1 * 10 + data.ones1;
+ let orangeTotal = data.tens2 * 10 + data.ones2;
+ let finalTotal = blueTotal + orangeTotal;
+ 
+ let fullCols = Math.floor(finalTotal / 10);
+ let remOnes = finalTotal % 10;
+ 
+ for (let i = 0; i < fullCols; i++) {
+ deckHTML += `<div class="crystal-column">`;
+ for (let j = 1; j <= 10; j++) {
+ let currentGlobalId = (i * 10) + j;
+ let isOrange = currentGlobalId > blueTotal;
+ deckHTML += `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+ }
+ deckHTML += `</div>`;
+ }
+ if (remOnes > 0) {
+ deckHTML += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+ for (let j = 1; j <= 10; j++) {
+ if (j <= remOnes) {
+ let currentGlobalId = (fullCols * 10) + j;
+ let isOrange = currentGlobalId > blueTotal;
+ deckHTML += `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+ } else {
+ deckHTML += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+ }
+ }
+ deckHTML += `</div>`;
+ }
  }
  
  let hCrystals = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
