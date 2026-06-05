@@ -1,4 +1,4 @@
-// version: v2.3
+// version: v2.5
 export function genHundreds(p, c, m, e) {
     let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
     for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
@@ -10,13 +10,15 @@ export function genHundreds(p, c, m, e) {
 
 export function generateCrystalColumnsHTML(tens, ones, borrowCount, isOrange = false) {
     let html = '';
-    // Рассчитываем физические столбики на основе изначальной массы груза
     let baseCubes = tens * 10 + ones;
+    // Живые активные кубики в кузове прямо сейчас
     let activeCubes = borrowCount < 0 ? baseCubes + borrowCount : baseCubes;
-    let totalCubes = borrowCount > 0 ? baseCubes + borrowCount : baseCubes;
-    
-    let fullCols = Math.floor(totalCubes / 10);
-    let remOnes = totalCubes % 10;
+    // Целевая сетка кузова (с учетом будущего заимствования)
+    let targetCubes = borrowCount > 0 ? baseCubes + borrowCount : (borrowCount < 0 ? baseCubes : Math.ceil(baseCubes / 10) * 10);
+    if (ones === 0 && baseCubes > 0) targetCubes = baseCubes;
+
+    let fullCols = Math.floor(targetCubes / 10);
+    let remOnes = targetCubes % 10;
     let globalCounter = 0;
 
     for (let i = 0; i < fullCols; i++) {
@@ -27,8 +29,8 @@ export function generateCrystalColumnsHTML(tens, ones, borrowCount, isOrange = f
             if (globalCounter <= activeCubes) {
                 let itemClass = (isLastColumn && j > (10 - borrowCount)) ? (isOrange ? 'borrow-blue' : 'borrow-orange') : (isOrange ? 'borrow-orange' : 'borrow-blue');
                 html += `<div class="crystal-item ${itemClass}"></div>`;
-            } else {
-                // Если робот отдал кубики, заменяем их на пустые белые контуры ячеек
+            } else if (globalCounter <= targetCubes) {
+                // Отрисовываем пустые ячейки-контуры под будущие кубики
                 html += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
             }
         }
