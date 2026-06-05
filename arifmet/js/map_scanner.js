@@ -1,11 +1,10 @@
-// version: v1.7
+// version: v2.0
 const FILE_PATHS = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
     'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 'js/multiplication.js',
-    'js/visual_engine.js', 'js/project_map.js', 'js/map_scanner.js', 'ai_sync.html',
-    'js/rules/rules_utils.js', 'js/rules/rules_addition.js', 'js/rules/rules_sub_utils.js',
-    'js/rules/rules_subtraction.js', 'js/rules/rules_multiplication.js', 'js/rules/rules_style.css'
+    'js/addition_visual.js', 'js/subtraction_visual.js', 'js/addition_hundreds_visual.js', 
+    'js/subtraction_hundreds_visual.js', 'js/project_map.js', 'js/map_scanner.js', 'ai_sync.html'
 ];
 
 export async function generateDynamicMap() {
@@ -16,7 +15,7 @@ export async function generateDynamicMap() {
             const text = await res.text();
             const lines = text.split('\n').length; const bytes = new Blob([text]).size;
             const m = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-            const ver = m ? m[1].replace(/-->/g, '').trim() : 'unknown';
+            const ver = m ? m[0].replace(/-->/g, '').trim() : 'unknown';
             report += `├── [FILE]: ${path} [VER: ${ver}] (${lines} lines, ${bytes} B)\n`;
         } catch { report += `├── [FILE]: ${path} [NOT_FOUND ❌]\n`; }
     }
