@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.4
 import { genSubCargo, genSubEmpty, genSubFinal } from './rules_sub_utils.js';
 
 export const SUBTRACTION_RULES = [
@@ -8,7 +8,7 @@ export const SUBTRACTION_RULES = [
         config: (ctx) => {
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             return {
-                layout: "sub-scene", phase: 1, text: "Проверяем пример... 👀",
+                layout: "sub-scene", phase: 1, text: "Проверяем пример... 👀", sound: null,
                 leftDeckHTML: genSubCargo(d.tens1, d.ones1, 0, 0), leftH: isH ? Math.floor(d.num1 / 100) : 0, leftLabel: `Л (${d.num1})`, leftColor: "#0284c7", leftEmptyH: 0, leftCrimsonH: 0,
                 rightDeckHTML: genSubEmpty(isH ? d.num2 % 100 : d.num2, 0), rightH: 0, rightLabel: `П (${d.num2})`, rightColor: "#ef4444", rightEmptyH: isH ? Math.floor(d.num2 / 100) : 0, rightCrimsonH: 0,
                 deckStyle: "border-color:#0284c7;", rightDeckStyle: "border:2px solid #000;background:rgba(0,0,0,0.03);"
@@ -20,16 +20,21 @@ export const SUBTRACTION_RULES = [
         match: (ctx) => ctx.operation === '-' && ctx.phase === 2,
         config: (ctx) => {
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
-            // ИСПРАВЛЕНО: расчет сотен идет от текущего измененного состояния примера
-            let cH1 = isH ? Math.floor(d.num1 / 100) : 0;
-            let userSubH = isH ? Math.floor(d.currentSubtrahend / 100) : 0;
-            let remainingEmptyH = isH ? (Math.floor(d.num2 / 100) - userSubH) : 0;
-            if (remainingEmptyH < 0) remainingEmptyH = 0;
-
+            let curH1 = isH ? Math.floor(d.num1 / 100) : 0, curH2 = isH ? Math.floor(d.currentSubtrahend / 100) : 0, userSubH = 0;
+            
+            // ВОССТАНОВЛЕНА ОРИГИНАЛЬНАЯ ЛОГИКА ДЕСТРУКТУРИЗАЦИИ СОТЕН ИЗ ВЕРСИИ v1.4
+            const simPart = ctx.currentInput.split('=').at(0) || '';
+            if (isH && simPart.includes('-')) {
+                const parts = simPart.split('-');
+                const leftNum = parseInt(parts[0], 10), rightNum = parseInt(parts[1], 10);
+                if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
+                if (!isNaN(rightNum)) { userSubH = Math.floor(d.num2 / 100) - Math.floor(rightNum / 100); curH2 = 0; }
+            }
+            
             return {
-                layout: "sub-scene", phase: 2, text: "Проверяем пример... 👀",
-                leftDeckHTML: genSubCargo(d.tens1, d.ones1, d.addedAmount, d.subtractedAmount), leftH: cH1, leftLabel: "Л", leftColor: "#0284c7", leftEmptyH: 0, leftCrimsonH: userSubH,
-                rightDeckHTML: genSubEmpty((isH ? d.num2 % 100 : d.num2) - d.subtractedAmount, d.addedAmount), rightH: 0, rightLabel: "П", rightColor: "#ef4444", rightEmptyH: remainingEmptyH, rightCrimsonH: 0,
+                layout: "sub-scene", phase: 2, text: "Проверяем пример... 👀", sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null),
+                leftDeckHTML: genSubCargo(d.tens1, d.ones1, d.addedAmount, d.subtractedAmount), leftH: curH1, leftLabel: "Л", leftColor: "#0284c7", leftEmptyH: 0, leftCrimsonH: userSubH,
+                rightDeckHTML: genSubEmpty((isH ? d.num2 % 100 : d.num2) - d.subtractedAmount, d.addedAmount), rightH: 0, rightLabel: "П", rightColor: "#ef4444", rightEmptyH: curH2, rightCrimsonH: 0,
                 deckStyle: `border-color:${ctx.simCorrect ? '#22c55e' : '#0284c7'}; ${ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : ''}`, rightDeckStyle: "border:2px solid #000;"
             };
         }
@@ -40,10 +45,9 @@ export const SUBTRACTION_RULES = [
         config: (ctx) => {
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             let cleanSub = isH ? d.currentSubtrahend % 100 : d.currentSubtrahend;
-            // ИСПРАВЛЕНО: робот П уезжает строго с правильным финальным остатком сотен!
             let finalH1 = isH ? Math.floor((d.num1 - d.num2) / 100) : 0;
             return {
-                layout: "sub-scene", phase: 3, isFullySolved: ctx.isFullySolved, text: ctx.isFullySolved ? "Ура! Робот П уехал с правильным грузом! 🎉" : "Проверяем ответ... 👀",
+                layout: "sub-scene", phase: 3, isFullySolved: ctx.isFullySolved, text: ctx.isFullySolved ? "Ура! Робот П уехал с правильным грузом! 🎉" : "Проверяем ответ... 👀", sound: ctx.isWrongAnswer ? "fail" : (ctx.isFullySolved ? "win" : null),
                 leftDeckHTML: genSubCargo(d.tens1, d.ones1, 0, cleanSub), leftH: finalH1, leftLabel: "Л", leftColor: "#0284c7", leftEmptyH: 0, leftCrimsonH: 0,
                 rightDeckHTML: genSubFinal(cleanSub - d.finalAddedAmount, d.finalAddedAmount), rightH: finalH1, rightLabel: "П", rightColor: "#ef4444", rightEmptyH: 0, rightCrimsonH: 0,
                 deckStyle: "border-color:#22c55e;", rightDeckStyle: "background:#e0f2fe;border-color:#ef4444;"
