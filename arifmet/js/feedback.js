@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 let currentWinPlayer = null;
 let currentAlienPlayer = null;
 let currentFailPlayer = null;
@@ -50,8 +50,13 @@ export function triggerFailFeedback() {
  * Единый диспетчер проигрывания звуков для VisualEngine
  */
 export function handleVisualSound(soundType, phase, hasEquals) {
-    if (soundType === "alien_win" && !soundFlags.finWinSoundPlayed) {
-        triggerWinFeedback(); soundFlags.finWinSoundPlayed = soundFlags.simWinSoundPlayed = true;
+    // ИСПРАВЛЕНО: Прямой и надежный запуск космического звука для умножения
+    if (soundType === "alien_win") {
+        if (!soundFlags.finWinSoundPlayed) {
+            triggerWinFeedback();
+            soundFlags.finWinSoundPlayed = true;
+            soundFlags.simWinSoundPlayed = true;
+        }
     } else if (soundType === "win" && !soundFlags.simWinSoundPlayed && phase === 2) {
         triggerTensWinSound(); soundFlags.simWinSoundPlayed = true;
     } else if (soundType === "win" && !soundFlags.finWinSoundPlayed && phase === 3) {
