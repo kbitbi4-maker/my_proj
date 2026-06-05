@@ -1,4 +1,4 @@
-// version: v1.7
+// version: v1.9
 import { GameCanvas } from './game_canvas.js';
 import { ADDITION_RULES } from './rules/rules_addition.js';
 import { SUBTRACTION_RULES } from './rules/rules_subtraction.js';
@@ -17,7 +17,6 @@ export const VisualEngine = {
         const cfg = rule.config(ctx);
         const cacheKey = ctx.operation === '×' ? `${ctx.exampleText}_status_${cfg.status}` : `${ctx.exampleText}_r_${rule.id}_s_${ctx.isFullySolved}_i_${ctx.currentInput}`;
         
-        // СОВЕРШЕННЫЙ АУДИО-ДВИЖОК ВНУТРИ ВИЗУАЛИЗАЦИИ
         if (cfg.sound === "alien_win" && !soundFlags.finWinSoundPlayed) {
             triggerWinFeedback(); soundFlags.finWinSoundPlayed = soundFlags.simWinSoundPlayed = true;
         } else if (cfg.sound === "win" && !soundFlags.simWinSoundPlayed && ctx.phase === 2) {
@@ -38,13 +37,19 @@ export const VisualEngine = {
             html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;"><div class="win-layout" style="display:flex;align-items:center;justify-content:center;position:relative;"><div class="${cfg.isFullySolved ? 'add-robot-left-drive' : ''}"><div style="${cfg.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate;' : ''}"><span style="font-size:36px;line-height:1;">🤖</span></div></div><div class="crystal-deck" style="background:#f0fdf4;border-color:#4ade80;margin:0 10px;display:flex;flex-direction:column;gap:5px;min-width:140px;align-items:flex-start;padding:8px;">${hCryst}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.deckHTML}</div></div><div class="${cfg.isFullySolved ? 'add-robot-right-drive' : ''}"><div style="${cfg.isFullySolved ? 'animation:monsterJump 0.5s infinite alternate-reverse;' : ''}"><span style="font-size:36px;line-height:1;">🤖</span></div></div></div><b style="color:#22c55e;font-size:14px;margin-top:8px;">${cfg.bottomText}</b></div>`;
         }
         else if (cfg.layout === "sub-scene") {
-            const rL = `<div><span style="font-size:36px;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">${cfg.leftLabel}</b></div>`;
-            const rR = `<div><span style="font-size:36px;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">${cfg.rightLabel}</b></div>`;
-            const d1 = `<div class="crystal-deck" style="${cfg.deckStyle}">${this.bH(cfg.leftH, cfg.leftCrimsonH, 0, false)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.leftDeckHTML}</div></div>`;
+            // ВОССТАНОВЛЕНА ОРИГИНАЛЬНАЯ ВЕРСТКА СБОРОЧНЫХ БЛОКОВ ВЫЧИТАНИЯ С СОТНЯМИ ИЗ ВЕРСИИ v1.4
+            const rL = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">${cfg.leftLabel}</b></div>`;
+            const rR = `<div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">${cfg.rightLabel}</b></div>`;
+            
+            const hL = this.bH(cfg.leftH, cfg.leftCrimsonH, 0, cfg.leftEmptyH);
+            const d1 = `<div class="crystal-deck" style="${cfg.deckStyle}">${hL}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.leftDeckHTML}</div></div>`;
+            
             if (cfg.phase === 3) {
-                html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${rL}${d1}<div class="${cfg.isFullySolved ? 'sub-drive-away' : ''}" style="display:flex;align-items:center;gap:20px;">${rR}<div class="crystal-deck" style="${cfg.rightDeckStyle}">${this.bH(cfg.rightH, 0, 0, false)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div></div></div><b class="sub-win-text">${cfg.text}</b></div>`;
+                const hR = this.bH(cfg.rightH, cfg.rightCrimsonH, 0, cfg.rightEmptyH);
+                html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;position:relative;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${rL}${d1}<div class="${cfg.isFullySolved ? 'sub-drive-away' : ''}" style="display:flex;align-items:center;gap:20px;">${rR}<div class="crystal-deck" style="${cfg.rightDeckStyle}">${hR}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div></div></div><b class="sub-win-text">${cfg.text}</b></div>`;
             } else {
-                const d2 = `<div class="crystal-deck" style="${cfg.rightDeckStyle}">${this.bH(0, 0, 0, cfg.rightEmptyH)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div>`;
+                const hR = this.bH(cfg.rightH, cfg.rightCrimsonH, 0, cfg.rightEmptyH);
+                const d2 = `<div class="crystal-deck" style="${cfg.rightDeckStyle}">${hR}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div>`;
                 html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${d2}${rR}</div>`;
             }
         }
