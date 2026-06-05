@@ -1,11 +1,12 @@
-// version: v1.3
+// version: v1.4
 const FILE_PATHS = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
     'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 'js/multiplication.js',
     'js/visual_engine.js', 'js/project_map.js', 'js/rules/rules_utils.js',
     'js/rules/rules_addition.js', 'js/rules/rules_sub_utils.js',
-    'js/rules/rules_subtraction.js', 'js/rules/rules_multiplication.js'
+    'js/rules/rules_subtraction.js', 'js/rules/rules_multiplication.js',
+    'js/rules/rules_style.css' // ДОБАВИЛИ НОВЫЙ CSS СЮДА
 ];
 
 export async function generateDynamicMap() {
@@ -20,7 +21,6 @@ export async function generateDynamicMap() {
             
             const lines = text.split('\n').length;
             const bytes = new Blob([text]).size;
-            // НАДЕЖНОЕ ИСПРАВЛЕНИЕ: Отрезали регулярку от дефисов, очистка идет через replace ниже
             const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
             const rawVer = verMatch ? verMatch[1] : 'unknown';
             const version = rawVer.replace(/-->/g, '').trim();
@@ -43,7 +43,7 @@ export async function generateDynamicMap() {
     });
 
     report += `    └── 📁 rules/\n`;
-    const rulesFiles = ['rules_utils.js', 'rules_addition.js', 'rules_sub_utils.js', 'rules_subtraction.js', 'rules_multiplication.js'];
+    const rulesFiles = ['rules_utils.js', 'rules_addition.js', 'rules_sub_utils.js', 'rules_subtraction.js', 'rules_multiplication.js', 'rules_style.css'];
     rulesFiles.forEach((file, idx) => {
         const p = `js/rules/${file}`; const isLast = idx === rulesFiles.length - 1;
         report += `        ${isLast ? '└──' : '├──'} 📄 ${file} [VER: ${filesData[p].version}] (${filesData[p].lines} lines, ${filesData[p].bytes} B)\n`;
