@@ -1,4 +1,4 @@
-// version: v3.5
+// version: v3.6
 
 if (typeof window !== 'undefined') {
     import('./state.js').then(module => {
@@ -88,40 +88,23 @@ async function generateFullStaticHTMLBundle() {
         }
     }
 
-    return `<!-- ВЕРСИЯ: СТАТИЧЕСКИЙ МОНОЛИТ С ТЕКСТОВЫМ ОКНОМ -->
-<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>AI Sync Panel 🤖 (Static Field)</title>
+    <title>AI Sync Panel 🤖</title>
     <style>
-        body { margin: 0; padding: 20px; background: #0f172a; color: #38bdf8; font-family: monospace; font-size: 13px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        .header { color: #22c55e; margin-bottom: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .btn-copy { background: #1e293b; border: 1px solid #334155; color: #38bdf8; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-family: monospace; }
-        .btn-copy:hover { background: #334155; color: #fff; }
-        .sync-area { flex-grow: 1; width: 100%; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #cbd5e1; padding: 15px; font-family: monospace; font-size: 12px; line-height: 1.5; resize: none; box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; }
+        .sync-area { width: 100%; height: 100%; background: #1e293b; color: #cbd5e1; padding: 20px; font-family: monospace; font-size: 13px; line-height: 1.5; border: none; resize: none; box-sizing: border-box; outline: none; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span>✅ Автоматическая сборка монолита завершена! Код готов для анализа ИИ.</span>
-        <button class="btn-copy" onclick="copyBuffer()">Скопировать весь код 📋</button>
-    </div>
-    <textarea id="bundle-container" class="sync-area" readonly>==================================================
+    <textarea class="sync-area" readonly>==================================================
 === ARIFMET FULL REPOSITORY SOURCE BUNDLE (STATIC) ===
 ==================================================
 
 ${manifest}
 ${sources}</textarea>
-
-    <script>
-        function copyBuffer() {
-            const area = document.getElementById('bundle-container');
-            area.select();
-            navigator.clipboard.writeText(area.value);
-            alert('Полный код проекта скопирован в буфер обмена! 📋');
-        }
-    </script>
 </body>
 </html>`;
 }
