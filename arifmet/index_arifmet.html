@@ -1,4 +1,4 @@
-<!-- version: v1.1 -->
+<!-- version: v1.3 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -8,20 +8,17 @@
     <link rel="stylesheet" href="style_arifmet.css">
 </head>
 <body>
-
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="version">arifmet_054</div>
         <button id="project-map-btn" class="map-btn">Карта 🗺️</button>
         <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
     </div>
-
     <div class="main-container">
         <div class="workspace-area">
             <div class="left-area" id="examples-list">
                 <div id="history-placeholder" class="placeholder">Выберите режим в меню для начала игры</div>
             </div>
-            
             <div class="right-area">
                 <div id="modes-menu-container">
                     <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
@@ -29,7 +26,6 @@
                     <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
                     <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
                 </div>
-
                 <div class="numpad" id="calc-numpad-container">
                     <button class="num-btn calc-btn" data-key="1">1</button>
                     <button class="num-btn calc-btn" data-key="2">2</button>
@@ -50,19 +46,18 @@
                 </div>
             </div>
         </div>
-
         <div id="game-zone"></div>
     </div>
-
     <div id="map-modal">
         <div class="modal-content">
             <div class="modal-header"><b>🗺️ Текстовая карта проекта arifmet</b><button id="close-map-btn">Закрыть</button></div>
-            <p>Скопируйте этот текст целиком и вставьте ИИ-ассистенту для мгновенной синхронизации состояния проекта.</p>
+            <p>Скопируйте этот текст целиком или скачайте полный бандл кода для ИИ-ассистента.</p>
             <textarea id="map-text-area" readonly></textarea>
             <button id="copy-map-btn">Скопировать карту в буфер обмена 📋</button>
+            <!-- Новая кнопка скачивания -->
+            <button id="download-project-btn" style="background:#22c55e; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; margin-top:5px;">Скачать весь код одним файлом (.txt) 💾</button>
         </div>
     </div>
-
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
