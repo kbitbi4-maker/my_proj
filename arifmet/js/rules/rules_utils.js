@@ -1,4 +1,4 @@
-// version: v2.0
+// version: v2.1
 export function genHundreds(p, c, m, e) {
     let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
     for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
@@ -9,27 +9,35 @@ export function genHundreds(p, c, m, e) {
 }
 
 function buildColsHTML(tens, ones, isOrange, isLRound, isRRound, need) {
-    let html = '';
-    for (let i = 0; i < tens; i++) {
+    let html = '', totalCubes = tens * 10 + ones;
+    // Динамически вычисляем ИТОГОВОЕ живое количество кубиков в Фазе 2
+    if (isLRound) totalCubes = isOrange ? totalCubes - need : totalCubes + need;
+    if (isRRound) totalCubes = isOrange ? totalCubes + need : totalCubes - need;
+
+    let displayTens = Math.floor(totalCubes / 10);
+    let displayOnes = totalCubes % 10;
+
+    // 1. Отрисовываем чистые полные десятки
+    for (let i = 0; i < displayTens; i++) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
         html += `</div>`;
     }
-    if (isLRound && !isOrange) { // Округление ЛЕВОГО (добирает оранжевые)
+    // 2. Отрисовываем смешанный столбик или чистый хвостик единиц
+    if (isLRound && !isOrange && displayOnes === 0 && totalCubes > 0) {
+        html = html.substring(0, html.lastIndexOf('<div class="crystal-column">')); // Заменяем последний десяток на гибрид
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= ones ? 'borrow-blue' : 'borrow-orange'}"></div>`;
         html += `</div>`;
-    } else if (isRRound && isOrange) { // Округление ПРАВОГО (добирает синие)
+    } else if (isRRound && isOrange && displayOnes === 0 && totalCubes > 0) {
+        html = html.substring(0, html.lastIndexOf('<div class="crystal-column">'));
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= ones ? 'borrow-orange' : 'borrow-blue'}"></div>`;
         html += `</div>`;
-    } else { // Обычный хвостик или остаток после отдачи кубиков
-        let rem = isOrange ? (isLRound ? ones - need : ones) : (isRRound ? ones - need : ones);
-        if (rem > 0) {
-            html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-            for (let j = 1; j <= 10; j++) html += (j <= rem) ? `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
-            html += `</div>`;
-        }
+    } else if (displayOnes > 0) {
+        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) html += (j <= displayOnes) ? `<div class="crystal-item ${isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        html += `</div>`;
     }
     return html;
 }
@@ -44,13 +52,11 @@ export function buildTruckHTML(t) {
 
 export function buildMergedDeckHTML(l, r) {
     let html = '';
-    // 1. Ставим чистые синие десятки левого робота
     for (let i = 0; i < l.tens; i++) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item borrow-blue"></div>`;
         html += `</div>`;
     }
-    // 2. Ставим смешанный столбик округления
     if (l.isLeftRound) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= l.ones ? 'borrow-blue' : 'borrow-orange'}"></div>`;
@@ -60,13 +66,11 @@ export function buildMergedDeckHTML(l, r) {
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item ${j <= r.ones ? 'borrow-orange' : 'borrow-blue'}"></div>`;
         html += `</div>`;
     }
-    // 3. Ставим чистые оранжевые десятки правого робота
     for (let i = 0; i < r.tens; i++) {
         html += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) html += `<div class="crystal-item borrow-orange"></div>`;
         html += `</div>`;
     }
-    // 4. Ставим хвостик единиц, оставшийся после округления
     let rem = l.isLeftRound ? r.ones - l.needOnes : l.ones - l.needOnes;
     if (rem > 0) {
         html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
