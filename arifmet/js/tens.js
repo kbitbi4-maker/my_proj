@@ -1,10 +1,7 @@
-// version: v1.3
+// version: v1.4
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-import { renderAdditionVisual } from './addition_visual.js';
-import { renderSubtractionVisual } from './subtraction_visual.js';
-import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
-import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
+import { VisualEngine } from './visual_engine.js';
 
 let isAddition = true;
 
@@ -50,17 +47,10 @@ export function generateExample() {
 }
 
 export function renderTensVisual() {
-    if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
-    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
-    
-    // ВЕТВЛЕНИЕ НА СОТНИ
-    if (state.currentMode === 'hundreds') {
-        if (isAdd) return renderAdditionHundredsVisual();
-        else return renderSubtractionHundredsVisual();
-    }
-    
-    if (isAdd) renderAdditionVisual();
-    else renderSubtractionVisual();
+    // Получаем собранный пакет фактов из state.js
+    const ctx = state.getContext();
+    // Отдаем его на отрисовку новому движку правил
+    VisualEngine.render(ctx);
 }
 
 export function getTensHistoryHTML(item, index, mode) {
