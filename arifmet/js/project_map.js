@@ -38,7 +38,6 @@ async function generateFullStaticHTMLBundle() {
     let sources = ``;
     const tStamp = Date.now();
 
-    // ПРОВЕРКА: Если скрипт запущен в Node.js (на сервере GitHub)
     if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
         const fs = await import('fs');
         const path = await import('path');
@@ -59,7 +58,6 @@ async function generateFullStaticHTMLBundle() {
             }
         }
     } 
-    // ИНАЧЕ: Если скрипт запущен в обычном браузере пользователя
     else {
         for (const p of files) {
             try {
@@ -100,7 +98,6 @@ ${sources}
 </html>`;
 }
 
-// ТОЧКА ВХОДА ДЛЯ NODE.JS (Автозапуск только на сервере GitHub Actions)
 if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
     generateFullStaticHTMLBundle().then(htmlBundle => {
         import('fs').then(fs => {
