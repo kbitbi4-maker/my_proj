@@ -1,4 +1,4 @@
-// version: v3.2
+// version: v3.3
 export const ADDITION_RULES = [
     {
         id: "add_p1",
@@ -18,17 +18,17 @@ export const ADDITION_RULES = [
             const glow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
             const simPart = ctx.currentInput.split('=').at(0) || '';
             const p = simPart.split('+');
-            let uL = parseInt(p[0], 10) || d.num1;
-            let uR = parseInt(p[1], 10) || d.num2;
+            let uL = parseInt(p, 10) || d.num1;
+            let uR = parseInt(p, 10) || d.num2;
             
             let isLeftRound = ctx.simCorrect && (uL > d.num1);
             let isRightRound = ctx.simCorrect && (uR > d.num2);
 
             return {
                 layout: "split-trucks", style: glow, sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null), phase: 2,
-                // ЖЁСТКОЕ ИСПРАВЛЕНИЕ: Передаем СТРОГО исходные tens1/ones1 и tens2/ones2, чтобы кузова не раздувались
-                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: isH ? Math.floor(d.num1 / 100) : 0, tens: d.tens1, ones: d.ones1, borrow: isLeftRound ? d.leftBorrowCount : -d.rightBorrowCount },
-                rightTruck: { label: String(uR), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: isH ? Math.floor(d.num2 / 100) : 0, tens: d.tens2, ones: d.ones2, borrow: isRightRound ? d.rightBorrowCount : -d.leftBorrowCount },
+                // ИСПРАВЛЕНО: Правый робот теперь считает сетку от uR, а borrow передает количество прилетевших синих кубиков
+                leftTruck: { label: String(uL), color: "#22c55e", isOrange: false, style: glow, hundreds: isH ? Math.floor(d.num1 / 100) : 0, tens: Math.floor(uL / 10) % 10, ones: uL % 10, borrow: isLeftRound ? d.leftBorrowCount : 0 },
+                rightTruck: { label: String(uR), color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: isH ? Math.floor(d.num2 / 100) : 0, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: isRightRound ? d.rightBorrowCount : 0 },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
