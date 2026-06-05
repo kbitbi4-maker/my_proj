@@ -1,4 +1,4 @@
-// version: v2.2
+// version: v2.3
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -14,19 +14,27 @@ export function evaluateExpr(str) {
     return parseInt(cleaned, 10) || null;
 }
 
-export function parseAdditionData(exampleText) {
+export function parseAdditionData(exampleText, report) {
     const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
     
-    // Вычисляем заимствование в обе стороны (зеркально)
-    let leftBorrow = (ones1 > 0 && ones1 + ones2 >= 10) ? 10 - ones1 : 0;
-    let rightBorrow = (ones2 > 0 && ones1 + ones2 >= 10) ? 10 - ones2 : 0;
-    
+    let uL = num1, uR = num2, addedL = 0, subL = 0, addedR = 0, subR = 0;
+    if (report && report.simText && report.simText.includes('+')) {
+        let p = report.simText.split('+');
+        let parsedL = parseInt(p[0], 10), parsedR = parseInt(p[1], 10);
+        if (!isNaN(parsedL) && !isNaN(parsedR)) {
+            uL = parsedL; uR = parsedR;
+            if (uL > num1) addedL = uL - num1; else if (uL < num1) subL = num1 - uL;
+            if (uR > num2) addedR = uR - num2; else if (uR < num2) subR = num2 - uR;
+        }
+    }
+
     return {
         num1, num2, tens1, ones1, tens2, ones2,
-        leftBorrowCount: leftBorrow,
-        rightBorrowCount: rightBorrow,
+        uL, uR, addedL, subL, addedR, subR,
+        leftBorrowCount: (ones1 > 0 && ones1 + ones2 >= 10) ? 10 - ones1 : 0,
+        rightBorrowCount: (ones2 > 0 && ones1 + ones2 >= 10) ? 10 - ones2 : 0,
         leftLabel: String(num1), rightLabel: String(num2)
     };
 }
