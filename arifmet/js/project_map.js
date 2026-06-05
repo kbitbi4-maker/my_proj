@@ -1,4 +1,4 @@
-// version: v3.0
+// version: v3.1
 import { state } from './state.js';
 
 export function openProjectMap() {
@@ -38,20 +38,43 @@ async function generateFullStaticHTMLBundle() {
     let sources = ``;
     const tStamp = Date.now();
 
-    for (const p of files) {
-        try {
-            const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
-            const t = await r.text();
+    // ПРОВЕРКА: Если скрипт запущен в Node.js (на сервере GitHub)
+    if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
+        const fs = await import('fs');
+        const path = await import('path');
+
+        for (const p of files) {
             const cleanPath = p.replace('./', '');
-            manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-            sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
-        } catch {
-            const cleanPath = p.replace('./', '');
-            manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
+            try {
+                const fullPath = path.resolve(cleanPath);
+                if (fs.existsSync(fullPath)) {
+                    const t = fs.readFileSync(fullPath, 'utf-8');
+                    manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
+                    sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+                } else {
+                    manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
+                }
+            } catch {
+                manifest += `- PATH: "${cleanPath}" | ERROR ❌\n`;
+            }
+        }
+    } 
+    // ИНАЧЕ: Если скрипт запущен в обычном браузере пользователя
+    else {
+        for (const p of files) {
+            try {
+                const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
+                const t = await r.text();
+                const cleanPath = p.replace('./', '');
+                manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
+                sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+            } catch {
+                const cleanPath = p.replace('./', '');
+                manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
+            }
         }
     }
 
-    // Собираем финальную чистую статическую страницу БЕЗ СКРИПТОВ СБОРКИ
     return `<!-- ВЕРСИЯ: СТАТИЧЕСКИЙ МОНОЛИТ -->
 <!DOCTYPE html>
 <html lang="ru">
@@ -75,4 +98,14 @@ ${sources}
     </pre>
 </body>
 </html>`;
+}
+
+// ТОЧКА ВХОДА ДЛЯ NODE.JS (Автозапуск только на сервере GitHub Actions)
+if (typeof process !== 'undefined' && process.release && process.release.name === 'node') {
+    generateFullStaticHTMLBundle().then(htmlBundle => {
+        import('fs').then(fs => {
+            fs.writeFileSync('ai_sync.html', htmlBundle, 'utf-8');
+            console.log('✅ [GitHub Actions] ai_sync.html успешно обновлен серверным скриптом!');
+        });
+    });
 }
