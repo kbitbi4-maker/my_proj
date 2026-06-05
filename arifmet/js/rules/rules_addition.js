@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
@@ -19,12 +19,13 @@ export const ADDITION_RULES = [
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             const glow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
             let lH = isH ? Math.floor(d.num1 / 100) : 0, rH = isH ? Math.floor(d.num2 / 100) : 0, lM = 0, rM = 0;
-            if (isH && ctx.currentInput.includes('+')) {
-                const parts = ctx.currentInput.split('=')[0].split('+');
+            const simPart = ctx.currentInput.split('=')[0] || '';
+            if (isH && simPart.includes('+')) {
+                const parts = simPart.split('+');
                 const n1 = parseInt(parts[0], 10), n2 = parseInt(parts[1], 10);
                 if (!isNaN(n1) && !isNaN(n2)) { if (Math.floor(n1 / 100) > lH) lM = Math.floor(n1 / 100) - lH; if (Math.floor(n2 / 100) > rH) rM = Math.floor(n2 / 100) - rH; }
             }
-            const p = ctx.currentInput.split('=')[0].split('+');
+            const p = simPart.split('+');
             let uL = parseInt(p[0], 10) || d.num1, uR = parseInt(p[1], 10) || d.num2;
             return {
                 layout: "split-trucks", style: glow,
