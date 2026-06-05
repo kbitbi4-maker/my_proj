@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
@@ -20,14 +20,19 @@ export const ADDITION_RULES = [
             const glow = ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80); border-color:#22c55e;' : '';
             let lH = isH ? Math.floor(d.num1 / 100) : 0, rH = isH ? Math.floor(d.num2 / 100) : 0, lM = 0, rM = 0;
             if (isH && ctx.currentInput.includes('+')) {
-                const parts = ctx.currentInput.split('=').at(0).split('+');
+                const simPart = ctx.currentInput.split('=')[0] || '';
+                const parts = simPart.split('+');
                 const n1 = parseInt(parts[0], 10), n2 = parseInt(parts[1], 10);
                 if (!isNaN(n1) && !isNaN(n2)) { if (Math.floor(n1 / 100) > lH) lM = Math.floor(n1 / 100) - lH; if (Math.floor(n2 / 100) > rH) rM = Math.floor(n2 / 100) - rH; }
             }
+            // Динамически пересчитываем tens и ones на основе ввода пользователя
+            let simPart = ctx.currentInput.split('=')[0] || '';
+            let p = simPart.split('+');
+            let uL = parseInt(p[0], 10) || d.num1, uR = parseInt(p[1], 10) || d.num2;
             return {
                 layout: "split-trucks", style: glow,
-                leftTruck: { label: d.leftLabel, color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: d.leftTens, ones: d.leftOnes, borrow: d.leftBorrowCount },
-                rightTruck: { label: d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: d.rightTens, ones: d.rightOnes, borrow: d.rightBorrowCount },
+                leftTruck: { label: ctx.simCorrect ? String(uL) : d.leftLabel, color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: Math.floor(uL / 10) % 10, ones: uL % 10, borrow: ctx.simCorrect ? d.leftBorrowCount : 0 },
+                rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: ctx.simCorrect ? d.rightBorrowCount : 0 },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
@@ -54,4 +59,3 @@ export const ADDITION_RULES = [
         }
     }
 ];
-
