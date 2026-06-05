@@ -1,4 +1,4 @@
-<!-- version: v2.1 -->
+<!-- version: v2.2 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -15,7 +15,6 @@
     <pre id="output">Сканирование файлов проекта...</pre>
 
     <script type="module">
-        // Пути жестко зафиксированы через префикс текущей директории
         const FILES = [
             './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
             './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
@@ -36,7 +35,8 @@
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     const t = await r.text();
                     const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-                    const ver = m ? m.replace(/-->/g, '').trim() : 'unknown';
+                    // ЖЕСТКИЙ ФИКС: Проверяем m на null перед вызовом replace, защищая скрипт от падения
+                    const ver = (m && m[1]) ? m[1].replace(/-->/g, '').trim() : 'unknown';
                     const cleanPath = p.replace('./', '');
                     out += `- PATH: "${cleanPath}" | VER: ${ver} | SIZE: ${t.length} chars\n`;
                 } catch { 
