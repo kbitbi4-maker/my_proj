@@ -1,71 +1,154 @@
-// version: v1.1
-import { state } from './state.js';
-import { GameCanvas } from './game_canvas.js';
-import { parseSubtractionData } from './calculator.js';
+/**
+ * Модуль визуализации для режима ВЫЧИТАНИЯ (Десятки/Сотни)
+ * Реализует метод постоянной разности: (А + Х) - (В + Х)
+ */
 
-export function renderSubtractionVisual() {
-    const item = state.examplesHistory[state.activeIndex]; if (!item) return;
-    const report = state.validateCurrentInput();
-    const data = parseSubtractionData(item.exampleText, report); // Запрос к калькулятору!
-    const cacheKey = `${item.exampleText}_phase${report.phase}_${report.isFullySolved}`;
+/**
+ * Главная функция рендеринга сцены вычитания
+ * @param {Object} data - Данные из state.getVisualData()
+ * @param {Object} report - Состояние проверки из state.checkStep(...)
+ * @returns {string} HTML-разметка сцены
+ */
+export function renderSubtractionVisual(data, report) {
     let html = '';
 
-    if (report.phase === 1) {
-        html = `<div class="sub-scene-container"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л (${data.num1})</b></div><div class="crystal-deck" style="border-color:#0284c7;">${generateSubCargoHTML(data.tens1, data.ones1, 0, 0)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П (${data.num2})</b></div><div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${generateSubEmptyCubesHTML(data.num2, 0)}</div></div>`;
+    // ФАЗА 1: Исходное состояние примера (например, 52 - 24)
+    if (data.stepPhase === 1) {
+        html = `
+        <div class="sub-scene-container">
+            <div class="sub-workspace">
+                <!-- Левый робот (Уменьшаемое) везет исходный груз -->
+                <div class="sub-robot-platform left-platform">
+                    <div class="sub-robot robot-left-idle">🤖 Уменьшаемое</div>
+                    <div class="sub-cargo-area">
+                        ${generateSubCargoHTML(data.tens1, data.ones1, 0, 0)}
+                    </div>
+                </div>
+
+                <div class="sub-operator-sign">➖</div>
+
+                <!-- Правый робот (Вычитаемое) хочет забрать часть груза -->
+                <div class="sub-robot-platform right-platform">
+                    <div class="sub-robot robot-right-idle">🤖 Вычитаемое</div>
+                    <div class="sub-cargo-needed">
+                        <div class="sub-need-bubble">Надо забрать: <b>${data.initialNum2}</b></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
     } 
-    else if (report.phase === 2) {
-        const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
-        html = `<div class="sub-scene-container" style="animation:fadeIn 0.3s;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div><div class="crystal-deck" style="border-color:${borderColor};${shadow}">${generateSubCargoHTML(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount)}</div><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div><div class="crystal-deck" style="border:2px solid #000;">${generateSubEmptyCubesHTML(data.num2 - data.subtractedAmount, data.addedAmount)}</div></div>`;
+    // ФАЗА 2: Промежуточный этап - округление (добавление кристаллов к обоим роботам)
+    else if (data.stepPhase === 2) {
+        const added = data.finalAddedAmount; // Сколько добавили для округления (например, 6)
+        html = `
+        <div class="sub-scene-container">
+            <div class="sub-info-banner">
+                Применяем хитрость: округлим вычитаемое! Добавим к обоим числам по <b>${added}</b> 💎
+            </div>
+            <div class="sub-workspace">
+                <!-- К левому роботу добавились синие кристаллы округления -->
+                <div class="sub-robot-platform left-platform highlighted-platform">
+                    <div class="sub-robot robot-left-work">🤖 Получил +${added}</div>
+                    <div class="sub-cargo-area">
+                        ${generateSubCargoHTML(data.tens1, data.ones1, added, 0)}
+                    </div>
+                </div>
+
+                <div class="sub-operator-sign">➖</div>
+
+                <!-- К правому роботу тоже добавились кристаллы, округлив его до десятков -->
+                <div class="sub-robot-platform right-platform highlighted-platform">
+                    <div class="sub-robot robot-right-work">🤖 Стал круглым!</div>
+                    <div class="sub-cargo-needed">
+                        <div class="sub-need-bubble">
+                            Новая цель: ${data.initialNum2} + ${added} = <b>${data.currentSubtrahend}</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
     } 
+    // ФАЗА 3: Финальный расчет и уезд робота с остатком груза
     else {
-        const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '', labelText = report.isFullySolved ? 'Ура! Робот П уехал с правильным грузом! 🎉' : 'Проверяем ответ... 👀';
-        html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;position:relative;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#0284c7;">Л</b></div><div class="crystal-deck" style="border-color:#22c55e;">${generateSubCargoHTML(data.tens1, data.ones1, 0, data.currentSubtrahend)}</div><div class="${driveAwayClass}" style="display:flex;align-items:center;gap:20px;"><div style="display:flex;flex-direction:column;align-items:center;"><span style="font-size:36px;line-height:1;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">П</b></div><div class="crystal-deck" style="background:#e0f2fe;border-color:#ef4444;">${generateSubFinalCubesHTML(data.currentSubtrahend - data.finalAddedAmount, data.finalAddedAmount)}</div></div></div><b class="sub-win-text">${labelText}</b></div>`;
+        const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '';
+        const labelText = report.isFullySolved ? 'Ура! Робот уехал с правильным грузом! 🎉' : 'Проверяем ответ... 👀';
+        
+        html = `
+        <div class="sub-scene-container ${driveAwayClass}">
+            <div class="sub-info-banner resolution-banner">${labelText}</div>
+            <div class="sub-workspace">
+                <div class="sub-robot-platform left-platform final-platform">
+                    <div class="sub-robot robot-left-drive">🚚 Остаток груза</div>
+                    <div class="sub-cargo-area">
+                        <!-- ИСПРАВЛЕНО: Передаем data.finalAddedAmount вместо 0, чтобы учесть синие кубики округления -->
+                        ${generateSubCargoHTML(data.tens1, data.ones1, data.finalAddedAmount, data.currentSubtrahend)}
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
     }
-    GameCanvas.renderZoneScene(html, cacheKey);
-}
 
-function generateSubCargoHTML(tens, ones, added, subtracted) {
-    let baseCubes = (tens * 10) + ones, totalCubes = baseCubes + added, activeCubes = totalCubes - subtracted;
-    let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10, globalCounter = 0, html = '';
-    for (let i = 0; i < fullCols; i++) {
-        html += `<div class="crystal-column">`;
-        for (let j = 1; j <= 10; j++) { globalCounter++; html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; }
-        html += `</div>`;
-    }
-    if (remOnes > 0) {
-        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += globalCounter <= activeCubes ? `<div class="${globalCounter <= baseCubes ? 'crystal-item' : 'crystal-item borrow-orange'}"></div>` : `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
-        html += `</div>`;
-    }
     return html;
 }
 
-function generateSubEmptyCubesHTML(emptyCount, addedOrange) {
-    let total = emptyCount + addedOrange, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0, html = '';
-    for (let i = 0; i < fullCols; i++) {
-        html += `<div class="crystal-column">`;
-        for (let j = 1; j <= 10; j++) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; }
-        html += `</div>`;
-    }
-    if (remOnes > 0) {
-        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += globalCounter <= emptyCount ? `<div class="crystal-item" style="border:1px solid #000;background:#fff;box-shadow:none;"></div>` : `<div class="crystal-item borrow-orange"></div>`; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
-        html += `</div>`;
-    }
-    return html;
-}
+/**
+ * Генератор HTML-структуры кристаллов на платформе уменьшаемого
+ * @param {number} tens - Исходное количество десятков (палочек)
+ * @param {number} ones - Исходное количество единиц (кубиков)
+ * @param {number} addedOnes - Количество добавленных единиц при округлении (синие кристаллы)
+ * @param {number} subtractedTotal - Сколько всего единиц нужно вычесть/скрыть на финальном шаге
+ * @returns {string} HTML-код контейнера с кристаллами
+ */
+function generateSubCargoHTML(tens, ones, addedOnes, subtractedTotal = 0) {
+    let html = '<div class="sub-cargo-grid">';
 
-function generateSubFinalCubesHTML(blueCount, orangeCount) {
-    let total = blueCount + orangeCount, fullCols = Math.floor(total / 10), remOnes = total % 10, globalCounter = 0, html = '';
-    for (let i = 0; i < fullCols; i++) {
-        html += `<div class="crystal-column">`;
-        for (let j = 1; j <= 10; j++) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>`; }
-        html += `</div>`;
+    // 1. Собираем массив всех имеющихся кубиков (исходные единицы + добавленные для округления)
+    let totalOnesArray = [];
+    for (let i = 0; i < ones; i++) {
+        totalOnesArray.push({ type: 'normal' });
     }
-    if (remOnes > 0) {
-        html += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        for (let j = 1; j <= 10; j++) { if (j <= remOnes) { globalCounter++; html += `<div class="crystal-item ${globalCounter <= blueCount ? '' : 'borrow-orange'}"></div>` ; } else html += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; }
-        html += `</div>`;
+    for (let i = 0; i < addedOnes; i++) {
+        totalOnesArray.push({ type: 'added' });
     }
+
+    // Рассчитываем общую сумму единиц до вычитания круглого десятка
+    let totalOnesCount = totalOnesArray.length; 
+    let totalAvailable = (tens * 10) + totalOnesCount;
+    
+    // Вычисляем, сколько кубиков должно остаться видимыми после вычитания
+    let visibleCount = totalAvailable - subtractedTotal;
+    let currentGlobalIndex = 0;
+
+    // 2. Отрисовка десятков (столбцов по 10 штук)
+    for (let t = 0; t < tens; t++) {
+        html += '<div class="sub-tens-column">';
+        for (let u = 0; u < 10; u++) {
+            currentGlobalIndex++;
+            // Если индекс превышает visibleCount, скрываем кубик (он «вычтен»)
+            const isHidden = currentGlobalIndex > visibleCount ? 'sub-cube-hidden' : '';
+            html += `<div class="sub-crystal-cube cube-tens ${isHidden}">🔮</div>`;
+        }
+        html += '</div>';
+    }
+
+    // 3. Отрисовка разрозненных единиц (исходных и добавленных синих)
+    if (totalOnesCount > 0) {
+        html += '<div class="sub-ones-block">';
+        for (let o = 0; o < totalOnesCount; o++) {
+            currentGlobalIndex++;
+            const cubeData = totalOnesArray[o];
+            const isHidden = currentGlobalIndex > visibleCount ? 'sub-cube-hidden' : '';
+            const cubeClass = cubeData.type === 'added' ? 'cube-ones-added' : 'cube-ones-normal';
+            const cubeEmoji = cubeData.type === 'added' ? '🔷' : '💎';
+
+            html += `<div class="sub-crystal-cube ${cubeClass} ${isHidden}">${cubeEmoji}</div>`;
+        }
+        html += '</div>';
+    }
+
+    html += '</div>';
     return html;
 }
