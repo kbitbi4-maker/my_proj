@@ -37,16 +37,16 @@
                 try {
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" });
                     if (!r.ok) {
-                        manifest += `- PATH: "\${p.replace('./', '')}" | NOT_FOUND ❌\n`;
+                        manifest += `- PATH: "${p.replace('./', '')}" | NOT_FOUND ❌\n`;
                         continue;
                     }
                     const t = await r.text();
                     const cleanPath = p.replace('./', '');
-                    manifest += `- PATH: "\${cleanPath}" | SIZE: \${t.length} chars\n`;
-                    sources += `=== FILE_START: "\${cleanPath}" ===\n\${t}\n=== FILE_END: "\${cleanPath}" ===\n\n`;
+                    manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
+                    sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
                 } catch {
                     const cleanPath = p.replace('./', '');
-                    manifest += `- PATH: "\${cleanPath}" | ERROR ❌\n`;
+                    manifest += `- PATH: "${cleanPath}" | ERROR ❌\n`;
                 }
             }
 
@@ -54,13 +54,12 @@
 === ARIFMET FULL REPOSITORY SOURCE BUNDLE (STATIC) ===
 ==================================================
 
-\${manifest}
-\${sources}`;
+${manifest}
+${sources}`;
 
             status.textContent = '✅ Автоматическая сборка монолита завершена! Весь код проекта готов для чтения ИИ.';
         }
 
-        // Запуск сборки сразу при загрузке страницы в браузере
         window.addEventListener('DOMContentLoaded', buildProjectMapForAI);
     </script>
 </body>
