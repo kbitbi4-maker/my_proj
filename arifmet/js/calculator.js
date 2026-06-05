@@ -1,4 +1,4 @@
-// version: v1.7
+// version: v1.8
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
