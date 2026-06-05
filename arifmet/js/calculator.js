@@ -1,4 +1,4 @@
-// version: v1.9
+// version: v2.0
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -19,11 +19,9 @@ export function parseAdditionData(exampleText) {
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
     let totalOnes = ones1 + ones2; const hasTens = totalOnes >= 10;
-    if (hasTens) totalOnes -= 10;
     return {
-        num1, num2, tens1, ones1, tens2, ones2, totalOnes,
-        leftBorrowCount: hasTens ? 10 - ones1 : 0,
-        rightBorrowCount: hasTens ? 10 - ones2 : 0,
+        num1, num2, tens1, ones1, tens2, ones2, totalOnes: hasTens ? totalOnes - 10 : totalOnes,
+        leftBorrowCount: hasTens ? 10 - ones1 : 0, rightBorrowCount: hasTens ? 10 - ones2 : 0,
         leftLabel: String(num1), rightLabel: String(num2), leftTens: tens1, leftOnes: ones1, rightTens: tens2, rightOnes: ones2
     };
 }
@@ -34,7 +32,8 @@ export function parseSubtractionData(exampleText, report) {
     let currentSubtrahend = num2, addedAmount = 0, subtractedAmount = 0;
     
     if (report && report.simText && report.simText.includes('-')) {
-        let userSub = parseInt(report.simText.split('-')[1], 10);
+        let p = report.simText.split('-');
+        let userSub = parseInt(p[1], 10);
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
