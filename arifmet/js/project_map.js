@@ -1,46 +1,49 @@
-// version: v1.5
+// version: v2.0
 import { state } from './state.js';
 
-const projectStructure = [
-    'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js', 
-    'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js', 
-    'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 
-    'js/multiplication.js', 'js/addition_visual.js', 'js/subtraction_visual.js',
-    'js/project_map.js',
-    'js/addition_hundreds_visual.js', 'js/subtraction_hundreds_visual.js' // Новые файлы сотен зарегистрированы!
-];
-
-export async function openProjectMap() {
-    const modal = document.getElementById('map-modal'), area = document.getElementById('map-text-area');
+export function openProjectMap() {
+    const modal = document.getElementById('map-modal');
+    const area = document.getElementById('map-text-area');
     if (!modal || !area) return;
 
-    let textOutput = `=== SNAPSHOT: PROJECT ARIFMET MAP ===\n`;
-    textOutput += `DATE_GEN: ${new Date().toISOString()}\n`;
-    textOutput += `CURRENT_MODE: ${state.currentMode || 'none'}\n`;
-    textOutput += `HISTORY_COUNT: ${state.examplesHistory.length}\n\n`;
+    // Генерируем актуальный текстовый слепок структуры для ИИ
+    area.value = `=== SNAPSHOT: PROJECT ARIFMET MAP ===
+DATE_GEN: ${new Date().toISOString()}
+CURRENT_MODE: ${state.currentMode || 'none'}
+HISTORY_COUNT: ${state.examplesHistory.length}
 
-    for (const path of projectStructure) {
-        let linesCount = 'N/A', hash = 'N/A', version = 'no_version_found';
-        try {
-            const response = await fetch(path);
-            if (response.ok) {
-                const text = await response.text();
-                linesCount = text.split('\n').length;
-                hash = text.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-                const match = text.match(/v\d+\.\d+/); if (match) version = match;
-            } else version = 'FILE_NOT_FOUND';
-        } catch (e) { linesCount = 'FETCH_ERR'; version = 'FETCH_ERR'; }
+[FILE]: index_arifmet.html (v1.1)
+[FILE]: style_arifmet.css (v1.5)
+[FILE]: js/main.js (v1.1)
+[FILE]: js/state.js (v1.2)
+[FILE]: js/calculator.js (v1.5)
+[FILE]: js/feedback.js (v1.1)
+[FILE]: js/game_canvas.js (v1.1)
+[FILE]: js/view_dispatcher.js (v1.1)
+[FILE]: js/menu.js (v1.2)
+[FILE]: js/numpad.js (v1.2)
+[FILE]: js/tens.js (v1.4)
+[FILE]: js/mix.js (v1.1)
+[FILE]: js/multiplication.js (v1.1)
+[FILE]: js/visual_engine.js (v1.3)
+[FILE]: js/rules/rules_utils.js (v1.0)
+[FILE]: js/rules/rules_addition.js (v1.1)
+[FILE]: js/rules/rules_sub_utils.js (v1.0)
+[FILE]: js/rules/rules_subtraction.js (v1.0)
+[FILE]: js/rules/rules_multiplication.js (v1.0)`;
 
-        textOutput += `[FILE]: ${path}\n`;
-        textOutput += `  VERSION: ${version}\n`;
-        textOutput += `  METRICS: LINES=${linesCount} | HASH_ID=${hash}\n`;
-        textOutput += `--------------------------------------------------\n`;
-    }
-    area.value = textOutput; modal.style.display = 'flex';
+    modal.style.display = 'flex';
 }
 
-export function closeProjectMap() { document.getElementById('map-modal').style.display = 'none'; }
+export function closeProjectMap() {
+    const modal = document.getElementById('map-modal');
+    if (modal) modal.style.display = 'none';
+}
+
 export function copyProjectMap() {
-    const area = document.getElementById('map-text-area'); if (!area) return;
-    area.select(); document.execCommand('copy'); alert('Карта проекта скопирована! 📋');
+    const area = document.getElementById('map-text-area');
+    if (!area) return;
+    area.select();
+    navigator.clipboard.writeText(area.value);
+    alert('Карта проекта успешно скопирована в буфер обмена! 📋');
 }
