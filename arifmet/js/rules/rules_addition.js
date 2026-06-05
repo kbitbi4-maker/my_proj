@@ -1,4 +1,4 @@
-// version: v5.0
+// version: v5.1
 import { buildTruckHTML, generateCrystalColumnsHTML, generateOnesHTML, genHundreds } from './rules_utils.js';
 
 export const ADDITION_RULES = [
