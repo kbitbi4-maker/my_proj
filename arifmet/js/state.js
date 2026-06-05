@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { evaluateExpr, parseAdditionData, parseSubtractionData, parseMultiplicationData } from './calculator.js';
 
 export const state = {
