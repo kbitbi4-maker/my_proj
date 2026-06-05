@@ -1,11 +1,12 @@
-// version: v1.1
+// version: v1.2
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
-import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
+import { selectExample } from './view_dispatcher.js';
 
-document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
-document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
-document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
+// Карта проекта теперь ведёт напрямую на страницу синхронизации ИИ
+document.getElementById('project-map-btn')?.addEventListener('click', () => {
+    window.open('ai_sync.html', '_blank');
+});
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
