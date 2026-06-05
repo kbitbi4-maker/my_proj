@@ -1,4 +1,4 @@
-// version: v1.5 - Fixed Hundreds Destruction and Bounds Mapping
+// version: v1.6 - Fixed Subtrahend Hundreds Parsing in Phase 2
 import { state } from './state.js'; 
 import { GameCanvas } from './game_canvas.js'; 
 import { parseSubtractionData } from './calculator.js';
@@ -15,13 +15,13 @@ export function renderSubtractionHundredsVisual() {
  const d2 = `<div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${buildSubHLayout(0, 0, h2, genSubEmpty(cleanN2, 0))}</div>`;
  html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${d2}${rR}</div>`;
  } else if (report.phase === 2) {
- let curH1 = h1, curH2 = Math.floor(data.currentSubtrahend / 100), userSubH = 0;
+ let curH1 = h1, curH2 = h2, userSubH = 0;
  if (report.simText.includes('-')) {
  const partsArr = report.simText.split('-');
  const leftNum = parseInt(partsArr[0], 10);
  const rightNum = parseInt(partsArr[1], 10);
  if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
- if (!isNaN(rightNum)) { userSubH = h2 - Math.floor(rightNum / 100); curH2 = 0; }
+ if (!isNaN(rightNum)) { userSubH = h2 - Math.floor(rightNum / 100); curH2 = Math.floor(rightNum / 100); }
  }
  const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
  const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, userSubH, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
