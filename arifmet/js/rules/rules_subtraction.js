@@ -1,4 +1,4 @@
-// version: v1.0
+// version: v1.1
 import { genSubCargo, genSubEmpty, genSubFinal } from './rules_sub_utils.js';
 
 export const SUBTRACTION_RULES = [
@@ -21,10 +21,9 @@ export const SUBTRACTION_RULES = [
         config: (ctx) => {
             const d = ctx.math; const isH = ctx.mode === 'hundreds';
             let cH1 = isH ? Math.floor(d.num1 / 100) : 0, cH2 = isH ? Math.floor(d.currentSubtrahend / 100) : 0, userSubH = 0;
-            if (isH && ctx.currentInput.includes('-')) {
-                const parts = ctx.currentInput.split('=').at(0).split('-');
-                if (parts[0] && !isNaN(parseInt(parts[0], 10))) cH1 = Math.floor(parseInt(parts[0], 10) / 100);
-                if (parts[1] && !isNaN(parseInt(parts[1], 10))) { userSubH = Math.floor(d.num2 / 100) - Math.floor(parseInt(parts[1], 10) / 100); cH2 = 0; }
+            if (isH && d.finalAddedAmount > 0) {
+                cH1 = Math.floor((d.num1 - d.subtractedAmount) / 100);
+                userSubH = Math.floor(d.addedAmount / 100);
             }
             return {
                 layout: "sub-scene", phase: 2, text: "Проверяем пример... 👀",
@@ -43,10 +42,9 @@ export const SUBTRACTION_RULES = [
             return {
                 layout: "sub-scene", phase: 3, isFullySolved: ctx.isFullySolved, text: ctx.isFullySolved ? "Ура! Робот П уехал с правильным грузом! 🎉" : "Проверяем ответ... 👀",
                 leftDeckHTML: genSubCargo(d.tens1, d.ones1, 0, cleanSub), leftH: finalH1, leftLabel: "Л", leftColor: "#0284c7", leftEmptyH: 0, leftCrimsonH: 0,
-                rightDeckHTML: genSubFinal(cleanSub - (ctx.currentInput.includes('=') ? parseInt(ctx.currentInput.split('=').at(1), 10) - d.num2 : 0 < 0 ? 0 : 0), 0), rightH: finalH1, rightLabel: "П", rightColor: "#ef4444", rightEmptyH: 0, rightCrimsonH: 0,
+                rightDeckHTML: genSubFinal(cleanSub - d.finalAddedAmount, d.finalAddedAmount), rightH: isH ? Math.floor(d.num2 / 100) : 0, rightLabel: "П", rightColor: "#ef4444", rightEmptyH: 0, rightCrimsonH: 0,
                 deckStyle: "border-color:#22c55e;", rightDeckStyle: "background:#e0f2fe;border-color:#ef4444;"
             };
         }
     }
 ];
-
