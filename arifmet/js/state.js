@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 import { evaluateExpr, parseAdditionData, parseSubtractionData, parseMultiplicationData } from './calculator.js';
 
 export const state = {
@@ -15,14 +15,10 @@ export const state = {
         if (this.activeIndex === -1 || !this.examplesHistory[this.activeIndex]) return null;
         const item = this.examplesHistory[this.activeIndex];
         const report = this.validateCurrentInput();
-        
-        let operation = '+';
-        if (item.exampleText.includes('-')) operation = '-';
-        if (item.exampleText.includes('×')) operation = '×';
+        let operation = item.exampleText.includes('-') ? '-' : (item.exampleText.includes('×') ? '×' : '+');
 
         let mathData = {};
         if (operation === '+') mathData = parseAdditionData(item.exampleText);
-        // Передаем отчет валидации в парсер вычитания
         else if (operation === '-') mathData = parseSubtractionData(item.exampleText, report);
         else if (operation === '×') mathData = parseMultiplicationData(item.exampleText);
 
@@ -45,18 +41,15 @@ export const state = {
 
         let simCorrect = false;
         if (hasPressedEqual) {
-            let simVal = evaluateExpr(simText); simCorrect = (simVal === item.correctValue);
+            simCorrect = (evaluateExpr(simText) === item.correctValue);
             if (item.exampleText.includes('×') && simCorrect && simText) {
-                const checkParts = simText.split('+');
-                if (checkParts.length !== parseInt(item.exampleText.split('×')[1], 10)) simCorrect = false;
+                if (simText.split('+').length !== parseInt(item.exampleText.split('×')[1], 10)) simCorrect = false;
             }
         }
-        let finCorrect = false;
-        if (hasFinalAnswer) finCorrect = (evaluateExpr(finText) === item.correctValue);
-
+        let finCorrect = hasFinalAnswer && (evaluateExpr(finText) === item.correctValue);
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
         let isWrongAnswer = (hasPressedEqual && !simCorrect) || (parts.length > 1 && finText.trim().length >= targetLength && !finCorrect);
-        let phase = 1; if (hasPressedEqual && !hasFinalAnswer) phase = 2; else if (hasFinalAnswer) phase = 3;
+        let phase = hasFinalAnswer ? 3 : (hasPressedEqual ? 2 : 1);
 
         return { isFullySolved, isWrongAnswer, phase, simText, finText, simCorrect, finCorrect };
     }
