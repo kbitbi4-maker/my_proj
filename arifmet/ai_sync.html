@@ -1,4 +1,4 @@
-<!-- version: v1.0 -->
+<!-- version: v2.1 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -15,13 +15,13 @@
     <pre id="output">Сканирование файлов проекта...</pre>
 
     <script type="module">
-        // Массив строго синхронизирован со структурой вашего Snapshot
+        // Пути жестко зафиксированы через префикс текущей директории
         const FILES = [
-            'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
-            'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
-            'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 'js/multiplication.js',
-            'js/addition_visual.js', 'js/subtraction_visual.js', 'js/project_map.js',
-            'js/addition_hundreds_visual.js', 'js/subtraction_hundreds_visual.js', 'ai_sync.html'
+            './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
+            './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
+            './js/menu.js', './js/numpad.js', './js/tens.js', './js/mix.js', './js/multiplication.js',
+            './js/addition_visual.js', './js/subtraction_visual.js', './js/project_map.js',
+            './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js', './ai_sync.html'
         ];
 
         async function buildBundle() {
@@ -30,23 +30,31 @@
             out += `=== GENERATED: ${new Date().toISOString()} ===\n`;
             out += `==================================================\n\n[AI RECONSTRUCTION MANIFEST]\n`;
             
-            const tStamp = Date.now(); // Обход кэша браузера
+            const tStamp = Date.now();
             for (const p of FILES) {
                 try {
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     const t = await r.text();
                     const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-                    const v = m ? m.replace(/-->/g, '').trim() : 'unknown';
-                    out += `- PATH: "${p}" | VER: ${v} | SIZE: ${t.length} chars\n`;
-                } catch { out += `- PATH: "${p}" | NOT_FOUND ❌\n`; }
+                    const ver = m ? m.replace(/-->/g, '').trim() : 'unknown';
+                    const cleanPath = p.replace('./', '');
+                    out += `- PATH: "${cleanPath}" | VER: ${ver} | SIZE: ${t.length} chars\n`;
+                } catch { 
+                    const cleanPath = p.replace('./', '');
+                    out += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`; 
+                }
             }
             out += `\n=== END OF MANIFEST ===\n\n`;
 
             for (const p of FILES) {
                 try {
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
-                    out += `=== FILE_START: "${p}" ===\n${await r.text()}\n=== FILE_END: "${p}" ===\n\n`;
-                } catch { out += `=== FILE_START: "${p}" ===\n// NOT_FOUND\n=== FILE_END: "${p}" ===\n\n`; }
+                    const cleanPath = p.replace('./', '');
+                    out += `=== FILE_START: "${cleanPath}" ===\n${await r.text()}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+                } catch { 
+                    const cleanPath = p.replace('./', '');
+                    out += `=== FILE_START: "${cleanPath}" ===\n// NOT_FOUND\n=== FILE_END: "${cleanPath}" ===\n\n`; 
+                }
             }
             document.getElementById('status').innerText = '✅ Сборка завершена! Страница готова для чтения ИИ.';
             document.getElementById('output').innerText = out;
@@ -55,4 +63,3 @@
     </script>
 </body>
 </html>
-
