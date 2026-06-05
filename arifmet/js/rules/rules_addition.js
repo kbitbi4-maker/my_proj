@@ -1,4 +1,4 @@
-// version: v1.5
+// version: v1.6
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
@@ -30,7 +30,8 @@ export const ADDITION_RULES = [
             return {
                 layout: "split-trucks", style: glow,
                 leftTruck: { label: ctx.simCorrect ? String(uL) : d.leftLabel, color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: Math.floor(uL / 10) % 10, ones: uL % 10, borrow: ctx.simCorrect ? d.leftBorrowCount : 0 },
-                rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: ctx.simCorrect ? d.rightBorrowCount : 0 },
+                // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Правый грузовик в Фазе 2 отображает СТРОГО остаток кубиков, borrow равен 0
+                rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: 0 },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
         }
