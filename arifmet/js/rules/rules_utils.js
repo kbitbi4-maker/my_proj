@@ -1,4 +1,4 @@
-// version: v4.1
+// version: v3.4
 export function genHundreds(p, c, m, e) {
     let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
     for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
@@ -10,32 +10,21 @@ export function genHundreds(p, c, m, e) {
 
 export function buildTruckHTML(t) {
     let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '';
-    
-    // 1. Отрисовываем чистые полные десятки (монолитные столбцы)
     for (let i = 0; i < t.tens; i++) {
         dC += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
         dC += `</div>`;
     }
-    
-    // 2. Отрисовываем хвостик единичных кубиков строго в отдельном столбце справа
     if (t.ones > 0 || t.borrow !== 0) {
         dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        
-        // Если borrow < 0 (робот отдал кубики), активных кубиков становится меньше.
-        // Если borrow > 0 (робот принял кубики), сетка расширяется вверх.
         let activeOnes = t.borrow < 0 ? t.ones + t.borrow : t.ones;
         let totalOnes = t.borrow > 0 ? t.ones + t.borrow : t.ones;
-        let gridCeil = t.borrow !== 0 ? 10 : totalOnes; // В фазе обмена достраиваем рамку до 10 кубиков
-
         for (let j = 1; j <= 10; j++) {
             if (j <= activeOnes) {
                 dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
             } else if (j <= totalOnes) {
-                // Кубики заимствования красятся в цвет соседа (инверсия)
                 dC += `<div class="crystal-item ${t.isOrange ? 'borrow-blue' : 'borrow-orange'}"></div>`;
-            } else if (j <= gridCeil) {
-                // Пустые контуры ячеек обмена
+            } else if (t.borrow !== 0 || t.ones >= 5) {
                 dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
             } else {
                 dC += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
@@ -43,7 +32,6 @@ export function buildTruckHTML(t) {
         }
         dC += `</div>`;
     }
-    
     const r = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${t.color};font-size:13px;margin-top:2px;">${t.label}</b></div>`;
     const d = `<div class="crystal-deck ${t.isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;${t.style || ''}">${hC}<div style="display:flex;gap:4px;align-items:flex-end;">${dC}</div></div>`;
     return t.isOrange ? `<div class="crystal-truck">${d}${r}</div>` : `<div class="crystal-truck">${r}${d}</div>`;
