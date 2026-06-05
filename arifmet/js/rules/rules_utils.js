@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 export function genCols(count, isOrange, borrow) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -31,9 +31,41 @@ export function genHundreds(p, c, m, e) {
 }
 
 export function buildTruckHTML(t) {
-    let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '';
-    for (let i = 0; i < t.tens; i++) { dC += `<div class="crystal-column">`; let isL = (i === t.tens - 1) && (t.borrow > 0); for (let j = 1; j <= 10; j++) dC += `<div class="crystal-item ${(isL && j > (10 - t.borrow)) ? (t.isOrange ? 'borrow-blue' : 'borrow-orange') : (t.isOrange ? 'borrow-orange' : 'borrow-blue')}"></div>`; dC += `</div>`; }
-    if (t.ones > 0) { dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`; for (let j = 1; j <= 10; j++) dC += (j <= t.ones) ? `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>` : `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`; dC += `</div>`; }
+    let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '', globalCounter = 0;
+    // Вычисляем общую массу кубиков с учетом заимствования
+    let baseCubes = (t.tens * 10) + t.ones;
+    let activeCubes = t.borrow < 0 ? baseCubes + t.borrow : baseCubes; // Если borrow отрицательный, уменьшаем кубики
+    let totalCubes = baseCubes;
+    
+    let fullCols = Math.floor(totalCubes / 10), remOnes = totalCubes % 10;
+    for (let i = 0; i < fullCols; i++) {
+        dC += `<div class="crystal-column">`;
+        let isLast = (i === fullCols - 1) && (t.borrow > 0);
+        for (let j = 1; j <= 10; j++) {
+            globalCounter++;
+            if (globalCounter <= activeCubes) {
+                dC += `<div class="crystal-item ${(isLast && j > (10 - t.borrow)) ? (t.isOrange ? 'borrow-blue' : 'borrow-orange') : (t.isOrange ? 'borrow-orange' : 'borrow-blue')}"></div>`;
+            } else {
+                // Превращаем отданные кристаллы в пустые белые контуры ячеек!
+                dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
+            }
+        }
+        dC += `</div>`;
+    }
+    if (remOnes > 0) {
+        dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
+        for (let j = 1; j <= 10; j++) {
+            if (j <= remOnes) {
+                globalCounter++;
+                if (globalCounter <= activeCubes) {
+                    dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
+                } else {
+                    dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
+                }
+            } else dC += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
+        }
+        dC += `</div>`;
+    }
     const r = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:40px;"><span style="font-size:36px;line-height:1;">🤖</span><b style="color:${t.color};font-size:13px;margin-top:2px;">${t.label}</b></div>`;
     const d = `<div class="crystal-deck ${t.isOrange ? 'orange-theme' : ''}" style="display:flex;flex-direction:column;gap:5px;${t.style || ''}">${hC}<div style="display:flex;gap:4px;align-items:flex-end;">${dC}</div></div>`;
     return t.isOrange ? `<div class="crystal-truck">${d}${r}</div>` : `<div class="crystal-truck">${r}${d}</div>`;
