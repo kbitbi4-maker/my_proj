@@ -1,4 +1,4 @@
-// version: v1.9 - Fixed Phase 2 Clean Hundreds Cargo with Zero Remainder Condition
+// version: v2.0 - Fixed Left Robot Zero Remainder Condition in Phase 2
 import { state } from './state.js'; 
 import { GameCanvas } from './game_canvas.js'; 
 import { parseSubtractionData } from './calculator.js';
@@ -15,13 +15,17 @@ export function renderSubtractionHundredsVisual() {
  const d2 = `<div class="crystal-deck" style="border:2px solid #000;background:rgba(0,0,0,0.03);">${buildSubHLayout(0, 0, h2, genSubEmpty(cleanN2, 0))}</div>`;
  html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:28px;font-weight:bold;color:#94a3b8;">-</div>${d2}${rR}</div>`;
  } else if (report.phase === 2) {
- let curH1 = h1, curH2 = h2, userSubH = 0, isRightZeroRemainder = false;
+ let curH1 = h1, curH2 = h2, userSubH = 0, isRightZeroRemainder = false, isLeftZeroRemainder = false, leftMixed = 0;
  if (report.simText.includes('-')) {
  const partsArr = report.simText.split('-');
  if (partsArr.length === 2) {
- const leftNum = parseInt(partsArr[0], 10);
- const rightNum = parseInt(partsArr[1], 10);
- if (!isNaN(leftNum)) curH1 = Math.floor(leftNum / 100);
+ const leftNum = parseInt(partsArr, 0);
+ const rightNum = parseInt(partsArr, 10);
+ if (!isNaN(leftNum)) {
+ curH1 = Math.floor(leftNum / 100);
+ if (leftNum > data.num1 && curH1 > h1) { leftMixed = curH1 - h1; curH1 = h1; }
+ if (leftNum % 100 === 0) { isLeftZeroRemainder = true; }
+ }
  if (!isNaN(rightNum)) { 
  userSubH = h2 - Math.floor(rightNum / 100); 
  curH2 = Math.floor(rightNum / 100); 
@@ -30,7 +34,10 @@ export function renderSubtractionHundredsVisual() {
  }
  }
  const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
- const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, userSubH, 0, genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount))}</div>`;
+ 
+ // Условие: если у левого робота ровные сотни, мелкие кубики скрываем
+ const leftSubHTML = isLeftZeroRemainder ? '' : genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount);
+ const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, leftMixed, 0, leftSubHTML)}</div>`;
  
  // Условие: если у отнимателя не остается десятков и единиц, мелкие занятые/пустые блоки не дорисовываем
  const rightSubHTML = isRightZeroRemainder ? '' : genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount);
@@ -59,7 +66,7 @@ export function renderSubtractionHundredsVisual() {
 function buildSubHLayout(p, c, e, sub) {
  let h = '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">';
  for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
- for (let i = 0; i < c; i++) h += '<div class="hundred-crystal crimson"></div>';
+ for (let i = 0; i < c; i++) h += '<div class="hundred-crystal mixed"></div>'; // Рендерим заем как mixed (смешанный) кристалл сотни
  for (let i = 0; i < e; i++) h += '<div class="hundred-crystal empty"></div>';
  return h + `</div><div style="display:flex;gap:4px;align-items:flex-end;">${sub}</div>`;
 }
