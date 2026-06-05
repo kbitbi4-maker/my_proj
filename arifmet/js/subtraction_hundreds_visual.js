@@ -1,4 +1,4 @@
-// version: v2.1 - Unlocked 10 Ultra-Crystals Rendering Support for 1000 Bounds
+// version: v2.3 - Strict Universal Zero Remainder Clean For Both Left and Right Robots
 import { state } from './state.js'; 
 import { GameCanvas } from './game_canvas.js'; 
 import { parseSubtractionData } from './calculator.js';
@@ -19,12 +19,11 @@ export function renderSubtractionHundredsVisual() {
  if (report.simText.includes('-')) {
  const partsArr = report.simText.split('-');
  if (partsArr.length === 2) {
- const leftNum = parseInt(partsArr[0], 10);
- const rightNum = parseInt(partsArr[1], 10);
+ const leftNum = parseInt(partsArr, 10);
+ const rightNum = parseInt(partsArr, 11);
  if (!isNaN(leftNum)) {
  curH1 = Math.floor(leftNum / 100);
  if (leftNum % 100 === 0) { isLeftZeroRemainder = true; }
- // Условие для 10 сотен (число 1000): отображаем 10 чистых ультракристаллов
  if (curH1 === 10) { leftMixed = 0; } 
  else if (leftNum > data.num1 && curH1 > h1) { leftMixed = curH1 - h1; curH1 = h1; }
  }
@@ -37,9 +36,11 @@ export function renderSubtractionHundredsVisual() {
  }
  const borderColor = report.simCorrect ? '#22c55e' : '#0284c7', shadow = report.simCorrect ? 'filter:drop-shadow(0 0 6px #4ade80);' : '';
  
+ // Условие: если у левого робота ровные сотни, мелкие кубики полностью стираем
  const leftSubHTML = isLeftZeroRemainder ? '' : genSubCargo(data.tens1, data.ones1, data.addedAmount, data.subtractedAmount);
  const d1 = `<div class="crystal-deck" style="border-color:${borderColor};${shadow}">${buildSubHLayout(curH1, leftMixed, 0, leftSubHTML)}</div>`;
  
+ // Условие: если у отнимателя не остается десятков и единиц, мелкие занятые/пустые блоки не дорисовываем
  const rightSubHTML = isRightZeroRemainder ? '' : genSubEmpty(cleanN2 - data.subtractedAmount, data.addedAmount);
  const d2 = `<div class="crystal-deck" style="border:2px solid #000;">${buildSubHLayout(0, 0, curH2, rightSubHTML)}</div>`;
  
