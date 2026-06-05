@@ -1,4 +1,4 @@
-<!-- version: v1.1 -->
+<!-- version: v2.0 -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -19,9 +19,8 @@
             'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
             'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
             'js/menu.js', 'js/numpad.js', 'js/tens.js', 'js/mix.js', 'js/multiplication.js',
-            'js/visual_engine.js', 'js/project_map.js', 'js/map_scanner.js', 'ai_sync.html',
-            'js/rules/rules_utils.js', 'js/rules/rules_addition.js', 'js/rules/rules_sub_utils.js',
-            'js/rules/rules_subtraction.js', 'js/rules/rules_multiplication.js', 'js/rules/rules_style.css'
+            'js/addition_visual.js', 'js/subtraction_visual.js', 'js/addition_hundreds_visual.js',
+            'js/subtraction_hundreds_visual.js', 'js/project_map.js', 'js/map_scanner.js', 'ai_sync.html'
         ];
 
         async function buildBundle() {
@@ -30,14 +29,13 @@
             out += `=== GENERATED: ${new Date().toISOString()} ===\n`;
             out += `==================================================\n\n[AI RECONSTRUCTION MANIFEST]\n`;
             
-            const tStamp = Date.now(); // Уникальный штамп времени для обхода кэша
+            const tStamp = Date.now();
             for (const p of FILES) {
                 try {
-                    // ИСПРАВЛЕНО: добавляем ?cb= штамп и no-store, чтобы fetch читал файлы с диска/сервера, а не из кэша
                     const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
                     const t = await r.text();
                     const m = t.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
-                    const v = m ? m[1].replace(/-->/g, '').trim() : 'unknown';
+                    const v = m ? m[0].replace(/-->/g, '').trim() : 'unknown';
                     out += `- PATH: "${p}" | VER: ${v} | SIZE: ${t.length} chars\n`;
                 } catch { out += `- PATH: "${p}" | NOT_FOUND ❌\n`; }
             }
