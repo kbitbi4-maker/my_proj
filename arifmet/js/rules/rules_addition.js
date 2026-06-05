@@ -1,4 +1,4 @@
-// version: v1.6
+// version: v1.7
 import { genCols, genOnes } from './rules_utils.js';
 
 export const ADDITION_RULES = [
@@ -6,7 +6,7 @@ export const ADDITION_RULES = [
         id: "add_p1",
         match: (ctx) => ctx.operation === '+' && ctx.phase === 1,
         config: (ctx) => ({
-            layout: "split-trucks",
+            layout: "split-trucks", sound: null,
             leftTruck: { label: String(ctx.math.num1), color: "#0284c7", isOrange: false, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num1 / 100) : 0, tens: ctx.math.tens1, ones: ctx.math.ones1, borrow: 0 },
             rightTruck: { label: String(ctx.math.num2), color: "#ea580c", isOrange: true, hundreds: ctx.mode === 'hundreds' ? Math.floor(ctx.math.num2 / 100) : 0, tens: ctx.math.tens2, ones: ctx.math.ones2, borrow: 0 },
             operatorHTML: `<div style="font-size:28px;font-weight:bold;color:#94a3b8;">+</div>`
@@ -28,9 +28,8 @@ export const ADDITION_RULES = [
             const p = simPart.split('+');
             let uL = parseInt(p[0], 10) || d.num1, uR = parseInt(p[1], 10) || d.num2;
             return {
-                layout: "split-trucks", style: glow,
+                layout: "split-trucks", style: glow, sound: ctx.isWrongAnswer ? "fail" : (ctx.simCorrect ? "win" : null),
                 leftTruck: { label: ctx.simCorrect ? String(uL) : d.leftLabel, color: "#22c55e", isOrange: false, style: glow, hundreds: lH, mixedHundreds: lM, tens: Math.floor(uL / 10) % 10, ones: uL % 10, borrow: ctx.simCorrect ? d.leftBorrowCount : 0 },
-                // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Правый грузовик в Фазе 2 отображает СТРОГО остаток кубиков, borrow равен 0
                 rightTruck: { label: ctx.simCorrect ? String(uR) : d.rightLabel, color: "#ea580c", isOrange: true, style: ctx.simCorrect ? 'filter:drop-shadow(0 0 6px #facc15);' : '', hundreds: rH, mixedHundreds: rM, tens: Math.floor(uR / 10) % 10, ones: uR % 10, borrow: 0 },
                 operatorHTML: `<div style="font-size:24px;font-weight:bold;color:#22c55e;">+</div>`
             };
@@ -51,7 +50,7 @@ export const ADDITION_RULES = [
                 else deckHTML += genCols(d.tens1, false, 0) + genOnes(d.ones1, false) + genCols(d.tens2, true, 0) + genOnes(d.ones2, true);
             }
             return {
-                layout: "merged-deck", isFullySolved: ctx.isFullySolved, deckHTML: deckHTML,
+                layout: "merged-deck", isFullySolved: ctx.isFullySolved, deckHTML: deckHTML, sound: ctx.isWrongAnswer ? "fail" : (ctx.isFullySolved ? "win" : null),
                 bottomText: ctx.isFullySolved ? (isH ? 'Ура! Сотни покорены! 🎉' : 'Ура! Ответ верный! Ты гений! 🎉') : 'Проверяем ответ... 👀',
                 hundredsConfig: isH ? { purple: Math.floor(d.num1 / 100), crimson: Math.floor(d.num2 / 100), mixed: finalMixedH } : null
             };
