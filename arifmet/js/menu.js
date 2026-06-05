@@ -1,42 +1,45 @@
-// version: v1.1 - Original Menu Sliding Logic
-import { initTensGame } from './tens.js';
-import { initMultiplicationGame } from './multiplication.js';
-import { initMixGame } from './mix.js';
+// version: v1.3 - Fixed Menu Compatibility with Compact Panels
+import { state } from './state.js';
+import { GameCanvas } from './game_canvas.js';
+import { resetAllFeedbacks } from './feedback.js';
+import { initTensMode } from './tens.js';
+import { initMultiplicationMode } from './multiplication.js';
+import { initMixMode } from './mix.js';
+
+const numpadContainer = document.getElementById('calc-numpad-container');
+const modesMenuContainer = document.getElementById('modes-menu-container');
+const rightArea = document.querySelector('.right-area');
+const menuButton = document.getElementById('menu-toggle-btn');
+let isMenuOpen = false;
 
 export function toggleMenuMode() {
-    const menu = document.getElementById('modes-menu-container');
-    const numpad = document.getElementById('calc-numpad-container');
-    const rightArea = document.querySelector('.right-area');
-    const toggleBtn = document.getElementById('menu-toggle-btn');
-
-    if (!menu || !numpad || !rightArea) return;
-
-    if (menu.style.display === 'none') {
-        menu.style.display = 'flex';
-        numpad.style.display = 'none';
-        rightArea.classList.add('menu-active');
-        if (toggleBtn) toggleBtn.textContent = 'Режим: Закрыть ▲';
-    } else {
-        menu.style.display = 'none';
-        numpad.style.display = 'grid';
-        rightArea.classList.remove('menu-active');
-        if (toggleBtn) toggleBtn.textContent = 'Режим: Выбрать ▼';
-    }
+    if (!numpadContainer || !modesMenuContainer || !rightArea) return;
+    isMenuOpen = !isMenuOpen;
+    rightArea.classList.toggle('menu-active', isMenuOpen);
+    if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
+    numpadContainer.style.display = isMenuOpen ? 'none' : 'grid';
+    modesMenuContainer.style.display = isMenuOpen ? 'flex' : 'none';
 }
 
 export function handleModeSelection(mode) {
-    toggleMenuMode();
-    
-    const placeholder = document.getElementById('history-placeholder');
-    if (placeholder) placeholder.style.display = 'none';
-
-    if (mode === 'tens') {
-        initTensGame('tens');
-    } else if (mode === 'hundreds') {
-        initTensGame('hundreds');
-    } else if (mode === 'multiplication') {
-        initMultiplicationGame();
-    } else if (mode === 'mix') {
-        initMixGame();
+    if (mode === 'thousands') {
+        alert("Режим в разработке ⚙️");
+        return;
     }
+    state.reset(mode);
+    resetAllFeedbacks();
+    GameCanvas.clearZone();
+    GameCanvas.clearHistory();
+    toggleMenuMode();
+    if (mode === 'tens' || mode === 'hundreds') initTensMode();
+    else if (mode === 'multiplication') initMultiplicationMode();
+    else if (mode === 'mix') initMixMode();
+}
+
+function getModeLabel(mode) {
+    if (mode === 'tens') return 'Режим: Десятки ▼';
+    if (mode === 'hundreds') return 'Режим: Сотни 🗺️ ▼';
+    if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
+    if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
+    return 'Режим: Выбрать ▼';
 }
