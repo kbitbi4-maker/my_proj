@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 import { GameCanvas } from './game_canvas.js';
 import { ADDITION_RULES } from './rules/rules_addition.js';
 import { SUBTRACTION_RULES } from './rules/rules_subtraction.js';
@@ -8,14 +8,13 @@ export const VisualEngine = {
     render(ctx) {
         if (!ctx) return GameCanvas.clearZone();
         let rule = null;
-        
         if (ctx.operation === '+') rule = ADDITION_RULES.find(r => r.match(ctx));
         else if (ctx.operation === '-') rule = SUBTRACTION_RULES.find(r => r.match(ctx));
         else if (ctx.operation === '×') rule = MULTIPLICATION_RULES.find(r => r.match(ctx));
         if (!rule) return;
 
         const cfg = rule.config(ctx);
-        const cacheKey = `${ctx.exampleText}_r_${rule.id}_s_${ctx.isFullySolved}_i_${ctx.currentInput}`;
+        const cacheKey = ctx.operation === '×' ? `${ctx.exampleText}_status_${cfg.status}` : `${ctx.exampleText}_r_${rule.id}_s_${ctx.isFullySolved}_i_${ctx.currentInput}`;
         let html = '';
 
         if (cfg.layout === "split-trucks") {
@@ -30,7 +29,7 @@ export const VisualEngine = {
             const rR = `<div><span style="font-size:36px;">🤖</span><b class="sub-robot-label" style="color:#ef4444;">${cfg.rightLabel}</b></div>`;
             const d1 = `<div class="crystal-deck" style="${cfg.deckStyle}">${this.bH(cfg.leftH, cfg.leftCrimsonH, 0, false)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.leftDeckHTML}</div></div>`;
             if (cfg.phase === 3) {
-                html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${rL}${d1}<div class="${cfg.isFullySolved ? 'sub-drive-away' : ''}" style="display:flex;align-items:center;gap:20px;">${rR}<div class="crystal-deck" style="${cfg.rightDeckStyle}">${this.bH(0, 0, 0, false)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div></div></div><b class="sub-win-text">${cfg.text}</b></div>`;
+                html = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;animation:fadeIn 0.4s;overflow:hidden;"><div style="display:flex;align-items:center;justify-content:center;gap:20px;width:100%;">${rL}${d1}<div class="${cfg.isFullySolved ? 'sub-drive-away' : ''}" style="display:flex;align-items:center;gap:20px;">${rR}<div class="crystal-deck" style="${cfg.rightDeckStyle}">${this.bH(cfg.rightH, 0, 0, false)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div></div></div><b class="sub-win-text">${cfg.text}</b></div>`;
             } else {
                 const d2 = `<div class="crystal-deck" style="${cfg.rightDeckStyle}">${this.bH(0, 0, 0, cfg.rightEmptyH)}<div style="display:flex;gap:4px;align-items:flex-end;">${cfg.rightDeckHTML}</div></div>`;
                 html = `<div class="sub-scene-container">${rL}${d1}<div style="font-size:24px;font-weight:bold;color:#22c55e;">-</div>${d2}${rR}</div>`;
