@@ -1,5 +1,5 @@
-// version: v1.1
-import { evaluateExpr } from './calculator.js';
+// version: v1.2
+import { evaluateExpr, parseAdditionData, parseSubtractionData, parseMultiplicationData } from './calculator.js';
 
 export const state = {
     currentMode: '',
@@ -19,6 +19,47 @@ export const state = {
     addExample(exampleObj) {
         this.examplesHistory.push(exampleObj);
         this.activeIndex = this.examplesHistory.length - 1;
+    },
+
+    /**
+     * Генерирует единый пакет фактов о текущем состоянии для системы правил
+     */
+    getContext() {
+        if (this.activeIndex === -1 || !this.examplesHistory[this.activeIndex]) {
+            return null;
+        }
+
+        const item = this.examplesHistory[this.activeIndex];
+        const report = this.validateCurrentInput();
+        
+        // Определяем операцию математического действия
+        let operation = '+';
+        if (item.exampleText.includes('-')) operation = '-';
+        if (item.exampleText.includes('×')) operation = '×';
+
+        // Собираем сухую математику в зависимости от операции
+        let mathData = {};
+        if (operation === '+') {
+            mathData = parseAdditionData(item.exampleText, report);
+        } else if (operation === '-') {
+            mathData = parseSubtractionData(item.exampleText, report);
+        } else if (operation === '×') {
+            mathData = parseMultiplicationData(item.exampleText);
+        }
+
+        // Возвращаем изолированный Context (пакет фактов)
+        return {
+            mode: this.currentMode,
+            operation: operation,
+            phase: report.phase,
+            simCorrect: report.simCorrect,
+            finCorrect: report.finCorrect,
+            isWrongAnswer: report.isWrongAnswer,
+            isFullySolved: report.isFullySolved,
+            exampleText: item.exampleText,
+            currentInput: item.currentInput,
+            math: mathData
+        };
     },
 
     validateCurrentInput(targetIndex = null) {
@@ -57,7 +98,6 @@ export const state = {
 
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
         
-        // Жёсткое исправление: ошибка засчитывается только если промежуточный неверный ИЛИ финальный ответ ДОСТИГ нужной длины и он неверный
         let isWrongAnswer = false;
         if (hasPressedEqual && !simCorrect) {
             isWrongAnswer = true;
