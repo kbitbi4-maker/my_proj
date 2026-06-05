@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 const FILE_PATHS = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
@@ -20,9 +20,9 @@ export async function generateDynamicMap() {
             
             const lines = text.split('\n').length;
             const bytes = new Blob([text]).size;
-            // ИСПРАВЛЕНО: Добавлена поддержка HTML-комментариев (<!--) для считывания версии индекса
-            const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/-->]+)/i);
-            const version = verMatch ? verMatch[1] : 'unknown';
+            // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: дефис экранирован как \- для предотвращения Range out of order
+            const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/--\>]+)/i);
+            const version = verMatch ? verMatch[1].replace(/-->/g, '').trim() : 'unknown';
 
             filesData[path] = { version, lines, bytes };
         } catch {
