@@ -1,4 +1,4 @@
-// version: v3.1
+// version: v3.2
 import { state } from './state.js';
 
 export function openProjectMap() {
@@ -25,6 +25,14 @@ export function copyProjectMap() {
     alert('Готовый статический HTML-код для ai_sync.html скопирован! 📋');
 }
 
+// Функция для безопасного отображения HTML-кода в виде текста
+function escapeHTML(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
 async function generateFullStaticHTMLBundle() {
     const files = [
         './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
@@ -49,7 +57,8 @@ async function generateFullStaticHTMLBundle() {
                 if (fs.existsSync(fullPath)) {
                     const t = fs.readFileSync(fullPath, 'utf-8');
                     manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-                    sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+                    // ИСПРАВЛЕНО: Экранируем текст файла перед вставкой в сборку
+                    sources += `=== FILE_START: "${cleanPath}" ===\n${escapeHTML(t)}\n=== FILE_END: "${cleanPath}" ===\n\n`;
                 } else {
                     manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
                 }
@@ -65,7 +74,8 @@ async function generateFullStaticHTMLBundle() {
                 const t = await r.text();
                 const cleanPath = p.replace('./', '');
                 manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-                sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
+                // ИСПРАВЛЕНО: Экранируем текст файла перед вставкой в сборку
+                sources += `=== FILE_START: "${cleanPath}" ===\n${escapeHTML(t)}\n=== FILE_END: "${cleanPath}" ===\n\n`;
             } catch {
                 const cleanPath = p.replace('./', '');
                 manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
