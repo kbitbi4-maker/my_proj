@@ -1,4 +1,4 @@
-// version: v3.2
+// version: v3.3
 export function genHundreds(p, c, m, e) {
     let h = p || c || m || e ? '<div style="display:flex;gap:4px;margin-bottom:8px;justify-content:flex-start;width:100%;padding-left:2px;">' : '';
     for (let i = 0; i < p; i++) h += '<div class="hundred-crystal"></div>';
@@ -11,27 +11,27 @@ export function genHundreds(p, c, m, e) {
 export function buildTruckHTML(t) {
     let hC = genHundreds(t.hundreds, t.mixedHundreds, 0, 0), dC = '';
     
-    // 1. Отрисовываем чистые полные десятки
+    // 1. Рисуем чистые полные десятки (монолитные столбцы)
     for (let i = 0; i < t.tens; i++) {
         dC += `<div class="crystal-column">`;
         for (let j = 1; j <= 10; j++) dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
         dC += `</div>`;
     }
     
-    // 2. Отрисовываем хвостик единичных кубиков
-    if (t.ones > 0 || t.borrow !== 0) {
+    // 2. Рисуем хвостик единичных кубиков строго в отдельном столбце справа
+    if (t.ones > 0 || t.borrow > 0) {
         dC += `<div class="crystal-column" style="margin-left:6px;border-left:1px dashed #cbd5e1;padding-left:4px;">`;
-        let activeOnes = t.borrow < 0 ? t.ones + t.borrow : t.ones; // Сколько родных осталось
-        let totalOnes = t.borrow > 0 ? t.ones + t.borrow : t.ones;   // С учетом прилетевших чужих
+        let totalOnes = t.ones === 0 && t.borrow > 0 ? 10 : t.ones; // Если число округлилось до 10, размер столбца равен 10
+        let baseOnes = t.borrow > 0 ? totalOnes - t.borrow : totalOnes;
         
         for (let j = 1; j <= 10; j++) {
-            if (j <= activeOnes) {
+            if (j <= baseOnes) {
                 dC += `<div class="crystal-item ${t.isOrange ? 'borrow-orange' : 'borrow-blue'}"></div>`;
             } else if (j <= totalOnes) {
-                // Красим заимствованные кубики в инвертированный цвет
+                // Красим прилетевшие сверху кубики заимствования в цвет соседа!
                 dC += `<div class="crystal-item ${t.isOrange ? 'borrow-blue' : 'borrow-orange'}"></div>`;
-            } else if (t.borrow !== 0 || t.ones >= 5) {
-                // Если идет фаза обмена, резервируем пустые белые контуры до 10 ячеек
+            } else if (t.borrow > 0 || t.ones >= 5) {
+                // Резервируем пустые белые контуры ячеек абакуса
                 dC += `<div class="crystal-item" style="border:1px solid #cbd5e1; background:#fff; box-shadow:none;"></div>`;
             } else {
                 dC += `<div class="crystal-item" style="background:transparent;border-color:transparent;box-shadow:none;"></div>`;
