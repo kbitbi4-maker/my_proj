@@ -1,13 +1,11 @@
-// version: v1.2
+// version: v1.1
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
-import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectBundle } from './project_map.js';
+import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
 
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
 document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
-// Вешаем клик на кнопку скачивания бандла
-document.getElementById('download-project-btn')?.addEventListener('click', downloadProjectBundle);
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
