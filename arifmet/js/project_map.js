@@ -1,4 +1,4 @@
-// version: v3.9
+// version: v4.0
 import { state } from './state.js';
 
 export function openProjectMap() {
@@ -23,6 +23,52 @@ export function copyProjectMap() {
     if (!area) return;
     area.select(); navigator.clipboard.writeText(area.value);
     alert('Готовый статический HTML-код для ai_sync.html скопирован! 📋');
+}
+
+/**
+ * Читает содержимое текстового поля и генерирует на его основе PDF для ИИ
+ */
+export function downloadProjectMapPDF() {
+    const area = document.getElementById('map-text-area');
+    if (!area || !area.value || area.value.startsWith('⏳')) {
+        alert('Пожалуйста, подождите полной сборки проекта!');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    // Настраиваем плотный Courier, чтобы код не разъезжался
+    doc.setFont("Courier", "normal");
+    doc.setFontSize(8);
+
+    const fullText = area.value;
+    const lines = fullText.split('\n');
+
+    const pageHeight = doc.internal.pageSize.height; // ~297mm
+    const margin = 10; 
+    const lineHeight = 3.5; 
+    let y = margin;
+
+    lines.forEach((line) => {
+        // Перенос строки при заполнении страницы A4
+        if (y + lineHeight > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+        }
+        
+        // Очищаем строку от непечатаемых управляющих символов ASCII во избежание сбоев в jsPDF
+        const cleanLine = line.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+        doc.text(cleanLine, margin, y);
+        y += lineHeight;
+    });
+
+    const dateStr = new Date().toISOString().slice(0,10);
+    doc.save(`arifmet_repository_${dateStr}.pdf`);
 }
 
 async function generateFullStaticHTMLBundle() {
@@ -57,4 +103,30 @@ async function generateFullStaticHTMLBundle() {
 
 ${manifest}
 ${sources}`;
+}
+
+export async function generateDynamicMap() {
+    let report = `==================================================\n`;
+    report += `=== LIVE AUTOMATIC PROJECT ARIFMET MAP ===\n`;
+    report += `=== GENERATED: ${new Date().toISOString()} ===\n`;
+    report += `==================================================\n\n📁 arifmet/\n`;
+    
+    const tStamp = Date.now();
+    for (const path of FILE_PATHS) {
+        try {
+            const res = await fetch(`${path}?cb=${tStamp}`, { cache: "no-store" }); if (!res.ok) throw new Error();
+            const text = await res.text();
+            const lines = text.split('\n').length;
+            const bytes = new Blob([text]).size;
+            const m = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
+            const ver = m ? m.replace(/-->/g, '').trim() : 'unknown';
+            const cleanPath = path.replace('./', '');
+            report += `├── [FILE]: ${cleanPath} [VER: ${ver}] (${lines} lines, ${bytes} B)\n`;
+        } catch {
+            const cleanPath = path.replace('./', '');
+            report += `├── [FILE]: ${cleanPath} [NOT_FOUND ❌]\n`;
+        }
+    }
+    report += `\n=== END OF LIVE MAP ===`;
+    return report;
 }
