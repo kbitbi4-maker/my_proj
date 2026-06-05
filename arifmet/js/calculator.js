@@ -1,4 +1,4 @@
-// version: v2.0 
+// version: v2.1
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -33,7 +33,7 @@ export function parseSubtractionData(exampleText, report) {
     
     if (report && report.simText && report.simText.includes('-')) {
         let p = report.simText.split('-');
-        let userSub = parseInt(p[1], 10);
+        let userSub = parseInt(p[1], 10); // ИСПРАВЛЕНО: строго берем индекс 1 (введенное вычитаемое)
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
