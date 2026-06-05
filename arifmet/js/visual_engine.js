@@ -1,8 +1,9 @@
-// version: v1.5
+// version: v1.7
 import { GameCanvas } from './game_canvas.js';
 import { ADDITION_RULES } from './rules/rules_addition.js';
 import { SUBTRACTION_RULES } from './rules/rules_subtraction.js';
 import { MULTIPLICATION_RULES } from './rules/rules_multiplication.js';
+import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, soundFlags } from './feedback.js';
 
 export const VisualEngine = {
     render(ctx) {
@@ -15,10 +16,21 @@ export const VisualEngine = {
 
         const cfg = rule.config(ctx);
         const cacheKey = ctx.operation === '×' ? `${ctx.exampleText}_status_${cfg.status}` : `${ctx.exampleText}_r_${rule.id}_s_${ctx.isFullySolved}_i_${ctx.currentInput}`;
-        let html = '';
+        
+        // СОВЕРШЕННЫЙ АУДИО-ДВИЖОК ВНУТРИ ВИЗУАЛИЗАЦИИ
+        if (cfg.sound === "alien_win" && !soundFlags.finWinSoundPlayed) {
+            triggerWinFeedback(); soundFlags.finWinSoundPlayed = soundFlags.simWinSoundPlayed = true;
+        } else if (cfg.sound === "win" && !soundFlags.simWinSoundPlayed && ctx.phase === 2) {
+            triggerTensWinSound(); soundFlags.simWinSoundPlayed = true;
+        } else if (cfg.sound === "win" && !soundFlags.finWinSoundPlayed && ctx.phase === 3) {
+            triggerTensWinSound(); soundFlags.finWinSoundPlayed = soundFlags.simWinSoundPlayed = true;
+        } else if (cfg.sound === "fail") {
+            if (ctx.currentInput.includes('=') && !soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
+            else if (!ctx.currentInput.includes('=') && !soundFlags.simFailSoundPlayed) { triggerFailFeedback(); soundFlags.simFailSoundPlayed = true; }
+        }
 
+        let html = '';
         if (cfg.layout === "split-trucks") {
-            // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: Грузовики позиционируются по краям, но внутри себя они монолитны
             html = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center;padding:0 5%;box-sizing:border-box;height:100%;${cfg.style || ''}">${this.bTruck(cfg.leftTruck)}${cfg.operatorHTML}${this.bTruck(cfg.rightTruck)}</div>`;
         } 
         else if (cfg.layout === "merged-deck") {
