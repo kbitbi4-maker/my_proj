@@ -1,4 +1,4 @@
-// version: v5.2
+// version: v6.0
 import { generateDynamicMap } from './map_scanner.js';
 
 export async function openProjectMap() {
