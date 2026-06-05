@@ -1,41 +1,56 @@
-// version: v2.3
+// version: v1.6
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
     if (cleaned.includes('*')) {
-        let p = cleaned.split('*');
-        return p.length === 2 ? parseInt(p[0], 10) * parseInt(p[1], 10) : null;
+        let partsArr = cleaned.split('*');
+        if (partsArr.length === 2) {
+            let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 * n2;
+        }
+        return null;
     }
-    if (cleaned.includes('+')) return cleaned.split('+').reduce((sum, p) => sum + (parseInt(p, 10) || 0), 0);
+    if (cleaned.includes('+')) {
+        let partsArr = cleaned.split('+'), sum = 0;
+        for (let i = 0; i < partsArr.length; i++) {
+            let num = parseInt(partsArr[i], 10);
+            if (isNaN(num)) return null; 
+            sum += num;
+        }
+        return sum;
+    }
     if (cleaned.includes('-')) {
-        let p = cleaned.split('-');
-        return p.length === 2 ? parseInt(p[0], 10) - parseInt(p[1], 10) : null;
+        let partsArr = cleaned.split('-');
+        if (partsArr.length === 2) {
+            let n1 = parseInt(partsArr[0], 10), n2 = parseInt(partsArr[1], 10);
+            return (isNaN(n1) || isNaN(n2)) ? null : n1 - n2;
+        }
+        return null;
     }
-    return parseInt(cleaned, 10) || null;
+    let num = parseInt(cleaned, 10);
+    return isNaN(num) ? null : num;
 }
 
 export function parseAdditionData(exampleText, report) {
     const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
+    let leftTens = 0, leftOnes = 0, rightTens = 0, rightOnes = 0, leftLabel = '0', rightLabel = '0';
     
-    let uL = num1, uR = num2, addedL = 0, subL = 0, addedR = 0, subR = 0;
+    // ИСПРАВЛЕНО: читаем из simText, в который state.js теперь честно положит именно ввод ребенка
     if (report && report.simText && report.simText.includes('+')) {
-        let p = report.simText.split('+');
-        let parsedL = parseInt(p[0], 10), parsedR = parseInt(p[1], 10);
-        if (!isNaN(parsedL) && !isNaN(parsedR)) {
-            uL = parsedL; uR = parsedR;
-            if (uL > num1) addedL = uL - num1; else if (uL < num1) subL = num1 - uL;
-            if (uR > num2) addedR = uR - num2; else if (uR < num2) subR = num2 - uR;
-        }
+        const userParts = report.simText.split('+'), leftNum = parseInt(userParts[0], 10), rightNum = parseInt(userParts[1], 10);
+        if (!isNaN(leftNum)) { leftTens = Math.floor(leftNum / 10) % 10; leftOnes = leftNum % 10; leftLabel = String(leftNum); }
+        if (!isNaN(rightNum)) { rightTens = Math.floor(rightNum / 10) % 10; rightOnes = rightNum % 10; rightLabel = String(rightNum); }
+    } else if (report && report.simText && report.simText.length > 0) {
+        let singleNum = parseInt(report.simText, 10);
+        if (!isNaN(singleNum)) { leftTens = Math.floor(singleNum / 10) % 10; leftOnes = singleNum % 10; leftLabel = String(singleNum); }
     }
-
+    let totalOnes = ones1 + ones2; if (totalOnes >= 10) totalOnes -= 10;
     return {
-        num1, num2, tens1, ones1, tens2, ones2,
-        uL, uR, addedL, subL, addedR, subR,
-        leftBorrowCount: (ones1 > 0 && ones1 + ones2 >= 10) ? 10 - ones1 : 0,
-        rightBorrowCount: (ones2 > 0 && ones1 + ones2 >= 10) ? 10 - ones2 : 0,
-        leftLabel: String(num1), rightLabel: String(num2)
+        num1, num2, tens1, ones1, tens2, ones2, leftTens, leftOnes, rightTens, rightOnes, leftLabel, rightLabel, totalOnes,
+        leftBorrowCount: (leftTens > tens1 && leftOnes === 0 && ones1 > 0) ? 10 - ones1 : 0,
+        rightBorrowCount: (rightTens > tens2 && rightOnes === 0 && ones2 > 0) ? 10 - ones2 : 0
     };
 }
 
@@ -43,21 +58,16 @@ export function parseSubtractionData(exampleText, report) {
     const nums = exampleText.split('-'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     let currentSubtrahend = num2, addedAmount = 0, subtractedAmount = 0;
-    
     if (report && report.simText && report.simText.includes('-')) {
-        let p = report.simText.split('-');
-        let userSub = parseInt(p[1], 10);
+        let userSub = parseInt(report.simText.split('-')[1], 10);
         if (!isNaN(userSub)) {
             currentSubtrahend = userSub;
             if (currentSubtrahend > num2) addedAmount = currentSubtrahend - num2;
             else if (currentSubtrahend < num2) subtractedAmount = num2 - currentSubtrahend;
         }
     }
-    let finalAdded = (report && report.simText && report.simText.includes('-')) ? parseInt(report.simText.split('-')[1], 10) - num2 : 0;
-    return { 
-        num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, 
-        finalAddedAmount: finalAdded < 0 ? 0 : finalAdded, leftLabel: "Л", rightLabel: "П"
-    };
+    let finalAddedAmount = (report && report.simText && report.simText.includes('-')) ? parseInt(report.simText.split('-')[1], 10) - num2 : 0;
+    return { num1, num2, tens1, ones1, currentSubtrahend, addedAmount, subtractedAmount, finalAddedAmount: finalAddedAmount < 0 ? 0 : finalAddedAmount };
 }
 
 export function parseMultiplicationData(exampleText) {
