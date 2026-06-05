@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 const FILE_PATHS = [
     'index_arifmet.html', 'style_arifmet.css', 'js/main.js', 'js/state.js',
     'js/calculator.js', 'js/feedback.js', 'js/game_canvas.js', 'js/view_dispatcher.js',
@@ -20,9 +20,10 @@ export async function generateDynamicMap() {
             
             const lines = text.split('\n').length;
             const bytes = new Blob([text]).size;
-            // ЖЕСТКОЕ ИСПРАВЛЕНИЕ: дефис экранирован как \- для предотвращения Range out of order
-            const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/--\>]+)/i);
-            const version = verMatch ? verMatch[1].replace(/-->/g, '').trim() : 'unknown';
+            // НАДЕЖНОЕ ИСПРАВЛЕНИЕ: Отрезали регулярку от дефисов, очистка идет через replace ниже
+            const verMatch = text.match(/(?:\/\/|\/\*|<!--)\s*version:\s*([^\s\*\/]+)/i);
+            const rawVer = verMatch ? verMatch[1] : 'unknown';
+            const version = rawVer.replace(/-->/g, '').trim();
 
             filesData[path] = { version, lines, bytes };
         } catch {
