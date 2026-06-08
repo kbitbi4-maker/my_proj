@@ -1,74 +1,63 @@
-// version: v2.6 - Fixed renderTensVisual Export and self-import error
+// version: v1.0 - Restored Pure Original File Clean Setup
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-import { buildColumnTable } from './column_helper.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
 
 let isAddition = true;
 
 export function initTensMode() {
- const isHundreds = state.currentMode === 'hundreds';
- document.querySelector('.header-menu-btn').innerText = isHundreds ? 'Режим: Сотни 🏔️ ▼' : 'Режим: Десятки ▼';
+ document.querySelector('.header-menu-btn').innerText = 'Режим: Десятки ▼';
  const gameZone = document.getElementById('game-zone');
  if (gameZone) {
-  gameZone.style.display = isHundreds ? 'none' : 'flex';
-  document.querySelector('.game-workspace').style.height = isHundreds ? '100%' : '68%';
+  gameZone.style.display = 'flex';
+  document.querySelector('.game-workspace').style.height = '68%';
  }
  generateExample();
 }
 
 export function generateExample() {
- if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
+ if (state.currentMode !== 'tens' && state.currentMode !== 'mix') return;
  if (!state.usedExamples) state.usedExamples = [];
- 
- let num1, num2, correctValue, text = '';
- const isHundreds = state.currentMode === 'hundreds';
- const min = isHundreds ? 100 : 10, max = isHundreds ? 900 : 90;
- 
+ let num1, num2, correctValue, text;
  if (isAddition) {
   while (true) {
-   num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+   num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
    let sum = num1 + num2;
-   if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { text = `${num1}+${num2}`; correctValue = sum; break; }
+   if ((num1 % 10 + num2 % 10) > 10 && sum < 100) { 
+    text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+   }
   }
  } else {
   while (true) {
-   num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { text = `${num1}-${num2}`; correctValue = num1 - num2; break; }
+   num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
+   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { 
+    text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+   }
   }
  }
-
  state.usedExamples.push(text);
- state.addExample({ exampleText: String(text), correctValue: correctValue, currentInput: '' });
+ state.addExample({ exampleText: text, correctValue: correctValue, currentInput: '' });
  isAddition = !isAddition;
- 
  GameCanvas.clearZone();
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
 }
 
 export function renderTensVisual() {
- if (state.activeIndex === -1 || state.currentMode === 'hundreds') return GameCanvas.clearZone();
+ if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
  const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
  if (isAdd) renderAdditionVisual(); else renderSubtractionVisual();
 }
 
 export function getTensHistoryHTML(item, index, mode) {
- const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
- const finText = item.currentInput || '';
+ const parts = item.currentInput.split('='), simText = parts[0] || '', finText = parts[1] || '';
  const report = state.validateCurrentInput(index);
-
- if (!isHundreds || index !== state.activeIndex) {
-  const isCorrect = (parseInt(finText, 10) === item.correctValue);
-  const ansClass = isCorrect ? 'block-correct' : 'block-incorrect';
-  let html = ` = <span class="${finText ? ansClass : 'block'}">${finText || '_'}</span>`;
-  return { simHTML: html, finHTML: '' };
+ let simHTML = ` = <span class="block">${simText || '_'}</span>`;
+ if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+ let finHTML = '';
+ if (parts.length > 1) {
+  if (finText.trim().length >= String(item.correctValue).length) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+  else finHTML = ` = <span class="block">${finText || '_'}</span>`;
  }
-
- const op = item.exampleText.includes('+') ? '+' : '-';
- const isCorrect = (parseInt(finText, 10) === item.correctValue);
- const ansClass = finText.length >= String(item.correctValue).length ? (isCorrect ? 'block-correct' : 'block-incorrect') : 'block';
- 
- const combinedHTML = buildColumnTable(item, index, op, finText, ansClass);
- return { simHTML: combinedHTML, finHTML: '' };
+ return { simHTML, finHTML };
 }
