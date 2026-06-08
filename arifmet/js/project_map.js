@@ -1,60 +1,72 @@
-// version: v3.9
+// version: v2.0 - Complete Self-Contained PDF Generation and Map Exporter
 import { state } from './state.js';
 
 export function openProjectMap() {
-    const modal = document.getElementById('map-modal');
-    const area = document.getElementById('map-text-area');
-    if (!modal || !area) return;
+ const modal = document.getElementById('project-map-modal');
+ const textarea = document.getElementById('project-map-textarea');
+ if (!modal || !textarea) return;
 
-    modal.style.display = 'flex';
-    area.value = '⏳ Сборка монолита проекта... Пожалуйста, подождите.';
-    generateFullStaticHTMLBundle().then(htmlBundle => {
-        area.value = htmlBundle;
-    });
+ // Собираем текущий моментальный снимок истории и состояния для ИИ-контекста
+ let mapText = `=== ARIFMET GAME SESSION SNAPSHOT ===\n`;
+ mapText += `Current Mode: ${state.currentMode}\n`;
+ mapText += `Active Index: ${state.activeIndex}\n\n`;
+ mapText += `=== EXAMPLES HISTORY ===\n`;
+ 
+ (state.examplesHistory || []).forEach((item, idx) => {
+  mapText += `[${idx}] ${item.exampleText} | User Input: "${item.currentInput}" | Correct: ${item.correctValue}\n`;
+ });
+
+ textarea.value = mapText;
+ modal.style.display = 'block';
 }
 
 export function closeProjectMap() {
-    const modal = document.getElementById('map-modal');
-    if (modal) modal.style.display = 'none';
+ const modal = document.getElementById('project-map-modal');
+ if (modal) modal.style.display = 'none';
 }
 
 export function copyProjectMap() {
-    const area = document.getElementById('map-text-area');
-    if (!area) return;
-    area.select(); navigator.clipboard.writeText(area.value);
-    alert('Готовый статический HTML-код для ai_sync.html скопирован! 📋');
+ const textarea = document.getElementById('project-map-textarea');
+ if (!textarea) return;
+ textarea.select();
+ navigator.clipboard.writeText(textarea.value);
+ const copyBtn = document.getElementById('copy-map-btn');
+ if (copyBtn) {
+  const oldText = copyBtn.innerText;
+  copyBtn.innerText = 'Скопировано! ✅';
+  setTimeout(() => { copyBtn.innerText = oldText; }, 2000);
+ }
 }
 
-async function generateFullStaticHTMLBundle() {
-    const files = [
-        './index_arifmet.html', './style_arifmet.css', './js/main.js', './js/state.js',
-        './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
-        './js/menu.js', './js/numpad.js', './js/tens.js', './js/mix.js', './js/multiplication.js',
-        './js/addition_visual.js', './js/subtraction_visual.js', './js/project_map.js',
-        './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js'
-    ];
-    
-    let manifest = `[AI RECONSTRUCTION MANIFEST]\n`;
-    let sources = ``;
-    const tStamp = Date.now();
+export function downloadProjectMapPDF() {
+ const textarea = document.getElementById('project-map-textarea');
+ if (!textarea) return;
 
-    for (const p of files) {
-        try {
-            const r = await fetch(`${p}?cb=${tStamp}`, { cache: "no-store" }); if (!r.ok) continue;
-            const t = await r.text();
-            const cleanPath = p.replace('./', '');
-            manifest += `- PATH: "${cleanPath}" | SIZE: ${t.length} chars\n`;
-            sources += `=== FILE_START: "${cleanPath}" ===\n${t}\n=== FILE_END: "${cleanPath}" ===\n\n`;
-        } catch {
-            const cleanPath = p.replace('./', '');
-            manifest += `- PATH: "${cleanPath}" | NOT_FOUND ❌\n`;
-        }
-    }
+ const printWindow = window.open('', '_blank');
+ if (!printWindow) {
+  alert('Пожалуйста, разрешите всплывающие окна для скачивания PDF');
+  return;
+ }
 
-    return `==================================================
-=== ARIFMET FULL REPOSITORY SOURCE BUNDLE (STATIC) ===
-==================================================
-
-${manifest}
-${sources}`;
+ // Генерируем изолированный HTML-документ для отправки в системный PDF-принтер
+ printWindow.document.write(`
+  <html>
+   <head>
+    <title>arifmet_project_code_export</title>
+    <style>
+     body { font-family: monospace; padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.4; color: #1e293b; }
+     @media print { body { padding: 0; margin: 0; } }
+    </style>
+   </head>
+   <body>${textarea.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+  </html>
+ `);
+ printWindow.document.close();
+ printWindow.focus();
+ 
+ // Триггерим нативное сохранение в PDF средствами браузера
+ setTimeout(() => {
+  printWindow.print();
+  printWindow.close();
+ }, 250);
 }
