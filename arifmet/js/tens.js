@@ -1,77 +1,73 @@
-// version: v1.3
+// version: v1.5 - Strict 90 Line Limit Clean Architecture
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-import { renderAdditionVisual } from './addition_visual.js';
-import { renderSubtractionVisual } from './subtraction_visual.js';
-import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
-import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
+import { buildColumnTable } from './column_helper.js';
 
 let isAddition = true;
 
 export function initTensMode() {
-    document.querySelector('.header-menu-btn').innerText = state.currentMode === 'hundreds' ? 'Режим: Сотни 🛠️ ▼' : 'Режим: Десятки ▼';
-    generateExample();
+ const isHundreds = state.currentMode === 'hundreds';
+ document.querySelector('.header-menu-btn').innerText = isHundreds ? 'Режим: Сотни 🏔️ ▼' : 'Режим: Десятки ▼';
+ const gameZone = document.getElementById('game-zone');
+ if (gameZone) {
+  gameZone.style.display = isHundreds ? 'none' : 'flex';
+  document.querySelector('.game-workspace').style.height = isHundreds ? '100%' : '68%';
+ }
+ generateExample();
 }
 
 export function generateExample() {
-    if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
-    if (!state.usedExamples) state.usedExamples = [];
-    let num1, num2, correctValue, text;
-
-    const isHundreds = state.currentMode === 'hundreds';
-    const min = isHundreds ? 100 : 10;
-    const max = isHundreds ? 900 : 90;
-
-    if (isAddition) {
-        while (true) {
-            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-            let sum = num1 + num2;
-            if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
-                text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
-            }
-        }
-    } else {
-        while (true) {
-            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-            let ones1 = num1 % 10, ones2 = num2 % 10;
-            if (num1 > num2 && ones2 !== 0) { 
-                text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
-            }
-        }
-    }
-
-    state.usedExamples.push(text);
-    state.addExample({ exampleText: text, correctValue: correctValue, currentInput: '' });
-    isAddition = !isAddition;
-
-    GameCanvas.clearZone();
-    GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
-    renderTensVisual();
-}
-
-export function renderTensVisual() {
-    if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
-    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
-    
-    // ВЕТВЛЕНИЕ НА СОТНИ
-    if (state.currentMode === 'hundreds') {
-        if (isAdd) return renderAdditionHundredsVisual();
-        else return renderSubtractionHundredsVisual();
-    }
-    
-    if (isAdd) renderAdditionVisual();
-    else renderSubtractionVisual();
+ if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
+ if (!state.usedExamples) state.usedExamples = [];
+ let num1, num2, correctValue, text;
+ const isHundreds = state.currentMode === 'hundreds';
+ const min = isHundreds ? 100 : 10, max = isHundreds ? 900 : 90;
+ if (isAddition) {
+  while (true) {
+   num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+   let sum = num1 + num2;
+   if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
+    text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+   }
+  }
+ } else {
+  while (true) {
+   num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { 
+    text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+   }
+  }
+ }
+ state.usedExamples.push(text);
+ state.addExample({ exampleText: text, correctValue: correctValue, currentInput: '' });
+ isAddition = !isAddition;
+ GameCanvas.clearZone();
+ GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
 }
 
 export function getTensHistoryHTML(item, index, mode) {
-    const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
-    let simHTML = ` = <span class="block">${simText || '_'}</span>`;
-    if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
-    let finHTML = '';
-    if (parts.length > 1) {
-        if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
-        else finHTML = ` = <span class="block">${finText || '_'}</span>`;
-    }
-    return { simHTML, finHTML };
+ const parts = item.currentInput.split('='), simText = parts[0] || '', finText = parts[1] || '';
+ const report = state.validateCurrentInput(index);
+ const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
+
+ if (!isHundreds) {
+  let simHTML = ` = <span class="block">${simText || '_'}</span>`;
+  if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+  let finHTML = '';
+  if (parts.length > 1) {
+   const targetLen = String(item.correctValue).length;
+   if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+   else finHTML = ` = <span class="block">${finText || '_'}</span>`;
+  }
+  return { simHTML, finHTML };
+ }
+
+ const op = item.exampleText.includes('+') ? '+' : '-';
+ let ansClass = 'block';
+ if (parts.length > 1 && finText.length >= String(item.correctValue).length) {
+  ansClass = report.finCorrect ? 'block-correct' : 'block-incorrect';
+ }
+ const simHTML = `<div style="display: inline-flex; font-size: 3vh; align-items: middle; height: 100%; font-weight: bold;">${item.exampleText} = </div>`;
+ const tableHTML = buildColumnTable(item, index, op, finText, ansClass);
+ return { simHTML, finHTML: tableHTML };
 }
