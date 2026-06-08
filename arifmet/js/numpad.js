@@ -1,8 +1,8 @@
-// version: v2.1 - Pure Atomic Digit Appending Without Mutation
+// version: v2.2 - Restore renderTensVisual Execution and Validation Hooks
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, resetAllFeedbacks, soundFlags } from './feedback.js';
-import { generateExample, getTensHistoryHTML } from './tens.js';
+import { generateExample, getTensHistoryHTML, renderTensVisual } from './tens.js';
 
 export function pressNum(n) {
  if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
@@ -19,7 +19,6 @@ export function pressNum(n) {
   }
  }
 
- // Подставляем валидатору временное выражение для внутренней проверки состояния
  const validationStr = isHundreds ? `${activeItem.exampleText}=${activeItem.currentInput}` : activeItem.currentInput;
  const report = state.validateCurrentInput(validationStr);
  
@@ -37,6 +36,6 @@ export function confirmAndNext() {
 
 export function refreshUI() {
  if (state.activeIndex === -1) return;
- const item = state.examplesHistory[state.activeIndex];
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
+ renderTensVisual();
 }
