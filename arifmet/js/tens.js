@@ -1,7 +1,9 @@
-// version: v1.5 - Strict 90 Line Limit Clean Architecture
+// version: v1.6 - Restore renderTensVisual for Core Compatibility
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
+import { renderAdditionVisual } from './addition_visual.js';
+import { renderSubtractionVisual } from './subtraction_visual.js';
 
 let isAddition = true;
 
@@ -43,6 +45,13 @@ export function generateExample() {
  isAddition = !isAddition;
  GameCanvas.clearZone();
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
+}
+
+export function renderTensVisual() {
+ if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
+ if (state.currentMode === 'hundreds') return GameCanvas.clearZone();
+ const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
+ if (isAdd) renderAdditionVisual(); else renderSubtractionVisual();
 }
 
 export function getTensHistoryHTML(item, index, mode) {
