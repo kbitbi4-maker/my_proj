@@ -1,24 +1,31 @@
-// version: v1.3
+// version: v1.5
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
 import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
 import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
+import { renderColumnVisual } from './column_visual.js'; // Импорт нового визуала
 
 let isAddition = true;
 
 export function initTensMode() {
-    document.querySelector('.header-menu-btn').innerText = state.currentMode === 'hundreds' ? 'Режим: Сотни 🛠️ ▼' : 'Режим: Десятки ▼';
+    if (state.currentMode === 'column') {
+        document.querySelector('.header-menu-btn').innerText = 'Режим: В столбик 📝 ▼';
+    } else {
+        document.querySelector('.header-menu-btn').innerText = state.currentMode === 'hundreds' ? 'Режим: Сотни 🛠️ ▼' : 'Режим: Десятки ▼';
+    }
     generateExample();
 }
 
 export function generateExample() {
-    if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
+    // Добавлена проверка на режим column
+    if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds' && state.currentMode !== 'column') return;
     if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, correctValue, text;
 
-    const isHundreds = state.currentMode === 'hundreds';
+    // Режим столбика генерирует такие же трехзначные числа, как и сотни
+    const isHundreds = state.currentMode === 'hundreds' || state.currentMode === 'column';
     const min = isHundreds ? 100 : 10;
     const max = isHundreds ? 900 : 90;
 
@@ -51,9 +58,13 @@ export function generateExample() {
 
 export function renderTensVisual() {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
-    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
     
-    // ВЕТВЛЕНИЕ НА СОТНИ
+    // ОТДЕЛЬНОЕ ВЕТВЛЕНИЕ НА СТОЛБИК
+    if (state.currentMode === 'column') {
+        return renderColumnVisual();
+    }
+
+    const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
     if (state.currentMode === 'hundreds') {
         if (isAdd) return renderAdditionHundredsVisual();
         else return renderSubtractionHundredsVisual();
