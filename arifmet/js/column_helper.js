@@ -1,4 +1,4 @@
-// version: v3.1 - Solid Type Assertions and Fixed String Prototypes
+// version: v3.2 - Stable Self-Contained Column Workspace Engine
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, resetAllFeedbacks, soundFlags } from './feedback.js';
