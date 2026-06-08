@@ -1,4 +1,4 @@
-// version: v4.0 - Total Clean Restored Original Without Column Helper Imports
+// version: ORIGINAL - Restored From PDF Context
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -22,17 +22,27 @@ export function generateExample() {
  let num1, num2, correctValue, text;
  if (isAddition) {
   while (true) {
-   num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
+   num1 = Math.floor(Math.random() * 90) + 10;
+   num2 = Math.floor(Math.random() * 90) + 10;
    let sum = num1 + num2;
-   if ((num1 % 10 + num2 % 10) > 10 && sum < 100) { 
-    text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+   if ((num1 % 10 + num2 % 10) > 10 && sum < 100) {
+    text = `${num1}+${num2}`;
+    if (!state.usedExamples.includes(text)) {
+     correctValue = sum;
+     break;
+    }
    }
   }
  } else {
   while (true) {
-   num1 = Math.floor(Math.random() * 90) + 10; num2 = Math.floor(Math.random() * 90) + 10;
-   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { 
-    text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+   num1 = Math.floor(Math.random() * 90) + 10;
+   num2 = Math.floor(Math.random() * 90) + 10;
+   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) {
+    text = `${num1}-${num2}`;
+    if (!state.usedExamples.includes(text)) {
+     correctValue = num1 - num2;
+     break;
+    }
    }
   }
  }
@@ -46,7 +56,8 @@ export function generateExample() {
 export function renderTensVisual() {
  if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
  const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
- if (isAdd) renderAdditionVisual(); else renderSubtractionVisual();
+ if (isAdd) renderAdditionVisual();
+ else renderSubtractionVisual();
 }
 
 export function getTensHistoryHTML(item, index, mode) {
@@ -56,7 +67,8 @@ export function getTensHistoryHTML(item, index, mode) {
  if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
  let finHTML = '';
  if (parts.length > 1) {
-  if (finText.trim().length >= String(item.correctValue).length) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+  const targetLen = String(item.correctValue).length;
+  if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
   else finHTML = ` = <span class="block">${finText || '_'}</span>`;
  }
  return { simHTML, finHTML };
