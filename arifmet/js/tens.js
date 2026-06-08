@@ -1,4 +1,4 @@
-// version: v1.8 - Single Slot Rendering to Stop Column Multiplying
+// version: v1.9 - Structural Single Container Injection Fix
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -62,13 +62,8 @@ export function getTensHistoryHTML(item, index, mode) {
 
  if (!isHundreds) {
   let simHTML = ` = <span class="block">${rawInput || '_'}</span>`;
-  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${rawInput.split('=')[0]}</span>`;
-  let finHTML = '';
-  if (rawInput.includes('=')) {
-   if (finText.trim().length >= String(item.correctValue).length) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
-   else finHTML = ` = <span class="block">${finText || '_'}</span>`;
-  }
-  return { simHTML, finHTML };
+  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${rawInput.split('=')[1]}</span>`;
+  return { simHTML, finHTML: '' };
  }
 
  const op = item.exampleText.includes('+') ? '+' : '-';
