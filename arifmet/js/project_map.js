@@ -1,4 +1,4 @@
-// version: v4.0
+// version: v4.1
 import { state } from './state.js';
 
 export function openProjectMap() {
@@ -31,7 +31,8 @@ async function generateFullStaticHTMLBundle() {
         './js/calculator.js', './js/feedback.js', './js/game_canvas.js', './js/view_dispatcher.js',
         './js/menu.js', './js/numpad.js', './js/tens.js', './js/mix.js', './js/multiplication.js',
         './js/addition_visual.js', './js/subtraction_visual.js', './js/project_map.js',
-        './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js'
+        './js/addition_hundreds_visual.js', './js/subtraction_hundreds_visual.js',
+        './js/column_visual.js' // ДОБАВЛЕН СЮДА
     ];
     
     let manifest = `[AI RECONSTRUCTION MANIFEST]\n`;
