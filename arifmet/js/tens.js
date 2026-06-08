@@ -1,4 +1,4 @@
-// version: v2.2 - Hard Isolated String Generation For Pure Examples
+// version: v2.3 - Fixed Array String Bracket Indexes for Tens History
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -63,7 +63,7 @@ export function getTensHistoryHTML(item, index, mode) {
 
  if (!isHundreds) {
   let simHTML = ` = <span class="block">${rawInput || '_'}</span>`;
-  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${parts[0]}</span>`;
+  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${parts[1]}</span>`;
   return { simHTML, finHTML: '' };
  }
 
