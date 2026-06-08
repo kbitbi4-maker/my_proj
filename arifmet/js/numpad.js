@@ -1,4 +1,4 @@
-// version: v1.5
+// version: v1.6
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -11,36 +11,30 @@ export function pressNum(n) {
     const activeItem = state.examplesHistory[state.activeIndex];
 
     const isColumnMode = state.currentMode === 'column';
+    const targetLength = String(activeItem.correctValue).length;
 
     if (n === 'C' || n === 'D') {
         if (n === 'C') {
             activeItem.currentInput = '';
         } else {
-            // Если режим столбика — удаляем ПЕРВУЮ введенную цифру (она стоит слева, но ввелась последней)
-            // Если обычный режим — удаляем последнюю цифру с конца строки
             activeItem.currentInput = isColumnMode ? activeItem.currentInput.slice(1) : activeItem.currentInput.slice(0, -1);
         }
         resetAllFeedbacks();
     } else {
+        // Блокируем нажатие знака "=" в режиме столбика, там он не нужен
+        if (isColumnMode && n === '=') return;
+
         const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
         if (n === '=' && totalEquals >= 2) return;
 
         if (isColumnMode) {
-            // В режиме столбика знак "=" разделяет стадии, но сами цифры ответов растут влево!
-            if (n === '=') {
-                activeItem.currentInput += n;
-            } else {
-                // Если мы уже ввели "=", то цифры финального ответа тоже должны расти влево
-                if (activeItem.currentInput.includes('=')) {
-                    const parts = activeItem.currentInput.split('=');
-                    parts[1] = n + parts[1]; // Добавляем цифру в начало финального ответа
-                    activeItem.currentInput = parts.join('=');
-                } else {
-                    activeItem.currentInput = n + activeItem.currentInput; // Добавляем цифру в начало промежуточного ответа
-                }
-            }
+            // Если ребенок уже ввел максимальное количество цифр, не даем вводить новые (сначала нужно стереть)
+            if (activeItem.currentInput.length >= targetLength) return;
+
+            // Направление роста от единиц влево
+            activeItem.currentInput = n + activeItem.currentInput;
         } else {
-            // Стандартное добавление цифры в конец строки для всех остальных режимов
+            // Стандартное добавление для остальных режимов
             activeItem.currentInput += n;
         }
     }
@@ -76,6 +70,15 @@ function handleInputSounds(report, exampleText) {
             soundFlags.simFailSoundPlayed = false;
         }
     } else if (report.isWrongAnswer) {
+        // Для режима столбика проверяем флаг ошибки напрямую
+        if (state.currentMode === 'column') {
+            if (!soundFlags.finFailSoundPlayed) {
+                triggerFailFeedback();
+                soundFlags.finFailSoundPlayed = true;
+            }
+            return;
+        }
+
         const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
         const hasFin = parts.length > 1 && parts.at(1).trim().length > 0;
         
