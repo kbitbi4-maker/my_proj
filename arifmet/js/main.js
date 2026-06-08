@@ -1,7 +1,9 @@
-// version: v1.4 - Flat Original Event Hook Up with Mix Support
+// version: v1.5 - Fully Original Main Thread Event Handlers
+import { state } from './state.js';
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
+import { initHundredsColumnMode } from './column_helper.js';
 
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
@@ -18,9 +20,9 @@ document.querySelectorAll('.calc-btn:not(.next)').forEach(btn => {
 });
 
 document.getElementById('next-example-btn')?.addEventListener('click', () => {
- confirmAndNext();
- if (state.currentMode === 'mix') {
-  const mixModule = import('./mix.js');
-  mixModule.then(m => m.generateMixExample());
+ if (state.currentMode === 'hundreds') {
+  initHundredsColumnMode();
+  return;
  }
+ confirmAndNext();
 });
