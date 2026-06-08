@@ -1,10 +1,8 @@
-// version: v1.9 - Direct Substring Array Index Referencing
+// version: v2.1 - Pure Atomic Digit Appending Without Mutation
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
-import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
-import { generateExample, getTensHistoryHTML, renderTensVisual } from './tens.js';
-import { generateMultiExample, getMultiplicationHistoryHTML, renderMonsterGame } from './multiplication.js';
-import { generateMixExample } from './mix.js';
+import { triggerTensWinSound, resetAllFeedbacks, soundFlags } from './feedback.js';
+import { generateExample, getTensHistoryHTML } from './tens.js';
 
 export function pressNum(n) {
  if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
@@ -13,58 +11,32 @@ export function pressNum(n) {
 
  if (n === 'C' || n === 'D') {
   if (n === 'C') activeItem.currentInput = '';
-  else {
-   if (isHundreds) {
-    const parts = activeItem.currentInput.split('=');
-    const fin = parts.length > 1 ? parts[1] : '';
-    activeItem.currentInput = activeItem.exampleText + '=' + fin.slice(0, -1);
-   } else {
-    activeItem.currentInput = activeItem.currentInput.slice(0, -1);
-   }
-  }
+  else activeItem.currentInput = activeItem.currentInput.slice(0, -1);
   resetAllFeedbacks();
  } else {
-  if (isHundreds) {
-   const parts = activeItem.currentInput.split('=');
-   let fin = parts.length > 1 ? parts[1] : '';
-   if (n !== '=') fin += n;
-   activeItem.currentInput = activeItem.exampleText + '=' + fin;
-  } else {
-   const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
-   if (n === '=' && totalEquals >= 2) return;
+  if (n !== '=') {
    activeItem.currentInput += n;
   }
  }
- const report = state.validateCurrentInput();
- handleInputSounds(report, activeItem.exampleText);
+
+ // Подставляем валидатору временное выражение для внутренней проверки состояния
+ const validationStr = isHundreds ? `${activeItem.exampleText}=${activeItem.currentInput}` : activeItem.currentInput;
+ const report = state.validateCurrentInput(validationStr);
+ 
+ if (report.isFullySolved && !soundFlags.finWinSoundPlayed) {
+  triggerTensWinSound();
+  soundFlags.finWinSoundPlayed = true;
+ }
  refreshUI();
 }
 
 export function confirmAndNext() {
  resetAllFeedbacks();
- if (state.currentMode === 'tens' || state.currentMode === 'hundreds') generateExample();
- else if (state.currentMode === 'multiplication') generateMultiExample();
- else if (state.currentMode === 'mix') generateMixExample();
-}
-
-function handleInputSounds(report, exampleText) {
- const isMulti = exampleText.includes('×');
- if (report.isFullySolved) {
-  if (!soundFlags.finWinSoundPlayed) {
-   if (isMulti) triggerWinFeedback(); else triggerTensWinSound();
-   soundFlags.finWinSoundPlayed = true; soundFlags.simWinSoundPlayed = true;
-  }
- } else if (report.isWrongAnswer) {
-  if (!soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
- }
+ generateExample();
 }
 
 export function refreshUI() {
  if (state.activeIndex === -1) return;
  const item = state.examplesHistory[state.activeIndex];
- const isMulti = item.exampleText.includes('×');
- const renderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
- GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, renderer);
- if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) renderMonsterGame();
- else renderTensVisual();
+ GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
 }
