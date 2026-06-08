@@ -1,4 +1,4 @@
-// version: v1.2 - Fixed Table Grid Alignment Without History Duplicates
+// version: v2.0 - Total Flexbox Grid Re-Architecture
 import { state } from './state.js';
 import { refreshUI } from './numpad.js';
 
@@ -30,40 +30,45 @@ export function buildColumnTable(item, index, op, finText, ansClass) {
   if (cellIdx >= 0) ansCells[cellIdx] = inputDigits[i];
  }
 
- let html = `<div style="display: inline-flex; align-items: center; gap: 20px; font-family: monospace; font-size: 3vh;">`;
- html += `<div>${item.exampleText} =</div>`;
- html += `<table style="border-collapse: collapse; text-align: center; user-select: none; line-height: 1;">`;
- 
- html += `<tr style="height: 4.5vh;">`;
+ let html = `<div style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 15px; font-family: monospace; font-size: 3.5vh; font-weight: bold; user-select: none; width: 100%;">`;
+ html += `<div style="white-space: nowrap; flex-shrink: 0;">${item.exampleText} =</div>`;
+ html += `<div style="display: flex; flex-direction: row;">`;
+
  for (let i = 0; i < totalCols; i++) {
   const val = item.userCarries[i] || 0;
-  if (i === totalCols - 1) {
-   html += `<td style="width: 4vh;">&nbsp;</td>`;
+  const c1 = padNum1[i] === ' ' ? '&nbsp;' : padNum1[i];
+  const c2 = padNum2[i] === ' ' ? '&nbsp;' : padNum2[i];
+  const ans = ansCells[i];
+  const isBlur = ans === ' ';
+  const isUnitsIdx = (i === totalCols - 1);
+
+  html += `<div style="display: flex; flex-direction: column; align-items: center; width: 4.5vh; text-align: center; line-height: 1.1;">`;
+  
+  if (isUnitsIdx) {
+   html += `<div style="height: 5.5vh;">&nbsp;</div>`;
   } else {
    html += `
-    <td style="width: 4vh; font-size: 1.4vh; color: #a855f7; font-weight: bold; padding: 2px 0;">
+    <div style="font-size: 1.5vh; color: #a855f7; display: flex; flex-direction: column; align-items: center; height: 5.5vh; justify-content: center;">
      <div style="cursor: pointer; color: #3b82f6;" onclick="window.changeCarry(${index}, ${i}, 1)">▲</div>
-     <div style="min-height: 2vh; font-size: 2vh;">${val === 0 ? '&nbsp;' : val}</div>
+     <div style="font-size: 2vh; min-height: 2vh;">${val === 0 ? '&nbsp;' : val}</div>
      <div style="cursor: pointer; color: #ef4444;" onclick="window.changeCarry(${index}, ${i}, -1)">▼</div>
-    </td>`;
+    </div>`;
   }
+
+  html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center;">${c1}</div>`;
+  
+  const isFirstWithOp = (i === 0);
+  const borderStyle = "border-bottom: 4px solid #333;";
+  if (isFirstWithOp) {
+   html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center; color: #475569; ${borderStyle}">${op}</div>`;
+  } else {
+   html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center; ${borderStyle}">${c2}</div>`;
+  }
+
+  html += `<div class="${isBlur ? '' : ansClass}" style="height: 5vh; display: flex; align-items: center; justify-content: center; color: ${isBlur ? '#ccc' : 'inherit'}; width: 100%;">${isBlur ? '_' : ans}</div>`;
+  html += `</div>`;
  }
- html += `</tr>`;
 
- html += `<tr style="height: 4vh;"><td style="width: 4vh;"></td>`;
- for (let i = 1; i < totalCols; i++) html += `<td style="width: 4vh;">${padNum1[i] === ' ' ? '&nbsp;' : padNum1[i]}</td>`;
- html += `</tr>`;
-
- html += `<tr style="height: 4vh; border-bottom: 3px solid #333;"><td style="width: 4vh; font-weight: bold; color: #475569; text-align: center;">${op}</td>`;
- for (let i = 1; i < totalCols; i++) html += `<td style="width: 4vh;">${padNum2[i] === ' ' ? '&nbsp;' : padNum2[i]}</td>`;
- html += `</tr>`;
-
- html += `<tr style="height: 5vh; font-weight: bold;"><td style="width: 4vh;"></td>`;
- for (let i = 1; i < totalCols; i++) {
-  const c = ansCells[i];
-  const isBlur = c === ' ';
-  html += `<td class="${isBlur ? '' : ansClass}" style="width: 4vh; color: ${isBlur ? '#ccc' : 'inherit'}">${isBlur ? '_' : c}</td>`;
- }
- html += `</tr></table></div>`;
+ html += `</div></div>`;
  return html;
 }
