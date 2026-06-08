@@ -1,45 +1,38 @@
-// version: v1.3 - Fixed Menu Compatibility with Compact Panels
+// version: v1.1 - Original Menu with Isolated Hundreds Integration
 import { state } from './state.js';
-import { GameCanvas } from './game_canvas.js';
-import { resetAllFeedbacks } from './feedback.js';
 import { initTensMode } from './tens.js';
 import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
-
-const numpadContainer = document.getElementById('calc-numpad-container');
-const modesMenuContainer = document.getElementById('modes-menu-container');
-const rightArea = document.querySelector('.right-area');
-const menuButton = document.getElementById('menu-toggle-btn');
-let isMenuOpen = false;
+import { initHundredsColumnMode } from './column_helper.js';
 
 export function toggleMenuMode() {
-    if (!numpadContainer || !modesMenuContainer || !rightArea) return;
-    isMenuOpen = !isMenuOpen;
-    rightArea.classList.toggle('menu-active', isMenuOpen);
-    if (menuButton) menuButton.innerText = isMenuOpen ? 'Назад к игре ▲' : getModeLabel(state.currentMode);
-    numpadContainer.style.display = isMenuOpen ? 'none' : 'grid';
-    modesMenuContainer.style.display = isMenuOpen ? 'flex' : 'none';
+ const container = document.querySelector('.header-menu-container');
+ if (container) {
+  container.classList.toggle('active');
+ }
 }
 
 export function handleModeSelection(mode) {
-    if (mode === 'thousands') {
-        alert("Режим в разработке ⚙️");
-        return;
-    }
-    state.reset(mode);
-    resetAllFeedbacks();
-    GameCanvas.clearZone();
-    GameCanvas.clearHistory();
-    toggleMenuMode();
-    if (mode === 'tens' || mode === 'hundreds') initTensMode();
-    else if (mode === 'multiplication') initMultiplicationMode();
-    else if (mode === 'mix') initMixMode();
-}
+ const container = document.querySelector('.header-menu-container');
+ if (container) {
+  container.classList.remove('active');
+ }
+ 
+ state.clearHistory();
 
-function getModeLabel(mode) {
-    if (mode === 'tens') return 'Режим: Десятки ▼';
-    if (mode === 'hundreds') return 'Режим: Сотни 🗺️ ▼';
-    if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
-    if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
-    return 'Режим: Выбрать ▼';
+ if (mode === 'tens' || mode === 'hundreds') {
+  if (mode === 'hundreds') {
+   state.currentMode = 'hundreds';
+   initHundredsColumnMode();
+   return;
+  }
+  state.currentMode = 'tens';
+  initTensMode();
+ } else if (mode === 'multiplication') {
+  state.currentMode = 'multiplication';
+  initMultiplicationMode();
+ } else if (mode === 'mix') {
+  state.currentMode = 'mix';
+  initMixMode();
+ }
 }
