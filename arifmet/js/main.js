@@ -1,7 +1,9 @@
-// version: ORIGINAL - Restored From PDF Context
+// version: v1.7 - Restored Menu Toggle Handler and Pure Event Routing
+import { state } from './state.js';
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
+import { initHundredsColumnMode } from './column_helper.js';
 
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
@@ -17,4 +19,10 @@ document.querySelectorAll('.calc-btn:not(.next)').forEach(btn => {
  btn.addEventListener('click', (e) => pressNum(e.currentTarget.getAttribute('data-key')));
 });
 
-document.getElementById('next-example-btn')?.addEventListener('click', confirmAndNext);
+document.getElementById('next-example-btn')?.addEventListener('click', () => {
+ if (state.currentMode === 'hundreds') {
+  initHundredsColumnMode();
+  return;
+ }
+ confirmAndNext();
+});
