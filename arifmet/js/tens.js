@@ -1,4 +1,4 @@
-// version: v1.7 - Array Unpacking Fix and Clean DOM Output
+// version: v1.8 - Single Slot Rendering to Stop Column Multiplying
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -55,18 +55,17 @@ export function renderTensVisual() {
 }
 
 export function getTensHistoryHTML(item, index, mode) {
- const parts = item.currentInput.split('=');
- const simText = parts[0] || '', finText = parts[1] || '';
- const report = state.validateCurrentInput(index);
  const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
+ const rawInput = item.currentInput || '';
+ const finText = rawInput.includes('=') ? rawInput.split('=')[1] : '';
+ const report = state.validateCurrentInput(index);
 
  if (!isHundreds) {
-  let simHTML = ` = <span class="block">${simText || '_'}</span>`;
-  if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
+  let simHTML = ` = <span class="block">${rawInput || '_'}</span>`;
+  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${rawInput.split('=')[0]}</span>`;
   let finHTML = '';
-  if (parts.length > 1) {
-   const targetLen = String(item.correctValue).length;
-   if (finText.trim().length >= targetLen) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
+  if (rawInput.includes('=')) {
+   if (finText.trim().length >= String(item.correctValue).length) finHTML = ` = <span class="block ${report.finCorrect ? 'block-correct' : 'block-incorrect'}">${finText}</span>`;
    else finHTML = ` = <span class="block">${finText || '_'}</span>`;
   }
   return { simHTML, finHTML };
@@ -74,10 +73,10 @@ export function getTensHistoryHTML(item, index, mode) {
 
  const op = item.exampleText.includes('+') ? '+' : '-';
  let ansClass = 'block';
- if (parts.length > 1 && finText.length >= String(item.correctValue).length) {
+ if (rawInput.includes('=') && finText.length >= String(item.correctValue).length) {
   ansClass = report.finCorrect ? 'block-correct' : 'block-incorrect';
  }
- const simHTML = `<div style="display: inline-flex; font-size: 3vh; align-items: middle; height: 100%; font-weight: bold;">${item.exampleText} = </div>`;
- const tableHTML = buildColumnTable(item, index, op, finText, ansClass);
- return { simHTML, finHTML: tableHTML };
+ 
+ const combinedHTML = buildColumnTable(item, index, op, finText, ansClass);
+ return { simHTML: combinedHTML, finHTML: '' };
 }
