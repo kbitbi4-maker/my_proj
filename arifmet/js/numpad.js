@@ -1,4 +1,4 @@
-// version: ORIGINAL - Restored From PDF Context
+// version: ORIGINAL - Extracted From Project Map Context
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -34,24 +34,16 @@ function handleInputSounds(report, exampleText) {
  const isMulti = exampleText.includes('×');
  if (report.isFullySolved) {
   if (!soundFlags.finWinSoundPlayed) {
-   if (isMulti) triggerWinFeedback();
-   else triggerTensWinSound();
-   soundFlags.finWinSoundPlayed = true;
-   soundFlags.simWinSoundPlayed = true;
+   if (isMulti) triggerWinFeedback(); else triggerTensWinSound();
+   soundFlags.finWinSoundPlayed = true; soundFlags.simWinSoundPlayed = true;
   }
  } else if (report.simCorrect && report.phase === 2 && !soundFlags.simWinSoundPlayed) {
-  triggerTensWinSound();
-  soundFlags.simWinSoundPlayed = true;
+  triggerTensWinSound(); soundFlags.simWinSoundPlayed = true;
  } else if (report.isWrongAnswer) {
   const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
   const hasFin = parts.length > 1 && parts[1].trim().length > 0;
-  if (hasFin && !soundFlags.finFailSoundPlayed) {
-   triggerFailFeedback();
-   soundFlags.finFailSoundPlayed = true;
-  } else if (!hasFin && !soundFlags.simFailSoundPlayed) {
-   triggerFailFeedback();
-   soundFlags.simFailSoundPlayed = true;
-  }
+  if (hasFin && !soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
+  else if (!hasFin && !soundFlags.simFailSoundPlayed) { triggerFailFeedback(); soundFlags.simFailSoundPlayed = true; }
  }
 }
 
