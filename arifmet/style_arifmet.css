@@ -1,4 +1,4 @@
-/* version: v1.5 */
+/* version: v1.6 */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; }
 .header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
@@ -17,6 +17,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; }
 #modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
 #modes-menu-container .mode-btn[data-mode="mix"] { background: #fda4af; color: #4c0519; }
 #modes-menu-container .mode-btn[data-mode="hundreds"] { background: #93c5fd; color: #1e3a8a; }
+#modes-menu-container .mode-btn[data-mode="column"] { background: #c084fc; color: #3b0764; }
 .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
 .num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 55px; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
