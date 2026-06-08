@@ -1,9 +1,9 @@
-// version: v1.4 - Right-To-Left Re-Engineered Digit Appending
+// version: v1.5 - Fix refreshUI Rendering and Array Split Indexes
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
-import { generateExample, getTensHistoryHTML } from './tens.js';
-import { generateMultiExample, getMultiplicationHistoryHTML } from './multiplication.js';
+import { generateExample, getTensHistoryHTML, renderTensVisual } from './tens.js';
+import { generateMultiExample, getMultiplicationHistoryHTML, renderMonsterGame } from './multiplication.js';
 import { generateMixExample } from './mix.js';
 
 export function pressNum(n) {
@@ -67,4 +67,6 @@ export function refreshUI() {
  const isMulti = item.exampleText.includes('×');
  const renderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, renderer);
+ if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) renderMonsterGame();
+ else renderTensVisual();
 }
