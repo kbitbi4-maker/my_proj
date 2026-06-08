@@ -1,4 +1,4 @@
-// version: v3.9
+// version: v4.0
 import { state } from './state.js';
 
 export function openProjectMap() {
