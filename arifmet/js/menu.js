@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
@@ -24,9 +24,9 @@ export function toggleMenuMode() {
 }
 
 export function handleModeSelection(mode) {
-    // Режимы в разработке выдают предупреждение
-    if (mode === 'column' || mode === 'thousands') {
-        alert("Режим «В столбик» в разработке 🛠️");
+    // В разработке остались только тысячи
+    if (mode === 'thousands') {
+        alert("Режим в разработке 🛠️");
         return;
     }
 
@@ -36,7 +36,8 @@ export function handleModeSelection(mode) {
     GameCanvas.clearHistory();
     toggleMenuMode();
 
-    if (mode === 'tens' || mode === 'hundreds') initTensMode();
+    // Запускаем движок tens для десятков, сотен и столбика
+    if (mode === 'tens' || mode === 'hundreds' || mode === 'column') initTensMode();
     else if (mode === 'multiplication') initMultiplicationMode();
     else if (mode === 'mix') initMixMode();
 }
