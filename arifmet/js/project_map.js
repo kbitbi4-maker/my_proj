@@ -1,4 +1,4 @@
-// version: v2.1 - Direct Core Mapping and Print Exporter
+// version: v2.2 - Stable Importer and Native PDF Print Controller
 import { state } from './state.js';
 
 export function openProjectMap() {
