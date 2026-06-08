@@ -1,4 +1,4 @@
-// version: v1.4
+// version: v1.5
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -10,13 +10,39 @@ export function pressNum(n) {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return;
     const activeItem = state.examplesHistory[state.activeIndex];
 
+    const isColumnMode = state.currentMode === 'column';
+
     if (n === 'C' || n === 'D') {
-        activeItem.currentInput = (n === 'C') ? '' : activeItem.currentInput.slice(0, -1);
+        if (n === 'C') {
+            activeItem.currentInput = '';
+        } else {
+            // Если режим столбика — удаляем ПЕРВУЮ введенную цифру (она стоит слева, но ввелась последней)
+            // Если обычный режим — удаляем последнюю цифру с конца строки
+            activeItem.currentInput = isColumnMode ? activeItem.currentInput.slice(1) : activeItem.currentInput.slice(0, -1);
+        }
         resetAllFeedbacks();
     } else {
         const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
         if (n === '=' && totalEquals >= 2) return;
-        activeItem.currentInput += n;
+
+        if (isColumnMode) {
+            // В режиме столбика знак "=" разделяет стадии, но сами цифры ответов растут влево!
+            if (n === '=') {
+                activeItem.currentInput += n;
+            } else {
+                // Если мы уже ввели "=", то цифры финального ответа тоже должны расти влево
+                if (activeItem.currentInput.includes('=')) {
+                    const parts = activeItem.currentInput.split('=');
+                    parts[1] = n + parts[1]; // Добавляем цифру в начало финального ответа
+                    activeItem.currentInput = parts.join('=');
+                } else {
+                    activeItem.currentInput = n + activeItem.currentInput; // Добавляем цифру в начало промежуточного ответа
+                }
+            }
+        } else {
+            // Стандартное добавление цифры в конец строки для всех остальных режимов
+            activeItem.currentInput += n;
+        }
     }
 
     const report = state.validateCurrentInput();
@@ -26,7 +52,6 @@ export function pressNum(n) {
 
 export function confirmAndNext() {
     resetAllFeedbacks();
-    // Добавлена явная проверка режима column для генерации следующей задачи
     if (state.currentMode === 'tens' || state.currentMode === 'hundreds' || state.currentMode === 'column') generateExample();
     else if (state.currentMode === 'multiplication') generateMultiExample();
     else if (state.currentMode === 'mix') generateMixExample();
