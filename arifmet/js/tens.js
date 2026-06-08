@@ -1,9 +1,8 @@
-// version: v2.3 - Fixed Array String Bracket Indexes for Tens History
+// version: v2.5 - Strict Active Index Segregation and Core Generation Fix
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
-import { renderAdditionVisual } from './addition_visual.js';
-import { renderSubtractionVisual } from './subtraction_visual.js';
+import { renderTensVisual } from './tens.js';
 
 let isAddition = true;
 
@@ -21,57 +20,47 @@ export function initTensMode() {
 export function generateExample() {
  if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
  if (!state.usedExamples) state.usedExamples = [];
+ 
  let num1, num2, correctValue, text = '';
  const isHundreds = state.currentMode === 'hundreds';
  const min = isHundreds ? 100 : 10, max = isHundreds ? 900 : 90;
+ 
  if (isAddition) {
   while (true) {
    num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
    let sum = num1 + num2;
-   if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
-    text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
-   }
+   if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { text = `${num1}+${num2}`; correctValue = sum; break; }
   }
  } else {
   while (true) {
    num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { 
-    text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
-   }
+   if (num1 > num2 && num1 % 10 !== 0 && num2 % 10 !== 0) { text = `${num1}-${num2}`; correctValue = num1 - num2; break; }
   }
  }
+
  state.usedExamples.push(text);
- state.addExample({ exampleText: String(text).trim(), correctValue: correctValue, currentInput: '' });
+ state.addExample({ exampleText: String(text), correctValue: correctValue, currentInput: '' });
  isAddition = !isAddition;
+ 
  GameCanvas.clearZone();
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
 }
 
-export function renderTensVisual() {
- if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
- if (state.currentMode === 'hundreds') return GameCanvas.clearZone();
- const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
- if (isAdd) renderAdditionVisual(); else renderSubtractionVisual();
-}
-
 export function getTensHistoryHTML(item, index, mode) {
  const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
- const rawInput = item.currentInput || '';
- const parts = rawInput.split('=');
- const finText = parts.length > 1 ? parts[1] : '';
- const report = state.validateCurrentInput(index);
+ const finText = item.currentInput || '';
 
- if (!isHundreds) {
-  let simHTML = ` = <span class="block">${rawInput || '_'}</span>`;
-  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${parts[1]}</span>`;
-  return { simHTML, finHTML: '' };
+ // РЕДУКЦИЯ КОРНЯ ПРОБЛЕМЫ: Старые архивные строки не должны превращаться в столбики
+ if (!isHundreds || index !== state.activeIndex) {
+  const isCorrect = (parseInt(finText, 10) === item.correctValue);
+  const ansClass = isCorrect ? 'block-correct' : 'block-incorrect';
+  let html = ` = <span class="${finText ? ansClass : 'block'}">${finText || '_'}</span>`;
+  return { simHTML: html, finHTML: '' };
  }
 
  const op = item.exampleText.includes('+') ? '+' : '-';
- let ansClass = 'block';
- if (rawInput.includes('=') && finText.length >= String(item.correctValue).length) {
-  ansClass = report.finCorrect ? 'block-correct' : 'block-incorrect';
- }
+ const isCorrect = (parseInt(finText, 10) === item.correctValue);
+ const ansClass = finText.length >= String(item.correctValue).length ? (isCorrect ? 'block-correct' : 'block-incorrect') : 'block';
  
  const combinedHTML = buildColumnTable(item, index, op, finText, ansClass);
  return { simHTML: combinedHTML, finHTML: '' };
