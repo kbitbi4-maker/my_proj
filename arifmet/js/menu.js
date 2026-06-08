@@ -1,9 +1,8 @@
-// version: v1.1 - Original Menu with Isolated Hundreds Integration
+// version: ORIGINAL - Restored From PDF Context
 import { state } from './state.js';
 import { initTensMode } from './tens.js';
 import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
-import { initHundredsColumnMode } from './column_helper.js';
 
 export function toggleMenuMode() {
  const container = document.querySelector('.header-menu-container');
@@ -17,15 +16,8 @@ export function handleModeSelection(mode) {
  if (container) {
   container.classList.remove('active');
  }
- 
  state.clearHistory();
-
  if (mode === 'tens' || mode === 'hundreds') {
-  if (mode === 'hundreds') {
-   state.currentMode = 'hundreds';
-   initHundredsColumnMode();
-   return;
-  }
   state.currentMode = 'tens';
   initTensMode();
  } else if (mode === 'multiplication') {
