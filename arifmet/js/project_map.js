@@ -1,4 +1,4 @@
-// version: v2.0 - Complete Self-Contained PDF Generation and Map Exporter
+// version: v2.1 - Direct Core Mapping and Print Exporter
 import { state } from './state.js';
 
 export function openProjectMap() {
@@ -6,7 +6,6 @@ export function openProjectMap() {
  const textarea = document.getElementById('project-map-textarea');
  if (!modal || !textarea) return;
 
- // Собираем текущий моментальный снимок истории и состояния для ИИ-контекста
  let mapText = `=== ARIFMET GAME SESSION SNAPSHOT ===\n`;
  mapText += `Current Mode: ${state.currentMode}\n`;
  mapText += `Active Index: ${state.activeIndex}\n\n`;
@@ -48,7 +47,6 @@ export function downloadProjectMapPDF() {
   return;
  }
 
- // Генерируем изолированный HTML-документ для отправки в системный PDF-принтер
  printWindow.document.write(`
   <html>
    <head>
@@ -64,7 +62,6 @@ export function downloadProjectMapPDF() {
  printWindow.document.close();
  printWindow.focus();
  
- // Триггерим нативное сохранение в PDF средствами браузера
  setTimeout(() => {
   printWindow.print();
   printWindow.close();
