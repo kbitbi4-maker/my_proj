@@ -1,4 +1,4 @@
-// version: v3.0 - Fully Encapsulated Hundreds Column Game Engine
+// version: v3.1 - Solid Type Assertions and Fixed String Prototypes
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -90,11 +90,12 @@ function renderHundredsWorkspace() {
 function buildColumnHTML(item) {
  const op = item.exampleText.includes('+') ? '+' : '-';
  const nums = item.exampleText.split(op);
- const maxDigits = Math.max(nums[0].length, nums[1].length, String(item.correctValue).length);
+ const n1 = nums[0] || '', n2 = nums[1] || '';
+ const maxDigits = Math.max(n1.length, n2.length, String(item.correctValue).length);
  const totalCols = maxDigits + 1;
 
- const padNum1 = nums[0].padStart(totalCols, ' ').split('');
- const padNum2 = nums[1].padStart(totalCols, ' ').split('');
+ const padNum1 = n1.padStart(totalCols, ' ').split('');
+ const padNum2 = n2.padStart(totalCols, ' ').split('');
  let ansCells = Array(totalCols).fill(' ');
  item.currentInput.split('').forEach((digit, i) => { if (totalCols - 1 - i >= 0) ansCells[totalCols - 1 - i] = digit; });
 
@@ -109,7 +110,7 @@ function buildColumnHTML(item) {
   else html += `<div style="font-size: 1.4vh; color: #a855f7; display: flex; flex-direction: column; align-items: center; height: 5.5vh; justify-content: center;"><div style="cursor: pointer; color: #3b82f6;" onclick="window.changeHundredsCarry(${i}, 1)">▲</div><div style="font-size: 2vh; min-height: 2vh;">${val === 0 ? '&nbsp;' : val}</div><div style="cursor: pointer; color: #ef4444;" onclick="window.changeHundredsCarry(${i}, -1)">▼</div></div>`;
   html += `<div style="height: 4vh; display: flex; align-items: center;">${padNum1[i] === ' ' ? '&nbsp;' : padNum1[i]}</div>`;
   html += `<div style="height: 4vh; display: flex; align-items: center; ${i === 0 ? '' : 'border-bottom: 4px solid #333;'} width: 100%; justify-content: center;">${i === 0 ? op : (padNum2[i] === ' ' ? '&nbsp;' : padNum2[i])}</div>`;
-  html += `<div class="${ansCells[i] === ' ' ? '' : ansClass}" style="height: 5vh; display: flex; align-items: center; justify-content: center; color: ${ansCells[i] === ' ' ? '#ccc' : 'inherit'}; width: 100%; border-top: ${i === 0 ? '4px solid #333' : 'none'};">${ansCells[i] === ' ' ? '_' : ansCells[i]}</div></div>`;
+  html += `<div class="${ansCells[i] === ' ' ? '' : ansClass}" style="height: 5vh; display: flex; align-items: center; justify-content: center; color: ${ansCells[i] === ' ' ? '#ccc' : 'inherit'}; width: 100%;">${ansCells[i] === ' ' ? '_' : ansCells[i]}</div></div>`;
  }
  return html + `</div></div>`;
 }
