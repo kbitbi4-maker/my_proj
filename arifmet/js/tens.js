@@ -1,4 +1,4 @@
-// version: v1.9 - Structural Single Container Injection Fix
+// version: v2.1 - Correct Array Bracket Indexes and Clean Slots
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -57,12 +57,13 @@ export function renderTensVisual() {
 export function getTensHistoryHTML(item, index, mode) {
  const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
  const rawInput = item.currentInput || '';
- const finText = rawInput.includes('=') ? rawInput.split('=')[1] : '';
+ const parts = rawInput.split('=');
+ const finText = parts.length > 1 ? parts[1] : '';
  const report = state.validateCurrentInput(index);
 
  if (!isHundreds) {
   let simHTML = ` = <span class="block">${rawInput || '_'}</span>`;
-  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${rawInput.split('=')[1]}</span>`;
+  if (rawInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${parts[0]}</span>`;
   return { simHTML, finHTML: '' };
  }
 
