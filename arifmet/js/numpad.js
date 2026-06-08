@@ -1,4 +1,4 @@
-// version: v1.7 - Clean String Synthesis for State Validator
+// version: v1.9 - Direct Substring Array Index Referencing
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -15,8 +15,9 @@ export function pressNum(n) {
   if (n === 'C') activeItem.currentInput = '';
   else {
    if (isHundreds) {
-    let currentAns = activeItem.currentInput.includes('=') ? activeItem.currentInput.split('=')[1] : '';
-    activeItem.currentInput = activeItem.exampleText + '=' + currentAns.slice(0, -1);
+    const parts = activeItem.currentInput.split('=');
+    const fin = parts.length > 1 ? parts[1] : '';
+    activeItem.currentInput = activeItem.exampleText + '=' + fin.slice(0, -1);
    } else {
     activeItem.currentInput = activeItem.currentInput.slice(0, -1);
    }
@@ -24,9 +25,10 @@ export function pressNum(n) {
   resetAllFeedbacks();
  } else {
   if (isHundreds) {
-   let currentAns = activeItem.currentInput.includes('=') ? activeItem.currentInput.split('=')[1] : '';
-   if (n !== '=') currentAns += n;
-   activeItem.currentInput = activeItem.exampleText + '=' + currentAns;
+   const parts = activeItem.currentInput.split('=');
+   let fin = parts.length > 1 ? parts[1] : '';
+   if (n !== '=') fin += n;
+   activeItem.currentInput = activeItem.exampleText + '=' + fin;
   } else {
    const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
    if (n === '=' && totalEquals >= 2) return;
