@@ -1,4 +1,4 @@
-// version: v1.6 - Restore renderTensVisual for Core Compatibility
+// version: v1.7 - Array Unpacking Fix and Clean DOM Output
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -55,7 +55,8 @@ export function renderTensVisual() {
 }
 
 export function getTensHistoryHTML(item, index, mode) {
- const parts = item.currentInput.split('='), simText = parts[0] || '', finText = parts[1] || '';
+ const parts = item.currentInput.split('=');
+ const simText = parts[0] || '', finText = parts[1] || '';
  const report = state.validateCurrentInput(index);
  const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
 
