@@ -1,4 +1,4 @@
-// version: v1.6 - Fixed Parts Unpacking for Backspace and Correct Deletion
+// version: v1.7 - Clean String Synthesis for State Validator
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -14,10 +14,9 @@ export function pressNum(n) {
  if (n === 'C' || n === 'D') {
   if (n === 'C') activeItem.currentInput = '';
   else {
-   if (isHundreds && activeItem.currentInput.includes('=')) {
-    const parts = activeItem.currentInput.split('=');
-    let fin = parts[1] || '';
-    activeItem.currentInput = parts[0] + '=' + fin.slice(0, -1);
+   if (isHundreds) {
+    let currentAns = activeItem.currentInput.includes('=') ? activeItem.currentInput.split('=')[1] : '';
+    activeItem.currentInput = activeItem.exampleText + '=' + currentAns.slice(0, -1);
    } else {
     activeItem.currentInput = activeItem.currentInput.slice(0, -1);
    }
@@ -25,8 +24,9 @@ export function pressNum(n) {
   resetAllFeedbacks();
  } else {
   if (isHundreds) {
-   if (!activeItem.currentInput.includes('=')) activeItem.currentInput += '=';
-   if (n !== '=') activeItem.currentInput += n;
+   let currentAns = activeItem.currentInput.includes('=') ? activeItem.currentInput.split('=')[1] : '';
+   if (n !== '=') currentAns += n;
+   activeItem.currentInput = activeItem.exampleText + '=' + currentAns;
   } else {
    const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
    if (n === '=' && totalEquals >= 2) return;
@@ -52,14 +52,8 @@ function handleInputSounds(report, exampleText) {
    if (isMulti) triggerWinFeedback(); else triggerTensWinSound();
    soundFlags.finWinSoundPlayed = true; soundFlags.simWinSoundPlayed = true;
   }
- } else if (report.simCorrect && report.phase === 2 && !soundFlags.simWinSoundPlayed) {
-  triggerTensWinSound(); soundFlags.simWinSoundPlayed = true;
  } else if (report.isWrongAnswer) {
-  const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
-  const finStr = parts[1] || '';
-  const hasFin = parts.length > 1 && finStr.trim().length > 0;
-  if (hasFin && !soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
-  else if (!hasFin && !soundFlags.simFailSoundPlayed) { triggerFailFeedback(); soundFlags.simFailSoundPlayed = true; }
+  if (!soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
  }
 }
 
