@@ -1,4 +1,4 @@
-// version: v1.3
+// version: v1.4
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -26,7 +26,8 @@ export function pressNum(n) {
 
 export function confirmAndNext() {
     resetAllFeedbacks();
-    if (state.currentMode === 'tens' || state.currentMode === 'hundreds') generateExample();
+    // Добавлена явная проверка режима column для генерации следующей задачи
+    if (state.currentMode === 'tens' || state.currentMode === 'hundreds' || state.currentMode === 'column') generateExample();
     else if (state.currentMode === 'multiplication') generateMultiExample();
     else if (state.currentMode === 'mix') generateMixExample();
 }
