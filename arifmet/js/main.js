@@ -1,4 +1,4 @@
-// version: v2.1 - Clean Isolation for Project Map Events Without 404
+// version: v2.2 - Pure Isolated Core Listeners Without Hundreds
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
