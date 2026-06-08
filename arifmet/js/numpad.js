@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v1.3
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -26,7 +26,6 @@ export function pressNum(n) {
 
 export function confirmAndNext() {
     resetAllFeedbacks();
-    // ИСПРАВЛЕНО ДЛЯ СОТЕН: Добавлена поддержка режима hundreds для генерации следующей задачи
     if (state.currentMode === 'tens' || state.currentMode === 'hundreds') generateExample();
     else if (state.currentMode === 'multiplication') generateMultiExample();
     else if (state.currentMode === 'mix') generateMixExample();
