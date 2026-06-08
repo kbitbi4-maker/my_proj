@@ -1,9 +1,9 @@
-// version: v2.2 - Stable Importer and Native PDF Print Controller
+// version: v2.5 - Fixed Modal Element ID Targets from Layout Context
 import { state } from './state.js';
 
 export function openProjectMap() {
- const modal = document.getElementById('project-map-modal');
- const textarea = document.getElementById('project-map-textarea');
+ const modal = document.getElementById('map-modal');
+ const textarea = document.getElementById('map-text-area');
  if (!modal || !textarea) return;
 
  let mapText = `=== ARIFMET GAME SESSION SNAPSHOT ===\n`;
@@ -16,54 +16,23 @@ export function openProjectMap() {
  });
 
  textarea.value = mapText;
- modal.style.display = 'block';
+ modal.style.display = 'flex'; // Используем flex для выравнивания по центру, как в ваших стилях
 }
 
 export function closeProjectMap() {
- const modal = document.getElementById('project-map-modal');
+ const modal = document.getElementById('map-modal');
  if (modal) modal.style.display = 'none';
 }
 
 export function copyProjectMap() {
- const textarea = document.getElementById('project-map-textarea');
+ const textarea = document.getElementById('map-text-area');
  if (!textarea) return;
  textarea.select();
  navigator.clipboard.writeText(textarea.value);
  const copyBtn = document.getElementById('copy-map-btn');
  if (copyBtn) {
   const oldText = copyBtn.innerText;
-  copyBtn.innerText = 'Скопировано! ✅';
+  copyBtn.innerText = 'Карта скопирована! ✅';
   setTimeout(() => { copyBtn.innerText = oldText; }, 2000);
  }
-}
-
-export function downloadProjectMapPDF() {
- const textarea = document.getElementById('project-map-textarea');
- if (!textarea) return;
-
- const printWindow = window.open('', '_blank');
- if (!printWindow) {
-  alert('Пожалуйста, разрешите всплывающие окна для скачивания PDF');
-  return;
- }
-
- printWindow.document.write(`
-  <html>
-   <head>
-    <title>arifmet_project_code_export</title>
-    <style>
-     body { font-family: monospace; padding: 20px; white-space: pre-wrap; font-size: 14px; line-height: 1.4; color: #1e293b; }
-     @media print { body { padding: 0; margin: 0; } }
-    </style>
-   </head>
-   <body>${textarea.value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
-  </html>
- `);
- printWindow.document.close();
- printWindow.focus();
- 
- setTimeout(() => {
-  printWindow.print();
-  printWindow.close();
- }, 250);
 }
