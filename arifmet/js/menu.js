@@ -1,11 +1,10 @@
-// version: v1.3 - Restored True Original Workflow with Hundreds Injection
+// version: v1.2 - CLEAN ORIGINAL BACKUP
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
 import { initTensMode } from './tens.js';
 import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
-import { initHundredsColumnMode } from './column_helper.js';
 
 const numpadContainer = document.getElementById('calc-numpad-container');
 const modesMenuContainer = document.getElementById('modes-menu-container');
@@ -36,20 +35,14 @@ export function handleModeSelection(mode) {
  GameCanvas.clearHistory();
  toggleMenuMode();
 
- if (mode === 'hundreds') {
-  initHundredsColumnMode();
- } else if (mode === 'tens') {
-  initTensMode();
- } else if (mode === 'multiplication') {
-  initMultiplicationMode();
- } else if (mode === 'mix') {
-  initMixMode();
- }
+ if (mode === 'tens' || mode === 'hundreds') initTensMode();
+ else if (mode === 'multiplication') initMultiplicationMode();
+ else if (mode === 'mix') initMixMode();
 }
 
 function getModeLabel(mode) {
  if (mode === 'tens') return 'Режим: Десятки ▼';
- if (mode === 'hundreds') return 'Режим: Сотни 🏔️ ▼';
+ if (mode === 'hundreds') return 'Режим: Сотни 🛠️ ▼';
  if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
  if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
  return 'Режим: Выбрать ▼';
