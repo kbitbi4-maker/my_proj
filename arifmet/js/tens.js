@@ -1,11 +1,11 @@
-// version: v1.5
+// version: v1.6
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
 import { renderSubtractionVisual } from './subtraction_visual.js';
 import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
 import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
-import { renderColumnVisual } from './column_visual.js'; // Импорт нового визуала
+import { renderColumnVisual } from './column_visual.js';
 
 let isAddition = true;
 
@@ -19,12 +19,10 @@ export function initTensMode() {
 }
 
 export function generateExample() {
-    // Добавлена проверка на режим column
     if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds' && state.currentMode !== 'column') return;
     if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, correctValue, text;
 
-    // Режим столбика генерирует такие же трехзначные числа, как и сотни
     const isHundreds = state.currentMode === 'hundreds' || state.currentMode === 'column';
     const min = isHundreds ? 100 : 10;
     const max = isHundreds ? 900 : 90;
@@ -59,7 +57,6 @@ export function generateExample() {
 export function renderTensVisual() {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return GameCanvas.clearZone();
     
-    // ОТДЕЛЬНОЕ ВЕТВЛЕНИЕ НА СТОЛБИК
     if (state.currentMode === 'column') {
         return renderColumnVisual();
     }
@@ -75,8 +72,26 @@ export function renderTensVisual() {
 }
 
 export function getTensHistoryHTML(item, index, mode) {
+    const report = state.validateCurrentInput(index);
+    const targetLen = String(item.correctValue).length;
+
+    // СПЕЦИАЛЬНЫЙ РЕНДЕРИНГ ДЛЯ РЕЖИМА СТОЛБИКА В ЛЕВОЙ ПАНЕЛИ
+    if (mode === 'column') {
+        let simHTML = '';
+        let finHTML = '';
+
+        if (item.currentInput.length >= targetLen) {
+            // Если ребенок ввел все цифры, показываем и подсвечиваем его ответ в истории
+            finHTML = ` = <span class="block ${report.isFullySolved ? 'block-correct' : 'block-incorrect'}">${item.currentInput}</span>`;
+        } else {
+            // Если ответ еще в процессе набора, аккуратно выводим то, что есть, без агрессивного цвета
+            finHTML = ` = <span class="block">${item.currentInput || '_'}</span>`;
+        }
+        return { simHTML, finHTML };
+    }
+
+    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (С ЗНАКОМ И УПРОЩЕНИЕМ)
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
     let finHTML = '';
