@@ -1,8 +1,9 @@
-// version: v2.5 - Strict Active Index Segregation and Core Generation Fix
+// version: v2.6 - Fixed renderTensVisual Export and self-import error
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
-import { renderTensVisual } from './tens.js';
+import { renderAdditionVisual } from './addition_visual.js';
+import { renderSubtractionVisual } from './subtraction_visual.js';
 
 let isAddition = true;
 
@@ -46,11 +47,17 @@ export function generateExample() {
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
 }
 
+export function renderTensVisual() {
+ if (state.activeIndex === -1 || state.currentMode === 'hundreds') return GameCanvas.clearZone();
+ const isAdd = state.examplesHistory[state.activeIndex].exampleText.includes('+');
+ if (isAdd) renderAdditionVisual(); else renderSubtractionVisual();
+}
+
 export function getTensHistoryHTML(item, index, mode) {
  const isHundreds = (mode === 'hundreds' || state.currentMode === 'hundreds');
  const finText = item.currentInput || '';
+ const report = state.validateCurrentInput(index);
 
- // РЕДУКЦИЯ КОРНЯ ПРОБЛЕМЫ: Старые архивные строки не должны превращаться в столбики
  if (!isHundreds || index !== state.activeIndex) {
   const isCorrect = (parseInt(finText, 10) === item.correctValue);
   const ansClass = isCorrect ? 'block-correct' : 'block-incorrect';
