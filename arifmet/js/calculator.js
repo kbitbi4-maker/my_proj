@@ -1,4 +1,4 @@
-// version: ORIGINAL - Restored From PDF Context
+// version: ORIGINAL - Extracted From Project Map Context
 export function evaluateExpr(str) {
  try {
   const clean = str.replace(/[^0-9+\-]/g, '');
