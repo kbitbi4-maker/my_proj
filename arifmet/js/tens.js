@@ -1,4 +1,4 @@
-// version: v1.0 - Restored Pure Original File Clean Setup
+// version: v4.0 - Total Clean Restored Original Without Column Helper Imports
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
