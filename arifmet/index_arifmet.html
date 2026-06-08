@@ -1,4 +1,4 @@
-<!-- version: v1.2 --> 
+<!-- version: v1.3 --> 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -12,7 +12,6 @@
     <div class="header">
         <a href="../index.html" title="Главное меню">←</a>
         <div class="version">arifmet_054</div>
-        <!-- Встраиваем кнопку карты ровно перед кнопкой переключения режимов -->
         <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:1.6vh; margin-left:15px;">Карта 🗺️</button>
         <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
     </div>
@@ -24,12 +23,13 @@
             </div>
             
             <div class="right-area">
-                <!-- Контейнер Выбора Режимов (Excel-таблица во всю ширину, изначально скрыт) -->
+                <!-- Контейнер Выбора Режимов -->
                 <div id="modes-menu-container" style="display: none;">
                     <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
                     <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
                     <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
                     <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
+                    <button class="mode-btn" data-mode="column">В столбик 📝 🟣</button>
                 </div>
 
                 <!-- Контейнер Цифрового Нумпада -->
@@ -65,7 +65,6 @@
             <textarea id="map-text-area" readonly style="width:100%; height:320px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; resize:none; background:#f8fafc; box-sizing:border-box;"></textarea>
             <div style="display:flex; gap:10px;">
                 <button id="copy-map-btn" style="flex:1; background:#3f51b5; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px;">Копировать карту 📋</button>
-                <!-- Добавлена оригинальная кнопка для безопасного перехода на страницу синхронизации для ИИ -->
                 <a href="ai_sync.html" target="_blank" style="flex:1; background:#22c55e; color:white; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; text-align:center;">Синхронизация ИИ 🤖🔗</a>
             </div>
         </div>
