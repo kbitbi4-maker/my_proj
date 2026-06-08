@@ -1,4 +1,4 @@
-// version: ORIGINAL - Extracted From Project Map Context
+// version: v1.0 - Main Bootstrapper and Core Event Listeners
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap, downloadProjectMapPDF } from './project_map.js';
