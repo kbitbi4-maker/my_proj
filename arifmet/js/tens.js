@@ -1,4 +1,4 @@
-// version: v2.1 - Correct Array Bracket Indexes and Clean Slots
+// version: v2.2 - Hard Isolated String Generation For Pure Examples
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { buildColumnTable } from './column_helper.js';
@@ -21,7 +21,7 @@ export function initTensMode() {
 export function generateExample() {
  if (state.currentMode !== 'tens' && state.currentMode !== 'mix' && state.currentMode !== 'hundreds') return;
  if (!state.usedExamples) state.usedExamples = [];
- let num1, num2, correctValue, text;
+ let num1, num2, correctValue, text = '';
  const isHundreds = state.currentMode === 'hundreds';
  const min = isHundreds ? 100 : 10, max = isHundreds ? 900 : 90;
  if (isAddition) {
@@ -41,7 +41,7 @@ export function generateExample() {
   }
  }
  state.usedExamples.push(text);
- state.addExample({ exampleText: text, correctValue: correctValue, currentInput: '' });
+ state.addExample({ exampleText: String(text).trim(), correctValue: correctValue, currentInput: '' });
  isAddition = !isAddition;
  GameCanvas.clearZone();
  GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getTensHistoryHTML);
