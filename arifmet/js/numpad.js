@@ -1,4 +1,4 @@
-// version: v1.5 - Fix refreshUI Rendering and Array Split Indexes
+// version: v1.6 - Fixed Parts Unpacking for Backspace and Correct Deletion
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -16,7 +16,8 @@ export function pressNum(n) {
   else {
    if (isHundreds && activeItem.currentInput.includes('=')) {
     const parts = activeItem.currentInput.split('=');
-    activeItem.currentInput = parts[0] + '=' + parts[1].slice(0, -1);
+    let fin = parts[1] || '';
+    activeItem.currentInput = parts[0] + '=' + fin.slice(0, -1);
    } else {
     activeItem.currentInput = activeItem.currentInput.slice(0, -1);
    }
@@ -55,7 +56,8 @@ function handleInputSounds(report, exampleText) {
   triggerTensWinSound(); soundFlags.simWinSoundPlayed = true;
  } else if (report.isWrongAnswer) {
   const parts = state.examplesHistory[state.activeIndex].currentInput.split('=');
-  const hasFin = parts.length > 1 && parts[1].trim().length > 0;
+  const finStr = parts[1] || '';
+  const hasFin = parts.length > 1 && finStr.trim().length > 0;
   if (hasFin && !soundFlags.finFailSoundPlayed) { triggerFailFeedback(); soundFlags.finFailSoundPlayed = true; }
   else if (!hasFin && !soundFlags.simFailSoundPlayed) { triggerFailFeedback(); soundFlags.simFailSoundPlayed = true; }
  }
