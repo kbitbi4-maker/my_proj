@@ -1,4 +1,4 @@
-// version: v2.0 - Total Flexbox Grid Re-Architecture
+// version: v2.3 - RegEx Anti-Duplication Protection for Safe Layout
 import { state } from './state.js';
 import { refreshUI } from './numpad.js';
 
@@ -13,8 +13,12 @@ if (!window.changeCarry) {
 }
 
 export function buildColumnTable(item, index, op, finText, ansClass) {
- const nums = item.exampleText.split(op);
- const n1 = nums[0].trim(), n2 = nums[1].trim();
+ // Защита от дублирования строки примера в самом ядре данных state
+ const rawText = item.exampleText || '';
+ const cleanExample = rawText.trim().split(/\s+/)[0] || rawText;
+
+ const nums = cleanExample.split(op);
+ const n1 = nums[0] || '', n2 = nums[1] || '';
  const maxDigits = Math.max(n1.length, n2.length, String(item.correctValue).length);
  const totalCols = maxDigits + 1;
 
@@ -31,7 +35,7 @@ export function buildColumnTable(item, index, op, finText, ansClass) {
  }
 
  let html = `<div style="display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 15px; font-family: monospace; font-size: 3.5vh; font-weight: bold; user-select: none; width: 100%;">`;
- html += `<div style="white-space: nowrap; flex-shrink: 0;">${item.exampleText} =</div>`;
+ html += `<div style="white-space: nowrap; flex-shrink: 0; color: #1e293b;">${cleanExample} =</div>`;
  html += `<div style="display: flex; flex-direction: row;">`;
 
  for (let i = 0; i < totalCols; i++) {
@@ -57,9 +61,8 @@ export function buildColumnTable(item, index, op, finText, ansClass) {
 
   html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center;">${c1}</div>`;
   
-  const isFirstWithOp = (i === 0);
   const borderStyle = "border-bottom: 4px solid #333;";
-  if (isFirstWithOp) {
+  if (i === 0) {
    html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center; color: #475569; ${borderStyle}">${op}</div>`;
   } else {
    html += `<div style="height: 4vh; display: flex; align-items: center; justify-content: center; ${borderStyle}">${c2}</div>`;
