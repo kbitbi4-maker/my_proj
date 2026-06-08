@@ -1,4 +1,4 @@
-// version: ORIGINAL - Extracted From Project Map Context
+// version: ORIGINAL_STABLE - Restored Core with parseAdditionData
 export function evaluateExpr(str) {
  try {
   const clean = str.replace(/[^0-9+\-]/g, '');
@@ -14,6 +14,16 @@ export function evaluateExpr(str) {
  } catch (e) {
   return null;
  }
+}
+
+export function parseAdditionData(exprStr) {
+ const clean = exprStr.replace(/[^0-9+]/g, '');
+ const parts = clean.split('+');
+ if (parts.length !== 2) return { num1: 0, num2: 0 };
+ return {
+  num1: parseInt(parts[0], 10) || 0,
+  num2: parseInt(parts[1], 10) || 0
+ };
 }
 
 export function parseMultiplicationData(exprStr) {
