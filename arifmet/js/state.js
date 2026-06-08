@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.2
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -28,14 +28,47 @@ export const state = {
         }
         
         const item = this.examplesHistory[idx];
+        const targetLength = String(item.correctValue).length;
+
+        // СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ РЕЖИМА В СТОЛБИК
+        if (this.currentMode === 'column') {
+            const currentLen = item.currentInput.length;
+            
+            // Если ребенок еще не донабирал нужное количество цифр — статус нейтральный (phase 1)
+            if (currentLen < targetLength) {
+                return { 
+                    isFullySolved: false, 
+                    isWrongAnswer: false, 
+                    phase: 1, 
+                    simText: item.currentInput, 
+                    finText: '', 
+                    simCorrect: false, 
+                    finCorrect: false 
+                };
+            }
+
+            // Длина совпала — проверяем математику
+            const val = parseInt(item.currentInput, 10);
+            const isCorrect = (val === item.correctValue);
+
+            return {
+                isFullySolved: isCorrect,
+                isWrongAnswer: !isCorrect,
+                phase: 3, // Сразу переводим в финальную фазу для окрашивания
+                simText: item.currentInput,
+                finText: item.currentInput,
+                simCorrect: isCorrect,
+                finCorrect: isCorrect
+            };
+        }
+
+        // СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
         const hasPressedEqual = item.currentInput.includes('=');
-        const targetLength = String(item.correctValue).length;
         const hasFinalAnswer = parts.length > 1 && finText.trim().length >= targetLength;
 
-        // 1. Проверка промежуточной стадии (упрощения)
         let simCorrect = false;
         if (hasPressedEqual) {
             let simVal = evaluateExpr(simText);
@@ -48,7 +81,6 @@ export const state = {
             }
         }
 
-        // 2. Проверка финального ответа
         let finCorrect = false;
         if (hasFinalAnswer) {
             let finVal = evaluateExpr(finText);
@@ -57,7 +89,6 @@ export const state = {
 
         const isFullySolved = hasPressedEqual && simCorrect && finCorrect;
         
-        // Жёсткое исправление: ошибка засчитывается только если промежуточный неверный ИЛИ финальный ответ ДОСТИГ нужной длины и он неверный
         let isWrongAnswer = false;
         if (hasPressedEqual && !simCorrect) {
             isWrongAnswer = true;
