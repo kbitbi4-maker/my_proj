@@ -1,4 +1,4 @@
-// version: v2.3 - RegEx Anti-Duplication Protection for Safe Layout
+// version: v2.5 - Math Length Half-Cut Anti-Duplication
 import { state } from './state.js';
 import { refreshUI } from './numpad.js';
 
@@ -13,9 +13,13 @@ if (!window.changeCarry) {
 }
 
 export function buildColumnTable(item, index, op, finText, ansClass) {
- // Защита от дублирования строки примера в самом ядре данных state
- const rawText = item.exampleText || '';
- const cleanExample = rawText.trim().split(/\s+/)[0] || rawText;
+ const rawText = (item.exampleText || '').trim();
+ 
+ // Математическое отсечение дубликата: берем ровно половину длины строки, если она сдвоена
+ const halfLen = rawText.length / 2;
+ const firstHalf = rawText.substring(0, halfLen);
+ const secondHalf = rawText.substring(halfLen);
+ const cleanExample = (firstHalf === secondHalf) ? firstHalf : rawText;
 
  const nums = cleanExample.split(op);
  const n1 = nums[0] || '', n2 = nums[1] || '';
@@ -44,11 +48,10 @@ export function buildColumnTable(item, index, op, finText, ansClass) {
   const c2 = padNum2[i] === ' ' ? '&nbsp;' : padNum2[i];
   const ans = ansCells[i];
   const isBlur = ans === ' ';
-  const isUnitsIdx = (i === totalCols - 1);
 
   html += `<div style="display: flex; flex-direction: column; align-items: center; width: 4.5vh; text-align: center; line-height: 1.1;">`;
   
-  if (isUnitsIdx) {
+  if (i === totalCols - 1) {
    html += `<div style="height: 5.5vh;">&nbsp;</div>`;
   } else {
    html += `
