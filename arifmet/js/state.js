@@ -1,4 +1,4 @@
-// version: v2.0  
+// version: v2.1  
 import { evaluateExpr } from './calculator.js'; 
 
 export const state = {  
@@ -30,7 +30,6 @@ return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finT
 const item = this.examplesHistory\[idx\];  
 const targetLength = String(item.correctValue).length; 
 
-// СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ РЕЖИМА В СТОЛБИК  
 if (this.currentMode === 'column') {  
 const currentLen = item.currentInput.length;  
 if (currentLen < targetLength) {  
@@ -41,31 +40,17 @@ const isCorrect = (val === item.correctValue);
 return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };  
 } 
 
-// МЯГКАЯ ЛОГИКА ДЛЯ УМНОЖЕНИЯ (ПРЯМОЙ ВВОД ОТВЕТА БЕЗ ПЛЮСИКОВ)  
 const isMulti = item.exampleText.includes('×');  
 if (isMulti && !item.currentInput.includes('=')) {  
-const currentLen = item.currentInput.length; 
-
-// Если ребенок еще не дописал цифры до нужной длины  
+const currentLen = item.currentInput.length;  
 if (currentLen < targetLength) {  
 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };  
-} 
-
-// Длина совпала — проверяем прямой ответ  
+}  
 const val = parseInt(item.currentInput, 10);  
 const isCorrect = (val === item.correctValue);  
-return {  
-isFullySolved: isCorrect,  
-isWrongAnswer: !isCorrect,  
-phase: 3, // Сразу переходим в финальную фазу победы/ошибки  
-simText: '',  
-finText: item.currentInput,  
-simCorrect: isCorrect,  
-finCorrect: isCorrect  
-};  
+return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: '', finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };  
 } 
 
-// СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (И ДЛЯ УМНОЖЕНИЯ С ПЛЮСАМИ)  
 const parts = item.currentInput.split('=');  
 const simText = parts.at(0) || '', finText = parts.at(1) || ''; 
 
