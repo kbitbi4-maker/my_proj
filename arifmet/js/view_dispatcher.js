@@ -1,4 +1,4 @@
-// version: v2.3 (Исправлен визуал сотен при клике на историю Микса)
+// version: v2.4 (Исправлены звуки ошибок в истории сотен режима Микс)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
@@ -12,28 +12,33 @@ export function selectExample(index) {
     const item = state.examplesHistory[index];
     const report = state.validateCurrentInput(index);
     const isMulti = item.exampleText.includes('×') || item.exampleText.includes('÷');
+    const firstNumber = parseInt(item.exampleText, 10);
+    const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (item.exampleText.includes('+') || item.exampleText.includes('-'));
+    const totalEquals = (item.currentInput.match(/=/g) || []).length;
 
     if (report.isFullySolved) {
-        if (isMulti) triggerWinFeedback(); else triggerTensWinSound();
+        if (isMulti || isHundreds) triggerWinFeedback(); else triggerTensWinSound();
         soundFlags.finWinSoundPlayed = true; soundFlags.simWinSoundPlayed = true;
     } else if (report.simCorrect && report.phase === 2) {
         triggerTensWinSound();
         soundFlags.simWinSoundPlayed = true;
     } else if (report.isWrongAnswer) {
-        triggerFailFeedback();
-        if (item.currentInput.includes('=')) {
-            const parts = item.currentInput.split('=');
-            if (parts.length > 1 && parts.at(1).trim().length > 0) soundFlags.finFailSoundPlayed = true;
-            else soundFlags.simFailSoundPlayed = true;
-        } else if (isMulti) {
-            soundFlags.finFailSoundPlayed = true;
+        // ХИРУРГИЧЕСКАЯ ПРАВКА: включаем звук ошибки при клике на историю только если в сотнях >= 2 знаков равенства
+        if (!isHundreds || totalEquals >= 2) {
+            triggerFailFeedback();
+            if (item.currentInput.includes('=')) {
+                const parts = item.currentInput.split('=');
+                if (parts.length > 1 && parts.at(1).trim().length > 0) soundFlags.finFailSoundPlayed = true;
+                else soundFlags.simFailSoundPlayed = true;
+            } else if (isMulti) {
+                soundFlags.finFailSoundPlayed = true;
+            }
         }
     }
 
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
 
-    // ХИРУРГИЧЕСКИЙ РОУТИНГ СЦЕНЫ ИСТОРИИ: Автономное определение по структуре примера
     if (item.exampleText.includes('×')) {
         syncMonsterGame();
     } else if (item.exampleText.includes('÷')) {
@@ -41,8 +46,7 @@ export function selectExample(index) {
     } else if (state.currentMode === 'column') {
         import('./column_visual.js').then(m => m.renderColumnVisual());
     } else {
-        const firstNumber = parseInt(item.exampleText, 10);
-        if (firstNumber >= 100) {
+        if (isHundreds) {
             if (item.exampleText.includes('+')) {
                 import('./addition_hundreds_visual.js').then(m => m.renderAdditionHundredsVisual());
             } else {
