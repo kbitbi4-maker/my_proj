@@ -1,4 +1,4 @@
-// version: v2.3 (Мягкая проверка порядка слагаемых в умножении)
+// version: v2.4 (Защита от подсказок в сотнях при неверном прямом вводе)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -40,22 +40,35 @@ export const state = {
             return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
         }
 
-        // ХИРУРГИЧЕСКОЕ ОБНОВЛЕНИЕ: Поддержка мгновенного прямого ввода ответа для СОТЕН и УМНОЖЕНИЯ/ДЕЛЕНИЯ
         const isMulti = item.exampleText.includes('×');
         const isDiv = item.exampleText.includes('÷');
         const firstNumber = parseInt(item.exampleText, 10);
         const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (item.exampleText.includes('+') || item.exampleText.includes('-'));
 
+        // ОСОБАЯ ПРОВЕРКА ДЛЯ ПРЯМОГО ВВОДА (БЕЗ ЗНАКА "=")
         if ((isMulti || isDiv || isHundreds) && !item.currentInput.includes('=')) {
+            const val = parseInt(item.currentInput, 10);
+            const isCorrect = (val === item.correctValue);
+
+            // Если введён ТОЧНЫЙ правильный ответ — мгновенный триумф
+            if (isCorrect) {
+                return { isFullySolved: true, isWrongAnswer: false, phase: 3, simText: '', finText: item.currentInput, simCorrect: true, finCorrect: true };
+            }
+            
+            // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ СОТЕН: Если ответ неверный, мы НЕ переходим в фазу 3 и НЕ ставим ошибку до нажатия "="
+            if (isHundreds) {
+                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
+            }
+
+            // Для умножения и деления оставляем стандартный строгий числовой контроль длины
             const currentLen = item.currentInput.length;
             if (currentLen < targetLength) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
             }
-            const val = parseInt(item.currentInput, 10);
-            const isCorrect = (val === item.correctValue);
-            return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: '', finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
+            return { isFullySolved: false, isWrongAnswer: true, phase: 3, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
         }
 
+        // СТАНДАРТНАЯ ДВУХЭТАПНАЯ ЛОГИКА (ВКЛЮЧАЕТСЯ ПОСЛЕ НАЖАТИЯ "=")
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
@@ -67,7 +80,6 @@ export const state = {
             let simVal = evaluateExpr(simText);
             simCorrect = (simVal === item.correctValue);
             
-            // ХИРУРГИЧЕСКОЕ ОБНОВЛЕНИЕ: Проверка разложения умножения (любой порядок слагаемых верный)
             if (item.exampleText.includes('×') && simCorrect && simText) {
                 const checkParts = simText.split('+');
                 const cleanText = item.exampleText.replace(/×/g, '*');
@@ -75,7 +87,6 @@ export const state = {
                 const f1 = parseInt(factors[0], 10);
                 const f2 = parseInt(factors[1], 10);
                 
-                // Допускаем f1 слагаемых по f2 ИЛИ f2 слагаемых по f1
                 const isVariantA = (checkParts.length === f2 && parseInt(checkParts[0], 10) === f1);
                 const isVariantB = (checkParts.length === f1 && parseInt(checkParts[0], 10) === f2);
                 
