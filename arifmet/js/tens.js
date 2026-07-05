@@ -1,4 +1,4 @@
-// version: v1.9 (Исправлены индексы массивов split в истории сотен)
+// version: v2.1 (Исправлено исчезновение текста упрощения сотен)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -91,7 +91,6 @@ export function getTensHistoryHTML(item, index, mode) {
     
     if (isHundreds) {
         const totalEquals = (item.currentInput.match(/=/g) || []).length;
-        const parts = item.currentInput.split('=');
         
         if (totalEquals === 0) {
             if (item.currentInput.length >= targetLen) {
@@ -101,20 +100,27 @@ export function getTensHistoryHTML(item, index, mode) {
             return { simHTML: '', finHTML: ` = <span class="block">${item.currentInput || '_'}</span>` };
         }
 
+        // ЖЕЛЕЗОБЕТОННЫЙ ВЫВОД ИСТОРИИ: Просто выводим всё, что набрано после первого знака "="
+        const firstEqualIndex = item.currentInput.indexOf('=');
+        const userContent = item.currentInput.substring(firstEqualIndex + 1);
+
         if (totalEquals === 1) {
-            const currentExpression = parts[1] || '';
             return {
-                simHTML: ` = <span class="block">${currentExpression || '_'}</span>`,
+                simHTML: ` = <span class="block">${userContent || '_'}</span>`,
                 finHTML: ''
             };
         }
 
-        const exprText = parts[1] || '';
-        const ansText = parts[2] || '';
+        // Введено два или более знаков равенства
+        const secondEqualIndex = userContent.indexOf('=');
+        const exprText = userContent.substring(0, secondEqualIndex);
+        const ansText = userContent.substring(secondEqualIndex + 1);
+        
+        // Цвет блока упрощения красится строго на основе реального ответа
         const simCls = report.simCorrect ? 'block-correct' : 'block-incorrect';
         
         let finHTML = ` = <span class="block">${ansText || '_'}</span>`;
-        if (parts.length > 2 && ansText.trim().length >= targetLen) {
+        if (ansText.trim().length >= targetLen) {
             const finCls = report.finCorrect ? 'block-correct' : 'block-incorrect';
             finHTML = ` = <span class="block ${finCls}">${ansText}</span>`;
         }
