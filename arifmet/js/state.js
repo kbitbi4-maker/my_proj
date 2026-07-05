@@ -1,4 +1,4 @@
-// version: v2.8 (Исправлены индексы массивов split для сотен)
+// version: v2.9 (Полная изоляция текстовых полей сотен до знака "=")
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -50,14 +50,18 @@ export const state = {
             const val = parseInt(item.currentInput, 10);
             const isCorrect = (val === item.correctValue);
 
+            // Если введён ТОЧНЫЙ итоговый правильный ответ — мгновенный триумф
             if (isCorrect) {
                 return { isFullySolved: true, isWrongAnswer: false, phase: 3, simText: '', finText: item.currentInput, simCorrect: true, finCorrect: true };
             }
             
+            // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: Если это сотни, мы возвращаем ТОТАЛЬНОЕ ОБНУЛЕНИЕ полей.
+            // Никаких промежуточных текстов! Тележки будут думать, что поле ввода абсолютно пустое.
             if (isHundreds) {
-                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
+                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '', simCorrect: false, finCorrect: false };
             }
 
+            // Для умножения и деления оставляем стандартный строгий числовой контроль длины
             const currentLen = item.currentInput.length;
             if (currentLen < targetLength) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
@@ -71,13 +75,14 @@ export const state = {
             const parts = item.currentInput.split('=');
             
             if (totalEquals === 1) {
-                // Передаем то, что идет строго ПОСЛЕ первого знака равенства (индекс 1)
+                // Пока введён один знак "=", мы передаём чистый текст упрощения для динамического изменения цифр на тележках,
+                // но строго удерживаем статус ошибки в положении false.
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: parts[1] || '', finText: '', simCorrect: false, finCorrect: false };
             }
 
-            // Нажато два или более знаков "="
-            const exprText = parts[1] || ''; // Вторая часть выражения (упрощение, например "580+153")
-            const ansText = parts[2] || '';  // Третья часть выражения (итоговый ответ, например "733")
+            // Нажато два или более знаков "=" (этап финальной проверки упрощения)
+            const exprText = parts[1] || ''; // Вторая часть (упрощение)
+            const ansText = parts[2] || '';  // Третья часть (финальное число)
 
             let simCorrect = false;
             if (exprText.trim().length > 0) {
@@ -124,11 +129,11 @@ export const state = {
                 const checkParts = simText.split('+');
                 const cleanText = item.exampleText.replace(/×/g, '*');
                 const factors = cleanText.split('*');
-                const f1 = parseInt(factors, 10);
-                const f2 = parseInt(factors, 10);
+                const f1 = parseInt(factors[0], 10);
+                const f2 = parseInt(factors[1], 10);
                 
-                const isVariantA = (checkParts.length === f2 && parseInt(checkParts, 10) === f1);
-                const isVariantB = (checkParts.length === f1 && parseInt(checkParts, 10) === f2);
+                const isVariantA = (checkParts.length === f2 && parseInt(checkParts[0], 10) === f1);
+                const isVariantB = (checkParts.length === f1 && parseInt(checkParts[0], 10) === f2);
                 
                 if (!isVariantA && !isVariantB) simCorrect = false;
             }
