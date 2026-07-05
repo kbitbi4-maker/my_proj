@@ -1,10 +1,11 @@
-// arifmet/menu.js
+// arifmet/js/menu.js
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
 import { initTensMode } from './tens.js';
 import { initMultiplicationMode } from './multiplication.js';
 import { initMixMode } from './mix.js';
+import { initArcherMode } from './archer_mode.js'; // ИМПОРТ НАШЕГО НОВОГО РЕЖИМА!
 
 const numpadContainer = document.getElementById('calc-numpad-container');
 const modesMenuContainer = document.getElementById('modes-menu-container');
@@ -27,25 +28,18 @@ export function handleModeSelection(mode) {
     state.reset(mode);
     resetAllFeedbacks();
     
-    // Глобальный триггер для нашего моста анимации — очищаем старые эффекты при смене режима!
+    // Сброс старых Canvas-эффектов моста при переключении
     window.dispatchEvent(new CustomEvent('game-reset-all'));
 
     GameCanvas.clearZone();
     GameCanvas.clearHistory();
     toggleMenuMode();
 
+    // Прямое и понятное распределение режимов
     if (mode === 'tens' || mode === 'hundreds' || mode === 'column') initTensMode();
     else if (mode === 'multiplication') initMultiplicationMode();
     else if (mode === 'mix') initMixMode();
-    else if (mode === 'archer') initArcherMode(); // Запуск нашего нового тестового режима!
-}
-
-// Вынесли инициализацию режима лучника прямо сюда, чтобы уложиться в лимит строк
-function initArcherMode() {
-    document.querySelector('.header-menu-btn').innerText = 'Режим: Лучник 🏹 ▼';
-    // Режим лучника будет использовать базу умножения для теста
-    initMultiplicationMode(); 
-    document.querySelector('.header-menu-btn').innerText = 'Режим: Лучник 🏹 ▼';
+    else if (mode === 'archer') initArcherMode(); // ПРЯМОЙ ВЫЗОВ НАШЕГО ТЕСТА!
 }
 
 function getModeLabel(mode) {
