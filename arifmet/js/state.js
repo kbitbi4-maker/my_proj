@@ -1,4 +1,4 @@
-// version: v2.4 (Защита от подсказок в сотнях при неверном прямом вводе)
+// version: v2.5 (Исправлено: полное игнорирование ошибок в сотнях до нажатия знака "=")
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -50,12 +50,13 @@ export const state = {
             const val = parseInt(item.currentInput, 10);
             const isCorrect = (val === item.correctValue);
 
-            // Если введён ТОЧНЫЙ правильный ответ — мгновенный триумф
+            // Если введён ТОЧНЫЙ итоговый правильный ответ — мгновенный триумф для всех режимов
             if (isCorrect) {
                 return { isFullySolved: true, isWrongAnswer: false, phase: 3, simText: '', finText: item.currentInput, simCorrect: true, finCorrect: true };
             }
             
-            // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ ДЛЯ СОТЕН: Если ответ неверный, мы НЕ переходим в фазу 3 и НЕ ставим ошибку до нажатия "="
+            // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: Если это сотни, то при ЛЮБОМ другом вводе (цифры, плюсы, минусы) 
+            // мы строго удерживаем нейтральную фазу 1, не выдавая ошибку и не запуская проверку до нажатия "="
             if (isHundreds) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
             }
@@ -68,7 +69,7 @@ export const state = {
             return { isFullySolved: false, isWrongAnswer: true, phase: 3, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
         }
 
-        // СТАНДАРТНАЯ ДВУХЭТАПНАЯ ЛОГИКА (ВКЛЮЧАЕТСЯ ПОСЛЕ НАЖАТИЯ "=")
+        // СТАНДАРТНАЯ ДВУХЭТАПНАЯ ЛОГИКА (ВКЛЮЧАЕТСЯ СТРОГО ПОСЛЕ НАЖАТИЯ "=")
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
