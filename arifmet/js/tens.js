@@ -1,4 +1,4 @@
-// version: v2.1 (Исправлено исчезновение текста упрощения сотен)
+// version: v2.1 (Исправлено исчезновение текста упрощения сотен) 
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
