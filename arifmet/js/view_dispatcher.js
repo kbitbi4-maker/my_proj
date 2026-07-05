@@ -1,4 +1,4 @@
-// version: v2.2 (Исправлен визуал деления в истории Микса)
+// version: v2.3 (Исправлен визуал сотен при клике на историю Микса)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
@@ -33,12 +33,23 @@ export function selectExample(index) {
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
 
-    // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: роутинг сцены при клике на историю теперь тоже смотрит на знак в примере
+    // ХИРУРГИЧЕСКИЙ РОУТИНГ СЦЕНЫ ИСТОРИИ: Автономное определение по структуре примера
     if (item.exampleText.includes('×')) {
         syncMonsterGame();
     } else if (item.exampleText.includes('÷')) {
         import('./division_visual.js').then(m => m.renderDivisionVisual());
+    } else if (state.currentMode === 'column') {
+        import('./column_visual.js').then(m => m.renderColumnVisual());
     } else {
-        renderTensVisual();
+        const firstNumber = parseInt(item.exampleText, 10);
+        if (firstNumber >= 100) {
+            if (item.exampleText.includes('+')) {
+                import('./addition_hundreds_visual.js').then(m => m.renderAdditionHundredsVisual());
+            } else {
+                import('./subtraction_hundreds_visual.js').then(m => m.renderSubtractionHundredsVisual());
+            }
+        } else {
+            renderTensVisual();
+        }
     }
 }
