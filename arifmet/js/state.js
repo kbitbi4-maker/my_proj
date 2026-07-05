@@ -1,4 +1,4 @@
-// version: v2.2  
+// version: v2.3  
 import { evaluateExpr } from './calculator.js'; 
 
 export const state = {  
