@@ -1,4 +1,4 @@
-// version: v2.4 (Исправлен визуал сотен в режиме Микс)
+// version: v2.5 (Исправлено: звуки ошибок сотен включаются строго после второго знака "=")
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -51,10 +51,13 @@ export function confirmAndNext() {
 
 function handleInputSounds(report, exampleText) {
     const isMulti = exampleText.includes('×') || exampleText.includes('÷');
+    const firstNumber = parseInt(exampleText, 10);
+    const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (exampleText.includes('+') || exampleText.includes('-'));
+    const totalEquals = (state.examplesHistory[state.activeIndex].currentInput.match(/=/g) || []).length;
     
     if (report.isFullySolved) {
         if (!soundFlags.finWinSoundPlayed) {
-            if (isMulti) triggerWinFeedback();
+            if (isMulti || isHundreds) triggerWinFeedback();
             else triggerTensWinSound();
             soundFlags.finWinSoundPlayed = true;
             soundFlags.simWinSoundPlayed = true;
@@ -68,6 +71,11 @@ function handleInputSounds(report, exampleText) {
             soundFlags.simFailSoundPlayed = false;
         }
     } else if (report.isWrongAnswer) {
+        // ХИРУРГИЧЕСКАЯ ПРАВКА: блокируем звук ошибки для сотен, если введено меньше 2 знаков равенства
+        if (isHundreds && totalEquals < 2) {
+            return;
+        }
+
         if (state.currentMode === 'column' || (isMulti && !state.examplesHistory[state.activeIndex].currentInput.includes('='))) {
             if (!soundFlags.finFailSoundPlayed) {
                 triggerFailFeedback();
@@ -95,7 +103,6 @@ export function refreshUI() {
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    // ХИРУРГИЧЕСКИЙ РОУТИНГ СЦЕНЫ: Смотрим строго на знаки и длину чисел в примере
     if (activeItem.exampleText.includes('×')) {
         renderMonsterGame();
     } else if (activeItem.exampleText.includes('÷')) {
@@ -103,7 +110,6 @@ export function refreshUI() {
     } else if (state.currentMode === 'column') {
         import('./column_visual.js').then(m => m.renderColumnVisual());
     } else {
-        // Проверяем, сотни это или десятки, извлекая первое число примера
         const firstNumber = parseInt(activeItem.exampleText, 10);
         if (firstNumber >= 100) {
             if (activeItem.exampleText.includes('+')) {
