@@ -1,4 +1,4 @@
-// version: v2.0  
+// version: v2.2  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { parseMultiplicationData } from './calculator.js'; 
@@ -12,22 +12,18 @@ export function generateMultiExample() {
 if (!state.usedExamples) state.usedExamples = \[\];  
 let num1, num2, text, ans; 
 
-// Пытаемся подобрать пример. Для ответов <= 25 делаем занижение вероятности (3 попытки)  
 for (let attempt = 0; attempt < 100; attempt++) {  
-num1 = Math.floor(Math.random() \* 9) + 2; // от 2 до 10  
-num2 = Math.floor(Math.random() \* 9) + 2; // от 2 до 10  
+num1 = Math.floor(Math.random() \* 9) + 2;  
+num2 = Math.floor(Math.random() \* 9) + 2;  
 ans = num1 \* num2;  
 text = `${num1}×${num2}`; 
 
 if (state.usedExamples.includes(text)) continue; 
 
-// Если ответ легкий (<= 25), с вероятностью ~66% отбрасываем его в пользу следующей итерации,  
-// чтобы такие примеры встречались в 3 раза реже.  
 if (ans <= 25 && Math.random() > 0.33) {  
 continue;  
-} 
-
-break; // Нашли подходящий пример  
+}  
+break;  
 } 
 
 state.usedExamples.push(text);  
@@ -52,8 +48,6 @@ const report = state.validateCurrentInput();
 const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');  
 const cacheKey = `${activeItem.exampleText}_${status}`; 
 
-// Динамический расчет размеров под количество монстров и пицц (до 10х10)  
-// Чем больше монстров, тем меньше их иконки. То же самое для кусочков пиццы.  
 const monsterSize = task.monsters > 6 ? '32px' : (task.monsters > 4 ? '40px' : '46px');  
 const pizzaSize = task.items > 7 ? '14px' : (task.items > 5 ? '18px' : '22px');  
 const labelSize = task.monsters > 7 ? '11px' : '13px'; 
@@ -74,7 +68,6 @@ const subtitleHTML = `<div style="display:flex;gap:2px;justify-content:center;fl
 actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });  
 } 
 
-// Обернем в контейнер с динамическим размером шрифта эмодзи монстра  
 const wrappedHTML = `<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:10px; width:100%; font-size:${monsterSize};">${actorsHTML}</div>`;  
 GameCanvas.renderZoneScene(wrappedHTML, cacheKey);  
 } 
@@ -83,7 +76,6 @@ export function getMultiplicationHistoryHTML(item, index, mode) {
 const report = state.validateCurrentInput(index);  
 const targetLen = String(item.correctValue).length; 
 
-// Если ребенок ввел строку без "=", значит он мог ввести чистый ответ сразу  
 if (!item.currentInput.includes('=')) {  
 if (item.currentInput.length >= targetLen) {  
 return {  
@@ -97,7 +89,6 @@ finHTML: `= <span class="block">${item.currentInput || '_'}</span>`
 };  
 } 
 
-// Если знак "=" есть, используем классический двухэтапный рендеринг  
 const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';  
 let simHTML = `= <span class="block">${simText || '_'}</span>`;  
 if (item.currentInput.includes('=')) simHTML = `= <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;  
