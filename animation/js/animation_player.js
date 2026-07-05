@@ -22,9 +22,7 @@ export const AnimationPlayer = {
 
     handleGridResize(newW, newH) {
         this.frames = this.frames.map(() => Array(newH).fill(null).map(() => Array(newW).fill(null)));
-        this.currentIndex = 0;
-        this.updateUI();
-        this.drawPreview(0);
+        this.currentIndex = 0; this.updateUI(); this.drawPreview(0);
     },
 
     addFrame() {
@@ -40,8 +38,8 @@ export const AnimationPlayer = {
         this.updateUI(); EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
-    updateConsoleCode() {
-        const grid = this.frames[this.currentIndex];
+    // Генерация RLE-кода для одной конкретной матрицы кадра
+    getGridRLECode(grid) {
         let compressedLines = [];
         for (let r = 0; r < EditorCore.GRID_H; r++) {
             let rowPackets = []; let c = 0;
@@ -54,7 +52,11 @@ export const AnimationPlayer = {
             }
             if (rowPackets.length > 0) compressedLines.push(`${r}:${rowPackets.join('|')}`);
         }
-        document.getElementById('frameConsole').value = compressedLines.join('\n');
+        return compressedLines.join('\n');
+    },
+
+    updateConsoleCode() {
+        document.getElementById('frameConsole').value = this.getGridRLECode(this.frames[this.currentIndex]);
     },
 
     loadFrameFromCode() {
@@ -68,10 +70,7 @@ export const AnimationPlayer = {
                     const data = packet.split(',');
                     if (data.length === 3) {
                         const startC = parseInt(data[0], 10); const count = parseInt(data[1], 10); const color = data[2].trim();
-                        for (let i = 0; i < count; i++) {
-                            let currentC = startC + i;
-                            if (currentC >= 0 && currentC < EditorCore.GRID_W) newGrid[r][currentC] = color;
-                        }
+                        for (let i = 0; i < count; i++) { let currentC = startC + i; if (currentC >= 0 && currentC < EditorCore.GRID_W) newGrid[r][currentC] = color; }
                     }
                 });
             });
@@ -79,15 +78,48 @@ export const AnimationPlayer = {
         this.frames[this.currentIndex] = newGrid; EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
+    // ФУНКЦИЯ ЭКСПОРТА: Автогенерация и скачивание готового игрового JS-файла
+    exportToJSFile() {
+        const allFramesData = this.frames.map(grid => this.getGridRLECode(grid));
+        const fileContent = `// Сгенерированный игровой спрайт анимации
+export const GameSpriteData = {
+    width: ${EditorCore.GRID_W},
+    height: ${EditorCore.GRID_H},
+    frames: ${JSON.stringify(allFramesData, null, 4)},
+    
+    // Готовый встроенный метод для отрисовки любого кадра на игровом Canvas
+    drawFrame(ctx, frameIdx, targetX, targetY, targetW, targetH) {
+        const code = this.frames[frameIdx];
+        if (!code) return;
+        ctx.clearRect(targetX, targetY, targetW, targetH);
+        const pSizeX = targetW / this.width;
+        const pSizeY = targetH / this.height;
+        
+        code.split('\\n').forEach(line => {
+            const parts = line.split(':'); if (parts.length !== 2) return;
+            const r = parseInt(parts[0], 10);
+            parts[1].split('|').forEach(packet => {
+                const data = packet.split(',');
+                if (data.length === 3) {
+                    const startC = parseInt(data[0], 10);
+                    const count = parseInt(data[1], 10);
+                    ctx.fillStyle = data[2].trim();
+                    ctx.fillRect(targetX + startC * pSizeX, targetY + r * pSizeY, count * pSizeX, pSizeY);
+                }
+            });
+        });
+    }
+};`;
+        const blob = new Blob([fileContent], { type: 'application/javascript' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob); link.download = 'game_sprite_data.js'; link.click();
+    },
+
     drawPreview(idx) {
         if (!this.pCtx) return; this.pCtx.clearRect(0, 0, this.pCanvas.width, this.pCanvas.height);
-        const grid = this.frames[idx];
-        const pSizeX = this.pCanvas.width / EditorCore.GRID_W;
-        const pSizeY = this.pCanvas.height / EditorCore.GRID_H;
+        const grid = this.frames[idx]; const pSizeX = this.pCanvas.width / EditorCore.GRID_W; const pSizeY = this.pCanvas.height / EditorCore.GRID_H;
         for (let r = 0; r < EditorCore.GRID_H; r++) {
-            for (let c = 0; c < EditorCore.GRID_W; c++) {
-                if (grid[r][c]) { this.pCtx.fillStyle = grid[r][c]; this.pCtx.fillRect(c * pSizeX, r * pSizeY, pSizeX, pSizeY); }
-            }
+            for (let c = 0; c < EditorCore.GRID_W; c++) { if (grid[r][c]) { this.pCtx.fillStyle = grid[r][c]; this.pCtx.fillRect(c * pSizeX, r * pSizeY, pSizeX, pSizeY); } }
         }
     },
 
