@@ -1,4 +1,4 @@
-// version: v2.3  
+// version: v1.1  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { parseMultiplicationData } from './calculator.js'; 
@@ -10,22 +10,13 @@ generateMultiExample();
 
 export function generateMultiExample() {  
 if (!state.usedExamples) state.usedExamples = \[\];  
-let num1, num2, text, ans; 
-
-for (let attempt = 0; attempt < 100; attempt++) {  
-num1 = Math.floor(Math.random() \* 9) + 2;  
-num2 = Math.floor(Math.random() \* 9) + 2;  
-ans = num1 \* num2;  
-text = `${num1}×${num2}`; 
-
-if (state.usedExamples.includes(text)) continue; 
-
-if (ans <= 25 && Math.random() > 0.33) {  
-continue;  
+let num1, num2, text;  
+while (true) {  
+num1 = Math.floor(Math.random() \* 4) + 2;  
+num2 = Math.floor(Math.random() \* 4) + 2;  
+text = `${num1}×${num2}`;  
+if (!state.usedExamples.includes(text)) break;  
 }  
-break;  
-} 
-
 state.usedExamples.push(text);  
 state.addExample({ exampleText: text, correctValue: num1 \* num2, currentInput: '' }); 
 
@@ -43,53 +34,33 @@ export function renderMonsterGame() {
 const activeItem = state.examplesHistory\[state.activeIndex\];  
 if (!activeItem) return GameCanvas.clearZone(); 
 
+// Запрашиваем чистую математику структуры задачи у калькулятора  
 const task = parseMultiplicationData(activeItem.exampleText);  
 const report = state.validateCurrentInput();  
 const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');  
 const cacheKey = `${activeItem.exampleText}_${status}`; 
 
-const monsterSize = task.monsters > 6 ? '32px' : (task.monsters > 4 ? '40px' : '46px');  
-const pizzaSize = task.items > 7 ? '14px' : (task.items > 5 ? '18px' : '22px');  
-const labelSize = task.monsters > 7 ? '11px' : '13px'; 
-
 let actorsHTML = '';  
 for (let i = 0; i < task.monsters; i++) {  
 let contentHTML = '', bg = '#fff7ed', border = '1px dashed #fed7aa', mClass = '';  
 if (status === 'win') {  
-contentHTML = `<span style="font-size:${labelSize};color:#22c55e;font-weight:bold;animation:fadeIn 0.3s;">Ням! 😋</span>`;  
+contentHTML = 'Ням-ням! 😋';  
 bg = '#dcfce7'; border = '1px dashed #22c55e'; mClass = 'monster-happy';  
 } else if (status === 'sad') {  
-contentHTML = `<span class="tears-animation" style="font-size:${pizzaSize};">💦</span>`;  
+contentHTML = '💦';  
 bg = '#eff6ff'; border = '1px dashed #60a5fa'; mClass = 'monster-sad';  
 } else {  
-contentHTML = `<span style="font-size:${pizzaSize}; line-height: 1.1; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1));">${'🍕'.repeat(task.items)}</span>`;  
+contentHTML = '🍕'.repeat(task.items);  
 }  
-const subtitleHTML = `<div style="display:flex;gap:2px;justify-content:center;flex-wrap:wrap;max-width:90px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;  
+const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:80px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;  
 actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });  
-} 
-
-const wrappedHTML = `<div style="display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:10px; width:100%; font-size:${monsterSize};">${actorsHTML}</div>`;  
-GameCanvas.renderZoneScene(wrappedHTML, cacheKey);  
+}  
+GameCanvas.renderZoneScene(actorsHTML, cacheKey);  
 } 
 
 export function getMultiplicationHistoryHTML(item, index, mode) {  
-const report = state.validateCurrentInput(index);  
-const targetLen = String(item.correctValue).length; 
-
-if (!item.currentInput.includes('=')) {  
-if (item.currentInput.length >= targetLen) {  
-return {  
-simHTML: '',  
-finHTML: `= <span class="block ${report.isFullySolved ? 'block-correct' : 'block-incorrect'}">${item.currentInput}</span>`  
-};  
-}  
-return {  
-simHTML: '',  
-finHTML: `= <span class="block">${item.currentInput || '_'}</span>`  
-};  
-} 
-
 const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';  
+const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;  
 let simHTML = `= <span class="block">${simText || '_'}</span>`;  
 if (item.currentInput.includes('=')) simHTML = `= <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;  
 let finHTML = '';  
