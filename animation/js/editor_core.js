@@ -10,6 +10,7 @@ export const EditorCore = {
 
     init() {
         this.canvas = document.getElementById('paintCanvas');
+        if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
         this.colorPicker = document.getElementById('colorPicker');
         this.pixelSize = this.CANVAS_SIZE / this.GRID_SIZE;
@@ -33,6 +34,7 @@ export const EditorCore = {
 
         if (c >= 0 && c < this.GRID_SIZE && r >= 0 && r < this.GRID_SIZE) {
             const currentGrid = AnimationPlayer.getCurrentGrid();
+            if (!currentGrid) return;
             currentGrid[r][c] = (e.buttons === 2) ? null : this.colorPicker.value;
             this.draw();
             AnimationPlayer.drawPreview(AnimationPlayer.currentIndex);
@@ -40,13 +42,15 @@ export const EditorCore = {
     },
 
     clearCurrentGrid() {
-        const emptyGrid = Array(this.GRID_SIZE).fill(null).map(() => Array(this.GRID_SIZE).fill(null));
+        const size = this.GRID_SIZE;
+        const emptyGrid = Array(size).fill(null).map(() => Array(size).fill(null));
         AnimationPlayer.setCurrentGrid(emptyGrid);
         this.draw();
         AnimationPlayer.drawPreview(AnimationPlayer.currentIndex);
     },
 
     draw() {
+        if (!this.ctx) return;
         this.ctx.clearRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
         const grid = AnimationPlayer.getCurrentGrid();
         if (!grid) return;
@@ -72,4 +76,3 @@ export const EditorCore = {
         }
     }
 };
-
