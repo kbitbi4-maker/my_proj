@@ -57,7 +57,6 @@ export const AnimationPlayer = {
                     let color = grid[r][c];
                     let count = 0;
 
-                    // Считаем, сколько пикселей этого же цвета идут подряд в строке
                     while (c < size && grid[r][c] === color) {
                         count++;
                         c++;
@@ -97,7 +96,6 @@ export const AnimationPlayer = {
                         const count = parseInt(data[1], 10);
                         const color = data[2].trim();
 
-                        // Распаковываем сжатый пакет обратно в строку ячеек
                         for (let i = 0; i < count; i++) {
                             let currentC = startC + i;
                             if (currentC >= 0 && currentC < size) {
