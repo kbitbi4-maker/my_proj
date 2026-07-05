@@ -1,4 +1,4 @@
- // version: v2.2    
+// version: v1.6  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';  
@@ -21,15 +21,20 @@ activeItem.currentInput = isColumnMode ? activeItem.currentInput.slice(1) : acti
 }  
 resetAllFeedbacks();  
 } else {  
+// Блокируем нажатие знака "=" в режиме столбика, там он не нужен  
 if (isColumnMode && n === '=') return; 
 
 const totalEquals = (activeItem.currentInput.match(/=/g) || \[\]).length;  
 if (n === '=' && totalEquals >= 2) return; 
 
 if (isColumnMode) {  
-if (activeItem.currentInput.length >= targetLength) return;  
+// Если ребенок уже ввел максимальное количество цифр, не даем вводить новые (сначала нужно стереть)  
+if (activeItem.currentInput.length >= targetLength) return; 
+
+// Направление роста от единиц влево  
 activeItem.currentInput = n + activeItem.currentInput;  
 } else {  
+// Стандартное добавление для остальных режимов  
 activeItem.currentInput += n;  
 }  
 } 
@@ -65,7 +70,8 @@ soundFlags.simWinSoundPlayed = true;
 soundFlags.simFailSoundPlayed = false;  
 }  
 } else if (report.isWrongAnswer) {  
-if (state.currentMode === 'column' || (isMulti && !state.examplesHistory\[state.activeIndex\].currentInput.includes('='))) {  
+// Для режима столбика проверяем флаг ошибки напрямую  
+if (state.currentMode === 'column') {  
 if (!soundFlags.finFailSoundPlayed) {  
 triggerFailFeedback();  
 soundFlags.finFailSoundPlayed = true;  
