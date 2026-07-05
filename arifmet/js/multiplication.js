@@ -24,8 +24,8 @@ export function generateMultiExample() {
     if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, text;
     while (true) {
-        num1 = Math.floor(Math.random() * 9) + 2; 
-        num2 = Math.floor(Math.random() * 9) + 2; 
+        num1 = Math.floor(Math.random() * 3) + 2; 
+        num2 = Math.floor(Math.random() * 3) + 2; 
         text = `${num1}×${num2}`;
         if (!state.usedExamples.includes(text)) break;
     }
