@@ -1,8 +1,8 @@
-// version: v1.1 (Вычислительный движок + подключение визуала)
+// version: v1.2 (Исправлен порядок вызова отрисовки)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { getMultiplicationHistoryHTML } from './multiplication.js';
-import { renderDivisionVisual } from './division_visual.js'; // Импортируем визуал
+import { renderDivisionVisual } from './division_visual.js';
 
 export function initDivisionMode() {
     document.querySelector('.header-menu-btn').innerText = 'Режим: Деление 🍕 ▼';
@@ -29,6 +29,6 @@ export function generateDivisionExample() {
     GameCanvas.clearZone();
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);
     
-    // Запускаем отрисовку сцены с тарелкой
+    // Вызываем отрисовку тарелки строго после подготовки истории
     renderDivisionVisual();
 }
