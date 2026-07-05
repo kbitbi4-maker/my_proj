@@ -1,10 +1,11 @@
-// version: v1.1
+// version: v1.2 (Добавлен интеллектуальный предохранитель для сотен)
+import { state } from './state.js';
+
 let currentWinPlayer = null;
 let currentAlienPlayer = null;
 let currentFailPlayer = null;
 let alienRepeatCount = 0;
 
-// Локальный объект флагов, защищенный от внешнего вмешательства
 export const soundFlags = {
     simFailSoundPlayed: false,
     finFailSoundPlayed: false,
@@ -12,9 +13,6 @@ export const soundFlags = {
     finWinSoundPlayed: false
 };
 
-/**
- * Полный сброс всех аудиоплееров и флагов при смене примера или режима
- */
 export function resetAllFeedbacks() {
     if (currentWinPlayer) { currentWinPlayer.pause(); currentWinPlayer = null; }
     if (currentAlienPlayer) { currentAlienPlayer.onended = null; currentAlienPlayer.pause(); currentAlienPlayer = null; }
@@ -28,9 +26,6 @@ export function resetAllFeedbacks() {
     soundFlags.finWinSoundPlayed = false;
 }
 
-/**
- * Обычный победный звук для режима десятков (win.mp3)
- */
 export function triggerTensWinSound() {
     if (currentWinPlayer) return; 
     try {
@@ -41,9 +36,6 @@ export function triggerTensWinSound() {
     } catch (e) { console.warn("Audio blocked:", e); }
 }
 
-/**
- * Финальный космический звук для умножения (alien_win.mp3 на 3 круга)
- */
 export function triggerWinFeedback() {
     if (currentAlienPlayer) return; 
     try {
@@ -63,10 +55,20 @@ export function triggerWinFeedback() {
     } catch (e) { console.warn("Audio blocked:", e); }
 }
 
-/**
- * Звук ошибки для всех режимов (fail.mp3)
- */
 export function triggerFailFeedback() {
+    // ПРЕДОХРАНИТЕЛЬ: Проверяем, не пытаемся ли мы шуметь во время первого этапа упрощения сотен
+    if (state.activeIndex !== -1 && state.examplesHistory[state.activeIndex]) {
+        const item = state.examplesHistory[state.activeIndex];
+        const firstNumber = parseInt(item.exampleText, 10);
+        const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (item.exampleText.includes('+') || item.exampleText.includes('-'));
+        const totalEquals = (item.currentInput.match(/=/g) || []).length;
+
+        // Если это сотни и введено меньше 2 знаков "=", полностью блокируем звук ошибки
+        if (isHundreds && totalEquals < 2) {
+            return;
+        }
+    }
+
     try {
         if (currentFailPlayer) {
             currentFailPlayer.currentTime = 0;
