@@ -1,4 +1,4 @@
-// version: v2.3  
+// version: v1.2  
 import { evaluateExpr } from './calculator.js'; 
 
 export const state = {  
@@ -30,27 +30,39 @@ return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finT
 const item = this.examplesHistory\[idx\];  
 const targetLength = String(item.correctValue).length; 
 
+// СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ РЕЖИМА В СТОЛБИК  
 if (this.currentMode === 'column') {  
-const currentLen = item.currentInput.length;  
+const currentLen = item.currentInput.length; 
+
+// Если ребенок еще не донабирал нужное количество цифр — статус нейтральный (phase 1)  
 if (currentLen < targetLength) {  
-return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: item.currentInput, finText: '', simCorrect: false, finCorrect: false };  
-}  
-const val = parseInt(item.currentInput, 10);  
-const isCorrect = (val === item.correctValue);  
-return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };  
+return {  
+isFullySolved: false,  
+isWrongAnswer: false,  
+phase: 1,  
+simText: item.currentInput,  
+finText: '',  
+simCorrect: false,  
+finCorrect: false  
+};  
 } 
 
-const isMulti = item.exampleText.includes('×');  
-if (isMulti && !item.currentInput.includes('=')) {  
-const currentLen = item.currentInput.length;  
-if (currentLen < targetLength) {  
-return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };  
-}  
+// Длина совпала — проверяем математику  
 const val = parseInt(item.currentInput, 10);  
-const isCorrect = (val === item.correctValue);  
-return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: '', finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };  
+const isCorrect = (val === item.correctValue); 
+
+return {  
+isFullySolved: isCorrect,  
+isWrongAnswer: !isCorrect,  
+phase: 3, // Сразу переводим в финальную фазу для окрашивания  
+simText: item.currentInput,  
+finText: item.currentInput,  
+simCorrect: isCorrect,  
+finCorrect: isCorrect  
+};  
 } 
 
+// СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ  
 const parts = item.currentInput.split('=');  
 const simText = parts.at(0) || '', finText = parts.at(1) || ''; 
 
