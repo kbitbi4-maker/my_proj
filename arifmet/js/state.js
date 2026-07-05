@@ -1,4 +1,4 @@
-// version: v1.2
+// version: v2.0 (Добавлен мягкий прямой ввод для умножения)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -33,36 +33,39 @@ export const state = {
         // СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ РЕЖИМА В СТОЛБИК
         if (this.currentMode === 'column') {
             const currentLen = item.currentInput.length;
-            
-            // Если ребенок еще не донабирал нужное количество цифр — статус нейтральный (phase 1)
             if (currentLen < targetLength) {
-                return { 
-                    isFullySolved: false, 
-                    isWrongAnswer: false, 
-                    phase: 1, 
-                    simText: item.currentInput, 
-                    finText: '', 
-                    simCorrect: false, 
-                    finCorrect: false 
-                };
+                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: item.currentInput, finText: '', simCorrect: false, finCorrect: false };
             }
-
-            // Длина совпала — проверяем математику
             const val = parseInt(item.currentInput, 10);
             const isCorrect = (val === item.correctValue);
+            return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
+        }
 
+        // ХИРУРГИЧЕСКАЯ ВСТАВКА: МЯГКАЯ ЛОГИКА ДЛЯ ПРЯМОГО ВВОДА УМНОЖЕНИЯ (БЕЗ ЗНАКА "=")
+        const isMulti = item.exampleText.includes('×');
+        if (isMulti && !item.currentInput.includes('=')) {
+            const currentLen = item.currentInput.length;
+            
+            // Пока ребёнок не набрал нужное количество цифр ответа, статус нейтральный
+            if (currentLen < targetLength) {
+                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
+            }
+            
+            // Длина совпала — мгновенно проверяем математику прямого ответа
+            const val = parseInt(item.currentInput, 10);
+            const isCorrect = (val === item.correctValue);
             return {
                 isFullySolved: isCorrect,
                 isWrongAnswer: !isCorrect,
-                phase: 3, // Сразу переводим в финальную фазу для окрашивания
-                simText: item.currentInput,
+                phase: 3, // Сразу переводим в финальную фазу для запуска победных скриптов
+                simText: '',
                 finText: item.currentInput,
                 simCorrect: isCorrect,
                 finCorrect: isCorrect
             };
         }
 
-        // СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ
+        // СТАНДАРТНАЯ ДВУХЭТАПНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ СЛУЧАЕВ
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
