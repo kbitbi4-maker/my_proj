@@ -1,4 +1,4 @@
-// version: v1.4 (Добавлена поддержка прямого ответа в историю)
+// version: v1.4 (Добавлена поддержка прямого ответа в историю) 
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseMultiplicationData } from './calculator.js';
