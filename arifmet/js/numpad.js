@@ -1,4 +1,4 @@
-// version: v1.6
+// version: v2.0 (Добавлены звуки для прямого ввода в умножении)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -21,20 +21,15 @@ export function pressNum(n) {
         }
         resetAllFeedbacks();
     } else {
-        // Блокируем нажатие знака "=" в режиме столбика, там он не нужен
         if (isColumnMode && n === '=') return;
 
         const totalEquals = (activeItem.currentInput.match(/=/g) || []).length;
         if (n === '=' && totalEquals >= 2) return;
 
         if (isColumnMode) {
-            // Если ребенок уже ввел максимальное количество цифр, не даем вводить новые (сначала нужно стереть)
             if (activeItem.currentInput.length >= targetLength) return;
-
-            // Направление роста от единиц влево
             activeItem.currentInput = n + activeItem.currentInput;
         } else {
-            // Стандартное добавление для остальных режимов
             activeItem.currentInput += n;
         }
     }
@@ -70,8 +65,8 @@ function handleInputSounds(report, exampleText) {
             soundFlags.simFailSoundPlayed = false;
         }
     } else if (report.isWrongAnswer) {
-        // Для режима столбика проверяем флаг ошибки напрямую
-        if (state.currentMode === 'column') {
+        // ХИРУРГИЧЕСКАЯ ПРАВКА: Если это режим столбика ИЛИ умножение при прямом вводе ответа (без знака "=")
+        if (state.currentMode === 'column' || (isMulti && !state.examplesHistory[state.activeIndex].currentInput.includes('='))) {
             if (!soundFlags.finFailSoundPlayed) {
                 triggerFailFeedback();
                 soundFlags.finFailSoundPlayed = true;
