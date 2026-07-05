@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('clearGridBtn')?.addEventListener('click', () => EditorCore.clearCurrentGrid());
     document.getElementById('addFrameBtn')?.addEventListener('click', () => AnimationPlayer.addFrame());
     document.getElementById('playBtn')?.addEventListener('click', () => AnimationPlayer.togglePlay());
+    
+    // Слушатель кнопки экспорта файла
+    document.getElementById('exportAnimBtn')?.addEventListener('click', () => AnimationPlayer.exportToJSFile());
 
     const fileInput = document.getElementById('imageImporter');
     document.getElementById('uploadTriggerBtn')?.addEventListener('click', () => fileInput?.click());
@@ -29,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         EditorCore.setZoom(zoom);
     });
 
-    // Расширенная проверка лимитов до 100x100
     document.getElementById('applyGridSizeBtn')?.addEventListener('click', () => {
         const newW = parseInt(document.getElementById('gridWidthInput').value, 10);
         const newH = parseInt(document.getElementById('gridHeightInput').value, 10);
