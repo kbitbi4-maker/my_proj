@@ -1,7 +1,8 @@
-// version: v1.0 (Вычислительный движок режима деления)
+// version: v1.1 (Вычислительный движок + подключение визуала)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { getMultiplicationHistoryHTML } from './multiplication.js';
+import { renderDivisionVisual } from './division_visual.js'; // Импортируем визуал
 
 export function initDivisionMode() {
     document.querySelector('.header-menu-btn').innerText = 'Режим: Деление 🍕 ▼';
@@ -27,6 +28,7 @@ export function generateDivisionExample() {
 
     GameCanvas.clearZone();
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);
-    GameCanvas.clearZone();
+    
+    // Запускаем отрисовку сцены с тарелкой
+    renderDivisionVisual();
 }
-
