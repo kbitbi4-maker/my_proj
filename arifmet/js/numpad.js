@@ -1,4 +1,4 @@
-// version: v2.0 (Добавлены звуки для прямого ввода в умножении)
+// version: v2.1 (Интеграция звуков и рендеринга для деления)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -44,10 +44,13 @@ export function confirmAndNext() {
     if (state.currentMode === 'tens' || state.currentMode === 'hundreds' || state.currentMode === 'column') generateExample();
     else if (state.currentMode === 'multiplication') generateMultiExample();
     else if (state.currentMode === 'mix') generateMixExample();
+    else if (state.currentMode === 'division') {
+        import('./division.js').then(m => m.generateDivisionExample());
+    }
 }
 
 function handleInputSounds(report, exampleText) {
-    const isMulti = exampleText.includes('×');
+    const isMulti = exampleText.includes('×') || exampleText.includes('÷');
     
     if (report.isFullySolved) {
         if (!soundFlags.finWinSoundPlayed) {
@@ -65,7 +68,6 @@ function handleInputSounds(report, exampleText) {
             soundFlags.simFailSoundPlayed = false;
         }
     } else if (report.isWrongAnswer) {
-        // ХИРУРГИЧЕСКАЯ ПРАВКА: Если это режим столбика ИЛИ умножение при прямом вводе ответа (без знака "=")
         if (state.currentMode === 'column' || (isMulti && !state.examplesHistory[state.activeIndex].currentInput.includes('='))) {
             if (!soundFlags.finFailSoundPlayed) {
                 triggerFailFeedback();
@@ -88,11 +90,15 @@ function handleInputSounds(report, exampleText) {
 export function refreshUI() {
     if (state.activeIndex === -1) return;
     const activeItem = state.examplesHistory[state.activeIndex];
-    const isMulti = activeItem.exampleText.includes('×');
+    const isMulti = activeItem.exampleText.includes('×') || activeItem.exampleText.includes('÷');
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && isMulti)) renderMonsterGame();
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && activeItem.exampleText.includes('×'))) renderMonsterGame();
+    else if (state.currentMode === 'division') {
+        // Очищаем зону, пока нет визуализации для деления
+        GameCanvas.clearZone();
+    }
     else renderTensVisual();
 }
