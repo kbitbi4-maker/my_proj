@@ -1,4 +1,4 @@
-// version: v1.1.6 (Шаг 1 - Исправлено)  
+// version: v1.1.7 (Шаг 1 - Точечная чистка синтаксиса)  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { parseMultiplicationData } from './calculator.js';
@@ -10,17 +10,20 @@ generateMultiExample();
 
 export function generateMultiExample() {  
 if (!state.usedExamples) state.usedExamples = \[\];  
-let num1, num2, text, ans;
+let num1 = 2;  
+let num2 = 2;  
+let text = "";  
+let ans = 4;
 
 for (let attempt = 0; attempt < 100; attempt++) {  
 num1 = Math.floor(Math.random() \* 9) + 2;  
 num2 = Math.floor(Math.random() \* 9) + 2;  
-ans = num1 \* num2;
+ans = num1 \* num2;  
+text = String(num1) + String.fromCharCode(215) + String(num2);
 
-// Используем экранированный Unicode вместо сырого знака умножения  
-text = num1 + "\\u00D7" + num2;
-
-if (state.usedExamples.includes(text)) continue;
+if (state.usedExamples.includes(text)) {  
+continue;  
+}
 
 if (ans <= 25 && Math.random() > 0.33) {  
 continue;  
@@ -29,7 +32,7 @@ break;
 }
 
 state.usedExamples.push(text);  
-state.addExample({ exampleText: text, correctValue: num1 \* num2, currentInput: '' });
+state.addExample({ exampleText: text, correctValue: ans, currentInput: '' });
 
 GameCanvas.clearZone();  
 GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);  
@@ -60,7 +63,7 @@ bg = '#dcfce7'; border = '1px dashed #22c55e'; mClass = 'monster-happy';
 contentHTML = '💦';  
 bg = '#eff6ff'; border = '1px dashed #60a5fa'; mClass = 'monster-sad';  
 } else {  
-contentHTML = '🍕'.repeat(task.items);  
+contentHTML = '' + '🍕'.repeat(task.items) + '';  
 }  
 const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;max-width:80px;background:${bg};padding:4px 6px;border-radius:6px;border:${border};min-height:32px;align-items:center;">${contentHTML}</div>`;  
 actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });  
