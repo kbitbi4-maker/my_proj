@@ -1,4 +1,4 @@
-// version: v2.1 (Поддержка мгновенной проверки деления)
+// version: v2.2 (Валидатор адаптирован под автономное определение сотен)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
