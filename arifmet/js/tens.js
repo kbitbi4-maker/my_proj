@@ -1,4 +1,4 @@
-// version: v1.8 (Рендеринг двухэтапного упрощения сотен в истории) 
+// version: v1.8 (Рендеринг двухэтапного упрощения сотен в истории)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
