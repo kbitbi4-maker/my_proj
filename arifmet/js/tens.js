@@ -1,4 +1,4 @@
-// version: v1.6
+// version: v1.7 (Добавлена поддержка прямого ввода сотен в историю)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -75,22 +75,34 @@ export function getTensHistoryHTML(item, index, mode) {
     const report = state.validateCurrentInput(index);
     const targetLen = String(item.correctValue).length;
 
-    // СПЕЦИАЛЬНЫЙ РЕНДЕРИНГ ДЛЯ РЕЖИМА СТОЛБИКА В ЛЕВОЙ ПАНЕЛИ
     if (mode === 'column') {
         let simHTML = '';
         let finHTML = '';
-
         if (item.currentInput.length >= targetLen) {
-            // Если ребенок ввел все цифры, показываем и подсвечиваем его ответ в истории
             finHTML = ` = <span class="block ${report.isFullySolved ? 'block-correct' : 'block-incorrect'}">${item.currentInput}</span>`;
         } else {
-            // Если ответ еще в процессе набора, аккуратно выводим то, что есть, без агрессивного цвета
             finHTML = ` = <span class="block">${item.currentInput || '_'}</span>`;
         }
         return { simHTML, finHTML };
     }
 
-    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (С ЗНАКОМ И УПРОЩЕНИЕМ)
+    // ХИРУРГИЧЕСКАЯ ПРАВКА: Если это режим сотен И ввод идет напрямую (без знака "=")
+    const firstNumber = parseInt(item.exampleText, 10);
+    const isHundreds = !isNaN(firstNumber) && firstNumber >= 100;
+    if (isHundreds && !item.currentInput.includes('=')) {
+        if (item.currentInput.length >= targetLen) {
+            const cls = report.isFullySolved ? 'block-correct' : 'block-incorrect';
+            return {
+                simHTML: '',
+                finHTML: ` = <span class="block ${cls}">${item.currentInput}</span>`
+            };
+        }
+        return {
+            simHTML: '',
+            finHTML: ` = <span class="block">${item.currentInput || '_'}</span>`
+        };
+    }
+
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
