@@ -1,4 +1,4 @@
-// version: v2.0  
+// version: v2.2  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';  
