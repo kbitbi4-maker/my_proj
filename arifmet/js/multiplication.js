@@ -1,4 +1,4 @@
-// version: v1.3 (Чистый код без Markdown-разметки)
+// version: v1.4 (Добавлена поддержка прямого ответа в историю)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseMultiplicationData } from './calculator.js';
@@ -66,8 +66,26 @@ export function renderMonsterGame() {
 }
 
 export function getMultiplicationHistoryHTML(item, index, mode) {
+    const report = state.validateCurrentInput(index);
+    const targetLen = String(item.correctValue).length;
+
+    // ХИРУРГИЧЕСКАЯ ВСТАВКА: если ребенок вводит ответ сразу без "=", красиво красим блок в истории
+    if (!item.currentInput.includes('=')) {
+        if (item.currentInput.length >= targetLen) {
+            const cls = report.isFullySolved ? 'block-correct' : 'block-incorrect';
+            return {
+                simHTML: '',
+                finHTML: ` = <span class="block ${cls}">${item.currentInput}</span>`
+            };
+        }
+        return {
+            simHTML: '',
+            finHTML: ` = <span class="block">${item.currentInput || '_'}</span>`
+        };
+    }
+
+    // СТАНДАРТНАЯ РАБОЧАЯ ЛОГИКА ДЛЯ ДВУХЭТАПНОГО ВВОДА
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
-    const report = state.validateCurrentInput(index), targetLen = String(item.correctValue).length;
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
     let finHTML = '';
