@@ -1,4 +1,4 @@
-// version: v1.1.5  
+// version: v1.2 (Точечное обновление пула)  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { parseMultiplicationData } from './calculator.js'; 
@@ -9,13 +9,12 @@ generateMultiExample();
 } 
 
 export function generateMultiExample() {  
-if (!state.usedExamples) state.usedExamples = \[\];  
+if (!state.usedExamples) state.usedExamples = [];  
 let num1, num2, text;  
 while (true) {  
 num1 = Math.floor(Math.random() \* 9) + 2;  
 num2 = Math.floor(Math.random() \* 9) + 2; 
 
-// ХИРУРГИЧЕСКАЯ ВСТАВКА: если ответ <= 25, с шансом 66% крутим цикл дальше за более сложным примером  
 if (num1 \* num2 <= 25 && Math.random() > 0.33) {  
 continue;  
 } 
