@@ -1,54 +1,54 @@
-// version: v1.1.5 (Шаг 1)  
+// version: v1.1.6 (Шаг 1 - Исправлено)  
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
-import { parseMultiplicationData } from './calculator.js'; 
+import { parseMultiplicationData } from './calculator.js';
 
 export function initMultiplicationMode() {  
 document.querySelector('.header-menu-btn').innerText = 'Режим: Умножение 🍕 ▼';  
 generateMultiExample();  
-} 
+}
 
 export function generateMultiExample() {  
 if (!state.usedExamples) state.usedExamples = \[\];  
-let num1, num2, text, ans; 
+let num1, num2, text, ans;
 
-// Пытаемся подобрать пример. Для ответов <= 25 делаем занижение вероятности  
 for (let attempt = 0; attempt < 100; attempt++) {  
-num1 = Math.floor(Math.random() \* 9) + 2; // случайное от 2 до 10  
-num2 = Math.floor(Math.random() \* 9) + 2; // случайное от 2 до 10  
-ans = num1 \* num2;  
-text = `${num1}×${num2}`; 
+num1 = Math.floor(Math.random() \* 9) + 2;  
+num2 = Math.floor(Math.random() \* 9) + 2;  
+ans = num1 \* num2;
 
-if (state.usedExamples.includes(text)) continue; 
+// Используем экранированный Unicode вместо сырого знака умножения  
+text = num1 + "\\u00D7" + num2;
 
-// Если ответ <= 25, отбрасываем его в пользу следующей итерации с шансом ~66%  
+if (state.usedExamples.includes(text)) continue;
+
 if (ans <= 25 && Math.random() > 0.33) {  
 continue;  
 }  
-break; // Нашли подходящий пример  
-} 
+break;  
+}
 
 state.usedExamples.push(text);  
-state.addExample({ exampleText: text, correctValue: num1 \* num2, currentInput: '' }); 
+state.addExample({ exampleText: text, correctValue: num1 \* num2, currentInput: '' });
 
 GameCanvas.clearZone();  
 GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, getMultiplicationHistoryHTML);  
 renderMonsterGame();  
-} 
+}
 
 export function syncMonsterGame() {  
 GameCanvas.clearZone();  
 renderMonsterGame();  
-} 
+}
 
 export function renderMonsterGame() {  
 const activeItem = state.examplesHistory\[state.activeIndex\];  
-if (!activeItem) return GameCanvas.clearZone(); 
+if (!activeItem) return GameCanvas.clearZone();
 
 const task = parseMultiplicationData(activeItem.exampleText);  
 const report = state.validateCurrentInput();  
 const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');  
-const cacheKey = `${activeItem.exampleText}_${status}`; 
+const cacheKey = activeItem.exampleText + "\_" + status;
 
 let actorsHTML = '';  
 for (let i = 0; i < task.monsters; i++) {  
@@ -66,7 +66,7 @@ const subtitleHTML = `<div style="display:flex;gap:4px;justify-content:center;fl
 actorsHTML += GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML });  
 }  
 GameCanvas.renderZoneScene(actorsHTML, cacheKey);  
-} 
+}
 
 export function getMultiplicationHistoryHTML(item, index, mode) {  
 const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';  
