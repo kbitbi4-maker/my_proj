@@ -1,4 +1,4 @@
-// version: v1.5
+// version: v2.0 (Калькулятор адаптирован под автономное определение сотен)
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
@@ -35,7 +35,8 @@ export function parseAdditionData(exampleText, report) {
     const nums = exampleText.split('+'), num1 = parseInt(nums[0], 10), num2 = parseInt(nums[1], 10);
     const tens1 = Math.floor(num1 / 10) % 10, ones1 = num1 % 10;
     const tens2 = Math.floor(num2 / 10) % 10, ones2 = num2 % 10;
-    let leftTens = 0, leftOnes = 0, rightTens = 0, rightOnes = 0, leftLabel = '0', rightLabel = '0';
+    let leftTens = 0, leftOnes = 0, rightTens = 0, rightOnes = 0, leftLabel = String(num1), rightLabel = String(num2);
+    
     if (report.simText.includes('+')) {
         const userParts = report.simText.split('+'), leftNum = parseInt(userParts[0], 10), rightNum = parseInt(userParts[1], 10);
         if (!isNaN(leftNum)) { leftTens = Math.floor(leftNum / 10) % 10; leftOnes = leftNum % 10; leftLabel = String(leftNum); }
