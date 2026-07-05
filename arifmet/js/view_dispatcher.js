@@ -1,4 +1,4 @@
-// version: v2.1 (Полная поддержка деления при переключении истории)
+// version: v2.1 (Полная поддержка деления при переключении истории) 
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
