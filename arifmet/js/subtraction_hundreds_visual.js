@@ -1,4 +1,4 @@
-// version: v2.0 (Новый стабильный визуал вычитания сотен кучками)
+// version: v2.1 (Сцентрированный визуал вычитания сотен кучками)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseSubtractionData } from './calculator.js';
@@ -17,7 +17,6 @@ export function renderSubtractionHundredsVisual() {
     let currentLeftLabel = baseLeft;
     let currentRightLabel = baseRight;
 
-    // В фазе упрощения динамически меняем цифры на тележках, если есть ввод
     if (report.phase === 2 && report.simText.includes('-')) {
         const parts = report.simText.split('-');
         const userLeft = parseInt(parts[0], 10);
@@ -29,13 +28,11 @@ export function renderSubtractionHundredsVisual() {
 
     let html = '';
 
-    // ФАЗА 1 и ФАЗА 2: Отрисовка процесса подготовки к разгрузке
     if (report.phase === 1 || report.phase === 2) {
         const borderColor = report.simCorrect ? '#22c55e' : '#0284c7';
         const borderGlow = report.simCorrect ? 'filter:drop-shadow(0 0 8px #4ade80); border-color:#22c55e;' : '';
         const signColor = report.simCorrect ? '#22c55e' : '#94a3b8';
 
-        // Левый робот (Л) с полной синей тележкой кубиков
         const leftCart = `
             <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 <div><span style="font-size:36px; line-height:1;">🤖</span></div>
@@ -47,7 +44,6 @@ export function renderSubtractionHundredsVisual() {
             </div>
         `;
 
-        // Правый робот (П) с пустой заготовкой под кучу (серая корзина запроса груза)
         const rightCart = `
             <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 <div><span style="font-size:36px; line-height:1;">🤖</span></div>
@@ -58,20 +54,19 @@ export function renderSubtractionHundredsVisual() {
             </div>
         `;
 
+        // ХИРУРГИЧЕСКАЯ ПРАВКА: Заменили justify-content: space-around на center + gap для сближения роботов у знака минус
         html = `
-            <div style="display:flex; justify-content:space-around; width:100%; align-items:center; padding:0 20px; box-sizing:border-box; height:100%;">
+            <div style="display:flex; justify-content:center; gap:40px; width:100%; align-items:center; padding:0 20px; box-sizing:border-box; height:100%;">
                 ${leftCart}
                 <div style="font-size:36px; font-weight:bold; color:${signColor}; transition:color 0.2s;">−</div>
                 ${rightCart}
             </div>
         `;
     } 
-    // ФАЗА 3: Финал. Робот П забрал груз и уезжает, у робота Л остался остаток кучи
     else {
         const driveAwayClass = report.isFullySolved ? 'sub-drive-away' : '';
         const labelText = report.isFullySolved ? 'Ура! Робот П увёз свою кучу кубиков! 🎉' : 'Проверяем ответ... 👀';
 
-        // Левая тележка с остатком груза (верный ответ задачи)
         const leftCartFinal = `
             <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                 <div><span style="font-size:36px; line-height:1;">🤖</span></div>
@@ -83,7 +78,6 @@ export function renderSubtractionHundredsVisual() {
             </div>
         `;
 
-        // Уезжающая правая тележка, наполненная кучей вычтенного груза (базовое число num2)
         const rightCartFinal = `
             <div class="${driveAwayClass}" style="display:flex; align-items:center; gap:20px;">
                 <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
