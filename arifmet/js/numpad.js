@@ -1,4 +1,4 @@
-// version: v2.1 (Интеграция звуков и рендеринга для деления)
+// version: v2.2 (Полная интеграция отрисовки деления при вводе)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -95,10 +95,11 @@ export function refreshUI() {
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && activeItem.exampleText.includes('×'))) renderMonsterGame();
-    else if (state.currentMode === 'division') {
-        // Очищаем зону, пока нет визуализации для деления
-        GameCanvas.clearZone();
+    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && activeItem.exampleText.includes('×'))) {
+        renderMonsterGame();
+    } else if (state.currentMode === 'division') {
+        import('./division_visual.js').then(m => m.renderDivisionVisual());
+    } else {
+        renderTensVisual();
     }
-    else renderTensVisual();
 }
