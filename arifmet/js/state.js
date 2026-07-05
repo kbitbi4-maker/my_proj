@@ -1,4 +1,4 @@
-// version: v2.9 (Полная изоляция текстовых полей сотен до знака "=")
+// version: v3.0 (Финальная стабильная проверка сотен без багов split)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -45,23 +45,18 @@ export const state = {
         const firstNumber = parseInt(item.exampleText, 10);
         const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (item.exampleText.includes('+') || item.exampleText.includes('-'));
 
-        // 1. ОСОБАЯ ПРОВЕРКА ДЛЯ ПРЯМОГО ВВОДА (БЕЗ ЗНАКА "=")
+        // 1. ПРЯМОЙ ВВОД ОТВЕТА (БЕЗ ЗНАКОВ "=")
         if ((isMulti || isDiv || isHundreds) && !item.currentInput.includes('=')) {
             const val = parseInt(item.currentInput, 10);
             const isCorrect = (val === item.correctValue);
 
-            // Если введён ТОЧНЫЙ итоговый правильный ответ — мгновенный триумф
             if (isCorrect) {
                 return { isFullySolved: true, isWrongAnswer: false, phase: 3, simText: '', finText: item.currentInput, simCorrect: true, finCorrect: true };
             }
-            
-            // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: Если это сотни, мы возвращаем ТОТАЛЬНОЕ ОБНУЛЕНИЕ полей.
-            // Никаких промежуточных текстов! Тележки будут думать, что поле ввода абсолютно пустое.
             if (isHundreds) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: '', simCorrect: false, finCorrect: false };
             }
 
-            // Для умножения и деления оставляем стандартный строгий числовой контроль длины
             const currentLen = item.currentInput.length;
             if (currentLen < targetLength) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
@@ -69,20 +64,22 @@ export const state = {
             return { isFullySolved: false, isWrongAnswer: true, phase: 3, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
         }
 
-        // 2. ДВУХЭТАПНАЯ ЛОГИКА ДЛЯ СОТЕН (ПРИ НАЛИЧИИ ЗНАКОВ "=")
+        // 2. СТАБИЛЬНАЯ ЛОГИКА ДЛЯ СОТЕН С РАВЕНСТВАМИ
         if (isHundreds) {
             const totalEquals = (item.currentInput.match(/=/g) || []).length;
-            const parts = item.currentInput.split('=');
             
-            if (totalEquals === 1) {
-                // Пока введён один знак "=", мы передаём чистый текст упрощения для динамического изменения цифр на тележках,
-                // но строго удерживаем статус ошибки в положении false.
-                return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: parts[1] || '', finText: '', simCorrect: false, finCorrect: false };
+            // Разрезаем строку строго по первому знаку "="
+            const firstEqualIndex = item.currentInput.indexOf('=');
+            const userContent = item.currentInput.substring(firstEqualIndex + 1); // Всё, что после первого "="
+            
+            // Выделяем промежуточное упрощение (убираем всё, что после второго знака "=" если он есть)
+            let exprText = userContent;
+            let ansText = '';
+            if (totalEquals >= 2) {
+                const secondEqualIndex = userContent.indexOf('=');
+                exprText = userContent.substring(0, secondEqualIndex);
+                ansText = userContent.substring(secondEqualIndex + 1);
             }
-
-            // Нажато два или более знаков "=" (этап финальной проверки упрощения)
-            const exprText = parts[1] || ''; // Вторая часть (упрощение)
-            const ansText = parts[2] || '';  // Третья часть (финальное число)
 
             let simCorrect = false;
             if (exprText.trim().length > 0) {
@@ -91,8 +88,7 @@ export const state = {
             }
 
             let finCorrect = false;
-            const hasFinalAnswer = parts.length > 2 && ansText.trim().length >= targetLength;
-            if (hasFinalAnswer) {
+            if (totalEquals >= 2 && ansText.trim().length >= targetLength) {
                 let finVal = evaluateExpr(ansText);
                 finCorrect = (finVal === item.correctValue);
             }
@@ -100,20 +96,23 @@ export const state = {
             const isFullySolved = simCorrect && finCorrect;
             
             let isWrongAnswer = false;
+            // Ошибка упрощения загорается ТОЛЬКО если введено 2 или более знаков "=" и математика неверна
             if (totalEquals >= 2 && !simCorrect) {
                 isWrongAnswer = true;
             }
-            if (hasFinalAnswer && !finCorrect) {
+            if (totalEquals >= 2 && ansText.trim().length >= targetLength && !finCorrect) {
                 isWrongAnswer = true;
             }
 
-            let phase = 2;
-            if (hasFinalAnswer) phase = 3;
+            let phase = 1;
+            if (totalEquals === 1) phase = 1;
+            else if (totalEquals >= 2 && !finCorrect) phase = 2;
+            else if (totalEquals >= 2 && finCorrect) phase = 3;
 
             return { isFullySolved, isWrongAnswer, phase, simText: exprText, finText: ansText, simCorrect, finCorrect };
         }
 
-        // 3. СТАНДАРТНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (ДЕСЯТКИ, УМНОЖЕНИЕ С "=")
+        // 3. СТАНДАРТНАЯ ЛОГИКА (ДЕСЯТКИ, УМНОЖЕНИЕ)
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
@@ -129,11 +128,11 @@ export const state = {
                 const checkParts = simText.split('+');
                 const cleanText = item.exampleText.replace(/×/g, '*');
                 const factors = cleanText.split('*');
-                const f1 = parseInt(factors[0], 10);
-                const f2 = parseInt(factors[1], 10);
+                const f1 = parseInt(factors, 10);
+                const f2 = parseInt(factors, 10);
                 
-                const isVariantA = (checkParts.length === f2 && parseInt(checkParts[0], 10) === f1);
-                const isVariantB = (checkParts.length === f1 && parseInt(checkParts[0], 10) === f2);
+                const isVariantA = (checkParts.length === f2 && parseInt(checkParts, 10) === f1);
+                const isVariantB = (checkParts.length === f1 && parseInt(checkParts, 10) === f2);
                 
                 if (!isVariantA && !isVariantB) simCorrect = false;
             }
