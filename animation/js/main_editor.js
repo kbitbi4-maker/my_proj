@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
         EditorCore.setZoom(zoom);
     });
 
-    // Считывание независимых параметров ширины и высоты
+    // Расширенная проверка лимитов до 100x100
     document.getElementById('applyGridSizeBtn')?.addEventListener('click', () => {
         const newW = parseInt(document.getElementById('gridWidthInput').value, 10);
         const newH = parseInt(document.getElementById('gridHeightInput').value, 10);
-        if (newW >= 8 && newW <= 64 && newH >= 8 && newH <= 64) {
+        if (newW >= 8 && newW <= 100 && newH >= 8 && newH <= 100) {
             EditorCore.changeGridSize(newW, newH);
         }
     });
