@@ -1,4 +1,4 @@
-// version: v2.0 (Исправлено затирание текста при наборе упрощения сотен)
+// version: v1.9 (Исправлены индексы массивов split в истории сотен)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -101,7 +101,6 @@ export function getTensHistoryHTML(item, index, mode) {
             return { simHTML: '', finHTML: ` = <span class="block">${item.currentInput || '_'}</span>` };
         }
 
-        // Если введён один знак "=", плавно выводим в блок упрощения всё, что набрано после него
         if (totalEquals === 1) {
             const currentExpression = parts[1] || '';
             return {
@@ -110,7 +109,6 @@ export function getTensHistoryHTML(item, index, mode) {
             };
         }
 
-        // Введено два или более знаков равенства (этап финальной проверки)
         const exprText = parts[1] || '';
         const ansText = parts[2] || '';
         const simCls = report.simCorrect ? 'block-correct' : 'block-incorrect';
