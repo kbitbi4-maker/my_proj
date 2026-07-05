@@ -1,4 +1,4 @@
-// version: v1.8 (Рендеринг двухэтапного упрощения сотен в истории)
+// version: v1.9 (Исправлен синтаксис индексов массивов в сотенной истории)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -89,12 +89,10 @@ export function getTensHistoryHTML(item, index, mode) {
     const firstNumber = parseInt(item.exampleText, 10);
     const isHundreds = !isNaN(firstNumber) && firstNumber >= 100;
     
-    // СПЕЦИАЛЬНЫЙ ДВУХЭТАПНЫЙ РЕНДЕРИНГ ДЛЯ СОТЕН
     if (isHundreds) {
         const totalEquals = (item.currentInput.match(/=/g) || []).length;
         const parts = item.currentInput.split('=');
         
-        // Ребёнок идёт через прямой ввод ответа (нет знаков "=")
         if (totalEquals === 0) {
             if (item.currentInput.length >= targetLen) {
                 const cls = report.isFullySolved ? 'block-correct' : 'block-incorrect';
@@ -103,7 +101,6 @@ export function getTensHistoryHTML(item, index, mode) {
             return { simHTML: '', finHTML: ` = <span class="block">${item.currentInput || '_'}</span>` };
         }
 
-        // Ребёнок ввёл только первый знак равенства ("579+154=580+153")
         if (totalEquals === 1) {
             const currentExpression = parts[1] || '';
             return {
@@ -112,7 +109,6 @@ export function getTensHistoryHTML(item, index, mode) {
             };
         }
 
-        // Введено два или более знаков равенства
         const exprText = parts[1] || '';
         const ansText = parts[2] || '';
         const simCls = report.simCorrect ? 'block-correct' : 'block-incorrect';
@@ -129,7 +125,6 @@ export function getTensHistoryHTML(item, index, mode) {
         };
     }
 
-    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (ДЕСЯТКИ)
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
