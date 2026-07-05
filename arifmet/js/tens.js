@@ -1,4 +1,4 @@
-// version: v1.7 (Добавлена поддержка прямого ввода сотен в историю)
+// version: v1.8 (Рендеринг двухэтапного упрощения сотен в истории)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -86,23 +86,50 @@ export function getTensHistoryHTML(item, index, mode) {
         return { simHTML, finHTML };
     }
 
-    // ХИРУРГИЧЕСКАЯ ПРАВКА: Если это режим сотен И ввод идет напрямую (без знака "=")
     const firstNumber = parseInt(item.exampleText, 10);
     const isHundreds = !isNaN(firstNumber) && firstNumber >= 100;
-    if (isHundreds && !item.currentInput.includes('=')) {
-        if (item.currentInput.length >= targetLen) {
-            const cls = report.isFullySolved ? 'block-correct' : 'block-incorrect';
+    
+    // СПЕЦИАЛЬНЫЙ ДВУХЭТАПНЫЙ РЕНДЕРИНГ ДЛЯ СОТЕН
+    if (isHundreds) {
+        const totalEquals = (item.currentInput.match(/=/g) || []).length;
+        const parts = item.currentInput.split('=');
+        
+        // Ребёнок идёт через прямой ввод ответа (нет знаков "=")
+        if (totalEquals === 0) {
+            if (item.currentInput.length >= targetLen) {
+                const cls = report.isFullySolved ? 'block-correct' : 'block-incorrect';
+                return { simHTML: '', finHTML: ` = <span class="block ${cls}">${item.currentInput}</span>` };
+            }
+            return { simHTML: '', finHTML: ` = <span class="block">${item.currentInput || '_'}</span>` };
+        }
+
+        // Ребёнок ввёл только первый знак равенства ("579+154=580+153")
+        if (totalEquals === 1) {
+            const currentExpression = parts[1] || '';
             return {
-                simHTML: '',
-                finHTML: ` = <span class="block ${cls}">${item.currentInput}</span>`
+                simHTML: ` = <span class="block">${currentExpression || '_'}</span>`,
+                finHTML: ''
             };
         }
+
+        // Введено два или более знаков равенства
+        const exprText = parts[1] || '';
+        const ansText = parts[2] || '';
+        const simCls = report.simCorrect ? 'block-correct' : 'block-incorrect';
+        
+        let finHTML = ` = <span class="block">${ansText || '_'}</span>`;
+        if (parts.length > 2 && ansText.trim().length >= targetLen) {
+            const finCls = report.finCorrect ? 'block-correct' : 'block-incorrect';
+            finHTML = ` = <span class="block ${finCls}">${ansText}</span>`;
+        }
+
         return {
-            simHTML: '',
-            finHTML: ` = <span class="block">${item.currentInput || '_'}</span>`
+            simHTML: ` = <span class="block ${simCls}">${exprText}</span>`,
+            finHTML: finHTML
         };
     }
 
+    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ (ДЕСЯТКИ)
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
