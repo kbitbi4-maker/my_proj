@@ -1,22 +1,24 @@
 import { EditorCore } from './editor_core.js';
 import { AnimationPlayer } from './animation_player.js';
+import { ImageScanner } from './image_scanner.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     try {
         EditorCore.init();
         AnimationPlayer.init();
     } catch (error) {
-        console.error("Ошибка инициализации редактора:", error);
+        console.error("Ошибка запуска модулей:", error);
     }
 
+    // Привязка триггеров кнопок
     document.getElementById('clearGridBtn')?.addEventListener('click', () => EditorCore.clearCurrentGrid());
     document.getElementById('addFrameBtn')?.addEventListener('click', () => AnimationPlayer.addFrame());
     document.getElementById('playBtn')?.addEventListener('click', () => AnimationPlayer.togglePlay());
 
-    // Новая кнопка заливки синего фона космоса
-    document.getElementById('fillSpaceBtn')?.addEventListener('click', () => {
-        EditorCore.fillWholeCanvas('#000080');
-    });
+    // Красивое открытие системного окна выбора файла по клику на нашу кнопку
+    const fileInput = document.getElementById('imageImporter');
+    document.getElementById('uploadTriggerBtn')?.addEventListener('click', () => fileInput?.click());
+    fileInput?.addEventListener('change', (e) => ImageScanner.scan(e));
 
     document.getElementById('fpsSlider')?.addEventListener('input', (e) => {
         document.getElementById('fpsVal').innerText = e.target.value;
