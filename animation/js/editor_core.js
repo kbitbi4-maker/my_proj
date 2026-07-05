@@ -1,23 +1,28 @@
 import { AnimationPlayer } from './animation_player.js';
 
 export const EditorCore = {
-    GRID_SIZE: 16,
+    GRID_W: 40,
+    GRID_H: 40,
     CANVAS_SIZE: 400,
-    pixelSize: 0,
+    pixelSizeX: 0,
+    pixelSizeY: 0,
     canvas: null,
     ctx: null,
     colorPicker: null,
-    currentZoom: 100,
 
     init() {
         this.canvas = document.getElementById('paintCanvas');
         if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
         this.colorPicker = document.getElementById('colorPicker');
-        this.pixelSize = this.CANVAS_SIZE / this.GRID_SIZE;
-
+        this.recalcPixelSizes();
         this.setupListeners();
         this.draw();
+    },
+
+    recalcPixelSizes() {
+        this.pixelSizeX = this.CANVAS_SIZE / this.GRID_W;
+        this.pixelSizeY = this.CANVAS_SIZE / this.GRID_H;
     },
 
     setupListeners() {
@@ -30,10 +35,10 @@ export const EditorCore = {
 
     handlePaint(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const c = Math.floor(((e.clientX - rect.left) / rect.width) * this.GRID_SIZE);
-        const r = Math.floor(((e.clientY - rect.top) / rect.height) * this.GRID_SIZE);
+        const c = Math.floor(((e.clientX - rect.left) / rect.width) * this.GRID_W);
+        const r = Math.floor(((e.clientY - rect.top) / rect.height) * this.GRID_H);
 
-        if (c >= 0 && c < this.GRID_SIZE && r >= 0 && r < this.GRID_SIZE) {
+        if (c >= 0 && c < this.GRID_W && r >= 0 && r < this.GRID_H) {
             const currentGrid = AnimationPlayer.getCurrentGrid();
             if (!currentGrid) return;
             currentGrid[r][c] = (e.buttons === 2) ? null : this.colorPicker.value;
@@ -42,38 +47,25 @@ export const EditorCore = {
         }
     },
 
-    fillWholeCanvas(color) {
-        const currentGrid = AnimationPlayer.getCurrentGrid();
-        if (!currentGrid) return;
-        for (let r = 0; r < this.GRID_SIZE; r++) {
-            for (let c = 0; c < this.GRID_SIZE; c++) {
-                currentGrid[r][c] = color;
-            }
-        }
-        this.draw();
-        AnimationPlayer.drawPreview(AnimationPlayer.currentIndex);
-    },
-
     setZoom(zoomLevel) {
-        this.currentZoom = zoomLevel;
         const size = (this.CANVAS_SIZE * zoomLevel) / 100;
         this.canvas.style.width = size + 'px';
         this.canvas.style.height = size + 'px';
     },
 
-    changeGridSize(newSize) {
-        this.GRID_SIZE = newSize;
-        this.pixelSize = this.CANVAS_SIZE / this.GRID_SIZE;
-        AnimationPlayer.handleGridResize(newSize);
+    changeGridSize(newW, newH) {
+        this.GRID_W = newW;
+        this.GRID_H = newH;
+        this.recalcPixelSizes();
+        AnimationPlayer.handleGridResize(newW, newH);
         this.draw();
     },
 
     clearCurrentGrid() {
-        const size = this.GRID_SIZE;
-        const emptyGrid = Array(size).fill(null).map(() => Array(size).fill(null));
+        const emptyGrid = Array(this.GRID_H).fill(null).map(() => Array(this.GRID_W).fill(null));
         AnimationPlayer.setCurrentGrid(emptyGrid);
         this.draw();
-        AnimationPlayer.drawPreview(AnimationPlayer.currentIndex);
+        AnimationPlayer.drawPreview(this.currentIndex);
     },
 
     draw() {
@@ -82,22 +74,21 @@ export const EditorCore = {
         const grid = AnimationPlayer.getCurrentGrid();
         if (!grid) return;
 
-        for (let r = 0; r < this.GRID_SIZE; r++) {
-            for (let c = 0; c < this.GRID_SIZE; c++) {
+        for (let r = 0; r < this.GRID_H; r++) {
+            for (let c = 0; c < this.GRID_W; c++) {
                 if (grid[r][c]) {
                     this.ctx.fillStyle = grid[r][c];
-                    this.ctx.fillRect(c * this.pixelSize, r * this.pixelSize, this.pixelSize, this.pixelSize);
+                    this.ctx.fillRect(c * this.pixelSizeX, r * this.pixelSizeY, this.pixelSizeX, this.pixelSizeY);
                 }
             }
         }
 
-        this.ctx.strokeStyle = '#2d2d38';
-        this.ctx.lineWidth = 1;
-        for (let i = 0; i <= this.GRID_SIZE; i++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(i * this.pixelSize, 0); this.ctx.lineTo(i * this.pixelSize, this.CANVAS_SIZE);
-            this.ctx.moveTo(0, i * this.pixelSize); this.ctx.lineTo(this.CANVAS_SIZE, i * this.pixelSize);
-            this.ctx.stroke();
+        this.ctx.strokeStyle = '#2d2d38'; this.ctx.lineWidth = 1;
+        for (let i = 0; i <= this.GRID_W; i++) {
+            this.ctx.beginPath(); this.ctx.moveTo(i * this.pixelSizeX, 0); this.ctx.lineTo(i * this.pixelSizeX, this.CANVAS_SIZE); this.ctx.stroke();
+        }
+        for (let j = 0; i <= this.GRID_H; j++) {
+            this.ctx.beginPath(); this.ctx.moveTo(0, j * this.pixelSizeY); this.ctx.lineTo(this.CANVAS_SIZE, j * this.pixelSizeY); this.ctx.stroke();
         }
     }
 };
