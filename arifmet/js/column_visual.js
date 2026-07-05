@@ -1,69 +1,87 @@
-// version: v1.1 (Исправлена мгновенная отрисовка тарелки)
+// version: v1.2 (Отреставрирован визуал режима в столбик)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 
-export function renderDivisionVisual() {
-    const activeItem = state.examplesHistory[state.activeIndex];
-    if (!activeItem) return GameCanvas.clearZone();
+const carryState = {};
 
-    // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: Добавлены индексы [0] и [1] для правильного извлечения чисел
-    const parts = activeItem.exampleText.split('÷');
-    const totalPizzas = parseInt(parts[0], 10); // Общее количество пицц
-    const monstersCount = parseInt(parts[1], 10); // Количество инопланетян
+export function renderColumnVisual() {
+    const item = state.examplesHistory[state.activeIndex];
+    if (!item) return;
 
     const report = state.validateCurrentInput();
-    const status = report.isFullySolved ? 'win' : (report.isWrongAnswer ? 'sad' : 'play');
-    const cacheKey = `${activeItem.exampleText}_div_${status}`;
-
-    // Адаптивные размеры под большое число пицц и монстров
-    const pizzaSize = totalPizzas > 24 ? '15px' : (totalPizzas > 12 ? '18px' : '22px');
-    const monsterSize = monstersCount > 4 ? '38px' : '46px';
-
-    // Формируем огромную общую тарелку с пиццами
-    let plateContent = '';
-    if (status === 'win') {
-        plateContent = '<span style="font-size:14px;color:#22c55e;font-weight:bold;animation:fadeIn 0.3s;">Всё честно разделили! 🍕✨</span>';
-    } else if (status === 'sad') {
-        plateContent = `<span class="tears-animation" style="font-size:${pizzaSize};">💦💦💦</span>`;
-    } else {
-        // Наполняем тарелку общим количеством пицц
-        plateContent = `<span style="font-size:${pizzaSize}; filter:drop-shadow(0 1px 1px rgba(0,0,0,0.1)); letter-spacing: 2px;">${'🍕'.repeat(totalPizzas)}</span>`;
-    }
-
-    const plateHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; background:#fff7ed; border:2px dashed #fed7aa; padding:10px 15px; border-radius:50%; min-width:160px; min-height:80px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); animation:fadeIn 0.3s;">
-            <b style="font-size:11px; color:#c2410c; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px;">Общая тарелка</b>
-            <div style="display:flex; justify-content:center; flex-wrap:wrap; max-width:240px; align-items:center; gap:2px;">${plateContent}</div>
-        </div>
-    `;
-
-    // Формируем группу голодных инопланетян
-    let monstersHTML = '';
-    const mClass = status === 'win' ? 'monster-happy' : (status === 'sad' ? 'monster-sad' : '');
+    const isAdd = item.exampleText.includes('+');
+    const sign = isAdd ? '+' : '−';
     
-    for (let i = 0; i < monstersCount; i++) {
-        let subtitleHTML = '';
-        if (status === 'win') {
-            subtitleHTML = `<div style="font-size:11px; color:#22c55e; font-weight:bold; margin-top:2px;">Ням! ${activeItem.correctValue}</div>`;
+    const nums = item.exampleText.split(/[+\-]/);
+    const num1 = parseInt(nums[0], 10);
+    const num2 = parseInt(nums[1], 10);
+
+    if (!carryState[state.activeIndex]) {
+        carryState[state.activeIndex] = { thousands: '', hundreds: '', tens: '' };
+    }
+    const carries = carryState[state.activeIndex];
+
+    const s1 = String(num1).padStart(3, ' ');
+    const s2 = String(num2).padStart(3, ' ');
+
+    const userAns = report.finText || report.simText || '';
+    
+    const paddedAns = userAns.padStart(4, ' ');
+    let answerHTML = '';
+    for (let i = 0; i < 4; i++) {
+        const char = paddedAns[i];
+        if (char === ' ') {
+            answerHTML += `<span style="color: #cbd5e1; font-weight: normal;">_</span>`;
+        } else {
+            answerHTML += `<span>${char}</span>`;
         }
-        monstersHTML += `<div style="font-size:${monsterSize}; display:inline-block; margin:0 4px;">` + GameCanvas.createActorHTML({ emoji: '👾', animationClass: mClass, subtitle: subtitleHTML }) + `</div>`;
     }
 
-    const monstersGroupHTML = `
-        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
-            <b style="font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Ждут свою долю (${monstersCount} инопланетян)</b>
-            <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:8px;">${monstersHTML}</div>
+    const cacheKey = `${item.exampleText}_col_p${report.phase}_input${userAns}_th${carries.thousands}_h${carries.hundreds}_t${carries.tens}`;
+
+    let html = `
+    <div class="column-math-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: monospace; font-size: 4.5vh; font-weight: bold; color: #334155; line-height: 1.2; user-select: none;">
+        
+        <div class="carry-row" style="display: flex; justify-content: flex-end; width: 140px; margin-bottom: 2px; height: 4vh;">
+            <div class="carry-box" data-digit="thousands" style="width: 35px; text-align: center; color: #a855f7; font-size: 2.5vh; background: #f3e8ff; border-radius: 4px; margin-right: 2px; cursor: pointer; min-height: 3.5vh; display: flex; align-items: center; justify-content: center;">${carries.thousands}</div>
+            <div class="carry-box" data-digit="hundreds" style="width: 35px; text-align: center; color: #3b82f6; font-size: 2.5vh; background: #dbeafe; border-radius: 4px; margin-right: 2px; cursor: pointer; min-height: 3.5vh; display: flex; align-items: center; justify-content: center;">${carries.hundreds}</div>
+            <div class="carry-box" data-digit="tens" style="width: 35px; text-align: center; color: #10b981; font-size: 2.5vh; background: #d1fae5; border-radius: 4px; margin-right: 2px; cursor: pointer; min-height: 3.5vh; display: flex; align-items: center; justify-content: center;">${carries.tens}</div>
+            <div style="width: 35px;"></div>
         </div>
+
+        <div style="position: relative; width: 140px; text-align: right; letter-spacing: 12px; padding-right: 4px;">
+            <div style="position: absolute; left: -25px; top: 1.2vh; color: #64748b; letter-spacing: normal;">${sign}</div>
+            <div>${s1}</div>
+            <div>${s2}</div>
+            <div style="width: 165px; position: absolute; left: -25px; border-top: 4px solid #475569; margin-top: 2px; margin-bottom: 2px;"></div>
+        </div>
+
+        <div class="answer-row ${report.isFullySolved ? 'block-correct' : (report.isWrongAnswer ? 'block-incorrect' : '')}" style="width: 140px; text-align: right; letter-spacing: 12px; margin-top: 12px; padding-right: 4px; color: ${report.isFullySolved ? '#155724' : (report.isWrongAnswer ? '#721c24' : '#1e293b')}; min-height: 5.5vh;">
+            ${answerHTML}
+        </div>
+
+        <div style="font-size: 1.8vh; margin-top: 15px; color: #64748b; letter-spacing: normal; font-family: sans-serif;">
+            ${report.isFullySolved ? 'Великолепно! Правильно в столбик! 🎉' : 'Считаем справа налево: сначала единицы, потом десятки 📝'}
+        </div>
+    </div>
     `;
 
-    // Собираем финальную сцену
-    const finalSceneHTML = `
-        <div style="display:flex; justify-content:space-around; align-items:center; width:100%; gap:20px; padding:0 10px; box-sizing:border-box;">
-            ${plateHTML}
-            <div style="font-size:32px; font-weight:bold; color:#cbd5e1;">➔</div>
-            ${monstersGroupHTML}
-        </div>
-    `;
+    GameCanvas.renderZoneScene(html, cacheKey);
 
-    GameCanvas.renderZoneScene(finalSceneHTML, cacheKey);
+    const container = document.getElementById('game-zone');
+    if (container) {
+        container.querySelectorAll('.carry-box').forEach(box => {
+            box.addEventListener('click', (e) => {
+                const digitType = e.currentTarget.getAttribute('data-digit');
+                let currentVal = carryState[state.activeIndex][digitType];
+                
+                if (currentVal === '') currentVal = '1';
+                else if (currentVal === '1') currentVal = '2';
+                else currentVal = '';
+
+                carryState[state.activeIndex][digitType] = currentVal;
+                renderColumnVisual();
+            });
+        });
+    }
 }
