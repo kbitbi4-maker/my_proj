@@ -10,8 +10,8 @@ export const AnimationPlayer = {
 
     init() {
         this.pCanvas = document.getElementById('previewCanvas');
+        if (!this.pCanvas) return;
         this.pCtx = this.pCanvas.getContext('2d');
-        // Добавляем стартовый пустой кадр
         this.frames.push(Array(16).fill(null).map(() => Array(16).fill(null)));
         this.updateUI();
         this.drawPreview(0);
@@ -40,6 +40,7 @@ export const AnimationPlayer = {
     },
 
     drawPreview(idx) {
+        if (!this.pCtx) return;
         this.pCtx.clearRect(0, 0, this.pCanvas.width, this.pCanvas.height);
         const grid = this.frames[idx];
         const pSize = this.pCanvas.width / 16;
@@ -55,6 +56,7 @@ export const AnimationPlayer = {
 
     updateUI() {
         const list = document.getElementById('framesList');
+        if (!list) return;
         list.innerHTML = '';
         this.frames.forEach((_, idx) => {
             const item = document.createElement('div');
@@ -82,6 +84,7 @@ export const AnimationPlayer = {
 
     togglePlay() {
         const btn = document.getElementById('playBtn');
+        if (!btn) return;
         if (this.isPlaying) {
             this.isPlaying = false;
             clearInterval(this.intervalId);
@@ -93,7 +96,8 @@ export const AnimationPlayer = {
             btn.innerText = 'Стоп ▢';
             btn.className = 'btn btn-danger';
             let animIdx = 0;
-            const fps = parseInt(document.getElementById('fpsSlider').value);
+            const slider = document.getElementById('fpsSlider');
+            const fps = slider ? parseInt(slider.value) : 6;
             this.intervalId = setInterval(() => {
                 this.drawPreview(animIdx);
                 animIdx = (animIdx + 1) % this.frames.length;
@@ -105,4 +109,3 @@ export const AnimationPlayer = {
         if (this.isPlaying) { this.togglePlay(); this.togglePlay(); }
     }
 };
-
