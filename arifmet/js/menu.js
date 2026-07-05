@@ -1,4 +1,4 @@
-// version: v1.5
+// version: v2.1 (Добавлен режим деления)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { resetAllFeedbacks } from './feedback.js';
@@ -24,7 +24,6 @@ export function toggleMenuMode() {
 }
 
 export function handleModeSelection(mode) {
-    // В разработке остались только тысячи
     if (mode === 'thousands') {
         alert("Режим в разработке 🛠️");
         return;
@@ -36,10 +35,12 @@ export function handleModeSelection(mode) {
     GameCanvas.clearHistory();
     toggleMenuMode();
 
-    // Запускаем движок tens для десятков, сотен и столбика
     if (mode === 'tens' || mode === 'hundreds' || mode === 'column') initTensMode();
     else if (mode === 'multiplication') initMultiplicationMode();
     else if (mode === 'mix') initMixMode();
+    else if (mode === 'division') {
+        import('./division.js').then(m => m.initDivisionMode());
+    }
 }
 
 function getModeLabel(mode) {
@@ -48,5 +49,6 @@ function getModeLabel(mode) {
     if (mode === 'multiplication') return 'Режим: Умножение 🍕 ▼';
     if (mode === 'mix') return 'Режим: Микс 🎰 ▼';
     if (mode === 'column') return 'Режим: В столбик 📝 ▼';
+    if (mode === 'division') return 'Режим: Деление 🍕 ▼';
     return 'Режим: Выбрать ▼';
 }
