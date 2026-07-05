@@ -31,9 +31,7 @@ export const AnimationPlayer = {
         const copy = this.frames[this.currentIndex].map(row => [...row]);
         this.frames.push(copy);
         this.currentIndex = this.frames.length - 1;
-        this.updateUI();
-        EditorCore.draw();
-        this.drawPreview(this.currentIndex);
+        this.updateUI(); EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
     deleteFrame(idx, e) {
@@ -43,55 +41,75 @@ export const AnimationPlayer = {
         this.updateUI(); EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
-    // Сжатая генерация кода: по 4 пикселя в одной строке через знак "|"
+    // ТЕХНОЛОГИЯ СЖАТИЯ RLE: Архивация строк по цвету и количеству повторений
     updateConsoleCode() {
         const grid = this.frames[this.currentIndex];
-        let buffer = [];
-        let codeLines = [];
-        
-        for (let r = 0; r < EditorCore.GRID_SIZE; r++) {
-            for (let c = 0; c < EditorCore.GRID_SIZE; c++) {
-                if (grid[r][c]) {
-                    buffer.push(`${r},${c},${grid[r][c]}`);
-                    if (buffer.length === 4) {
-                        codeLines.push(buffer.join('|'));
-                        buffer = [];
+        const size = EditorCore.GRID_SIZE;
+        let compressedLines = [];
+
+        for (let r = 0; r < size; r++) {
+            let rowPackets = [];
+            let c = 0;
+
+            while (c < size) {
+                if (grid[r][c] !== null) {
+                    let startC = c;
+                    let color = grid[r][c];
+                    let count = 0;
+
+                    // Считаем, сколько пикселей этого же цвета идут подряд в строке
+                    while (c < size && grid[r][c] === color) {
+                        count++;
+                        c++;
                     }
+                    rowPackets.push(`${startC},${count},${color}`);
+                } else {
+                    c++;
                 }
             }
+            if (rowPackets.length > 0) {
+                compressedLines.push(`${r}:${rowPackets.join('|')}`);
+            }
         }
-        if (buffer.length > 0) {
-            codeLines.push(buffer.join('|'));
-        }
-        document.getElementById('frameConsole').value = codeLines.join('\n');
+        document.getElementById('frameConsole').value = compressedLines.join('\n');
     },
 
-    // Чтение сжатого кода (по 4 пикселя на строку) обратно на холст
+    // РАСПАКОВКА АРХИВИРОВАННОГО КОДА обратно в пиксели матрицы
     loadFrameFromCode() {
         const text = document.getElementById('frameConsole').value.trim();
         const size = EditorCore.GRID_SIZE;
         const newGrid = Array(size).fill(null).map(() => Array(size).fill(null));
-        
+
         if (text) {
             const lines = text.split('\n');
             lines.forEach(line => {
-                const pixels = line.split('|');
-                pixels.forEach(pixel => {
-                    const parts = pixel.split(',');
-                    if (parts.length === 3) {
-                        const r = parseInt(parts[0], 10);
-                        const c = parseInt(parts[1], 10);
-                        const color = parts[2].trim();
-                        if (r >= 0 && r < size && c >= 0 && c < size) {
-                            newGrid[r][c] = color;
+                const parts = line.split(':');
+                if (parts.length !== 2) return;
+
+                const r = parseInt(parts[0], 10);
+                if (r < 0 || r >= size) return;
+
+                const packets = parts[1].split('|');
+                packets.forEach(packet => {
+                    const data = packet.split(',');
+                    if (data.length === 3) {
+                        const startC = parseInt(data[0], 10);
+                        const count = parseInt(data[1], 10);
+                        const color = data[2].trim();
+
+                        // Распаковываем сжатый пакет обратно в строку ячеек
+                        for (let i = 0; i < count; i++) {
+                            let currentC = startC + i;
+                            if (currentC >= 0 && currentC < size) {
+                                newGrid[r][currentC] = color;
+                            }
                         }
                     }
                 });
             });
         }
         this.frames[this.currentIndex] = newGrid;
-        EditorCore.draw();
-        this.drawPreview(this.currentIndex);
+        EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
     drawPreview(idx) {
