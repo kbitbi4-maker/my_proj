@@ -1,4 +1,4 @@
-// version: v1.1.2 (Хирургически безопасный пул до 10)  
+// version: v1.1.2 (Хирургически безопасный пул до 10)   
 import { state } from './state.js';  
 import { GameCanvas } from './game\_canvas.js';  
 import { parseMultiplicationData } from './calculator.js';
