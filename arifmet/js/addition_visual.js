@@ -1,4 +1,4 @@
-// version: v1.1
+// version: v1.1 
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseAdditionData } from './calculator.js';
