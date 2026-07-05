@@ -1,4 +1,4 @@
-// version: v2.2 (Валидатор адаптирован под автономное определение сотен)
+// version: v2.3 (Мягкая проверка порядка слагаемых в умножении)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -40,9 +40,13 @@ export const state = {
             return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
         }
 
+        // ХИРУРГИЧЕСКОЕ ОБНОВЛЕНИЕ: Поддержка мгновенного прямого ввода ответа для СОТЕН и УМНОЖЕНИЯ/ДЕЛЕНИЯ
         const isMulti = item.exampleText.includes('×');
         const isDiv = item.exampleText.includes('÷');
-        if ((isMulti || isDiv) && !item.currentInput.includes('=')) {
+        const firstNumber = parseInt(item.exampleText, 10);
+        const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (item.exampleText.includes('+') || item.exampleText.includes('-'));
+
+        if ((isMulti || isDiv || isHundreds) && !item.currentInput.includes('=')) {
             const currentLen = item.currentInput.length;
             if (currentLen < targetLength) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
@@ -63,10 +67,19 @@ export const state = {
             let simVal = evaluateExpr(simText);
             simCorrect = (simVal === item.correctValue);
             
+            // ХИРУРГИЧЕСКОЕ ОБНОВЛЕНИЕ: Проверка разложения умножения (любой порядок слагаемых верный)
             if (item.exampleText.includes('×') && simCorrect && simText) {
                 const checkParts = simText.split('+');
-                const expectedCount = parseInt(item.exampleText.split('×').at(1), 10);
-                if (checkParts.length !== expectedCount) simCorrect = false;
+                const cleanText = item.exampleText.replace(/×/g, '*');
+                const factors = cleanText.split('*');
+                const f1 = parseInt(factors[0], 10);
+                const f2 = parseInt(factors[1], 10);
+                
+                // Допускаем f1 слагаемых по f2 ИЛИ f2 слагаемых по f1
+                const isVariantA = (checkParts.length === f2 && parseInt(checkParts[0], 10) === f1);
+                const isVariantB = (checkParts.length === f1 && parseInt(checkParts[0], 10) === f2);
+                
+                if (!isVariantA && !isVariantB) simCorrect = false;
             }
         }
 
