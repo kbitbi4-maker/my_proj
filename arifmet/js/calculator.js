@@ -1,4 +1,4 @@
-// version: v2.0 (Калькулятор адаптирован под автономное определение сотен)
+// version: v2.0 (Калькулятор адаптирован под автономное определение сотен) 
 export function evaluateExpr(str) {
     if (!str) return null;
     let cleaned = str.replace(/×/g, '*').trim();
