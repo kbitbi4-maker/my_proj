@@ -1,4 +1,4 @@
-// version: v2.1 (Сцентрированный визуал вычитания сотен кучками)
+// version: v2.2 (Исправлено центрирование роботов вокруг минуса)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { parseSubtractionData } from './calculator.js';
@@ -54,11 +54,11 @@ export function renderSubtractionHundredsVisual() {
             </div>
         `;
 
-        // Заменили justify-content: space-around на center и зафиксировали gap для компактного расположения
+        // ИСПРАВЛЕНО: убрали раскидывание по краям, зафиксировали max-width контейнера и выровняли по центру
         html = `
-            <div style="display:flex; justify-content:center; gap:40px; width:100%; align-items:center; padding:0 20px; box-sizing:border-box; height:100%;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:30px; width:100%; max-width:450px; margin:0 auto; height:100%;">
                 ${leftCart}
-                <div style="font-size:36px; font-weight:bold; color:${signColor}; transition:color 0.2s;">−</div>
+                <div style="font-size:36px; font-weight:bold; color:${signColor}; transition:color 0.2s; padding:0 10px;">−</div>
                 ${rightCart}
             </div>
         `;
@@ -82,7 +82,7 @@ export function renderSubtractionHundredsVisual() {
             <div class="${driveAwayClass}" style="display:flex; align-items:center; gap:20px;">
                 <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                     <div><span style="font-size:36px; line-height:1;">🤖</span></div>
-                    <div style="position:relative; width:110px; height:70px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:2px solid #dc2626; border-radius:12px 12px 4px 4px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(220,38,38,0.15);">
+                    <div style="relative; width:110px; height:70px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border:2px solid #dc2626; border-radius:12px 12px 4px 4px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(220,38,38,0.15);">
                         <div style="position:absolute; top:-14px; left:20px; width:66px; height:16px; background:#dc2626; border-radius:40% 40% 0 0; opacity:0.8;"></div>
                         <b style="font-size:22px; color:white; font-family:monospace; text-shadow:0 2px 4px rgba(0,0,0,0.15); z-index:2;">${baseRight}</b>
                     </div>
