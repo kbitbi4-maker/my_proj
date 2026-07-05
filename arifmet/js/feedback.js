@@ -1,4 +1,4 @@
-// version: v2.0 (Умный фидбек: универсальный мягкий ввод и управление фазами для всех режимов) 
+// version: v2.1 (Умный фидбек: универсальный мягкий ввод и управление фазами без опечаток)
 import { state } from './state.js';
 
 let currentWinPlayer = null;
@@ -10,7 +10,7 @@ export const soundFlags = {
     simFailSoundPlayed: false,
     finFailSoundPlayed: false,
     simWinSoundPlayed: false,
-    finWinSoundPlayed = false
+    finWinSoundPlayed: false
 };
 
 export function resetAllFeedbacks() {
@@ -69,9 +69,7 @@ export function triggerFailFeedback() {
 }
 
 /**
- * ИНТЕЛЛЕКТУАЛЬНЫЙ АНАЛИЗАТОР ВВОДА
- * Перехватывает сырой отчет валидации и на лету модифицирует фазы игры,
- * обеспечивая мягкий ввод (прямой ответ или упрощение) для всех режимов.
+ * ИНТЕЛЛЕКТУАЛЬНЫЙ АНАЛИЗАТОР ВВОДА И ЗВУКОВЫХ ТРИГГЕРОВ
  */
 export function interceptAndTriggerFeedback(report, exampleText) {
     if (state.activeIndex === -1 || !state.examplesHistory[state.activeIndex]) return report;
@@ -83,7 +81,7 @@ export function interceptAndTriggerFeedback(report, exampleText) {
     const isHundreds = !isNaN(firstNumber) && firstNumber >= 100 && (exampleText.includes('+') || exampleText.includes('-'));
     const isTens = !isNaN(firstNumber) && firstNumber < 100 && firstNumber >= 10 && (exampleText.includes('+') || exampleText.includes('-'));
 
-    // ФАЗА А: Ребёнок пишет число напрямую (знака "=" в строке ввода нет)
+    // ФАЗА А: Прямой ввод числа (знака "=" в строке ввода НЕТ)
     if (!item.currentInput.includes('=')) {
         const inputNum = parseInt(item.currentInput, 10);
         
@@ -105,14 +103,15 @@ export function interceptAndTriggerFeedback(report, exampleText) {
             return report;
         }
 
-        // Если вводится что-то другое (выражение упрощения или неполное число) — 
-        // мы замораживаем любые ошибки и держим нейтральный статус фазы 1
+        // Если вносится выражение или неполный ответ — удерживаем тишину и нейтральный статус
         if (isHundreds || isTens || isMulti || isDiv) {
             report.isFullySolved = false;
             report.isWrongAnswer = false;
             report.phase = 1;
             report.simCorrect = false;
             report.finCorrect = false;
+            report.simText = '';
+            report.finText = '';
             return report;
         }
     }
@@ -137,6 +136,12 @@ export function interceptAndTriggerFeedback(report, exampleText) {
             report.simCorrect = false;
             report.isFullySolved = false;
         }
+    }
+
+    // Блокируем ложный звук ошибки для сотен, пока не введено 2 знака "="
+    if (isHundreds && totalEquals < 2 && report.isWrongAnswer) {
+        report.isWrongAnswer = false;
+        return report;
     }
 
     // Обработка звуков для классической двухэтапной схемы
