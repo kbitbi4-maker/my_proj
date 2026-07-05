@@ -1,4 +1,4 @@
-// version: v2.0 (Добавлен мягкий прямой ввод для умножения)
+// version: v2.1 (Поддержка мгновенной проверки деления)
 import { evaluateExpr } from './calculator.js';
 
 export const state = {
@@ -30,7 +30,6 @@ export const state = {
         const item = this.examplesHistory[idx];
         const targetLength = String(item.correctValue).length;
 
-        // СПЕЦИАЛЬНАЯ ЛОГИКА ДЛЯ РЕЖИМА В СТОЛБИК
         if (this.currentMode === 'column') {
             const currentLen = item.currentInput.length;
             if (currentLen < targetLength) {
@@ -41,31 +40,18 @@ export const state = {
             return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: item.currentInput, finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
         }
 
-        // ХИРУРГИЧЕСКАЯ ВСТАВКА: МЯГКАЯ ЛОГИКА ДЛЯ ПРЯМОГО ВВОДА УМНОЖЕНИЯ (БЕЗ ЗНАКА "=")
         const isMulti = item.exampleText.includes('×');
-        if (isMulti && !item.currentInput.includes('=')) {
+        const isDiv = item.exampleText.includes('÷');
+        if ((isMulti || isDiv) && !item.currentInput.includes('=')) {
             const currentLen = item.currentInput.length;
-            
-            // Пока ребёнок не набрал нужное количество цифр ответа, статус нейтральный
             if (currentLen < targetLength) {
                 return { isFullySolved: false, isWrongAnswer: false, phase: 1, simText: '', finText: item.currentInput, simCorrect: false, finCorrect: false };
             }
-            
-            // Длина совпала — мгновенно проверяем математику прямого ответа
             const val = parseInt(item.currentInput, 10);
             const isCorrect = (val === item.correctValue);
-            return {
-                isFullySolved: isCorrect,
-                isWrongAnswer: !isCorrect,
-                phase: 3, // Сразу переводим в финальную фазу для запуска победных скриптов
-                simText: '',
-                finText: item.currentInput,
-                simCorrect: isCorrect,
-                finCorrect: isCorrect
-            };
+            return { isFullySolved: isCorrect, isWrongAnswer: !isCorrect, phase: 3, simText: '', finText: item.currentInput, simCorrect: isCorrect, finCorrect: isCorrect };
         }
 
-        // СТАНДАРТНАЯ ДВУХЭТАПНАЯ ЛОГИКА ДЛЯ ОСТАЛЬНЫХ СЛУЧАЕВ
         const parts = item.currentInput.split('=');
         const simText = parts.at(0) || '', finText = parts.at(1) || '';
         
