@@ -1,4 +1,4 @@
-<!-- version: v1.3 --> 
+<!-- version: v1.4 --> 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -23,13 +23,14 @@
             </div>
             
             <div class="right-area">
-                <!-- Контейнер Выбора Режимов -->
+                <!-- Контейнер Выбора Режимов с новой кнопкой Лучника -->
                 <div id="modes-menu-container" style="display: none;">
                     <button class="mode-btn" data-mode="tens">Десятки 🟢</button>
                     <button class="mode-btn" data-mode="multiplication">Умножение 🍕 🟡</button>
                     <button class="mode-btn" data-mode="mix">Микс 🎰 🍒</button>
                     <button class="mode-btn" data-mode="hundreds">Сотни 🛠️ 🔵</button>
                     <button class="mode-btn" data-mode="column">В столбик 📝 🟣</button>
+                    <button class="mode-btn" data-mode="archer">Лучник 🏹 🟢</button>
                 </div>
 
                 <!-- Контейнер Цифрового Нумпада -->
@@ -70,6 +71,10 @@
         </div>
     </div>
 
+    <!-- Главная точка входа игры -->
     <script type="module" src="js/main.js"></script>
+
+    <!-- Подключаем мост анимации из параллельной папки, чтобы он слушал события успеха/ошибки -->
+    <script type="module" src="../animation/js/animation_bridge.js"></script>
 </body>
 </html>
