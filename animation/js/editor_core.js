@@ -3,9 +3,8 @@ import { AnimationPlayer } from './animation_player.js';
 export const EditorCore = {
     GRID_W: 40,
     GRID_H: 40,
-    CANVAS_SIZE: 400,
-    pixelSizeX: 0,
-    pixelSizeY: 0,
+    BASE_PIXEL_SIZE: 8, // Базовый размер одного пикселя сетки
+    currentZoom: 100,
     canvas: null,
     ctx: null,
     colorPicker: null,
@@ -15,14 +14,17 @@ export const EditorCore = {
         if (!this.canvas) return;
         this.ctx = this.canvas.getContext('2d');
         this.colorPicker = document.getElementById('colorPicker');
-        this.recalcPixelSizes();
+        this.resizeCanvasSize();
         this.setupListeners();
         this.draw();
     },
 
-    recalcPixelSizes() {
-        this.pixelSizeX = this.CANVAS_SIZE / this.GRID_W;
-        this.pixelSizeY = this.CANVAS_SIZE / this.GRID_H;
+    // Динамически меняем реальное разрешение холста под пропорции сетки
+    resizeCanvasSize() {
+        const pSize = this.BASE_PIXEL_SIZE;
+        this.canvas.width = this.GRID_W * pSize;
+        this.canvas.height = this.GRID_H * pSize;
+        this.setZoom(this.currentZoom);
     },
 
     setupListeners() {
@@ -47,16 +49,36 @@ export const EditorCore = {
         }
     },
 
+    // Изменение масштаба через CSS с сохранением прямоугольных пропорций
     setZoom(zoomLevel) {
-        const size = (this.CANVAS_SIZE * zoomLevel) / 100;
-        this.canvas.style.width = size + 'px';
-        this.canvas.style.height = size + 'px';
+        this.currentZoom = zoomLevel;
+        const scale = zoomLevel / 100;
+        const visualW = this.GRID_W * this.BASE_PIXEL_SIZE * scale;
+        const visualH = this.GRID_H * this.BASE_PIXEL_SIZE * scale;
+        
+        this.canvas.style.width = visualW + 'px';
+        this.canvas.style.height = visualH + 'px';
+        this.updateGridCSS();
+    },
+
+    updateGridCSS() {
+        if (this.GRID_W > 75 || this.GRID_H > 75) {
+            this.canvas.style.backgroundImage = 'none';
+            return;
+        }
+        const stepX = (100 / this.GRID_W) + '%';
+        const stepY = (100 / this.GRID_H) + '%';
+        this.canvas.style.backgroundImage = `
+            linear-gradient(to right, #2d2d38 1px, transparent 1px),
+            linear-gradient(to bottom, #2d2d38 1px, transparent 1px)
+        `;
+        this.canvas.style.backgroundSize = `${stepX} ${stepY}`;
     },
 
     changeGridSize(newW, newH) {
         this.GRID_W = newW;
         this.GRID_H = newH;
-        this.recalcPixelSizes();
+        this.resizeCanvasSize();
         AnimationPlayer.handleGridResize(newW, newH);
         this.draw();
     },
@@ -70,25 +92,19 @@ export const EditorCore = {
 
     draw() {
         if (!this.ctx) return;
-        this.ctx.clearRect(0, 0, this.CANVAS_SIZE, this.CANVAS_SIZE);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         const grid = AnimationPlayer.getCurrentGrid();
         if (!grid) return;
 
+        const pSize = this.BASE_PIXEL_SIZE;
+        // Отрисовка строго квадратных пикселей стык-в-стык без искажения пропорций экрана!
         for (let r = 0; r < this.GRID_H; r++) {
             for (let c = 0; c < this.GRID_W; c++) {
                 if (grid[r][c]) {
                     this.ctx.fillStyle = grid[r][c];
-                    this.ctx.fillRect(c * this.pixelSizeX, r * this.pixelSizeY, this.pixelSizeX, this.pixelSizeY);
+                    this.ctx.fillRect(c * pSize, r * pSize, pSize, pSize);
                 }
             }
-        }
-
-        this.ctx.strokeStyle = '#2d2d38'; this.ctx.lineWidth = 1;
-        for (let i = 0; i <= this.GRID_W; i++) {
-            this.ctx.beginPath(); this.ctx.moveTo(i * this.pixelSizeX, 0); this.ctx.lineTo(i * this.pixelSizeX, this.CANVAS_SIZE); this.ctx.stroke();
-        }
-        for (let j = 0; i <= this.GRID_H; j++) {
-            this.ctx.beginPath(); this.ctx.moveTo(0, j * this.pixelSizeY); this.ctx.lineTo(this.CANVAS_SIZE, j * this.pixelSizeY); this.ctx.stroke();
         }
     }
 };
