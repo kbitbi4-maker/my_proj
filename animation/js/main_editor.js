@@ -10,12 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Ошибка запуска модулей:", error);
     }
 
-    // Привязка триггеров кнопок
     document.getElementById('clearGridBtn')?.addEventListener('click', () => EditorCore.clearCurrentGrid());
     document.getElementById('addFrameBtn')?.addEventListener('click', () => AnimationPlayer.addFrame());
     document.getElementById('playBtn')?.addEventListener('click', () => AnimationPlayer.togglePlay());
 
-    // Красивое открытие системного окна выбора файла по клику на нашу кнопку
     const fileInput = document.getElementById('imageImporter');
     document.getElementById('uploadTriggerBtn')?.addEventListener('click', () => fileInput?.click());
     fileInput?.addEventListener('change', (e) => ImageScanner.scan(e));
@@ -31,10 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
         EditorCore.setZoom(zoom);
     });
 
+    // Считывание независимых параметров ширины и высоты
     document.getElementById('applyGridSizeBtn')?.addEventListener('click', () => {
-        const newSize = parseInt(document.getElementById('gridSizeInput').value, 10);
-        if (newSize >= 8 && newSize <= 64) {
-            EditorCore.changeGridSize(newSize);
+        const newW = parseInt(document.getElementById('gridWidthInput').value, 10);
+        const newH = parseInt(document.getElementById('gridHeightInput').value, 10);
+        if (newW >= 8 && newW <= 64 && newH >= 8 && newH <= 64) {
+            EditorCore.changeGridSize(newW, newH);
         }
     });
 
