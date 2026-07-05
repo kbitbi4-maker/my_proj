@@ -12,10 +12,10 @@ export function generateMultiExample() {
 if (!state.usedExamples) state.usedExamples = [];  
 let num1, num2, text;  
 while (true) {  
-num1 = Math.floor(Math.random() \* 9) + 2;  
-num2 = Math.floor(Math.random() \* 9) + 2; 
+num1 = Math.floor(Math.random() * 9) + 2;  
+num2 = Math.floor(Math.random() * 9) + 2; 
 
-if (num1 \* num2 <= 25 && Math.random() > 0.33) {  
+if (num1 * num2 <= 25 && Math.random() > 0.33) {  
 continue;  
 } 
 
