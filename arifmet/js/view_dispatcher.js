@@ -1,4 +1,4 @@
-// version: v2.1 (Полная поддержка деления при переключении истории) 
+// version: v2.2 (Исправлен визуал деления в истории Микса)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { syncMonsterGame, getMultiplicationHistoryHTML } from './multiplication.js';
@@ -33,9 +33,10 @@ export function selectExample(index) {
     const historyRenderer = isMulti ? getMultiplicationHistoryHTML : getTensHistoryHTML;
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
 
-    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && item.exampleText.includes('×'))) {
+    // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: роутинг сцены при клике на историю теперь тоже смотрит на знак в примере
+    if (item.exampleText.includes('×')) {
         syncMonsterGame();
-    } else if (state.currentMode === 'division') {
+    } else if (item.exampleText.includes('÷')) {
         import('./division_visual.js').then(m => m.renderDivisionVisual());
     } else {
         renderTensVisual();
