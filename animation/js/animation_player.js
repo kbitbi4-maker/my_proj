@@ -43,33 +43,50 @@ export const AnimationPlayer = {
         this.updateUI(); EditorCore.draw(); this.drawPreview(this.currentIndex);
     },
 
-    // Генерация компактного кода пикселей для консоли кадра
+    // Сжатая генерация кода: по 4 пикселя в одной строке через знак "|"
     updateConsoleCode() {
         const grid = this.frames[this.currentIndex];
+        let buffer = [];
         let codeLines = [];
+        
         for (let r = 0; r < EditorCore.GRID_SIZE; r++) {
             for (let c = 0; c < EditorCore.GRID_SIZE; c++) {
                 if (grid[r][c]) {
-                    codeLines.push(`${r},${c},${grid[r][c]}`);
+                    buffer.push(`${r},${c},${grid[r][c]}`);
+                    if (buffer.length === 4) {
+                        codeLines.push(buffer.join('|'));
+                        buffer = [];
+                    }
                 }
             }
+        }
+        if (buffer.length > 0) {
+            codeLines.push(buffer.join('|'));
         }
         document.getElementById('frameConsole').value = codeLines.join('\n');
     },
 
-    // Чтение текстового кода из консоли обратно в пиксели кадра
+    // Чтение сжатого кода (по 4 пикселя на строку) обратно на холст
     loadFrameFromCode() {
         const text = document.getElementById('frameConsole').value.trim();
         const size = EditorCore.GRID_SIZE;
         const newGrid = Array(size).fill(null).map(() => Array(size).fill(null));
+        
         if (text) {
             const lines = text.split('\n');
             lines.forEach(line => {
-                const parts = line.split(',');
-                if (parts.length === 3) {
-                    const r = parseInt(parts[0], 10), c = parseInt(parts[1], 10), color = parts[2].trim();
-                    if (r >= 0 && r < size && c >= 0 && c < size) newGrid[r][c] = color;
-                }
+                const pixels = line.split('|');
+                pixels.forEach(pixel => {
+                    const parts = pixel.split(',');
+                    if (parts.length === 3) {
+                        const r = parseInt(parts[0], 10);
+                        const c = parseInt(parts[1], 10);
+                        const color = parts[2].trim();
+                        if (r >= 0 && r < size && c >= 0 && c < size) {
+                            newGrid[r][c] = color;
+                        }
+                    }
+                });
             });
         }
         this.frames[this.currentIndex] = newGrid;
