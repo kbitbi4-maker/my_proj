@@ -1,4 +1,4 @@
-// version: v2.3 (Исправлен визуал деления в режиме Микс)
+// version: v2.4 (Исправлен визуал сотен в режиме Микс)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -95,12 +95,24 @@ export function refreshUI() {
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: привязка визуала идет строго к знаку в примере, а не к режиму
+    // ХИРУРГИЧЕСКИЙ РОУТИНГ СЦЕНЫ: Смотрим строго на знаки и длину чисел в примере
     if (activeItem.exampleText.includes('×')) {
         renderMonsterGame();
     } else if (activeItem.exampleText.includes('÷')) {
         import('./division_visual.js').then(m => m.renderDivisionVisual());
+    } else if (state.currentMode === 'column') {
+        import('./column_visual.js').then(m => m.renderColumnVisual());
     } else {
-        renderTensVisual();
+        // Проверяем, сотни это или десятки, извлекая первое число примера
+        const firstNumber = parseInt(activeItem.exampleText, 10);
+        if (firstNumber >= 100) {
+            if (activeItem.exampleText.includes('+')) {
+                import('./addition_hundreds_visual.js').then(m => m.renderAdditionHundredsVisual());
+            } else {
+                import('./subtraction_hundreds_visual.js').then(m => m.renderSubtractionHundredsVisual());
+            }
+        } else {
+            renderTensVisual();
+        }
     }
 }
