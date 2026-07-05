@@ -1,4 +1,4 @@
-// version: v2.2 (Полная интеграция отрисовки деления при вводе)
+// version: v2.3 (Исправлен визуал деления в режиме Микс)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { triggerTensWinSound, triggerWinFeedback, triggerFailFeedback, resetAllFeedbacks, soundFlags } from './feedback.js';
@@ -95,9 +95,10 @@ export function refreshUI() {
     
     GameCanvas.renderHistory(state.examplesHistory, state.activeIndex, state.currentMode, historyRenderer);
     
-    if (state.currentMode === 'multiplication' || (state.currentMode === 'mix' && activeItem.exampleText.includes('×'))) {
+    // ХИРУРГИЧЕСКОЕ ИСПРАВЛЕНИЕ: привязка визуала идет строго к знаку в примере, а не к режиму
+    if (activeItem.exampleText.includes('×')) {
         renderMonsterGame();
-    } else if (state.currentMode === 'division') {
+    } else if (activeItem.exampleText.includes('÷')) {
         import('./division_visual.js').then(m => m.renderDivisionVisual());
     } else {
         renderTensVisual();
