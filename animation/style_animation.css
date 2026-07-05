@@ -1,0 +1,154 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e24;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+.header {
+    width: 100%;
+    background: #2d2d38;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.back-btn {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.5rem;
+    margin-right: 20px;
+    font-weight: bold;
+}
+.header h1 { margin: 0; font-size: 1.4rem; color: #a78bfa; }
+
+.main-container {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 60px);
+    padding: 20px;
+    box-sizing: border-box;
+    gap: 20px;
+}
+.left-panel, .right-panel {
+    width: 250px;
+    background: #252530;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-sizing: border-box;
+}
+.section-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #94a3b8;
+    border-bottom: 1px solid #3f3f50;
+    padding-bottom: 5px;
+    margin: 0;
+}
+.color-picker-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+input[type="color"] {
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: none;
+}
+.btn {
+    background: #3f51b5;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+.btn:hover { background: #5c6bc0; }
+.btn:active { transform: scale(0.98); }
+.btn-danger { background: #ef4444; }
+.btn-danger:hover { background: #f87171; }
+.btn-success { background: #22c55e; }
+.btn-success:hover { background: #4ade80; }
+
+.frames-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+.frame-item {
+    background: #1e1e24;
+    padding: 8px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+.frame-item.active {
+    border-color: #a78bfa;
+    background: #2d2d38;
+}
+.frame-item span { font-size: 0.85rem; }
+
+.canvas-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111116;
+    border-radius: 12px;
+}
+#paintCanvas {
+    background: #1a1a24;
+    border: 2px solid #3f3f50;
+    border-radius: 4px;
+    cursor: crosshair;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.preview-box {
+    width: 100%;
+    height: 180px;
+    background: #1a1a24;
+    border-radius: 8px;
+    border: 2px solid #3f3f50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#frameConsole {
+    width: 100%;
+    height: 110px;
+    background: #111116;
+    color: #38bdf8;
+    border: 1px solid #3f3f50;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    padding: 6px;
+    resize: none;
+    box-sizing: border-box;
+}
+#frameConsole:focus {
+    outline: 1px solid #a78bfa;
+}
+#paintCanvas {
+    transition: width 0.1s, height 0.1s;
+    touch-action: none; /* Отключаем стандартный скролл браузера при рисовании пальцем */
+}
