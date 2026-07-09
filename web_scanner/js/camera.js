@@ -1,5 +1,5 @@
 /**
- * ТЕСТОВЫЙ МОДУЛЬ КАМЕРЫ (Проверка захвата и работы библиотеки jsQR)
+ * Модуль управления стримом камеры и интеграции с jsQR (Полное восстановление оригинального алгоритма)
  */
 window.Camera = {
   stream: null,
@@ -7,7 +7,7 @@ window.Camera = {
   context: null,
 
   /**
-   * Переключение состояния камеры по нажатию на кнопку
+   * Точка входа для кнопки "Найти QR"
    */
   toggle() {
     if (AppConfig.state.scanning) { 
@@ -18,17 +18,20 @@ window.Camera = {
   },
 
   /**
-   * Запуск видеопотока с задней камеры устройства
+   * Запуск видеопотока
    */
   async start() {
     if (AppConfig.state.scanning) return;
-    const video = document.getElementById('video');
+    
+    // Явно находим элемент видео в DOM-дереве
+    const videoElement = document.getElementById('video');
     const sBtn = document.getElementById('start-camera');
 
     try {
-      // Запрашиваем доступ к камере устройства
       this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      if (video) video.srcObject = this.stream;
+      if (videoElement) {
+        videoElement.srcObject = this.stream;
+      }
       
       AppConfig.state.scanning = true;
       if (sBtn) {
@@ -36,15 +39,15 @@ window.Camera = {
         sBtn.disabled = false;
       }
       
-      // Запускаем непрерывный цикл сканирования кадров
+      // Запускаем оригинальный покадровый цикл
       requestAnimationFrame(() => this.tick());
     } catch (e) { 
-      alert("Тест провален: Ошибка доступа к камере устройств"); 
+      alert("Ошибка камеры"); 
     }
   },
 
   /**
-   * Отключение камеры и освобождение ресурсов
+   * Остановка камеры
    */
   stop() {
     AppConfig.state.scanning = false;
@@ -52,10 +55,10 @@ window.Camera = {
       this.stream.getTracks().forEach(track => track.stop());
     }
     
-    const video = document.getElementById('video');
+    const videoElement = document.getElementById('video');
     const sBtn = document.getElementById('start-camera');
     
-    if (video) video.srcObject = null;
+    if (videoElement) videoElement.srcObject = null;
     if (sBtn) {
       sBtn.innerText = "Найти QR";
       sBtn.disabled = false;
@@ -63,38 +66,37 @@ window.Camera = {
   },
 
   /**
-   * Покадровый анализ изображения
+   * Оригинальный покадровый анализ кадра
    */
   tick() {
-    const video = document.getElementById('video');
+    // Находим видео заново внутри кадра анимации для гарантированного доступа
+    const videoElement = document.getElementById('video');
     
-    // Проверяем, что видео готово и флаг сканирования активен
-    if (video && video.readyState === video.HAVE_ENOUGH_DATA && AppConfig.state.scanning) {
+    if (videoElement && videoElement.readyState === videoElement.HAVE_ENOUGH_DATA && AppConfig.state.scanning) {
       if (!this.canvas) { 
         this.canvas = document.createElement('canvas'); 
         this.context = this.canvas.getContext('2d'); 
       }
       
-      // Рисуем текущий кадр видео на скрытый холст
-      this.canvas.width = video.videoWidth; 
-      this.canvas.height = video.videoHeight;
-      this.context.drawImage(video, 0, 0, this.canvas.width, this.canvas.height);
+      this.canvas.width = videoElement.videoWidth; 
+      this.canvas.height = videoElement.videoHeight;
+      this.context.drawImage(videoElement, 0, 0, this.canvas.width, this.canvas.height);
       
-      // Считываем пиксели и передаем их в библиотеку jsQR
+      // Вызываем подключенную библиотеку jsQR через переданный массив пикселей холста
       const code = jsQR(this.context.getImageData(0, 0, this.canvas.width, this.canvas.height).data, this.canvas.width, this.canvas.height);
       
-      // ЕСЛИ КОД НАЙДЕН — ПОКАЗЫВАЕМ ДИАЛОГОВОЕ ОКНО И ОСТАНАВЛИВАЕМСЯ
       if (code) { 
-        this.stop(); // Гасим камеру
+        // Привязываем результат к нашему общему глобальному состоянию
+        AppConfig.state.currentQR = code.data; 
+        this.stop(); 
         
-        // ВЫВОДИМ РАСШИФРОВКУ НА ЭКРАН ДЛЯ ПРОВЕРКИ
-        alert("УСПЕХ!\nРасшифрованный QR-код:\n" + code.data);
-        
+        // Передаем управление модулю нумпада (флаг false - данные пришли с камеры)
+        Numpad.open(false); 
         return; 
       }
     }
     
-    // Если код не найден, продолжаем сканировать следующий кадр
+    // Если сканирование продолжается и код не найден - запрашиваем следующий кадр
     if (AppConfig.state.scanning) {
       requestAnimationFrame(() => this.tick());
     }
