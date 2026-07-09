@@ -15,7 +15,8 @@
     <h2><div id="indicator" class="net-indicator"></div> QR_25</h2>
     <button class="btn-icon" title="Остатки" onclick="UI.showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="Network.syncFromGoogle()">☁</button>
-    <button id="start-camera" onclick="Camera.toggle()">Найти QR</button>
+    <!-- Вызывает оригинальную функцию напрямую -->
+    <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
 
   <!-- Основной контент: Видеострим и Журнал -->
@@ -60,9 +61,7 @@
     <!-- Модальное окно 2: Выбор сотрудника -->
     <div class="numpad-container hidden" id="user-view">
       <button class="btn-icon back-btn" onclick="UI.closeUserMenu()">← НАЗАД</button>
-      <div id="users-list-container">
-        <!-- Список сотрудников генерируется динамически через UI.js -->
-      </div>
+      <div id="users-list-container"></div>
     </div>
 
     <!-- Модальное окно 3: Просмотр и поиск остатков -->
@@ -85,15 +84,22 @@
   <div id="auth-overlay" class="modal-overlay hidden">
     <div class="login-card">
       <h2>Склад ПРО</h2>
-      <select id="auth-user-select"><!-- Заполняется из AppConfig.js --></select>
+      <select id="auth-user-select"></select>
       <input type="password" id="auth-pin-input" placeholder="ПИН-код" inputmode="numeric">
       <button id="auth-submit-btn">ВОЙТИ</button>
     </div>
   </div>
 
-  <!-- Внешние библиотеки и модули ядра -->
+  <!-- Внешние библиотеки -->
   <script src="https://unpkg.com"></script>
-  <!-- Сначала загружаем файл окружения с вашей скрытой ссылкой -->
+  
+  <!-- Инициализируем глобальные переменные для совместимости с оригинальным кодом камеры -->
+  <script>
+    window.video = document.getElementById('video');
+    window.currentQR = "";
+  </script>
+
+  <!-- Скрипты ядра и модули -->
   <script src="js/env.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
@@ -101,7 +107,14 @@
   <script src="js/numpad.js"></script>
   <script src="js/db.js"></script>
   <script src="js/network.js"></script>
-  <script src="js/camera.js"></script>
+  <script src="js/camera.js"></script> <!-- Сюда вставляется ваш неизмененный рабочий код -->
   <script src="js/app.js"></script>
+
+  <!-- Глобальный мост-связка для оригинального скрипта -->
+  <script>
+    function openModal() {
+      Numpad.open(false);
+    }
+  </script>
 </body>
 </html>
