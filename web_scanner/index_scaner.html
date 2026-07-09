@@ -101,8 +101,7 @@
   <script src="js/auth.js"></script>
   <script src="js/camera.js"></script>
   <script>
-    const SCRIPT_URL = (window.AppEnv && window.AppEnv.SCRIPT_URL) || 'https://google.com';
-
+    const SCRIPT_URL = window.AppEnv.SCRIPT_URL;
     let isSaving = false;
     const video = document.getElementById('video');
     const indicator = document.getElementById('indicator');
@@ -154,18 +153,28 @@
 
     function selectFromStock(code) { currentQR = code; closeModal(); openModal(true); }
     
-    function openModal(isFromTable = false) {
-      const separator = isFromTable ? '/' : '!';
-      const qrParts = currentQR.split(separator);
-      const foundRow = inventoryData.find(r => String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1]));
-      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
-      document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
-      currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
-      addBtn.innerText = "ДОБАВИТЬ 0";
-      document.getElementById('modal').classList.remove('hidden');
-      document.getElementById('numpad-view').classList.remove('hidden');
-      document.getElementById('stock-view').classList.add('hidden');
-    }
+   function openModal(isFromTable = false) {
+  // Если пришли из таблицы остатков — делим по '/', если с камеры — строго по '!'
+  const separator = isFromTable ? '/' : '!';
+  const qrParts = currentQR.split(separator);
+  const qrArt = qrParts[0] ? qrParts[0].trim() : ""; 
+  const qrParam = qrParts[1] ? qrParts[1].trim() : ""; 
+
+  const foundRow = inventoryData.find(r => 
+    String(r[0]).trim() === String(qrArt) && String(r[1]).trim() === String(qrParam)
+  );
+
+  const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+
+  document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+  
+  currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
+  addBtn.innerText = "ДОБАВИТЬ 0";
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('numpad-view').classList.remove('hidden');
+  document.getElementById('stock-view').classList.add('hidden');
+}
+
 
     function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; if(typeof stopCamera === 'function') stopCamera(); }
     function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
