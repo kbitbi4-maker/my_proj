@@ -1,5 +1,5 @@
 // Переменные состояния (инициализируются при загрузке)
-const SCRIPT_URL = 'https://google.com';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
 const video = document.getElementById('video');
 const indicator = document.getElementById('indicator');
 const whoLabel = document.getElementById('who-label');
