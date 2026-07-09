@@ -28,7 +28,7 @@ window.UI = {
     }
 
     // Рендерим заголовки (всегда берем из первой строки массива в кэше)
-    head.innerHTML = logs[0].map(h => `<th>${h}</th>`).join('');
+    head.innerHTML = logs[0].data.map(h => `<th>${h}</th>`).join('');
 
     // Рендерим строки логов, разворачивая каждую ячейку в отдельный <td>
     body.innerHTML = logs.slice(1).reverse().map(item => {
@@ -92,7 +92,6 @@ window.UI = {
     document.getElementById('modal').classList.add('hidden'); 
     document.getElementById('start-camera').disabled = false; 
     AppConfig.state.scanning = false;
-    if (typeof stopCamera === 'function') stopCamera(); // Дополнительно тушим оригинальную камеру
   },
   openUserMenu() { this.toggleViews('user-view'); },
   closeUserMenu() { this.toggleViews('numpad-view'); },
