@@ -3,7 +3,7 @@
  */
 window.AppConfig = {
   // Настройки сетевого шлюза Google Apps Script
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec',
+  SCRIPT_URL: 'https://google.com',
   
   // База данных персонала и доступов (ПИН-коды)
   STAFF: { 
@@ -24,6 +24,7 @@ window.AppConfig = {
     currentQR: "",           // Данные текущего отсканированного QR
     currentQty: "0",         // Текстовое значение набранного количества
     currentUser: "Не указан",// Выбранный получатель груза
+    foundRowRef: null,       // Ссылка на найденную строку товара в базе остатков
     
     // Реактивные кэши данных в оперативной памяти
     qrLogs: JSON.parse(localStorage.getItem('qr_db_v9')) || [],
@@ -43,4 +44,3 @@ window.AppConfig = {
     }
   }
 };
-
