@@ -12,27 +12,25 @@ window.DB = {
 
     try {
       const timestamp = this.generateDateTime();
-      const qrParts = state.currentQR.split('/');
+      // Нарезаем QR-код по новому разделителю '!'
+      const qrParts = state.currentQR.split('!');
       
       // Вычисление инкрементального ID для записи
       const nextId = state.qrLogs.length > 1 
         ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // Структура строки: ID, 4 части QR, Количество, Получатель, Администратор, Время, День, Месяц, Год
+      // Структура строки для лога: ID, части QR, Количество, Получатель, Администратор, Время, День, Месяц, Год
       const newRowData = [
         nextId, ...qrParts, state.currentQty, state.currentUser, 
         Auth.user || "Неугодников", timestamp.time, timestamp.day, timestamp.month, timestamp.year
       ];
 
-      // Офлайн-вычитание остатков в оперативной памяти
-      const qty = parseInt(state.currentQty) || 0;
-      state.inventoryData = state.inventoryData.map(r => {
-        if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
-          r[4] = (parseInt(r[4]) || 0) - qty;
-        }
-        return r;
-      });
+      // БЕЗ ПОВТОРНОГО ПОИСКА: Списываем остаток напрямую по ссылке, если товар был найден
+      if (state.foundRowRef) {
+        const qty = parseInt(state.currentQty) || 0;
+        state.foundRowRef[4] = (parseInt(state.foundRowRef[4]) || 0) - qty;
+      }
 
       // Фиксация изменений в кэше и хранилище
       AppConfig.saveToStorage('inventory');
@@ -67,4 +65,3 @@ window.DB = {
     };
   }
 };
-
