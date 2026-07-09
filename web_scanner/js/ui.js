@@ -6,7 +6,6 @@ window.UI = {
    * Инициализация базовых элементов UI
    */
   init() {
-    // Динамически генерируем кнопки получателей в меню "КОМУ" из конфига
     const container = document.getElementById('users-list-container');
     if (container) {
       container.innerHTML = AppConfig.RECIPIENTS.map(name => 
@@ -16,19 +15,22 @@ window.UI = {
   },
 
   /**
-   * Отрисовка журнала выдачи (Таблица логов)
+   * Отрисовка журнала выдачи (Таблица логов) на главном экране
    */
   renderLogs() {
     const head = document.getElementById('logs-head');
     const body = document.getElementById('logs-body');
     const logs = AppConfig.state.qrLogs;
 
-    if (!logs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
+    if (!logs || !logs.length) { 
+      body.innerHTML = '<tr><td colspan="12">Журнал выдачи пуст</td></tr>'; 
+      return; 
+    }
 
-    // Заголовок берем из первой строки массива
+    // Рендерим заголовки (всегда берем из первой строки массива в кэше)
     head.innerHTML = logs[0].data.map(h => `<th>${h}</th>`).join('');
 
-    // Тело: пропускаем заголовок (индекс 0), переворачиваем для вывода свежих записей сверху
+    // Рендерим строки логов, разворачивая каждую ячейку в отдельный <td>
     body.innerHTML = logs.slice(1).reverse().map(item => {
       const bg = item.status === 'ok' ? 'style="background:#d4edda;"' : '';
       return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
@@ -36,7 +38,7 @@ window.UI = {
   },
 
   /**
-   * Открытие экрана просмотра остатков
+   * Открытие экрана просмотра остатков («планшетик»)
    */
   showStock() {
     const stock = AppConfig.state.inventoryData;
@@ -58,24 +60,31 @@ window.UI = {
     const stock = AppConfig.state.inventoryData;
     const term = (document.getElementById('stock-search')?.value || "").toLowerCase();
 
+    if (!stock || !stock.length) return;
     head.innerHTML = stock[0].map(h => `<th>${h}</th>`).join('');
 
-    const filtered = stock.slice(1).filter(row => 
-      row.some(cell => String(cell).toLowerCase().includes(term))
+    // Фильтруем строки, сохраняя оригинальный числовой индекс для точного выбора
+    const filtered = stock.slice(1).map((row, idx) => ({ row, originalIndex: idx + 1 })).filter(item => 
+      item.row.some(cell => String(cell).toLowerCase().includes(term))
     );
 
-    body.innerHTML = filtered.map(row => {
-      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
-      return `<tr onclick="UI.selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
-    }).join('');
+    body.innerHTML = filtered.map(item => 
+      `<tr onclick="UI.selectFromStockIndex(${item.originalIndex})">${item.row.map(c => `<td>${c}</td>`).join('')}</tr>`
+    ).join('');
     
-    if (!filtered.length) body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>';
+    if (!filtered.length) body.innerHTML = '<tr><td colspan="5">Ничего не найдено</td></tr>';
   },
 
-  selectFromStock(code) {
-    AppConfig.state.currentQR = code;
+  /**
+   * Прямой выбор товара из таблицы без использования текстовых разделителей
+   */
+  selectFromStockIndex(index) {
+    const state = AppConfig.state;
+    // Копируем ссылку на готовый массив ячеек товара
+    state.foundRowRef = state.inventoryData[index];
+    state.currentQR = ""; // Камера не участвовала
     this.closeModal();
-    Numpad.open();
+    Numpad.open(true); // Передаем флаг ручного выбора
   },
 
   // Вспомогательные функции переключения экранов
@@ -94,4 +103,3 @@ window.UI = {
     });
   }
 };
-
