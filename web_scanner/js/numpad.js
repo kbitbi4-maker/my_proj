@@ -4,28 +4,39 @@
 window.Numpad = {
   /**
    * Открытие нумпада для ввода количества под конкретный QR-код
+   * @param {boolean} isPreFound - Был ли товар выбран из таблицы остатков вручную
    */
-  open() {
+  open(isPreFound = false) {
     const state = AppConfig.state;
-    // Разделяем данные QR-кода по новому разделителю '!'
-    const qrParts = state.currentQR.split('!');
-    const qrArt = qrParts[0] || ""; 
-    const qrParam = qrParts[1] || ""; 
 
-    // Находим строку ОДИН раз и сохраняем ссылку в состояние
-    state.foundRowRef = state.inventoryData.find(r => 
-      String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
-    );
+    // Если данные пришли с камеры, парсим строку по разделителю '!'
+    if (!isPreFound) {
+      const qrParts = state.currentQR.split('!');
+      const qrArt = (qrParts[0] || "").trim(); 
+      const qrParam = (qrParts[1] || "").trim(); 
 
-    // Берем остаток из сохраненной ссылки (5-я колонка, индекс 4)
+      // Ищем строку в базе по совпадению первых двух параметров
+      state.foundRowRef = state.inventoryData.find(r => 
+        String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
+      );
+    }
+
+    // Получаем текущий остаток из 5-й ячейки найденного массива (индекс 4)
     const stockText = state.foundRowRef ? ` (Ост: ${state.foundRowRef[4] || '0'})` : " (Ост: ?)";
 
-    // Инициализация стартовых значений в состоянии
+    // Сброс вводимых значений
     state.currentQty = "0"; 
     state.currentUser = "Не указан";
 
-    // Обновление интерфейса
-    document.getElementById('qr-data-display').innerText = "ТОВАР: " + state.currentQR + stockText;
+    // Формируем красивое отображение названия на экране нумпада
+    let displayTitle = "";
+    if (isPreFound && state.foundRowRef) {
+      displayTitle = `${state.foundRowRef[0]} | ${state.foundRowRef[2]}`;
+    } else {
+      displayTitle = state.foundRowRef ? `${state.foundRowRef[0]} | ${state.foundRowRef[2]}` : state.currentQR;
+    }
+
+    document.getElementById('qr-data-display').innerText = "ТОВАР: " + displayTitle + stockText;
     document.getElementById('numpad-display').innerText = "0";
     document.getElementById('who-label').innerText = "...";
     
@@ -42,7 +53,6 @@ window.Numpad = {
     if (n === 'C') {
       state.currentQty = "0";
     } else {
-      // Защита от ведущих нулей (избегаем "012", превращая в "12")
       state.currentQty = state.currentQty === "0" ? String(n) : state.currentQty + n;
     }
     document.getElementById('numpad-display').innerText = state.currentQty;
