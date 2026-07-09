@@ -9,13 +9,14 @@ window.Numpad = {
   open(isPreFound = false) {
     const state = AppConfig.state;
 
-    // Если данные пришли с оригинальной камеры, парсим глобальный window.currentQR по '!'
+    // Если данные пришли с камеры, парсим глобальный window.currentQR по разделителю '!'
     if (!isPreFound) {
       const qrParts = window.currentQR.split('!');
+      // Берем строго 1-й элемент (индекс 0) и 2-й элемент (индекс 1)
       const qrArt = qrParts && qrParts[0] ? qrParts[0].trim() : ""; 
       const qrParam = qrParts && qrParts[1] ? qrParts[1].trim() : ""; 
 
-      // Находим строку в базе по совпадению первых двух колонок (индексы 0 и 1)
+      // Находим строку в базе по совпадению первых двух колонок (индексы 0 i 1)
       state.foundRowRef = state.inventoryData.find(r => 
         r && String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
       );
