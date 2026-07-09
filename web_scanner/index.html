@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_26 (Модульный)</title>
+  <title>QR_TABLE_PRO_25 (Модульный)</title>
   <!-- Подключаем внешние стили -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,7 +12,7 @@
   <!-- Шапка приложения -->
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_26</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_27</h2>
     <button class="btn-icon" title="Остатки" onclick="UI.showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="Network.syncFromGoogle()">☁</button>
     <!-- Вызывает оригинальную функцию напрямую -->
@@ -92,14 +92,8 @@
 
   <!-- Внешние библиотеки -->
   <script src="https://unpkg.com"></script>
-  
-  <!-- Инициализируем глобальные переменные для совместимости с оригинальным кодом камеры -->
-  <script>
-    window.video = document.getElementById('video');
-    window.currentQR = "";
-  </script>
 
-  <!-- Скрипты ядра и модули -->
+  <!-- Скрипты ядра и модули окружения -->
   <script src="js/env.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
@@ -107,10 +101,14 @@
   <script src="js/numpad.js"></script>
   <script src="js/db.js"></script>
   <script src="js/network.js"></script>
-  <script src="js/camera.js"></script> <!-- Сюда вставляется ваш неизмененный рабочий код -->
+  
+  <!-- Сюда вставляется ваш оригинальный неизмененный рабочий код камеры -->
+  <script src="js/camera.js"></script> 
+  
+  <!-- Главный инициализатор связей -->
   <script src="js/app.js"></script>
 
-  <!-- Глобальный мост-связка для оригинального скрипта -->
+  <!-- Глобальный мост-связка для оригинального скрипта камеры -->
   <script>
     function openModal() {
       Numpad.open(false);
