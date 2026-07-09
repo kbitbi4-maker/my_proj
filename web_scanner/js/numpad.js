@@ -7,15 +7,18 @@ window.Numpad = {
    */
   open() {
     const state = AppConfig.state;
-    const qrParts = state.currentQR.split('/');
+    // Разделяем данные QR-кода по новому разделителю '!'
+    const qrParts = state.currentQR.split('!');
     const qrArt = qrParts[0] || ""; 
     const qrParam = qrParts[1] || ""; 
 
-    // Ищем товар в массиве остатков для вывода текущего баланса
-    const foundRow = state.inventoryData.find(r => 
+    // Находим строку ОДИН раз и сохраняем ссылку в состояние
+    state.foundRowRef = state.inventoryData.find(r => 
       String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
     );
-    const stockText = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+
+    // Берем остаток из сохраненной ссылки (5-я колонка, индекс 4)
+    const stockText = state.foundRowRef ? ` (Ост: ${state.foundRowRef[4] || '0'})` : " (Ост: ?)";
 
     // Инициализация стартовых значений в состоянии
     state.currentQty = "0"; 
@@ -36,14 +39,12 @@ window.Numpad = {
    */
   press(n) {
     const state = AppConfig.state;
-
     if (n === 'C') {
       state.currentQty = "0";
     } else {
       // Защита от ведущих нулей (избегаем "012", превращая в "12")
       state.currentQty = state.currentQty === "0" ? String(n) : state.currentQty + n;
     }
-
     document.getElementById('numpad-display').innerText = state.currentQty;
     this.updateAddButton();
   },
@@ -55,7 +56,6 @@ window.Numpad = {
   selectUser(name) {
     AppConfig.state.currentUser = name;
     document.getElementById('who-label').innerText = name;
-    
     this.updateAddButton();
     UI.closeUserMenu();
   },
@@ -71,4 +71,3 @@ window.Numpad = {
     }
   }
 };
-
