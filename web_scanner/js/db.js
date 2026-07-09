@@ -12,32 +12,41 @@ window.DB = {
 
     try {
       const timestamp = this.generateDateTime();
-      // Нарезаем QR-код по новому разделителю '!'
-      const qrParts = state.currentQR.split('!');
       
-      // Вычисление инкрементального ID для записи
+      if (!state.foundRowRef) {
+        alert("Ошибка: Товар не сопоставлен с базой остатков");
+        state.isSaving = false;
+        return;
+      }
+
+      // Нахождение инкрементального ID
       const nextId = state.qrLogs.length > 1 
         ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // Структура строки для лога: ID, части QR, Количество, Получатель, Администратор, Время, День, Месяц, Год
+      // КОПИРУЕМ ЧИСТЫЕ ЯЧЕЙКИ ИЗ БАЗЫ: Артикул, Параметр, Название, Размер
+      const qrArt = state.foundRowRef[0];
+      const qrParam = state.foundRowRef[1];
+      const qrName = state.foundRowRef[2];
+      const qrSize = state.foundRowRef[3] || "";
+
+      // Формируем финальный массив для архива (12 колонок Excel-вида)
       const newRowData = [
-        nextId, ...qrParts, state.currentQty, state.currentUser, 
-        Auth.user || "Неугодников", timestamp.time, timestamp.day, timestamp.month, timestamp.year
+        nextId, qrArt, qrParam, qrName, qrSize, 
+        state.currentQty, state.currentUser, Auth.user || "Неугодников", 
+        timestamp.time, timestamp.day, timestamp.month, timestamp.year
       ];
 
-      // БЕЗ ПОВТОРНОГО ПОИСКА: Списываем остаток напрямую по ссылке, если товар был найден
-      if (state.foundRowRef) {
-        const qty = parseInt(state.currentQty) || 0;
-        state.foundRowRef[4] = (parseInt(state.foundRowRef[4]) || 0) - qty;
-      }
+      // Офлайн-вычитание количества прямо из ячейки остатка (индекс 4)
+      const qty = parseInt(state.currentQty) || 0;
+      state.foundRowRef[4] = (parseInt(state.foundRowRef[4]) || 0) - qty;
 
-      // Фиксация изменений в кэше и хранилище
+      // Фиксация изменений в кэше устройства
       AppConfig.saveToStorage('inventory');
       state.qrLogs.push({ data: newRowData, status: 'wait' });
       AppConfig.saveToStorage('logs');   
       
-      // Сброс окон и триггер отправки в облако
+      // Сброс интерфейса и инициализация POST-отправки
       UI.renderLogs(); 
       UI.closeModal();
       state.isSaving = false; 
