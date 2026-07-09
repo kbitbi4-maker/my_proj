@@ -12,11 +12,11 @@ window.Numpad = {
     // Если данные пришли с камеры, парсим строку по разделителю '!'
     if (!isPreFound) {
       const qrParts = state.currentQR.split('!');
-      // Берем строго 1-й элемент (индекс 0) и 2-й элемент (индекс 1)
+      // Восстанавливаем точные индексы элементов
       const qrArt = qrParts[0] ? qrParts[0].trim() : ""; 
       const qrParam = qrParts[1] ? qrParts[1].trim() : ""; 
 
-      // Строго ищем строку в базе по совпадению первых двух колонок таблицы Google (индексы 0 и 1)
+      // Ищем строку в базе по совпадению первых двух колонок таблицы Google (индексы 0 и 1)
       state.foundRowRef = state.inventoryData.find(r => 
         r && String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
       );
