@@ -21,7 +21,7 @@ window.DB = {
 
       // Нахождение инкрементального ID лога
       const nextId = state.qrLogs.length > 1 
-        ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
+        ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data)).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
       // КОПИРУЕМ ЧИСТЫЕ ЯЧЕЙКИ ИЗ БАЗЫ ОСТАТКОВ: Артикул (0), Параметр (1), Название (2), Размер (3)
