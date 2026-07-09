@@ -27,10 +27,8 @@ window.UI = {
       return; 
     }
 
-    // Рендерим заголовки (всегда берем из первой строки массива в кэше)
-    head.innerHTML = logs[0].data.map(h => `<th>${h}</th>`).join('');
+    head.innerHTML = logs.map(h => `<th>${h}</th>`).join('');
 
-    // Рендерим строки логов, разворачивая каждую ячейку в отдельный <td>
     body.innerHTML = logs.slice(1).reverse().map(item => {
       const bg = item.status === 'ok' ? 'style="background:#d4edda;"' : '';
       return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
@@ -61,9 +59,8 @@ window.UI = {
     const term = (document.getElementById('stock-search')?.value || "").toLowerCase();
 
     if (!stock || !stock.length) return;
-    head.innerHTML = stock[0].map(h => `<th>${h}</th>`).join('');
+    head.innerHTML = stock.map(h => `<th>${h}</th>`).join('');
 
-    // Фильтруем строки, сохраняя оригинальный числовой индекс для точного выбора
     const filtered = stock.slice(1).map((row, idx) => ({ row, originalIndex: idx + 1 })).filter(item => 
       item.row.some(cell => String(cell).toLowerCase().includes(term))
     );
@@ -80,18 +77,20 @@ window.UI = {
    */
   selectFromStockIndex(index) {
     const state = AppConfig.state;
-    // Копируем ссылку на готовый массив ячеек товара
     state.foundRowRef = state.inventoryData[index];
-    state.currentQR = ""; // Камера не участвовала
+    window.currentQR = ""; 
     this.closeModal();
-    Numpad.open(true); // Передаем флаг ручного выбора
+    Numpad.open(true); 
   },
 
   // Вспомогательные функции переключения экранов
   closeModal() { 
     document.getElementById('modal').classList.add('hidden'); 
     document.getElementById('start-camera').disabled = false; 
-    AppConfig.state.scanning = false;
+    // Гасим оригинальную камеру, если она была запущена
+    if (typeof stopCamera === 'function') {
+      stopCamera();
+    }
   },
   openUserMenu() { this.toggleViews('user-view'); },
   closeUserMenu() { this.toggleViews('numpad-view'); },
