@@ -12,7 +12,6 @@ window.Numpad = {
     // Если данные пришли с камеры, парсим строку по разделителю '!'
     if (!isPreFound) {
       const qrParts = state.currentQR.split('!');
-      // Восстанавливаем точные индексы элементов
       const qrArt = qrParts[0] ? qrParts[0].trim() : ""; 
       const qrParam = qrParts[1] ? qrParts[1].trim() : ""; 
 
