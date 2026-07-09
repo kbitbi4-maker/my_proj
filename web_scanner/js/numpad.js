@@ -9,13 +9,13 @@ window.Numpad = {
   open(isPreFound = false) {
     const state = AppConfig.state;
 
-    // Если данные пришли с камеры, парсим строку по разделителю '!'
+    // Если данные пришли с оригинальной камеры, парсим глобальный window.currentQR по '!'
     if (!isPreFound) {
-      const qrParts = state.currentQR.split('!');
-      const qrArt = qrParts[0] ? qrParts[0].trim() : ""; 
-      const qrParam = qrParts[1] ? qrParts[1].trim() : ""; 
+      const qrParts = window.currentQR.split('!');
+      const qrArt = qrParts && qrParts[0] ? qrParts[0].trim() : ""; 
+      const qrParam = qrParts && qrParts[1] ? qrParts[1].trim() : ""; 
 
-      // Ищем строку в базе по совпадению первых двух колонок таблицы Google (индексы 0 и 1)
+      // Находим строку в базе по совпадению первых двух колонок (индексы 0 и 1)
       state.foundRowRef = state.inventoryData.find(r => 
         r && String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
       );
@@ -28,14 +28,12 @@ window.Numpad = {
     state.currentQty = "0"; 
     state.currentUser = "Не указан";
 
-    // Формируем наглядное отображение названия товара на экране нумпада
+    // Формируем отображение названия товара на экране нумпада
     let displayTitle = "";
     if (isPreFound && state.foundRowRef) {
-      // Если из таблицы: выводим Артикул и Наименование товара (индексы 0 и 2)
       displayTitle = `${state.foundRowRef[0]} | ${state.foundRowRef[2]}`;
     } else {
-      // Если с камеры: выводим данные из базы, либо сырой текст QR, если совпадение не найдено
-      displayTitle = state.foundRowRef ? `${state.foundRowRef[0]} | ${state.foundRowRef[2]}` : state.currentQR;
+      displayTitle = state.foundRowRef ? `${state.foundRowRef[0]} | ${state.foundRowRef[2]}` : window.currentQR;
     }
 
     document.getElementById('qr-data-display').innerText = "ТОВАР: " + displayTitle + stockText;
