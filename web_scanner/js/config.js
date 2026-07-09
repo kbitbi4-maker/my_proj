@@ -2,8 +2,8 @@
  * Глобальная конфигурация и реактивное состояние приложения
  */
 window.AppConfig = {
-  // Настройки сетевого шлюза Google Apps Script
-  SCRIPT_URL: 'https://google.com',
+  // Автоматически подтягиваем секретную ссылку из внешнего файла env.js
+  SCRIPT_URL: (window.AppEnv && window.AppEnv.SCRIPT_URL) || 'https://google.com',
   
   // База данных персонала и доступов (ПИН-коды)
   STAFF: { 
