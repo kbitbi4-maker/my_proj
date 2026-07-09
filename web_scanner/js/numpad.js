@@ -12,26 +12,27 @@ window.Numpad = {
     // Если данные пришли с камеры, парсим строку по разделителю '!'
     if (!isPreFound) {
       const qrParts = state.currentQR.split('!');
-      const qrArt = (qrParts[0] || "").trim(); 
-      const qrParam = (qrParts[1] || "").trim(); 
+      // Берем строго 1-й элемент (индекс 0) и 2-й элемент (индекс 1)
+      const qrArt = qrParts[0] ? qrParts[0].trim() : ""; 
+      const qrParam = qrParts[1] ? qrParts[1].trim() : ""; 
 
-      // Строго ищем строку в базе по совпадению первых двух колонок (Артикул и Параметр)
+      // Строго ищем строку в базе по совпадению первых двух колонок таблицы Google (индексы 0 и 1)
       state.foundRowRef = state.inventoryData.find(r => 
-        String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
+        r && String(r[0]).trim() === qrArt && String(r[1]).trim() === qrParam
       );
     }
 
     // Получаем текущий остаток из 5-го столбца найденного массива (индекс 4)
     const stockText = state.foundRowRef ? ` (Ост: ${state.foundRowRef[4] || '0'})` : " (Ост: ?)";
 
-    // Сброс вводимых значений в состоянии
+    // Сброс вводимых значений в состоянии перед вводом количества
     state.currentQty = "0"; 
     state.currentUser = "Не указан";
 
     // Формируем наглядное отображение названия товара на экране нумпада
     let displayTitle = "";
     if (isPreFound && state.foundRowRef) {
-      // Если из таблицы: выводим Артикул и Наименование (индексы 0 и 2)
+      // Если из таблицы: выводим Артикул и Наименование товара (индексы 0 и 2)
       displayTitle = `${state.foundRowRef[0]} | ${state.foundRowRef[2]}`;
     } else {
       // Если с камеры: выводим данные из базы, либо сырой текст QR, если совпадение не найдено
