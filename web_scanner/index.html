@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>QR_TABLE_PRO_25 (Модульный)</title>
+  <title>QR_TABLE_PRO_25</title>
   <!-- Подключаем внешние стили -->
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,10 +12,9 @@
   <!-- Шапка приложения -->
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
-    <h2><div id="indicator" class="net-indicator"></div> QR_27</h2>
+    <h2><div id="indicator" class="net-indicator"></div> QR_25</h2>
     <button class="btn-icon" title="Остатки" onclick="UI.showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="Network.syncFromGoogle()">☁</button>
-    <!-- Вызывает оригинальную функцию напрямую -->
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
 
@@ -93,7 +92,7 @@
   <!-- Внешние библиотеки -->
   <script src="https://unpkg.com"></script>
 
-  <!-- Скрипты ядра и модули окружения -->
+  <!-- Модули окружения и конфигурации -->
   <script src="js/env.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
@@ -101,17 +100,72 @@
   <script src="js/numpad.js"></script>
   <script src="js/db.js"></script>
   <script src="js/network.js"></script>
-  
-  <!-- Сюда вставляется ваш оригинальный неизмененный рабочий код камеры -->
-  <script src="js/camera.js"></script> 
-  
-  <!-- Главный инициализатор связей -->
   <script src="js/app.js"></script>
 
-  <!-- Глобальный мост-связка для оригинального скрипта камеры -->
+  <!-- ВШИТЫЙ ОРИГИНАЛЬНЫЙ КОД КАМЕРЫ ДЛЯ ИСКЛЮЧЕНИЯ СБОЕВ ВИДИМОСТИ -->
   <script>
+    let stream = null;
+    let scanning = false;
+    let canvas = null;
+    let context = null;
+    
+    // Объявляем глобальные переменные, которые ищет оригинальный код камеры
+    window.video = document.getElementById('video');
+    window.currentQR = "";
+
+    function toggleCamera() {
+        if (scanning) { stopCamera(); } 
+        else { startScanner(); }
+    }
+
+    function stopCamera() {
+        scanning = false;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        if (window.video) window.video.srcObject = null;
+        const sBtn = document.getElementById('start-camera');
+        if (sBtn) {
+            sBtn.innerText = "Найти QR";
+            sBtn.disabled = false;
+        }
+    }
+
+    async function startScanner() {
+        if (scanning) return;
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            if (window.video) window.video.srcObject = stream;
+            scanning = true;
+            const sBtn = document.getElementById('start-camera');
+            if (sBtn) {
+                sBtn.innerText = "ВЫКЛ КАМЕРУ";
+                sBtn.disabled = false;
+            }
+            requestAnimationFrame(tick);
+        } catch (e) { alert("Ошибка камеры"); }
+    }
+
+    function tick() {
+        if (window.video && window.video.readyState === window.video.HAVE_ENOUGH_DATA && scanning) {
+            if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
+            canvas.width = window.video.videoWidth; canvas.height = window.video.videoHeight;
+            context.drawImage(window.video, 0, 0, canvas.width, canvas.height);
+            const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+            
+            if (code) { 
+                window.currentQR = code.data; 
+                stopCamera(); 
+                openModal(); 
+                return; 
+            }
+        }
+        if (scanning) requestAnimationFrame(tick);
+    }
+
+    // Мост-связка оригинальной камеры с модулем Нумпада
     function openModal() {
-      Numpad.open(false);
+        Numpad.open(false);
     }
   </script>
 </body>
