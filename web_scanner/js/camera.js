@@ -1,4 +1,4 @@
-// Переменные состояния камеры
+// Переменные состояния камеры 
 let stream = null;
 scanning = false;
 let canvas = null;
