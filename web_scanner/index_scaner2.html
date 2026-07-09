@@ -83,16 +83,11 @@
 
   <!-- Внешние библиотеки и модули -->
   <script src="https://unpkg.com"></script>
-  <script src="js/camera.js"></script>
-
-  <script>
-    // Глобальные флаги состояния для синхронизации модулей
-    let authUser = "Неугодникова"; 
-    let isSaving = false;
-    let scanning = false; 
-  </script>
-
-  <!-- Местоположение ядра логики приложения -->
+  
+  <!-- Сначала подключаем ядро, чтобы инициализировать все глобальные переменные для камеры -->
   <script src="js/scanner_core.js"></script>
+
+  <!-- Затем подключаем камеру, которая теперь успешно увидит общие переменные ядра -->
+  <script src="js/camera.js"></script>
 </body>
 </html>
