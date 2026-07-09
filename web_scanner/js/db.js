@@ -21,7 +21,7 @@ window.DB = {
 
       // Нахождение инкрементального ID лога
       const nextId = state.qrLogs.length > 1 
-        ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data)).map(r => parseInt(r.data[0]) || 0)) + 1 
+        ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data)).map(r => parseInt(r.data) || 0)) + 1 
         : 1;
 
       // КОПИРУЕМ ЧИСТЫЕ ЯЧЕЙКИ ИЗ БАЗЫ ОСТАТКОВ: Артикул (0), Параметр (1), Название (2), Размер (3)
@@ -33,7 +33,7 @@ window.DB = {
       // Формируем финальный массив для архива (12 колонок Excel-вида)
       const newRowData = [
         nextId, qrArt, qrParam, qrName, qrSize, 
-        state.currentQty, state.currentUser, Auth.user || "Неугодников", 
+        state.currentQty, state.currentUser, Auth.user || "Неугодникова", 
         timestamp.time, timestamp.day, timestamp.month, timestamp.year
       ];
 
