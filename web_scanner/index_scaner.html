@@ -4,10 +4,26 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   <title>QR_TABLE_PRO_25</title>
-  <!-- Подключаем вынесенный файл оптимизированных стилей -->
+  <!-- Подключаем вынесенный файл стилей -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- Оверлей авторизации, который ищет оригинальный auth.js -->
+  <div id="auth-overlay" class="modal-overlay hidden" style="z-index: 9999;">
+    <div class="login-card">
+      <h2>Склад ПРО</h2>
+      <select id="auth-user-select">
+        <option value="">Кто вы?</option>
+        <option value="Неугодникова">Неугодникова</option>
+        <option value="Окороков">Окороков</option>
+        <option value="Глушков">Глушков</option>
+        <option value="Гуляев">Гуляев</option>
+      </select>
+      <input type="password" id="auth-pin-input" placeholder="ПИН-код" inputmode="numeric">
+      <button id="auth-submit-btn">ВОЙТИ</button>
+    </div>
+  </div>
 
   <header class="header">
     <button class="btn-icon" onclick="window.location.href='../index.html'">←</button>
@@ -29,7 +45,6 @@
       </div>
     </div>
   </main>
-
   <div id="modal" class="modal-overlay hidden">
     <!-- Окно Нумпада -->
     <div class="numpad-container" id="numpad-view">
@@ -45,6 +60,7 @@
       <button id="add-btn" class="btn-add" onclick="saveEntry()">ДОБАВИТЬ 0</button>
       <button class="user-btn" style="background:#f44336;color:white;margin-top:10px" onclick="closeModal()">ОТМЕНА</button>
     </div>
+
     <!-- Окно Пользователей -->
     <div class="numpad-container hidden" id="user-view">
       <button class="btn-icon" style="color:black;font-weight:bold;justify-content:flex-start;" onclick="closeUserMenu()">← НАЗАД</button>
@@ -79,15 +95,14 @@
     </div>
   </div>
 
+  <!-- Подключение библиотек и внешних скриптов оригинала -->
   <script src="https://unpkg.com"></script>
-  <!-- Вынесенный файл окружения с вашей секретной ссылкой -->
   <script src="js/env.js"></script>
-
+  <script src="js/auth.js"></script>
+  <script src="js/camera.js"></script>
   <script>
-    // Подтягиваем ссылку из env.js, если файла нет — используем базовую заглушку
     const SCRIPT_URL = (window.AppEnv && window.AppEnv.SCRIPT_URL) || 'https://google.com';
 
-    let authUser = "Неугодникова"; 
     let isSaving = false;
     const video = document.getElementById('video');
     const indicator = document.getElementById('indicator');
@@ -99,203 +114,117 @@
     let inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
     
     let currentQR = "", currentQty = "0", currentUser = "Не указан";
-    let stream = null;
-    let scanning = false;
-    let canvas = null;
-    let context = null;
 
     function renderLogs() {
       const head = document.getElementById('logs-head');
       const body = document.getElementById('logs-body');
       if (!qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
-
       head.innerHTML = qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
-
       body.innerHTML = qrLogs.slice(1).reverse().map(item => {
-        const isSynced = item.status === 'ok';
-        const bg = isSynced ? 'style="background:#d4edda;"' : '';
-        return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+        const bg = item.status === 'ok' ? 'style="background:#d4edda;"' : '';
+        return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>幕.join('')}</tr>`;
       }).join('');
     }
-  function showStock() {
-    if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
-    const searchInput = document.getElementById('stock-search');
-    if (searchInput) searchInput.value = "";
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('numpad-view').classList.add('hidden');
-    document.getElementById('stock-view').classList.remove('hidden');
-    renderStock();
-  }
 
-  function renderStock() {
-    const head = document.getElementById('stock-head');
-    const body = document.getElementById('stock-body');
-    const searchInput = document.getElementById('stock-search');
-    const term = searchInput ? searchInput.value.toLowerCase() : "";
-    head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
-    const filtered = inventoryData.slice(1).filter(row => 
-      row.some(cell => String(cell).toLowerCase().includes(term))
-    );
-    body.innerHTML = filtered.map(row => {
-      const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
-      return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
-    }).join('');
-    if (filtered.length === 0) { body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>'; }
-  }
+    function showStock() {
+      if (!inventoryData || inventoryData.length === 0) { alert("Сначала нажмите ☁"); return; }
+      const searchInput = document.getElementById('stock-search');
+      if (searchInput) searchInput.value = "";
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('numpad-view').classList.add('hidden');
+      document.getElementById('stock-view').classList.remove('hidden');
+      renderStock();
+    }
 
-  function selectFromStock(code) { currentQR = code; closeModal(); openModal(true); }
-  
-  function openModal(isFromTable = false) {
-    const separator = isFromTable ? '/' : '!';
-    const qrParts = currentQR.split(separator);
-    const qrArt = qrParts[0]; 
-    const qrParam = qrParts[1]; 
+    function renderStock() {
+      const head = document.getElementById('stock-head');
+      const body = document.getElementById('stock-body');
+      const searchInput = document.getElementById('stock-search');
+      const term = searchInput ? searchInput.value.toLowerCase() : "";
+      head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
+      const filtered = inventoryData.slice(1).filter(row => 
+        row.some(cell => String(cell).toLowerCase().includes(term))
+      );
+      body.innerHTML = filtered.map(row => {
+        const fullCode = `${row[0]}/${row[1]}/${row[2]}/${row[3]}`; 
+        return `<tr onclick="selectFromStock('${fullCode}')">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+      }).join('');
+      if (filtered.length === 0) { body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>'; }
+    }
 
-    const foundRow = inventoryData.find(r => 
-      String(r[0]) === String(qrArt) && String(r[1]) === String(qrParam)
-    );
-
-    const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
-    document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+    function selectFromStock(code) { currentQR = code; closeModal(); openModal(true); }
     
-    currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
-    addBtn.innerText = "ДОБАВИТЬ 0";
-    document.getElementById('modal').classList.remove('hidden');
-    document.getElementById('numpad-view').classList.remove('hidden');
-    document.getElementById('stock-view').classList.add('hidden');
-  }
-
-  function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; }
-  function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
-  function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
-  function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
-  function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
-
-  async function saveEntry() {
-    if (isSaving) return; 
-    isSaving = true;
-    try {
-      const now = new Date(),
-            hh = now.getHours().toString().padStart(2,'0'),
-            mm = now.getMinutes().toString().padStart(2,'0'),
-            time = "'" + hh + ":" + mm,
-            day = now.getDate().toString().padStart(2,'0'),
-            month = (now.getMonth()+1).toString().padStart(2,'0'),
-            year = now.getFullYear().toString().slice(-2);
-      
-      const authUser = "Неугодников"; 
-      const separator = currentQR.includes('!') ? '!' : '/';
+    function openModal(isFromTable = false) {
+      const separator = isFromTable ? '/' : '!';
       const qrParts = currentQR.split(separator);
-      const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
+      const foundRow = inventoryData.find(r => String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1]));
+      const stock = foundRow ? ` (Ост: ${foundRow[4] || '0'})` : " (Ост: ?)";
+      document.getElementById('qr-data-display').innerText = "ТОВАР: " + currentQR + stock;
+      currentQty = "0"; numDisplay.innerText = "0"; currentUser = "Не указан"; whoLabel.innerText = "...";
+      addBtn.innerText = "ДОБАВИТЬ 0";
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('numpad-view').classList.remove('hidden');
+      document.getElementById('stock-view').classList.add('hidden');
+    }
 
-      const newRowData = [nextId, ...qrParts, currentQty, currentUser, authUser, time, day, month, year];
+    function closeModal() { document.getElementById('modal').classList.add('hidden'); document.getElementById('start-camera').disabled = false; scanning = false; if(typeof stopCamera === 'function') stopCamera(); }
+    function openUserMenu() { document.getElementById('numpad-view').classList.add('hidden'); document.getElementById('user-view').classList.remove('hidden'); }
+    function closeUserMenu() { document.getElementById('user-view').classList.add('hidden'); document.getElementById('numpad-view').classList.remove('hidden'); }
+    function selectUser(name) { currentUser = name; whoLabel.innerText = name; addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`; closeUserMenu(); }
+    function pressNum(n) { if (n==='C') currentQty="0"; else currentQty=currentQty==="0"?String(n):currentQty+n; numDisplay.innerText=currentQty; addBtn.innerText=`ДОБАВИТЬ ${currentQty} (${currentUser})`; }
 
-      const qty = parseInt(currentQty) || 0;
-      inventoryData = inventoryData.map(r => {
-        if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) {
-          r[4] = (parseInt(r[4]) || 0) - qty;
-        }
-        return r;
-      });
+    async function saveEntry() {
+      if (isSaving) return; 
+      isSaving = true;
+      try {
+        const now = new Date(),
+              hh = now.getHours().toString().padStart(2,'0'),
+              mm = now.getMinutes().toString().padStart(2,'0'),
+              time = "'" + hh + ":" + mm,
+              day = now.getDate().toString().padStart(2,'0'),
+              month = (now.getMonth()+1).toString().padStart(2,'0'),
+              year = now.getFullYear().toString().slice(-2);
+        const currentAdmin = window.authUser || "Неугодникова";
+        const separator = currentQR.includes('!') ? '!' : '/';
+        const qrParts = currentQR.split(separator);
+        const nextId = qrLogs.length > 1 ? Math.max(...qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 : 1;
+        const newRowData = [nextId, ...qrParts, currentQty, currentUser, currentAdmin, time, day, month, year];
+        const qty = parseInt(currentQty) || 0;
+        inventoryData = inventoryData.map(r => { if (String(r[0]) === String(qrParts[0]) && String(r[1]) === String(qrParts[1])) { r[4] = (parseInt(r[4]) || 0) - qty; } return r; });
+        localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
+        qrLogs.push({ data: newRowData, status: 'wait' });
+        localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
+        renderLogs(); closeModal(); isSaving = false; sendUnsynced(); 
+      } catch (e) { console.error(e); isSaving = false; }
+    }
 
-      localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
-      qrLogs.push({ data: newRowData, status: 'wait' });
-      localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));   
-      
-      renderLogs(); closeModal();
-      isSaving = false; sendUnsynced(); 
-      
-    } catch (e) { console.error(e); isSaving = false; }
-  }
-
-  async function sendUnsynced() {
-    if (!navigator.onLine) return;
-    for (let i = 0; i < qrLogs.length; i++) {
-      if (qrLogs[i].status === 'wait') {
-        qrLogs[i].status = 'syncing'; 
-        try {
-          await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({ row: qrLogs[i].data })
-          });
-          qrLogs[i].status = 'ok';
-          localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
-          renderLogs();
-        } catch (e) {
-          qrLogs[i].status = 'wait'; 
-          localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
-          break; 
+    async function sendUnsynced() {
+      if (!navigator.onLine) return;
+      for (let i = 0; i < qrLogs.length; i++) {
+        if (qrLogs[i].status === 'wait') {
+          qrLogs[i].status = 'syncing'; 
+          try {
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ row: qrLogs[i].data }) });
+            qrLogs[i].status = 'ok'; localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs)); renderLogs();
+          } catch (e) { qrLogs[i].status = 'wait'; localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs)); break; }
         }
       }
     }
-  }
 
-  async function syncFromGoogle() {
-    if (!navigator.onLine) return;
-    try {
-      const res = await fetch(SCRIPT_URL);
-      const data = await res.json();
-      if (data.logs) {
-        qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
-        localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs));
-      }
-      if (data.stock) {
-        inventoryData = data.stock;
-        localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData));
-      }
-      renderLogs();
-    } catch (e) { alert("Ошибка"); }
-  }
-        
-  function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); }
-
-  function toggleCamera() { if (scanning) { stopCamera(); } else { startScanner(); } }
-
-  function stopCamera() {
-      scanning = false;
-      if (stream) { stream.getTracks().forEach(track => track.stop()); }
-      video.srcObject = null;
-      const sBtn = document.getElementById('start-camera');
-      sBtn.innerText = "Найти QR";
-      sBtn.disabled = false;
-  }
-
-  async function startScanner() {
-      if (scanning) return;
+    async function syncFromGoogle() {
+      if (!navigator.onLine) return;
       try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-          video.srcObject = stream;
-          scanning = true;
-          const sBtn = document.getElementById('start-camera');
-          sBtn.innerText = "ВЫКЛ КАМЕРУ";
-          sBtn.disabled = false;
-          requestAnimationFrame(tick);
-      } catch (e) { alert("Ошибка камеры"); }
-  }
-
-  function tick() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-          if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-          if (code) { 
-              currentQR = code.data; 
-              stopCamera(); 
-              openModal(false); 
-              return; 
-          }
-      }
-      if (scanning) requestAnimationFrame(tick);
-  }
-
-  window.addEventListener('online', () => { updateStatus(); sendUnsynced(); });
-  window.addEventListener('offline', updateStatus);
-  
-  updateStatus(); 
-  renderLogs();
-  sendUnsynced();
-</script>
+        const res = await fetch(SCRIPT_URL); const data = await res.json();
+        if (data.logs) { qrLogs = data.logs.map(row => ({ data: row, status: 'ok' })); localStorage.setItem('qr_db_v9', JSON.stringify(qrLogs)); }
+        if (data.stock) { inventoryData = data.stock; localStorage.setItem('qr_inventory_v2', JSON.stringify(inventoryData)); }
+        renderLogs();
+      } catch (e) { alert("Ошибка"); }
+    }
+          
+    function updateStatus() { indicator.classList.toggle('net-online', navigator.onLine); }
+    window.addEventListener('online', () => { updateStatus(); sendUnsynced(); });
+    window.addEventListener('offline', updateStatus);
+    updateStatus(); renderLogs(); sendUnsynced();
+  </script>
 </body>
 </html>
