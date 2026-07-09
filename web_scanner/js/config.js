@@ -3,7 +3,7 @@
  */
 window.AppConfig = {
   // Настройки сетевого шлюза Google Apps Script
-  SCRIPT_URL: 'https://google.com',
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec',
   
   // База данных персонала и доступов (ПИН-коды)
   STAFF: { 
