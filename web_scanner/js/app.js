@@ -1,8 +1,12 @@
 /**
  * Главная точка входа приложения.
- * Отвечает за координацию, инициализацию и стартовую сборку всех модулей.
+ * Связывает модули ядра и инициализирует глобальные переменные для оригинального кода камеры.
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Инициализируем глобальные переменные в окне браузера для оригинальной камеры
+  window.video = document.getElementById('video');
+  window.currentQR = "";
+
   // 1. Инициализируем систему авторизации (проверяет сессию и рисует оверлей)
   if (window.Auth) {
     Auth.init();
@@ -22,4 +26,3 @@ document.addEventListener('DOMContentLoaded', () => {
     Network.sendUnsynced();
   }
 });
-
