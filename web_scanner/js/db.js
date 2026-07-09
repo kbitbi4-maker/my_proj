@@ -14,17 +14,17 @@ window.DB = {
       const timestamp = this.generateDateTime();
       
       if (!state.foundRowRef) {
-        alert("Ошибка: Товар не сопоставлен с базой остатков");
+        alert("Ошибка: Товар не сопоставлен с базой остатков. Списание невозможно.");
         state.isSaving = false;
         return;
       }
 
-      // Нахождение инкрементального ID
+      // Нахождение инкрементального ID лога
       const nextId = state.qrLogs.length > 1 
         ? Math.max(...state.qrLogs.filter(r => r.status === 'ok' || !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // КОПИРУЕМ ЧИСТЫЕ ЯЧЕЙКИ ИЗ БАЗЫ: Артикул, Параметр, Название, Размер
+      // КОПИРУЕМ ЧИСТЫЕ ЯЧЕЙКИ ИЗ БАЗЫ ОСТАТКОВ: Артикул (0), Параметр (1), Название (2), Размер (3)
       const qrArt = state.foundRowRef[0];
       const qrParam = state.foundRowRef[1];
       const qrName = state.foundRowRef[2];
@@ -60,7 +60,6 @@ window.DB = {
 
   /**
    * Вспомогательный метод генерации форматированной даты и времени
-   * @returns {Object} Объект с компонентами даты и времени
    */
   generateDateTime() {
     const now = new Date();
