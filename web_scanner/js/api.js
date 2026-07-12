@@ -13,7 +13,6 @@ function renderLogs() {
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
   
-  // Для отображения на экране берем только реальные записи выдач/возвратов (где есть поле data)
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
@@ -21,12 +20,10 @@ function renderLogs() {
     return; 
   }
 
-  // Заголовок берем из первой строки базы данных логов
-  if (visibleLogs && visibleLogs.data) {
-    head.innerHTML = visibleLogs.data.map(h => `<th>${h}</th>`).join('');
+  if (window.qrLogs && window.qrLogs[0] && window.qrLogs[0].data) {
+    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела: выводим записи в обратном порядке (новые сверху)
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
@@ -60,7 +57,7 @@ async function syncFromGoogle() {
 }
 
 /**
- * ФОНОВАЯ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ: Отправляет и строки выдачи, и команды удаления
+ * ФОНОВАЯ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ: Разделяет POST для выдач и GET для удалений
  */
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
@@ -69,41 +66,29 @@ async function sendUnsynced() {
     const item = window.qrLogs[i];
     if (!item || item.status !== 'wait') continue;
 
-    // Блокируем элемент очереди
     item.status = 'syncing'; 
     
     try {
-      let payload = {};
-      
       if (item.action === 'delete') {
-        // Упаковываем параметры команды удаления
-        payload = {
-          action: "delete",
-          id: item.id,
-          itemKeys: item.itemKeys,
-          qty: item.qty
-        };
-      } else if (item.data) {
-        // Упаковываем параметры обычной строки выдачи или возврата
-        payload = { row: item.data };
-      }
+        // ЕСЛИ ЭТО УДАЛЕНИЕ: собираем параметры в прямую GET-строку
+        const art = encodeURIComponent(item.itemKeys[0] || "");
+        const param = encodeURIComponent(item.itemKeys[1] || "");
+        const deleteUrl = `${SCRIPT_URL}?action=delete&id=${item.id}&qty=${item.qty}&art=${art}&param=${param}`;
+        
+        // Отправляем легкий GET-запрос (он никогда не блокируется CORS)
+        await fetch(deleteUrl, { method: 'GET' });
 
-      // Отправляем пакет на сервер Google как чистый текст БЕЗ mode: 'no-cors'
-      const response = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const serverText = await response.text();
-
-      // Если сервер ответил успешным удалением или успешной записью выдачи
-      if (item.action === 'delete') {
+        // Успешно выполнено в облаке — вырезаем маркер задачи из очереди телефона
         window.qrLogs.splice(i, 1);
         i--; 
-      } else {
+      } else if (item.data) {
+        // ЕСЛИ ЭТО ОБЫЧНАЯ ВЫДАЧА/ВОЗВРАТ: используем ваш оригинальный рабочий POST
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify({ row: item.data })
+        });
+        
         item.status = 'ok';
       }
       
@@ -112,7 +97,6 @@ async function sendUnsynced() {
       
     } catch (e) {
       console.error("Ошибка при фоновой отправке:", e);
-      // В случае сбоя возвращаем статус обратно в 'wait'
       item.status = 'wait'; 
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
       break; 
@@ -120,9 +104,7 @@ async function sendUnsynced() {
   }
 }
 
-// Запуск фоновой выгрузки при старте приложения
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
 });
-
