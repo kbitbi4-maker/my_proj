@@ -32,10 +32,20 @@ function openNumpadView() {
   document.getElementById('stock-view').classList.add('hidden');
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
+  if (document.getElementById('balance-view')) document.getElementById('balance-view').classList.add('hidden');
   document.getElementById('numpad-view').classList.remove('hidden');
 }
 
 function handleBackButton() {
+  // 1. Если мы в меню Сальдо
+  const balanceView = document.getElementById('balance-view');
+  if (balanceView && !balanceView.classList.contains('hidden')) {
+    balanceView.classList.add('hidden');
+    closeModal();
+    return;
+  }
+
+  // 2. Если мы находимся в окне управления возвратом
   const returnView = document.getElementById('return-view');
   if (returnView && !returnView.classList.contains('hidden')) {
     returnView.classList.add('hidden');
@@ -168,6 +178,7 @@ function closeModal() {
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
+  if (document.getElementById('balance-view')) document.getElementById('balance-view').classList.add('hidden');
   
   window.isPartialReturnInput = false;
   const addBtnEl = document.getElementById('addBtn');
