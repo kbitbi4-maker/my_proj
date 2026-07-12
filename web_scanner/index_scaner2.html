@@ -40,7 +40,6 @@
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
       <div id="stock-view" class="hidden">
         <h3>Остатки на складе</h3>
-        <!-- ОЧИЩЕНО: Здесь убраны любые старые статичные кнопки, мешавшие интерфейсу -->
         <input type="text" id="stock-search" oninput="renderStock()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off">
         <div class="table-wrapper modal-table">
           <table>
@@ -88,14 +87,18 @@
         </div>
       </div>
 
-      <!-- ЭКРАН 3: Выбор сотрудника -->
+      <!-- ЭКРАН 3: Выбор сотрудника (ОБНОВЛЕННЫЙ СПИСОК РАБОЧИХ) -->
       <div id="user-view" class="hidden">
         <h3>Выберите сотрудника</h3>
         <div class="user-list-grid">
-          <button onclick="selectUser('Иванов И.И.')">Иванов И.И.</button>
-          <button onclick="selectUser('Петров П.П.')">Петров П.П.</button>
-          <button onclick="selectUser('Сидоров С.С.')">Сидоров С.С.</button>
-          <button onclick="selectUser('Кузнецов А.В.')">Кузнецов А.В.</button>
+          <button onclick="selectUser('Головин')">Головин</button>
+          <button onclick="selectUser('Иванов')">Иванов</button>
+          <button onclick="selectUser('Мытин')">Мытин</button>
+          <button onclick="selectUser('Погорелов')">Погорелов</button>
+          <button onclick="selectUser('Перепелица')">Перепелица</button>
+          <button onclick="selectUser('Гуляев')">Гуляев</button>
+          <button onclick="selectUser('Божков')">Божков</button>
+          <button onclick="selectUser('Бывальцев')">Бывальцев</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
       </div>
