@@ -1,5 +1,5 @@
-// URL вашего Google Apps Script (берем из старого проекта)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
+// URL вашего Google Apps Script
+const SCRIPT_URL = 'https://google.com';
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
@@ -10,7 +10,7 @@ function renderLogs() {
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
   
-  // Фильтруем логи: для отображения на экране берем только реальные строки данных (где нет action === 'delete')
+  // Фильтруем логи: для отображения на экране берем только реальные строки данных
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
@@ -24,7 +24,6 @@ function renderLogs() {
   }
 
   // Отрисовка тела: берем всё, кроме первой строки, переворачиваем и выводим
-  // Привязываем handleLogClick к ОРИГИНАЛЬНОМУ индексу в window.qrLogs, чтобы возвраты работали корректно
   body.innerHTML = window.qrLogs.map((item, originalIndex) => {
     if (originalIndex === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
@@ -68,7 +67,7 @@ async function sendUnsynced() {
       
       // Проверяем тип задачи в буфере
       if (item.action === 'delete') {
-        // Если это маркер удаления — формируем команду удаления для Google Script
+        // Формируем команду удаления
         payload = {
           action: "delete",
           id: item.id,
@@ -80,16 +79,20 @@ async function sendUnsynced() {
         payload = { row: item.data };
       }
 
+      // ВАЖНО: Отправляем как чистый ТЕКСТ (text/plain). 
+      // Это позволяет обойти блокировку Google при фоновых POST запросах без использования mode: 'no-cors'
       await fetch(SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
         body: JSON.stringify(payload)
       });
 
-      // Если это было удаление — мы можем полностью стереть этот маркер из локальной базы, он больше не нужен
+      // Если это было удаление — мы стираем этот маркер из локальной базы, задача выполнена в облаке
       if (item.action === 'delete') {
         window.qrLogs.splice(i, 1);
-        i--; // Корректируем индекс после удаления элемента из массива
+        i--; // Сдвигаем индекс назад, так как элемент удален
       } else {
         item.status = 'ok';
       }
@@ -110,4 +113,3 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
 });
-
