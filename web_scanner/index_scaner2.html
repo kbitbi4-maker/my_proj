@@ -17,8 +17,17 @@
   </header>
 
   <main class="content">
-    <div class="camera-preview">
-      <video id="video" autoplay playsinline></video>
+    <div class="camera-preview"><video id="video" autoplay playsinline></video></div>
+    
+    <!-- НОВАЯ ОБЛАСТЬ: Журнал выданных товаров (как в Excel) -->
+    <div id="result">
+      <div class="log-title">Журнал выдачи:</div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr id="logs-head"></tr></thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+      </div>
     </div>
   </main>
 
