@@ -11,6 +11,7 @@
   <header class="header">
     <a class="btn-icon" href="../index.html">←</a>
     <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
+    <button id="return-mode-btn" class="btn-icon" title="Режим возврата" onclick="toggleReturnMode()">🔄</button>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
@@ -98,6 +99,18 @@
         </div>
       </div>
 
+      <!-- ЭКРАН 4: Подтверждение возврата / Действия со строкой журнала -->
+      <div id="return-view" class="hidden">
+        <h3>Управление выдачей</h3>
+        <div id="return-info-badge" class="item-info-badge return-badge">Загрузка данных...</div>
+        <div class="return-actions-grid">
+          <button class="btn-return-action return-full" onclick="processReturn('full')">ВОЗВРАТ</button>
+          <button class="btn-return-action return-part" onclick="processReturn('part')">ВЕРНУТЬ ЧАСТЬ</button>
+          <button class="btn-return-action return-delete" onclick="processReturn('delete')">УДАЛИТЬ СТРОКУ</button>
+          <button class="btn-back" onclick="handleBackButton()">← Отмена</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -108,6 +121,7 @@
   <script src="js/stock.js"></script>
   <script src="js/numpad.js"></script>
   <script src="js/save.js"></script>
+  <script src="js/returns.js"></script>
 
 </body>
 </html>
