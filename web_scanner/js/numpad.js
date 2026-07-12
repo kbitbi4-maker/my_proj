@@ -1,6 +1,5 @@
-// Переменные состояния для даты
 window.isEditingDate = false;
-window.customDateStr = ""; // Будет хранить строку формата ДДММГГ
+window.customDateStr = ""; 
 
 function openNumpadView() {
   if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) return;
@@ -10,13 +9,11 @@ function openNumpadView() {
 
   document.getElementById('qr-data-display').innerText = `ТОВАР: ${itemTitle} (Ост: ${currentStock})`;
   
-  // Сброс состояния
   window.currentQty = "0"; 
   window.currentUser = "Не указан"; 
   window.isEditingDate = false;
   window.customDateStr = "";
   
-  // Получаем текущую системную дату для отображения по умолчанию
   const now = new Date();
   const day = now.getDate().toString().padStart(2, '0');
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -35,27 +32,22 @@ function openNumpadView() {
 }
 
 function handleBackButton() {
-  // Если мы в меню подтверждения возврата — закрываем модалку и сбрасываем режим возврата
+  // Навигация для экрана возврата
   if (!document.getElementById('return-view').classList.contains('hidden')) {
     document.getElementById('return-view').classList.add('hidden');
     closeModal();
-    if (typeof toggleReturnMode === 'function' && window.isReturnMode) {
-      toggleReturnMode();
-    }
+    if (window.isReturnMode) toggleReturnMode();
     return;
   }
-  // Если мы находимся в меню выбора пользователя, возвращаемся в нумпад
   if (!document.getElementById('user-view').classList.contains('hidden')) {
     closeUserMenu();
     return;
   }
-  // Если мы в нумпаде, возвращаемся к таблице остатков
   if (!document.getElementById('numpad-view').classList.contains('hidden')) {
     document.getElementById('numpad-view').classList.add('hidden');
     document.getElementById('stock-view').classList.remove('hidden');
     return;
   }
-  // В противном случае (мы в окне остатков) — закрываем модалку полностью
   closeModal();
 }
 
@@ -144,7 +136,4 @@ function selectUser(name) {
 
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
-  window.scanning = false;
-  const camBtn = document.getElementById('start-camera');
-  if (camBtn) camBtn.disabled = false;
-}
+  window.scanning
