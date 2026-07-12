@@ -28,24 +28,26 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .hidden { display: none !important; }
 
 /* Стили окон: Модальное окно */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-.modal-content { background: white; width: 95%; max-width: 450px; height: 85vh; border-radius: 15px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
-.modal-close { position: absolute; top: 10px; right: 15px; font-size: 30px; border: none; background: transparent; color: #333; cursor: pointer; z-index: 10; }
-.modal-content h3 { margin: 0 0 15px 0; font-size: 2.2vh; color: #333; text-align: center; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f0f2f5; z-index: 2000; display: flex; align-items: stretch; justify-content: center; }
+.modal-content { background: white; width: 100%; height: 100%; padding: 15px; padding-top: 45px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
+.modal-close { position: absolute; top: 5px; right: 15px; font-size: 35px; border: none; background: transparent; color: #333; cursor: pointer; z-index: 10; }
+.modal-content h3 { margin: 0 0 10px 0; font-size: 2.2vh; color: #333; text-align: center; }
 
 /* Компоненты остатков (Stock) */
-#stock-search { width: 100%; padding: 10px; font-size: 1.6vh; box-sizing: border-box; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 10px; }
-.modal-table { flex-grow: 1; border: 1px solid #ccc; }
+#stock-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+#stock-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
+.modal-table { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; -webkit-overflow-scrolling: touch; }
+.modal-table table { width: max-content; min-width: 100%; }
 .modal-table tr { cursor: pointer; }
-.modal-table tr:hover { background: #f0f2f5; }
+.modal-table tr:hover { background: #f1f5f9; }
 
 /* Компоненты клавиатуры (Numpad) */
-.item-info-badge { background: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 1.5vh; font-weight: bold; color: #1e293b; text-align: center; margin-bottom: 15px; border-left: 5px solid #4285f4; }
-.numpad-display-row { display: flex; gap: 10px; margin-bottom: 15px; height: 7vh; }
+#numpad-view { display: flex; flex-direction: column; height: 100%; }
+.item-info-badge { background: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 1.5vh; font-weight: bold; color: #1e293b; text-align: center; margin-bottom: 15px; border-left: 5px solid #4285f4; flex-shrink: 0; }
+.numpad-display-row { display: flex; gap: 10px; margin-bottom: 15px; height: 7vh; flex-shrink: 0; }
 .numpad-screen { flex: 2; background: #222; color: #00ff66; border-radius: 8px; font-size: 4vh; font-family: monospace; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
 .user-select-trigger { flex: 1.5; background: #edf2f7; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1.4vh; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; color: #334155; }
 .user-select-trigger span { color: #4285f4; font-size: 1.6vh; margin-top: 3px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-grow: 1; }
 .numpad-grid button { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 3vh; font-weight: bold; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: background 0.1s; }
 .numpad-grid button:active { background: #cbd5e1; }
@@ -54,6 +56,7 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .numpad-grid .btn-submit:active { background: #16a34a; }
 
 /* Компоненты выбора пользователей */
+#user-view { display: flex; flex-direction: column; height: 100%; }
 .user-list-grid { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; overflow-y: auto; }
 .user-list-grid button { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: 600; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; text-align: left; cursor: pointer; color: #334155; }
 .user-list-grid button:active { background: #e2e8f0; }
