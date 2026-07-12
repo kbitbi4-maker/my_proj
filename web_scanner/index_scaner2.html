@@ -124,8 +124,9 @@
         
         <div id="balance-menu-buttons" class="return-actions-grid" style="margin-top: 20px;">
           <button class="btn-return-action return-full" style="background: #2563eb;" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
-          <!-- ИСПРАВЛЕНО: Кнопка перепривязана к рабочему алгоритму executeDatabaseComparison() -->
           <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
+          <!-- НАША НОВАЯ ТРЕТЬЯ КНОПКА ОТЧЕТА СВЕРКИ -->
+          <button class="btn-return-action return-full" style="background: #0284c7;" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
 
@@ -135,6 +136,18 @@
           <button id="btn-confirm-balance-import" class="btn-submit" style="background: #22c55e; height: 50px; flex-shrink: 0;" onclick="processTextTableImport()">ПОДТВЕРДИТЬ ИМПОРТ</button>
           <button class="btn-back" style="margin-top: 0; height: 40px;" onclick="hideBalancePasteArea()">← Назад</button>
         </div>
+      </div>
+
+      <!-- НОВЫЙ ЭКРАН 6: Просмотр Таблицы Отличий (Лист 4) -->
+      <div id="diff-table-view" class="hidden" style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;">
+        <h3>Таблица отличий остатков</h3>
+        <div class="table-wrapper modal-table" style="flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;">
+          <table style="width: max-content; min-width: 100%;">
+            <thead><tr id="diff-head"></tr></thead>
+            <tbody id="diff-body"></tbody>
+          </table>
+        </div>
+        <button class="btn-back" style="margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0;" onclick="handleBackButton()">← Назад</button>
       </div>
 
     </div>
