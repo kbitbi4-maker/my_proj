@@ -66,11 +66,53 @@ function tick() {
         const code = jsQR(imageData.data, imageData.width, imageData.height);
         
         if (code) { 
-            currentQR = code.data; 
+            currentQR = code.data.trim(); 
             stopCamera(); 
             
-            // Выводим всплывающее окно с расшифровкой QR-кода
-            alert("QR-код успешно считан!\n\nРасшифровка:\n" + currentQR); 
+            // Обработка QR-кода: разбиваем по знаку "!"
+            const parts = currentQR.split('!');
+            if (parts.length < 2) {
+                alert("Ошибка: Неверный формат QR-кода (отсутствует разделитель '!')");
+                return;
+            }
+            
+            const param1 = parts[0].trim().toLowerCase();
+            const param2 = parts[1].trim().toLowerCase();
+            
+            const currentData = window.inventoryData;
+            if (!currentData || currentData.length <= 1) {
+                alert("Ошибка: База данных остатков пуста. Синхронизируйте приложение ☁");
+                return;
+            }
+            
+            // Ищем строку в базе остатков по совпадению первых двух параметров
+            let foundIndex = -1;
+            for (let i = 1; i < currentData.length; i++) {
+                const row = currentData[i];
+                if (row && row[0] && row[1]) {
+                    const cell1 = String(row[0]).trim().toLowerCase();
+                    const cell2 = String(row[1]).trim().toLowerCase();
+                    
+                    if (cell1 === param1 && cell2 === param2) {
+                        foundIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (foundIndex !== -1) {
+                // Товар найден — копируем строку данных
+                window.currentSelectedRowData = [...currentData[foundIndex]];
+                
+                // Переключаем интерфейс на ввод количества (нумпад)
+                if (typeof openNumpadView === 'function') {
+                    openNumpadView();
+                } else {
+                    alert("Ошибка: Модуль нумпада (js/numpad.js) не подключен.");
+                }
+            } else {
+                alert(`Товар не найден в остатках!\nПараметр 1: ${parts[0]}\nПараметр 2: ${parts[1]}`);
+            }
             return; 
         }
     }
