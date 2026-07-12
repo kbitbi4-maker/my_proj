@@ -1,22 +1,33 @@
 // URL вашего Google Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-
+// js/api.js — Модуль сетевого взаимодействия и фоновой синхронизации
+// Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
 
+/**
+ * Отрисовка журнала выданных товаров на главном экране
+ */
 function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
+  
+  // Для отображения на экране берем только реальные записи выдач/возвратов (где есть поле data)
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
+
   if (!visibleLogs.length) { 
     body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; 
     return; 
   }
-  if (window.qrLogs && window.qrLogs.data) {
-    head.innerHTML = window.qrLogs.data.map(h => `<th>${h}</th>`).join('');
+
+  // Заголовок берем из первой строки базы данных логов
+  if (visibleLogs[0] && visibleLogs[0].data) {
+    head.innerHTML = visibleLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
+
+  // Отрисовка тела: выводим записи в обратном порядке (новые сверху)
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
@@ -25,11 +36,15 @@ function renderLogs() {
   }).filter(Boolean).reverse().join('');
 }
 
+/**
+ * Принудительное скачивание актуальной базы из Google Таблиц (Кнопка «Облачко»)
+ */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
+    
     if (data.logs) {
       window.qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
@@ -40,11 +55,13 @@ async function syncFromGoogle() {
     }
     renderLogs();
     alert("Синхронизация успешно завершена!");
-  } catch (e) { alert("Ошибка при синхронизации"); }
+  } catch (e) { 
+    alert("Ошибка при синхронизации"); 
+  }
 }
 
 /**
- * АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ С ПЕРЕХВАТОМ ДИАГНОСТИКИ ОТ GOOGLE
+ * ФОНОВАЯ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ: Отправляет и строки выдачи, и команды удаления
  */
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
@@ -53,42 +70,42 @@ async function sendUnsynced() {
     const item = window.qrLogs[i];
     if (!item || item.status !== 'wait') continue;
 
+    // Блокируем элемент очереди
     item.status = 'syncing'; 
     
     try {
-      let payload = {};
+      // Используем URLSearchParams вместо JSON. Это решает проблему CORS и блокировок Google
+      const formData = new URLSearchParams();
       
       if (item.action === 'delete') {
-        payload = {
-          action: "delete",
-          id: item.id,
-          itemKeys: item.itemKeys,
-          qty: item.qty
-        };
+        // Упаковываем параметры команды удаления
+        formData.append("action", "delete");
+        formData.append("id", item.id);
+        formData.append("itemKeys", JSON.stringify(item.itemKeys));
+        formData.append("qty", item.qty);
       } else if (item.data) {
-        payload = { row: item.data };
+        // Упаковываем параметры обычной строки выдачи или возврата
+        formData.append("row", JSON.stringify(item.data));
       }
 
-      // Отправляем запрос
+      // Отправляем пакет на сервер Google с флагом 'redirect: follow'
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
+        redirect: 'follow', 
         headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
+          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
         },
-        body: JSON.stringify(payload)
+        body: formData.toString()
       });
 
-      // Считываем текстовый ответ, который прислал Google Apps Script
-      const serverResponseText = await response.text();
+      const serverText = await response.text();
 
-      // Если это была команда на удаление — выводим лог от сервера на экран смартфона!
+      // Если это было удаление — мы стираем этот маркер из локальной памяти
       if (item.action === 'delete') {
-        alert("ОТВЕТ ОБЛАКА НА УДАЛЕНИЕ:\n\n" + serverResponseText);
-        
-        // Удаляем маркер из локальной памяти в любом случае, чтобы завершить цикл
         window.qrLogs.splice(i, 1);
         i--; 
       } else {
+        // Если это обычная строка — переводим её в статус 'ok' (она станет зеленой)
         item.status = 'ok';
       }
       
@@ -97,6 +114,7 @@ async function sendUnsynced() {
       
     } catch (e) {
       console.error("Ошибка при фоновой отправке:", e);
+      // В случае сбоя возвращаем статус обратно в 'wait' для следующей автоматической попытки
       item.status = 'wait'; 
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
       break; 
@@ -104,7 +122,9 @@ async function sendUnsynced() {
   }
 }
 
+// Запуск фоновой выгрузки при старте приложения
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
 });
+
