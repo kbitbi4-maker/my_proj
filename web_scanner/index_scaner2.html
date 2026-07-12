@@ -34,7 +34,8 @@
   <!-- Единое модальное окно для всех подэкранов -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">×</button>
+      <!-- Новая кнопка Назад в виде стрелочки -->
+      <button class="modal-close" onclick="handleBackButton()">←</button>
 
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
       <div id="stock-view" class="hidden">
@@ -54,9 +55,16 @@
         
         <div class="numpad-display-row">
           <div id="numDisplay" class="numpad-screen">0</div>
-          <button class="user-select-trigger" onclick="openUserMenu()">
-            Сотрудник: <span id="whoLabel">...</span>
-          </button>
+          
+          <div class="numpad-meta-buttons">
+            <button class="meta-trigger" onclick="openUserMenu()">
+              Сотрудник: <span id="whoLabel">...</span>
+            </button>
+            <!-- Новая кнопка выбора/изменения даты -->
+            <button id="date-select-btn" class="meta-trigger" onclick="toggleDateMode()">
+              Дата: --.--.--
+            </button>
+          </div>
         </div>
 
         <div class="numpad-grid">
@@ -79,12 +87,11 @@
       <div id="user-view" class="hidden">
         <h3>Выберите сотрудника</h3>
         <div class="user-list-grid">
-          <!-- Имена сотрудников подставьте под свои нужды -->
           <button onclick="selectUser('Иванов И.И.')">Иванов И.И.</button>
           <button onclick="selectUser('Петров П.П.')">Петров П.П.</button>
           <button onclick="selectUser('Сидоров С.С.')">Сидоров С.С.</button>
           <button onclick="selectUser('Кузнецов А.В.')">Кузнецов А.В.</button>
-          <button class="btn-back" onclick="closeUserMenu()">← Назад</button>
+          <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
       </div>
 
