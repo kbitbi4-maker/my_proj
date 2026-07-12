@@ -1,5 +1,8 @@
+// js/numpad.js — Модуль цифровой клавиатуры и навигации
+
+// Переменные состояния для даты
 window.isEditingDate = false;
-window.customDateStr = ""; 
+window.customDateStr = ""; // Будет хранить строку формата ДДММГГ
 
 function openNumpadView() {
   if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) return;
@@ -9,11 +12,13 @@ function openNumpadView() {
 
   document.getElementById('qr-data-display').innerText = `ТОВАР: ${itemTitle} (Ост: ${currentStock})`;
   
+  // Сброс состояния
   window.currentQty = "0"; 
   window.currentUser = "Не указан"; 
   window.isEditingDate = false;
   window.customDateStr = "";
   
+  // Получаем текущую системную дату для отображения по умолчанию
   const now = new Date();
   const day = now.getDate().toString().padStart(2, '0');
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -26,29 +31,44 @@ function openNumpadView() {
   const dateBtn = document.getElementById('date-select-btn');
   if (dateBtn) dateBtn.innerText = `Дата: ${day}.${month}.${year}`;
 
+  // Изолированно открываем только нумпад внутри модалки
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('stock-view').classList.add('hidden');
+  document.getElementById('user-view').classList.add('hidden');
+  if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
   document.getElementById('numpad-view').classList.remove('hidden');
 }
 
 function handleBackButton() {
-  // Навигация для экрана возврата
-  if (!document.getElementById('return-view').classList.contains('hidden')) {
-    document.getElementById('return-view').classList.add('hidden');
+  // 1. Если мы находимся в окне управления возвратом
+  const returnView = document.getElementById('return-view');
+  if (returnView && !returnView.classList.contains('hidden')) {
+    returnView.classList.add('hidden');
     closeModal();
-    if (window.isReturnMode) toggleReturnMode();
+    if (typeof toggleReturnMode === 'function' && window.isReturnMode) {
+      toggleReturnMode(); // Отключаем режим возврата при выходе
+    }
     return;
   }
+
+  // 2. Если мы находимся в меню выбора пользователя (возврат в нумпад)
   if (!document.getElementById('user-view').classList.contains('hidden')) {
     closeUserMenu();
     return;
   }
+  
+  // 3. Если мы в нумпад-режиме (возврат к таблице остатков)
   if (!document.getElementById('numpad-view').classList.contains('hidden')) {
     document.getElementById('numpad-view').classList.add('hidden');
     document.getElementById('stock-view').classList.remove('hidden');
     return;
   }
-  closeModal();
+  
+  // 4. В противном случае (мы в окне просмотра остатков) — закрываем модалку полностью
+  if (!document.getElementById('stock-view').classList.contains('hidden')) {
+    closeModal();
+    return;
+  }
 }
 
 function toggleDateMode() {
@@ -136,4 +156,13 @@ function selectUser(name) {
 
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
-  window.scanning
+  // Скрываем абсолютно все внутренние экраны, чтобы при следующем открытии не было наложений
+  document.getElementById('stock-view').classList.add('hidden');
+  document.getElementById('numpad-view').classList.add('hidden');
+  document.getElementById('user-view').classList.add('hidden');
+  if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
+  
+  window.scanning = false;
+  const camBtn = document.getElementById('start-camera');
+  if (camBtn) camBtn.disabled = false;
+}
