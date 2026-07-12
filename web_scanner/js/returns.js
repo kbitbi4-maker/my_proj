@@ -31,7 +31,7 @@ function handleLogClick(originalIndex) {
   if (!window.isReturnMode) return;
   
   const logItem = window.qrLogs[originalIndex];
-  if (!logItem || !logItem.data) return;
+  if (!logItem || !logItem.data || logItem.action === 'delete') return; // Игнорируем маркеры удаления
   
   window.currentReturnLogIndex = originalIndex;
   const rowData = logItem.data;
@@ -61,7 +61,7 @@ function handleLogClick(originalIndex) {
  * 3. Обработка действий управления строкой выдачи
  * @param {string} actionType - Тип нажатой кнопки ('full', 'part', 'delete')
  */
-async function processReturn(actionType) {
+function processReturn(actionType) {
   if (window.currentReturnLogIndex === null) {
     alert("Ошибка: Строка лога не выбрана.");
     return;
@@ -116,12 +116,11 @@ async function processReturn(actionType) {
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
 
-    alert(`Локально оформлен возврат на ${qty} шт. Выполняется фоновая отправка.`);
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'delete') {
-    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ С ПОЛНЫМ ПЕРЕРАСЧЕТОМ ----
-    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}? Товар (${qty} шт.) вернется на склад локально, затем изменения отправятся в облако.`)) return;
+    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ (ЧЕРЕЗ ЛОКАЛЬНЫЙ БУФЕР ОТПРАВКИ) ----
+    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}?`)) return;
 
     // ШАГ 1: Корректируем локальный склад (Лист 1)
     window.inventoryData = window.inventoryData.map(row => {
@@ -132,11 +131,20 @@ async function processReturn(actionType) {
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    // ШАГ 2: Физически удаляем строку из локального журнала выданных товаров (Лист 2)
-    window.qrLogs = window.qrLogs.filter(item => item && item.data && parseInt(item.data[0]) !== parseInt(targetId));
+    // ШАГ 2: Удаляем старую строку из локального массива видимых логов
+    window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
+
+    // ШАГ 3: Добавляем в этот же массив специальный скрытый маркер удаления для фоновой синхронизации
+    window.qrLogs.push({
+      action: "delete",
+      id: targetId,
+      itemKeys: itemKeys,
+      qty: qty,
+      status: "wait"
+    });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
-    // Мгновенно обновляем интерфейс главного экрана, чтобы удаленная строка пропала
+    // Мгновенно обновляем интерфейс главного экрана — строка пропала
     if (typeof renderLogs === 'function') renderLogs();
 
     // Закрываем модальные окна
@@ -144,31 +152,8 @@ async function processReturn(actionType) {
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
 
-    // ШАГ 3: Отправляем синхронный сетевой запрос в Google Apps Script без no-cors режима
-    if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
-      try {
-        // Формируем чистый URL-запрос для обхода ограничений CORS при POST-командах
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          body: JSON.stringify({ 
-            action: "delete", 
-            id: targetId,
-            itemKeys: itemKeys,
-            qty: qty
-          })
-        });
-
-        // ШАГ 4: Если сервер успешно принял команду — запускаем обратную принудительную синхронизацию («облачко»)
-        if (typeof syncFromGoogle === 'function') {
-          syncFromGoogle();
-        }
-      } catch (e) {
-        console.error("Сетевая ошибка при удалении:", e);
-        alert("Строка удалена локально. Сервер обновится при следующей общей синхронизации.");
-      }
-    } else {
-      alert("Работа в офлайне. Изменения применены локально. Синхронизируйте приложение при появлении сети.");
-    }
+    // ШАГ 4: Запускаем автоматическую выгрузку накопленных изменений в Google Таблицу
+    if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'part') {
     alert("Режим 'Вернуть часть' настроим позже.");
