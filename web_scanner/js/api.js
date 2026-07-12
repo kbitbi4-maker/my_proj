@@ -1,10 +1,5 @@
 // URL вашего Google Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-// js/api.js — Модуль сетевого взаимодействия и фоновой синхронизации
-
-// URL вашего Google Apps Script
-const SCRIPT_URL = 'https://google.com';
-
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
