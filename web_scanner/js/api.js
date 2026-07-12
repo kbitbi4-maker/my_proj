@@ -5,12 +5,16 @@ window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
 
+/**
+ * Отрисовка журнала выданных товаров на главном экране
+ */
 function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
   
-  // Фильтруем логи: для отображения на экране берем только реальные строки данных
+  // Для отображения на экране берем только реальные записи выдач/возвратов (где есть поле data)
+  // Скрытые технические маркеры удаления на экран выводить не нужно
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
@@ -18,20 +22,24 @@ function renderLogs() {
     return; 
   }
 
-  // Заголовок всегда берем из поля data первой записи в массиве логов
-  if (visibleLogs[0] && visibleLogs[0].data) {
-    head.innerHTML = visibleLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  // Заголовок берем из первой строки базы данных логов
+  if (window.qrLogs[0] && window.qrLogs[0].data) {
+    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела: берем всё, кроме первой строки, переворачиваем и выводим
-  body.innerHTML = window.qrLogs.map((item, originalIndex) => {
-    if (originalIndex === 0 || !item || !item.data) return '';
+  // Отрисовка тела: выводим записи в обратном порядке (новые сверху)
+  // Передаем оригинальный индекс i в функцию handleLogClick, чтобы всегда точно знать строку
+  body.innerHTML = window.qrLogs.map((item, i) => {
+    if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
-    return `<tr ${bg} onclick="handleLogClick(${originalIndex})">${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+    return `<tr ${bg} onclick="handleLogClick(${i})">${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
   }).filter(Boolean).reverse().join('');
 }
 
+/**
+ * Принудительное скачивание актуальной базы из Google Таблиц (Кнопка «Облачко»)
+ */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
@@ -53,6 +61,9 @@ async function syncFromGoogle() {
   }
 }
 
+/**
+ * ФОНОВАЯ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ: Умеет и добавлять записи, и удалять строки
+ */
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
   
@@ -60,14 +71,15 @@ async function sendUnsynced() {
     const item = window.qrLogs[i];
     if (!item || item.status !== 'wait') continue;
 
+    // Блокируем элемент очереди, чтобы избежать дублирования запросов
     item.status = 'syncing'; 
     
     try {
       let payload = {};
       
-      // Проверяем тип задачи в буфере
+      // Анализируем, что именно находится в очереди отправки
       if (item.action === 'delete') {
-        // Формируем команду удаления
+        // ЕСЛИ ЭТО МАРКЕР УДАЛЕНИЯ: формируем команду удаления для Google Script
         payload = {
           action: "delete",
           id: item.id,
@@ -75,12 +87,12 @@ async function sendUnsynced() {
           qty: item.qty
         };
       } else if (item.data) {
-        // Если это обычная строка выдачи или возврата
+        // ЕСЛИ ЭТО ОБЫЧНАЯ СТРОКА: формируем стандартный пакет отправки выдачи/возврата
         payload = { row: item.data };
       }
 
-      // ВАЖНО: Отправляем как чистый ТЕКСТ (text/plain). 
-      // Это позволяет обойти блокировку Google при фоновых POST запросах без использования mode: 'no-cors'
+      // Отправляем данные как чистый текст (text/plain). 
+      // Это критически важно, чтобы Google Apps Script смог прочитать тело запроса в фоне
       await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: {
@@ -89,18 +101,23 @@ async function sendUnsynced() {
         body: JSON.stringify(payload)
       });
 
-      // Если это было удаление — мы стираем этот маркер из локальной базы, задача выполнена в облаке
+      // ПОСЛЕ УСПЕШНОГО ОТВЕТА СЕРВЕРА:
       if (item.action === 'delete') {
+        // Если это была команда на удаление — полностью стираем маркер из локальной очереди
         window.qrLogs.splice(i, 1);
-        i--; // Сдвигаем индекс назад, так как элемент удален
+        i--; // Сдвигаем индекс цикла назад, так как элемент удален из массива
       } else {
+        // Если это была обычная строка — переводим её в статус 'ok' (она станет зеленой)
         item.status = 'ok';
       }
       
+      // Сохраняем обновленное состояние в память телефона и обновляем экран
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
       renderLogs();
+      
     } catch (e) {
-      // При ошибке связи возвращаем статус обратно в 'wait' для следующей попытки
+      console.error("Ошибка при фоновой отправке:", e);
+      // В случае сбоя сети возвращаем статус обратно в 'wait' для следующей автоматической попытки
       item.status = 'wait'; 
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
       break; 
@@ -108,7 +125,7 @@ async function sendUnsynced() {
   }
 }
 
-// Безопасный запуск отрисовки при загрузке DOM
+// Запуск фоновой выгрузки при старте приложения
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
