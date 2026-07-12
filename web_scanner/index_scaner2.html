@@ -40,18 +40,8 @@
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
       <div id="stock-view" class="hidden">
         <h3>Остатки на складе</h3>
-        <!-- КРАСНОЕ ПРЕДУПРЕЖДЕНИЕ О РЕЖИМЕ РЕДАКТИРОВАНИЯ -->
-        <div id="stock-edit-warning" class="edit-mode-alert hidden">РЕЖИМ ИЗМЕНЕНИЯ АКТИВЕН</div>
-
+        <!-- ОЧИЩЕНО: Здесь убраны любые старые статичные кнопки, мешавшие интерфейсу -->
         <input type="text" id="stock-search" oninput="renderStock()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off">
-        
-        <!-- БЛОК КНОПОК ДЛЯ КОРРЕКТИРОВКИ ОСТАТКОВ -->
-        <div class="stock-controls-row">
-          <button id="btn-stock-edit-start" class="btn-stock-ctrl ctrl-edit" onclick="startStockEditMode()">Внести изменения</button>
-          <button id="btn-stock-edit-save" class="btn-stock-ctrl ctrl-save hidden" onclick="saveStockEditChanges()">Сохранить изменения</button>
-          <button id="btn-stock-edit-cancel" class="btn-stock-ctrl ctrl-cancel hidden" onclick="cancelStockEditMode()">Отмена</button>
-        </div>
-
         <div class="table-wrapper modal-table">
           <table>
             <thead><tr id="stock-head"></tr></thead>
@@ -64,6 +54,7 @@
       <div id="numpad-view" class="hidden">
         <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>
         
+        <!-- Левая/Верхняя часть: Ввод данных -->
         <div class="numpad-input-block">
           <div class="numpad-display-row">
             <div id="numDisplay" class="numpad-screen">0</div>
@@ -87,6 +78,7 @@
           </div>
         </div>
 
+        <!-- Правая/Нижняя часть: Главные кнопки действий -->
         <div class="numpad-actions">
           <button class="user-select-trigger" onclick="openUserMenu()">
             СОТРУДНИК
