@@ -29,8 +29,8 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 
 /* Стили окон: Модальное окно */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f0f2f5; z-index: 2000; display: flex; align-items: stretch; justify-content: center; }
-.modal-content { background: white; width: 100%; height: 100%; padding: 15px; padding-top: 45px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
-.modal-close { position: absolute; top: 5px; right: 15px; font-size: 35px; border: none; background: transparent; color: #333; cursor: pointer; z-index: 10; }
+.modal-content { background: white; width: 100%; height: 100%; padding: 15px; padding-top: 45px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; margin: 0 auto; }
+.modal-close { position: absolute; top: 5px; left: 15px; font-size: 35px; border: none; background: transparent; color: #333; cursor: pointer; z-index: 10; font-weight: bold; }
 .modal-content h3 { margin: 0 0 10px 0; font-size: 2.2vh; color: #333; text-align: center; }
 
 /* Компоненты остатков (Stock) */
@@ -42,22 +42,35 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .modal-table tr:hover { background: #f1f5f9; }
 
 /* Компоненты клавиатуры (Numpad) */
-#numpad-view { display: flex; flex-direction: column; height: 100%; }
-.item-info-badge { background: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 1.5vh; font-weight: bold; color: #1e293b; text-align: center; margin-bottom: 15px; border-left: 5px solid #4285f4; flex-shrink: 0; }
-.numpad-display-row { display: flex; gap: 10px; margin-bottom: 15px; height: 7vh; flex-shrink: 0; }
-.numpad-screen { flex: 2; background: #222; color: #00ff66; border-radius: 8px; font-size: 4vh; font-family: monospace; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-.user-select-trigger { flex: 1.5; background: #edf2f7; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1.4vh; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; color: #334155; }
-.user-select-trigger span { color: #4285f4; font-size: 1.6vh; margin-top: 3px; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-grow: 1; }
-.numpad-grid button { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 3vh; font-weight: bold; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: background 0.1s; }
+#numpad-view { display: flex; flex-direction: column; height: 100%; max-width: 480px; max-height: 650px; margin: 0 auto; width: 100%; }
+.item-info-badge { background: #e2e8f0; padding: 10px; border-radius: 8px; font-size: 1.5vh; font-weight: bold; color: #1e293b; text-align: center; margin-bottom: 10px; border-left: 5px solid #4285f4; flex-shrink: 0; }
+.numpad-display-row { display: flex; gap: 10px; margin-bottom: 10px; height: 8vh; min-height: 50px; flex-shrink: 0; }
+.numpad-screen { flex: 1.8; background: #222; color: #00ff66; border-radius: 8px; font-size: 3.8vh; font-family: monospace; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+.numpad-meta-buttons { flex: 1.5; display: flex; flex-direction: column; gap: 5px; }
+.meta-trigger { flex: 1; background: #edf2f7; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 1.3vh; font-weight: bold; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #334155; padding: 2px; text-align: center; overflow: hidden; }
+.meta-trigger span { color: #4285f4; font-size: 1.4vh; display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex-grow: 1; padding-bottom: 5px; }
+.numpad-grid button { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 2.6vh; font-weight: bold; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: background 0.1s; min-height: 40px; }
 .numpad-grid button:active { background: #cbd5e1; }
 .numpad-grid .btn-clear { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
-.numpad-grid .btn-submit { grid-column: span 3; background: #22c55e; color: white; border: none; font-size: 2.2vh; text-transform: uppercase; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+.numpad-grid .btn-submit { grid-column: span 3; background: #22c55e; color: white; border: none; font-size: 2vh; text-transform: uppercase; box-shadow: 0 4px 10px rgba(34,197,94,0.2); min-height: 45px; }
 .numpad-grid .btn-submit:active { background: #16a34a; }
 
 /* Компоненты выбора пользователей */
-#user-view { display: flex; flex-direction: column; height: 100%; }
+#user-view { display: flex; flex-direction: column; height: 100%; max-width: 450px; margin: 0 auto; width: 100%; }
 .user-list-grid { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; overflow-y: auto; }
 .user-list-grid button { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: 600; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; text-align: left; cursor: pointer; color: #334155; }
 .user-list-grid button:active { background: #e2e8f0; }
 .user-list-grid .btn-back { background: #64748b; color: white; text-align: center; margin-top: auto; border: none; }
+
+/* Адаптивность под горизонтальный режим экрана телефона */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-content { padding-top: 35px; }
+  .item-info-badge { padding: 4px; margin-bottom: 5px; font-size: 1.3vh; }
+  .numpad-display-row { margin-bottom: 5px; height: 12vh; min-height: 35px; }
+  .numpad-screen { font-size: 5vh; }
+  .numpad-grid { gap: 4px; }
+  .numpad-grid button { font-size: 4vh; min-height: 30px; border-radius: 6px; }
+  .numpad-grid .btn-submit { font-size: 3.5vh; min-height: 35px; }
+}
