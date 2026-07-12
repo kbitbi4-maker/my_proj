@@ -1,6 +1,5 @@
 // URL вашего Google Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-// js/api.js — Модуль сетевого взаимодействия и фоновой синхронизации
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
@@ -23,8 +22,8 @@ function renderLogs() {
   }
 
   // Заголовок берем из первой строки базы данных логов
-  if (visibleLogs[0] && visibleLogs[0].data) {
-    head.innerHTML = visibleLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  if (visibleLogs && visibleLogs.data) {
+    head.innerHTML = visibleLogs.data.map(h => `<th>${h}</th>`).join('');
   }
 
   // Отрисовка тела: выводим записи в обратном порядке (новые сверху)
@@ -74,38 +73,37 @@ async function sendUnsynced() {
     item.status = 'syncing'; 
     
     try {
-      // Используем URLSearchParams вместо JSON. Это решает проблему CORS и блокировок Google
-      const formData = new URLSearchParams();
+      let payload = {};
       
       if (item.action === 'delete') {
         // Упаковываем параметры команды удаления
-        formData.append("action", "delete");
-        formData.append("id", item.id);
-        formData.append("itemKeys", JSON.stringify(item.itemKeys));
-        formData.append("qty", item.qty);
+        payload = {
+          action: "delete",
+          id: item.id,
+          itemKeys: item.itemKeys,
+          qty: item.qty
+        };
       } else if (item.data) {
         // Упаковываем параметры обычной строки выдачи или возврата
-        formData.append("row", JSON.stringify(item.data));
+        payload = { row: item.data };
       }
 
-      // Отправляем пакет на сервер Google с флагом 'redirect: follow'
+      // Отправляем пакет на сервер Google как чистый текст БЕЗ mode: 'no-cors'
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
-        redirect: 'follow', 
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8'
+          'Content-Type': 'text/plain;charset=utf-8'
         },
-        body: formData.toString()
+        body: JSON.stringify(payload)
       });
 
       const serverText = await response.text();
 
-      // Если это было удаление — мы стираем этот маркер из локальной памяти
+      // Если сервер ответил успешным удалением или успешной записью выдачи
       if (item.action === 'delete') {
         window.qrLogs.splice(i, 1);
         i--; 
       } else {
-        // Если это обычная строка — переводим её в статус 'ok' (она станет зеленой)
         item.status = 'ok';
       }
       
@@ -114,7 +112,7 @@ async function sendUnsynced() {
       
     } catch (e) {
       console.error("Ошибка при фоновой отправке:", e);
-      // В случае сбоя возвращаем статус обратно в 'wait' для следующей автоматической попытки
+      // В случае сбоя возвращаем статус обратно в 'wait'
       item.status = 'wait'; 
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
       break; 
