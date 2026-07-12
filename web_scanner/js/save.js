@@ -26,7 +26,7 @@ async function saveEntry() {
     const itemKeys = window.currentSelectedRowData.slice(0, 4);
     const qty = parseInt(window.currentQty) || 0;
 
-    // Расчет нового ID
+    // Расчет нового ID на основе данных внутри объектов структуры логов
     const nextId = window.qrLogs.length > 1 
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
@@ -34,9 +34,9 @@ async function saveEntry() {
     // Прямая вставка без разделителей
     const newRowData = [nextId, ...itemKeys, qty, currentWorker, author, time, day, month, year];
 
-    // Локальное списание остатка: сравниваем первые 4 ячейки строки
+    // Локальное списание остатка: сравниваем первые 4 ячейки каждой строки
     window.inventoryData = window.inventoryData.map(row => {
-      if (row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
+      if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
         row[4] = (parseInt(row[4]) || 0) - qty;
       }
       return row;
