@@ -39,12 +39,49 @@ function hideBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.remove('hidden');
 }
 
-function runCompareAlert() {
-  alert("Опция 'Сравнить сальдо' находится в разработке.");
+/**
+ * ВЫВОД И ОТРИСОВКА ЛОКАЛЬНОЙ ТАБЛИЦЫ ОТЛИЧИЙ (ЛИСТ 4)
+ */
+function showDiffTable() {
+  const diffMatrix = window.diffData;
+
+  // ПРОВЕРКА: Если база пуста или содержит только шапку
+  if (!diffMatrix || diffMatrix.length <= 1) {
+    alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ', чтобы рассчитать разницу остатков.");
+    return;
+  }
+
+  const head = document.getElementById('diff-head');
+  const body = document.getElementById('diff-body');
+  if (!head || !body) return;
+
+  // Отрисовка шапки (первая строка diffMatrix)
+  head.innerHTML = diffMatrix[0].map(h => `<th>${h}</th>`).join('');
+
+  // Отрисовка тела с умным цветовым выделением расхождений
+  body.innerHTML = diffMatrix.map((row, index) => {
+    if (index === 0 || !row) return ''; // Пропускаем заголовок
+
+    const lastCell = String(row[4] || '').trim();
+    let bgStyle = '';
+
+    // Подсветка строк на экране смартфона
+    if (lastCell.indexOf('-') === 0) {
+      bgStyle = 'style="background: #fee2e2;"'; // Мягкий красный
+    } else if (lastCell.indexOf('+') === 0) {
+      bgStyle = 'style="background: #dcfce7;"'; // Мягкий зеленый
+    }
+
+    return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+  }).join('');
+
+  // Переключаем экраны: скрываем меню сальдо, открываем таблицу отличий
+  document.getElementById('balance-view').classList.add('hidden');
+  document.getElementById('diff-table-view').classList.remove('hidden');
 }
 
 /**
- * ИСПРАВЛЕННАЯ ЛОГИКА АВТОМАТИЧЕСКОГО СРАВНЕНИЯ БАЗ (С ОЧИСТКОЙ РАЗРЯДОВ ТЫСЯЧ)
+ * АВТОМАТИЧЕСКОЕ СРАВНЕНИЕ БАЗ ДАННЫХ
  */
 async function executeDatabaseComparison() {
   const stock = window.inventoryData; 
@@ -60,7 +97,7 @@ async function executeDatabaseComparison() {
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock[0].slice(0, 5)]); // Шапка таблицы
+  diffMatrix.push([...stock[0].slice(0, 5)]); // Берем шапку из оригинальной структуры
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
@@ -69,7 +106,6 @@ async function executeDatabaseComparison() {
     const sArt = String(sRow[0]).trim();
     const sParam = String(sRow[1]).trim();
     
-    // БЕЗОПАСНО: Вырезаем любые разделители тысяч и пробелы из планшетика
     const cleanStockStr = String(sRow[4]).replace(/\s+/g, '');
     const sQty = parseInt(cleanStockStr) || 0; 
 
@@ -82,8 +118,6 @@ async function executeDatabaseComparison() {
 
       if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
         foundInBalance = true;
-        
-        // КРИТИЧЕСКИЙ ФИКС: Удаляем все скрытые пробелы разрядов тысяч из Excel строки
         const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
         bQty = parseInt(cleanBalanceStr) || 0; 
         break;
