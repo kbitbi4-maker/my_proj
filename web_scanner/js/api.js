@@ -1,4 +1,4 @@
-// URL вашего Google Apps Script (берем из старого проекта)
+// URL вашего Google Apps Script (берем из старого проекта) 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6liG6fwKIJfTg3iURAdhWItkl1CzXFfoZGxYhgcSH7D2Sxbvu8SCUYlg---jTntlY2Q/exec';
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
