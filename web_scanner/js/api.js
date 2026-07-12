@@ -19,13 +19,13 @@ function renderLogs() {
     head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела: берем всё, кроме первой строки, переворачиваем и выводим
-  body.innerHTML = window.qrLogs.slice(1).reverse().map(item => {
-    if (!item || !item.data) return '';
+  // Отрисовка тела: берем всё, кроме первой строки, передаем индекс клика i
+  body.innerHTML = window.qrLogs.map((item, i) => {
+    if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
-    return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
-  }).join('');
+    return `<tr ${bg} onclick="handleLogClick(${i})">${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+  }).filter(Boolean).reverse().join('');
 }
 
 async function syncFromGoogle() {
