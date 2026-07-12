@@ -1,5 +1,5 @@
 // URL вашего Google Apps Script (берем из старого проекта)
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzbxVFq8xZombR1frV60X-R1aJezltGsLIr1n-ZRjhvp0kAly-0v7eUJ00Vo8WinhJMbg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyykPd35o4rvnOOLXMH0m8hxVGrLqIYmOLRHqudYkkafxd4eA9Ues6bI47ba3GmbSQeeg/exec';
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
