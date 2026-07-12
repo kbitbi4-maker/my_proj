@@ -23,7 +23,8 @@ async function saveEntry() {
     }
     
     const currentWorker = window.currentUser || "Не указан";
-    const author = "Неугодников"; 
+    // ИСПРАВЛЕНО: Меняем автора выдачи на Неугодникову
+    const author = "Неугодникова"; 
     
     if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) {
       alert("Ошибка: Товар не выбран!");
@@ -55,11 +56,11 @@ async function saveEntry() {
       // 1. Возвращаем указанную часть товара на локальный склад на телефоне
       window.inventoryData = window.inventoryData.map(row => {
         if (row && 
-            String(row).trim() == String(itemKeys).trim() && 
-            String(row).trim() == String(itemKeys).trim() && 
-            String(row).trim() == String(itemKeys).trim() && 
-            String(row).trim() == String(itemKeys).trim()) {
-          row = (parseInt(row) || 0) + enteredQty; // ПРИБАВЛЯЕМ возвращенную часть
+            String(row[0]).trim() == String(itemKeys[0]).trim() && 
+            String(row[1]).trim() == String(itemKeys[1]).trim() && 
+            String(row[2]).trim() == String(itemKeys[2]).trim() && 
+            String(row[3]).trim() == String(itemKeys[3]).trim()) {
+          row[4] = (parseInt(row[4]) || 0) + enteredQty; // ПРИБАВЛЯЕМ возвращенную часть
         }
         return row;
       });
@@ -70,7 +71,7 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // 3. Формируем запись: количество записываем со знаком МИНУС, как в вашем возврате
+      // 3. Формируем запись: количество записываем со знаком МИНУС
       const returnPartRowData = [nextId, ...itemKeys, -enteredQty, currentWorker, author, time, day, month, year];
 
       // 4. Сохраняем в локальный буфер
@@ -79,7 +80,6 @@ async function saveEntry() {
       
       if (typeof renderLogs === 'function') renderLogs(); 
       
-      // Сбрасываем флаг частичного возврата и возвращаем кнопке Нумпада зеленый цвет
       window.isPartialReturnInput = false;
       const addBtnEl = document.getElementById('addBtn');
       if (addBtnEl) addBtnEl.style.background = "#22c55e"; 
@@ -89,7 +89,7 @@ async function saveEntry() {
       
       window.isSaving = false; 
       if (typeof sendUnsynced === 'function') sendUnsynced(); 
-      return; // Завершаем выполнение функции
+      return; 
     }
 
     // =========================================================================
