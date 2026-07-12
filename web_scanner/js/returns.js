@@ -3,30 +3,6 @@
 window.isReturnMode = false;
 window.currentReturnLogIndex = null;
 
-// ФУНКЦИЯ ДЛЯ НАШЕЙ НОВОЙ ТЕСТОВОЙ КНОПКИ УДАЛЕНИЯ (ИЗОЛИРОВАННЫЙ ЭКСПЕРИМЕНТ)
-async function runDeleteTest() {
-  const targetId = prompt("ВВЕДИТЕ УНИКАЛЬНЫЙ ID СТРОКИ ДЛЯ УДАЛЕНИЯ (из 1-го столбца Листа 2):");
-  if (!targetId || targetId.trim() === "") {
-    alert("Отменено. ID не введен.");
-    return;
-  }
-
-  alert("Отправляем тестовый запрос на удаление ID: " + targetId + "\nОжидайте ответ от Google...");
-
-  try {
-    // Собираем прямую ссылку с параметром тестового удаления
-    const testUrl = `${SCRIPT_URL}?testAction=deleteRowById&deleteId=${encodeURIComponent(targetId.trim())}`;
-    
-    const response = await fetch(testUrl);
-    const serverResultText = await response.text();
-    
-    // Выводим точный ответ, который нам прислал Google Apps Script
-    alert("ОТВЕТ GOOGLE APPS SCRIPT:\n\n" + serverResultText);
-  } catch (e) {
-    alert("Сетевая ошибка при тесте удаления: " + e.message);
-  }
-}
-
 function toggleReturnMode() {
   window.isReturnMode = !window.isReturnMode;
   const btn = document.getElementById('return-mode-btn');
@@ -46,10 +22,10 @@ function handleLogClick(originalIndex) {
   window.currentReturnLogIndex = originalIndex;
   const rowData = logItem.data;
   
-  const id = rowData !== undefined ? rowData[0] : '---';
-  const col4 = rowData !== undefined ? rowData[3] : '';
-  const col5 = rowData !== undefined ? rowData[4] : '';
-  const col6 = rowData !== undefined ? rowData[5] : '0';
+  const id = rowData !== undefined ? rowData : '---';
+  const col4 = rowData !== undefined ? rowData : '';
+  const col5 = rowData !== undefined ? rowData : '';
+  const col6 = rowData !== undefined ? rowData : '0';
   
   const infoBadge = document.getElementById('return-info-badge');
   if (infoBadge) {
@@ -76,10 +52,10 @@ function processReturn(actionType) {
   if (!logItem || !logItem.data) return;
 
   const rowData = logItem.data;
-  const targetId = rowData[0];
-  const itemKeys = rowData.slice(1, 5);
-  const qty = parseInt(rowData[5]) || 0;
-  const worker = rowData[6] || "Не указан";
+  const targetId = rowData; // ID строки (1-й столбец)
+  const itemKeys = rowData.slice(1, 5); // 4 ключа товара (столбцы 2, 3, 4, 5)
+  const qty = parseInt(rowData) || 0; // Количество (6-й столбец)
+  const worker = rowData || "Не указан";
 
   const now = new Date();
   const hh = now.getHours().toString().padStart(2, '0');
@@ -93,18 +69,18 @@ function processReturn(actionType) {
   if (actionType === 'full') {
     window.inventoryData = window.inventoryData.map(row => {
       if (row && 
-          String(row[0]).trim() == String(itemKeys[0]).trim() && 
-          String(row[1]).trim() == String(itemKeys[1]).trim() && 
-          String(row[2]).trim() == String(itemKeys[2]).trim() && 
-          String(row[3]).trim() == String(itemKeys[3]).trim()) {
-        row[4] = (parseInt(row[4]) || 0) + qty; 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim()) {
+        row = (parseInt(row) || 0) + qty; 
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
     const nextId = window.qrLogs.length > 1 
-      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
+      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data))).map(r => parseInt(r.data) || 0)) + 1 
       : 1;
 
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, time, day, month, year];
@@ -118,28 +94,40 @@ function processReturn(actionType) {
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'delete') {
-    // ВРЕМЕННЫЙ ПЕРЕНРАВИТЕЛЬ СТАРЫХ КНОПОК НА НАШ ТЕСТ
-    alert("Перенаправляем в тестовый режим удаления строки №" + targetId);
-    
-    // Эмулируем локальное списание остатка для чистоты
+    if (!confirm(`Вы уверены, что хотите полностью удалить строку №${targetId}? Товар вернется на склад локально, команда уйдет в облако.`)) return;
+
+    // ШАГ 1: Корректируем локальный склад (Лист 1)
     window.inventoryData = window.inventoryData.map(row => {
       if (row && 
-          String(row[0]).trim() == String(itemKeys[0]).trim() && 
-          String(row[1]).trim() == String(itemKeys[1]).trim() && 
-          String(row[2]).trim() == String(itemKeys[2]).trim() && 
-          String(row[3]).trim() == String(itemKeys[3]).trim()) {
-        row[4] = (parseInt(row[4]) || 0) + qty;
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim()) {
+        row = (parseInt(row) || 0) + qty; // Локальный перерасчет
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+
+    // ШАГ 2: Удаляем старую строку из локального массива видимых логов смартфона
     window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
-    window.qrLogs.push({ action: "delete", id: targetId, itemKeys: itemKeys, qty: qty, status: "wait" });
+
+    // ШАГ 3: Добавляем маркер удаления для текстовой отправки sendUnsynced()
+    window.qrLogs.push({
+      action: "delete",
+      id: targetId,
+      itemKeys: itemKeys,
+      qty: qty,
+      status: "wait"
+    });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+
     if (typeof renderLogs === 'function') renderLogs();
+    
     document.getElementById('return-view').classList.add('hidden');
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
+
     if (typeof sendUnsynced === 'function') sendUnsynced();
   } else if (actionType === 'part') {
     alert("Режим 'Вернуть часть' настроим позже.");
