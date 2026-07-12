@@ -21,24 +21,28 @@ async function executePhysicalDeletion() {
   const param = String(rowData[2]).trim(); // Параметр (3-й столбец)
   const qty = parseInt(rowData[5]) || 0;  // Количество товара (6-й столбец)
 
-  if (!confirm(`Вы уверены, что хотите полностью стереть строку №${targetId} из Google Таблицы? Товар (${qty} шт.) вернется на склад.`)) {
+  if (!confirm(`Вы уверены, что хотите полностью стереть строку №${targetId} из Google Таблицы?`)) {
     return;
   }
 
-  // 1. КОРРЕКТИРУЕМ МГНОВЕННО ЛОКАЛЬНЫЙ СКЛАД (ЛИСТ 1 НА ТЕЛЕФОНЕ)
-  window.inventoryData = window.inventoryData.map(row => {
-    if (row && String(row[0]).trim() === art && String(row[1]).trim() === param) {
-      row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад
-    }
-    return row;
-  });
-  localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+  // 1. КОРРЕКТИРУЕМ ЛОКАЛЬНЫЙ СКЛАД (ЛИСТ 1 НА ТЕЛЕФОНЕ) — ТОЛЬКО ЕСЛИ КОЛИЧЕСТВО БЫЛО ПОЛОЖИТЕЛЬНЫМ (ВЫДАЧА)
+  if (qty > 0) {
+    window.inventoryData = window.inventoryData.map(row => {
+      if (row && String(row[0]).trim() === art && String(row[1]).trim() === param) {
+        row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад
+      }
+      return row;
+    });
+    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+  } else {
+    console.log("Удаление строки возврата (qty < 0): локальный остаток на складе не изменяется.");
+  }
 
   // 2. УДАЛЯЕМ МГНОВЕННО СТРОКУ ИЗ ЛОКАЛЬНОГО ЖУРНАЛА ВЫДАЧИ НА ТЕЛЕФОНЕ
   window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
   localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
-  // 3. ПЕРЕРИСОВЫВАЕМ ИНТЕРФЕЙС ГЛАВНОГО ЭКРАНА (Строка мгновенно исчезает)
+  // 3. ПЕРЕРИСОВЫВАЕМ ИНТЕРФЕЙС ГЛАВНОГО ЭКРАНА
   if (typeof renderLogs === 'function') renderLogs();
 
   // 4. ЗАКРЫВАЕМ ОКНА НАВИГАЦИИ
@@ -52,7 +56,6 @@ async function executePhysicalDeletion() {
       // Собираем данные в одну текстовую строку через разделитель "|"
       const textPayload = `DELETE_ROW|${targetId}|${qty}|${art}|${param}`;
 
-      // Стреляем методом POST с типом text/plain. Это гарантированно пробивает CORS
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: {
@@ -62,8 +65,6 @@ async function executePhysicalDeletion() {
       });
       
       const serverText = await response.text();
-
-      // Выводим финальное подтверждение выполнения операции на сервере
       alert("ОТВЕТ СЕРВЕРА GOOGLE:\n\n" + serverText);
 
     } catch (e) {
