@@ -1,10 +1,8 @@
-// js/balance.js — Модуль импорта и обработки Сальдо (Лист 3) через прямую вставку
+// js/balance.js — Модуль импорта Сальдо (Лист 3) и Сравнения остатков (Лист 4)
 
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
+window.diffData = JSON.parse(localStorage.getItem('qr_diff_v1')) || [];
 
-/**
- * Открытие стартового диалогового окна Сальдо
- */
 function openBalanceMenu() {
   if (typeof stopCamera === 'function') stopCamera();
 
@@ -14,47 +12,134 @@ function openBalanceMenu() {
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
   
-  // Возвращаем исходный вид меню
-  document.getElementById('balance-menu-buttons').classList.remove('hidden');
-  document.getElementById('balance-paste-container').classList.add('hidden');
+  const loadBtn = document.getElementById('btn-load-balance-action');
+  if (loadBtn) {
+    loadBtn.innerText = "ЗАГРУЗИТЬ САЛЬДО";
+    loadBtn.disabled = false;
+  }
+
   document.getElementById('balance-view').classList.remove('hidden');
 }
 
-/**
- * Переключение интерфейса на окно ввода текста таблицы
- */
 function showBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.add('hidden');
-  
   const textArea = document.getElementById('balance-text-area');
-  if (textArea) textArea.value = ""; // Очищаем старый текст
+  if (textArea) textArea.value = ""; 
   
   const importBtn = document.getElementById('btn-confirm-balance-import');
   if (importBtn) {
     importBtn.innerText = "ПОДТВЕРДИТЬ ИМПОРТ";
     importBtn.disabled = false;
   }
-
   document.getElementById('balance-paste-container').classList.remove('hidden');
 }
 
-/**
- * Возврат из окна ввода текста к главным кнопкам Сальдо
- */
 function hideBalancePasteArea() {
   document.getElementById('balance-paste-container').classList.add('hidden');
   document.getElementById('balance-menu-buttons').classList.remove('hidden');
 }
 
 /**
- * Опция "СРАВНИТЬ" (Заглушка по ТЗ)
+ * ЛОГИКА АВТОМАТИЧЕСКОГО СРАВНЕНИЯ БАЗ ДАННЫХ И ФОРМИРОВАНИЯ ЛИСТА 4
  */
-function runCompareAlert() {
-  alert("Опция 'Сравнить сальдо' находится в разработке.");
+async function runCompareAlert() {
+  const stock = window.inventoryData; // База "планшетика" (Лист 1)
+  const balance = window.balanceData;  // База загруженного сальдо (Лист 3)
+
+  if (!stock || stock.length <= 1) {
+    alert("Ошибка: База остатков ('планшетик') пуста. Синхронизируйте облачко ☁");
+    return;
+  }
+  if (!balance || balance.length <= 1) {
+    alert("Ошибка: Сначала загрузите сальдо из Excel через кнопку выше!");
+    return;
+  }
+
+  // Создаем массив для хранения результатов расхождений
+  let diffMatrix = [];
+  
+  // Добавляем шапку для новой таблицы (копируем 5 первых заголовков из "планшетика")
+  diffMatrix.push([...stock[0].slice(0, 5)]);
+
+  // Бежим по строкам "планшетика" (пропуская заголовки i=0)
+  for (let i = 1; i < stock.length; i++) {
+    const sRow = stock[i];
+    if (!sRow || sRow.length < 5) continue;
+
+    const sArt = String(sRow[0]).trim();
+    const sParam = String(sRow[1]).trim();
+    const sQty = parseInt(sRow[4]) || 0; // 5-й столбец (индекс 4)
+
+    // Ищем этот же товар в базе сальдо по первым двум столбцам
+    let foundInBalance = false;
+    let bQty = 0;
+
+    for (let j = 1; j < balance.length; j++) {
+      const bRow = balance[j];
+      if (!bRow || bRow.length < 5) continue;
+
+      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+        foundInBalance = true;
+        bQty = parseInt(bRow[4]) || 0; // 5-й столбец сальдо
+        break;
+      }
+    }
+
+    // Рассчитываем разницу
+    const difference = sQty - bQty;
+
+    // Если количества совпадают — строку игнорируем, идем дальше
+    if (difference === 0) continue;
+
+    // Формируем строку: берем первые 5 столбцов текущего товара
+    let newDiffRow = [...sRow.slice(0, 5)];
+    
+    // В 5-й столбец записываем разницу с соответствующим знаком (+ или -)
+    if (difference > 0) {
+      newDiffRow[4] = "+" + difference;
+    } else {
+      newDiffRow[4] = String(difference); // Знак минус подставится автоматически
+    }
+
+    diffMatrix.push(newDiffRow);
+  }
+
+  // 1. ЗАПИСЫВАЕМ СФОРМИРОВАННУЮ РАЗНИЦУ В ЧЕТВЕРТУЮ ЛОКАЛЬНУЮ БАЗУ
+  window.diffData = diffMatrix;
+  localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
+
+  alert(`Сверка завершена!\nОбнаружено расхождений: ${diffMatrix.length - 1} позиций.\nОтправляем отчет на Лист 4 в облако...`);
+
+  // 2. ОТПРАВЛЯЕМ МАТРИЦУ РАЗНИЦЫ В GOOGLE ТАБЛИЦУ (ЛИСТ 4)
+  if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
+    try {
+      const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
+
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: textPayload
+      });
+
+      const serverText = await response.text();
+      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО СВЕРКЕ:\n\n" + serverText);
+      
+      if (typeof closeModal === 'function') closeModal();
+
+    } catch (e) {
+      console.error(e);
+      alert("Отчет сохранен на устройстве, но произошла ошибка отправки в облако: " + e.message);
+    }
+  } else {
+    alert("Нет сети. Результаты сравнения сохранены локально в четвертую базу данных.");
+    if (typeof closeModal === 'function') closeModal();
+  }
 }
 
 /**
- * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА
+ * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ
  */
 async function processTextTableImport() {
   const textArea = document.getElementById('balance-text-area');
@@ -69,22 +154,17 @@ async function processTextTableImport() {
     importBtn.disabled = true;
   }
 
-  // Даем браузеру 50мс на перерисовку текста кнопки перед тяжелым расчетом
   await new Promise(resolve => setTimeout(resolve, 50));
 
   try {
     const rawText = textArea.value;
-    
-    // Разделяем монолитный текст по строкам (поддерживаем \r\n из Windows и чистый \n)
     const lines = rawText.split(/\r?\n/);
-    
     let matrix = [];
     
-    // Бежим по строкам и разбиваем каждую строку по знаку табуляции (\t)
     for (let i = 0; i < lines.length; i++) {
       const lineStr = lines[i];
       if (lineStr && lineStr.trim() !== "") {
-        const cells = lineStr.split('\t'); // Разделение ячеек Excel в строке
+        const cells = lineStr.split('\t'); 
         matrix.push(cells);
       }
     }
@@ -98,7 +178,6 @@ async function processTextTableImport() {
       return;
     }
 
-    // 1. СОХРАНЯЕМ МАТРИЦУ ЯЧЕЕК В ТРЕТЬЮ ЛОКАЛЬНУЮ БАЗУ ДАННЫХ
     window.balanceData = matrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
@@ -107,7 +186,6 @@ async function processTextTableImport() {
     }
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // 2. ОТПРАВЛЯЕМ СФОРМИРОВАННЫЙ ТЕКСТ В ГУГЛ ТАБЛИЦУ (ЛИСТ 3)
     if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
       const textPayload = "BALANCE_IMPORT|" + JSON.stringify(matrix);
 
@@ -121,7 +199,6 @@ async function processTextTableImport() {
 
       const serverText = await response.text();
       alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО:\n\n" + serverText);
-      
       if (typeof closeModal === 'function') closeModal();
 
     } else {
