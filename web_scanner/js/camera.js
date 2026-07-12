@@ -47,7 +47,6 @@ function tick() {
     return;
   }
 
-  // Создаем виртуальный холст для считывания картинки
   const canvas = document.createElement("canvas");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
@@ -60,7 +59,6 @@ function tick() {
   });
 
   if (code && code.data) {
-    // QR-код успешно считан, останавливаем камеру и отправляем данные на обработку
     stopCamera();
     const btn = document.getElementById("start-camera");
     if (btn) btn.innerText = "Найти QR";
@@ -72,8 +70,7 @@ function tick() {
 }
 
 /**
- * ФУНКЦИОНАЛ СКАНЕРА С РАЗДЕЛИТЕЛЕМ "!"
- * Принимает сырую строку из QR-кода, делит её и запускает нумпад
+ * ОПЕРАЦИЯ СКАНЕРА: Разделение по "!" и обязательная ПРОВЕРКА ПО БАЗЕ ДАННЫХ
  */
 function handleQRCode(rawData) {
   if (!rawData) return;
@@ -84,21 +81,55 @@ function handleQRCode(rawData) {
   const scannedParam = parts[1] ? parts[1].trim() : "";
 
   if (!scannedArt) {
-    alert("Ошибка: В QR-коде не найден артикул.");
+    alert("Ошибка: В QR-коде не распознан артикул.");
     return;
   }
 
-  // Записываем распознанные данные в глобальные переменные для save.js
+  // Считываем текущую базу данных остатков из глобального кэша приложения
+  const stock = window.cachedStockData || window.stockData || [];
+  
+  if (!stock || stock.length <= 1) {
+    alert("Ошибка: База данных склада пуста. Пожалуйста, выполните синхронизацию (облако).");
+    return;
+  }
+
+  // ИЩЕМ ТОВАР В БАЗЕ ДАННЫХ ОСТАТКОВ
+  let isProductExists = false;
+  let matchedRowData = null;
+
+  // Бежим по складу (пропуская шапку под индексом 0)
+  for (let i = 1; i < stock.length; i++) {
+    const row = stock[i];
+    if (!Array.isArray(row)) continue;
+
+    // Предполагаем стандарт: артикул в 1-й колонке (индекс 0), параметр во 2-й (индекс 1)
+    const currentArt = String(row[0]).trim();
+    const currentParam = String(row[1]).trim();
+
+    if (currentArt === scannedArt && currentParam === scannedParam) {
+      isProductExists = true;
+      matchedRowData = row; // Сохраняем ссылку на найденную строку склада
+      break;
+    }
+  }
+
+  // Если проверка по базе данных провалилась — блокируем запуск нумпада
+  if (!isProductExists) {
+    alert(`Товар не найден в базе остатков!\nАртикул: ${scannedArt}\nПараметр: ${scannedParam || "нет"}\nПроверьте справочник.`);
+    return;
+  }
+
+  // Товар железно найден в базе, фиксируем параметры в глобальный контекст для save.js
   window.currentScannedArt = scannedArt;
   window.currentScannedParam = scannedParam;
 
-  // Обновляем текстовую плашку в нумпаде, чтобы пользователь видел, какой товар выбран
+  // Выводим информацию о найденном товаре на плашку нумпада
   const displayBadge = document.getElementById("qr-data-display");
   if (displayBadge) {
     displayBadge.innerText = `Арт: ${scannedArt} | Парам: ${scannedParam || "нет"}`;
   }
 
-  // Открываем подэкран нумпада (Экран 2) внутри вашего единого модального окна
+  // Переключаем экраны единого модального окна на Нумпад (Экран 2)
   const modal = document.getElementById("modal");
   const numpadView = document.getElementById("numpad-view");
   const stockView = document.getElementById("stock-view");
@@ -110,6 +141,5 @@ function handleQRCode(rawData) {
   if (stockView) stockView.classList.add("hidden");
   if (userView) userView.classList.add("hidden");
   
-  // Сбрасываем дисплей ввода количества на ноль
   if (numDisplay) numDisplay.innerText = "0";
 }
