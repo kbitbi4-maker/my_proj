@@ -1,67 +1,104 @@
-async function saveEntry() {
-  if (window.isSaving) return; 
-  window.isSaving = true;
+/**
+ * Функция сохранения записи (Выдача или Возврат)
+ */
+function saveEntry() {
+  const numDisplay = document.getElementById("numDisplay");
+  if (!numDisplay) return;
 
-  try {
-    const now = new Date(),
-          hh = now.getHours().toString().padStart(2, '0'),
-          mm = now.getMinutes().toString().padStart(2, '0'),
-          time = "'" + hh + ":" + mm;
-          
-    let day, month, year;
+  // Получаем введенное на нумпаде количество
+  let qty = parseInt(numDisplay.innerText, 10) || 0;
+  if (qty <= 0) {
+    alert("Введите количество больше 0");
+    return;
+  }
 
-    // Проверяем, введена ли измененная дата вручную (строка должна быть строго 6 символов)
-    if (window.customDateStr && window.customDateStr.length === 6) {
-      day = window.customDateStr.substring(0, 2);
-      month = window.customDateStr.substring(2, 4);
-      year = window.customDateStr.substring(4, 6);
-    } else {
-      // Иначе берем текущую системную дату
-      day = now.getDate().toString().padStart(2, '0');
-      month = (now.getMonth() + 1).toString().padStart(2, '0');
-      year = now.getFullYear().toString().slice(-2);
+  // Проверяем, включен ли режим возврата (флаг проверяется по состоянию кнопки или глобальной переменной)
+  const isReturnMode = window.isReturnActive === true;
+
+  // Извлекаем текущие данные отсканированного QR-кода (переменные должны быть объявлены в вашем коде глобально)
+  const id = Date.now(); // Генерируем уникальный ID операции
+  const art = window.currentScannedArt || "Не указан";
+  const param = window.currentScannedParam || "Не указан";
+  const user = window.currentSelectedUser || "Не выбран";
+  const dateStr = window.currentSelectedDate || new Date().toLocaleDateString("ru-RU");
+
+  // Если включен режим возврата — силой делаем количество отрицательным
+  const finalQty = isReturnMode ? -qty : qty;
+  const statusText = isReturnMode ? "Возврат" : "Выдача";
+
+  // Формируем массив из 12 колонок для отправки в Google Таблицу (Лист 2)
+  // Индексы: 0=ID, 1=Артикул, 2=Параметр, 5=Количество (Индекс 5), 11=Статус (Индекс 11)
+  const rowData = [
+    id,          // 1. Порядковый номер / ID
+    art,         // 2. Артикул
+    param,       // 3. Параметр
+    dateStr,     // 4. Дата
+    user,        // 5. Сотрудник
+    finalQty,    // 6. Количество (Сюда улетит минус, если это возврат!)
+    "",          // 7. Пусто
+    "",          // 8. Пусто
+    "",          // 9. Пусто
+    "",          // 10. Пусто
+    "",          // 11. Пусто
+    statusText   // 12. Маркер операции ("Выдача" или "Возврат")
+  ];
+
+  // Блокируем кнопку на время отправки
+  const addBtn = document.getElementById("addBtn");
+  if (addBtn) addBtn.disabled = true;
+
+  // Вызываем функцию отправки POST-запроса (она обычно находится в api.js или network.js)
+  if (typeof sendPostToGoogle === "function") {
+    sendPostToGoogle(rowData)
+      .then(response => {
+        if (response === "Success") {
+          // Сбрасываем нумпад и закрываем модальное окно
+          if (typeof clearNumpad === "function") clearNumpad();
+          handleBackButton();
+          // Принудительно запускаем синхронизацию, чтобы обновить локальный журнал и остатки
+          if (typeof syncFromGoogle === "function") syncFromGoogle();
+        } else {
+          alert("Ошибка сервера: " + response);
+        }
+      })
+      .catch(err => {
+        alert("Ошибка сети: " + err);
+      })
+      .finally(() => {
+        if (addBtn) addBtn.disabled = false;
+      });
+  } else {
+    // Резервный вариант, если функция отправки называется по-другому
+    console.error("Функция отправки sendPostToGoogle не найдена");
+    if (addBtn) addBtn.disabled = false;
+  }
+}
+
+/**
+ * Переключение режима возврата по кнопке в Хедере
+ */
+function toggleReturnMode() {
+  if (window.isReturnActive === undefined) {
+    window.isReturnActive = false;
+  }
+  
+  window.isReturnActive = !window.isReturnActive;
+  const btn = document.getElementById("return-mode-btn");
+  const addBtn = document.getElementById("addBtn");
+
+  if (window.isReturnActive) {
+    btn.style.backgroundColor = "#FCE4D6"; // Подсвечиваем кнопку возврата
+    btn.title = "Режим ВОЗВРАТА активен";
+    if (addBtn) {
+      addBtn.style.backgroundColor = "#d9534f";
+      addBtn.innerText = "ВЕРНУТЬ 0";
     }
-    
-    const currentWorker = window.currentUser || "Не указан";
-    const author = "Неугодников"; 
-    
-    if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) {
-      alert("Ошибка: Товар не выбран!");
-      window.isSaving = false;
-      return;
+  } else {
+    btn.style.backgroundColor = ""; // Возвращаем исходный стиль
+    btn.title = "Режим выдачи";
+    if (addBtn) {
+      addBtn.style.backgroundColor = "";
+      addBtn.innerText = "ДОБАВИТЬ 0";
     }
-
-    const itemKeys = window.currentSelectedRowData.slice(0, 4);
-    const qty = parseInt(window.currentQty) || 0;
-
-    const nextId = window.qrLogs.length > 1 
-      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
-      : 1;
-
-    // Формируем массив данных строки
-    const newRowData = [nextId, ...itemKeys, qty, currentWorker, author, time, day, month, year];
-
-    // Локальное списание остатка
-    window.inventoryData = window.inventoryData.map(row => {
-      if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
-        row[4] = (parseInt(row[4]) || 0) - qty;
-      }
-      return row;
-    });
-
-    // Сохранение изменений
-    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-    window.qrLogs.push({ data: newRowData, status: 'wait' });
-    localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
-    
-    if (typeof renderLogs === 'function') renderLogs(); 
-    closeModal();
-    
-    window.isSaving = false; 
-    if (typeof sendUnsynced === 'function') sendUnsynced(); 
-    
-  } catch (e) { 
-    console.error("Ошибка при сохранении:", e); 
-    window.isSaving = false; 
   }
 }
