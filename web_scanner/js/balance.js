@@ -3,26 +3,41 @@
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
 window.diffData = JSON.parse(localStorage.getItem('qr_diff_v1')) || [];
 
+/**
+ * Открытие стартового диалогового окна Сальдо (С ФИКСОМ СБРОСА ЭКРАНОВ)
+ */
 function openBalanceMenu() {
   if (typeof stopCamera === 'function') stopCamera();
 
+  // КРИТИЧЕСКИЙ ФИКС: Принудительно возвращаем меню в начальное состояние при каждом открытии
+  document.getElementById('balance-menu-buttons').classList.remove('hidden');
+  document.getElementById('balance-paste-container').classList.add('hidden');
+
+  // Скрываем все остальные возможные подэкраны модалки
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('stock-view').classList.add('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
+  if (document.getElementById('diff-table-view')) document.getElementById('diff-table-view').classList.add('hidden');
   
+  // Возвращаем кнопке загрузки её первоначальный текст
   const loadBtn = document.getElementById('btn-load-balance-action');
   if (loadBtn) {
     loadBtn.innerText = "ЗАГРУЗИТЬ САЛЬДО";
     loadBtn.disabled = false;
   }
 
+  // Показываем само меню сальдо
   document.getElementById('balance-view').classList.remove('hidden');
 }
 
+/**
+ * Переключение интерфейса на окно ввода текста таблицы
+ */
 function showBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.add('hidden');
+  
   const textArea = document.getElementById('balance-text-area');
   if (textArea) textArea.value = ""; 
   
@@ -34,6 +49,9 @@ function showBalancePasteArea() {
   document.getElementById('balance-paste-container').classList.remove('hidden');
 }
 
+/**
+ * Возврат из окна ввода текста к главным кнопкам Сальдо
+ */
 function hideBalancePasteArea() {
   document.getElementById('balance-paste-container').classList.add('hidden');
   document.getElementById('balance-menu-buttons').classList.remove('hidden');
@@ -45,7 +63,6 @@ function hideBalancePasteArea() {
 function showDiffTable() {
   const diffMatrix = window.diffData;
 
-  // ПРОВЕРКА: Если база пуста или содержит только шапку
   if (!diffMatrix || diffMatrix.length <= 1) {
     alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ', чтобы рассчитать разницу остатков.");
     return;
@@ -55,40 +72,36 @@ function showDiffTable() {
   const body = document.getElementById('diff-body');
   if (!head || !body) return;
 
-  // Отрисовка шапки (первая строка diffMatrix)
   head.innerHTML = diffMatrix[0].map(h => `<th>${h}</th>`).join('');
 
-  // Отрисовка тела с умным цветовым выделением расхождений
   body.innerHTML = diffMatrix.map((row, index) => {
-    if (index === 0 || !row) return ''; // Пропускаем заголовок
+    if (index === 0 || !row) return ''; 
 
-    const lastCell = String(row[4] || '').trim();
+    const lastCell = String(row[row.length - 1] || '').trim();
     let bgStyle = '';
 
-    // Подсветка строк на экране смартфона
     if (lastCell.indexOf('-') === 0) {
-      bgStyle = 'style="background: #fee2e2;"'; // Мягкий красный
+      bgStyle = 'style="background: #fee2e2;"'; 
     } else if (lastCell.indexOf('+') === 0) {
-      bgStyle = 'style="background: #dcfce7;"'; // Мягкий зеленый
+      bgStyle = 'style="background: #dcfce7;"'; 
     }
 
     return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
   }).join('');
 
-  // Переключаем экраны: скрываем меню сальдо, открываем таблицу отличий
   document.getElementById('balance-view').classList.add('hidden');
   document.getElementById('diff-table-view').classList.remove('hidden');
 }
 
 /**
- * АВТОМАТИЧЕСКОЕ СРАВНЕНИЕ БАЗ ДАННЫХ
+ * АВТОМАТИЧЕСКОЕ СРАВНЕНИЕ БАЗ ДАННЫХ С ОЧИСТКОЙ РАЗРЯДОВ ТЫСЯЧ
  */
 async function executeDatabaseComparison() {
   const stock = window.inventoryData; 
   const balance = window.balanceData;  
 
   if (!stock || stock.length <= 1) {
-    alert("Ошибка: База остатков ('планшетик') пуста. Синхронизируйте облачко ☁");
+    alert("Ошибка: База остатков пуста. Синхронизируйте облачко ☁");
     return;
   }
   if (!balance || balance.length <= 1) {
@@ -97,7 +110,7 @@ async function executeDatabaseComparison() {
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock[0].slice(0, 5)]); // Берем шапку из оригинальной структуры
+  diffMatrix.push([...stock[0].slice(0, 5)]); 
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
@@ -170,7 +183,7 @@ async function executeDatabaseComparison() {
 }
 
 /**
- * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ
+ * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА
  */
 async function processTextTableImport() {
   const textArea = document.getElementById('balance-text-area');
