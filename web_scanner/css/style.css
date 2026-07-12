@@ -27,13 +27,13 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 /* Вспомогательный класс скрытия элементов */
 .hidden { display: none !important; }
 
-/* Стили окон: Модальное окно (Всегда на весь экран по умолчанию) */
+/* Стили окон: Модальное окно */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f0f2f5; z-index: 2000; display: flex; align-items: stretch; justify-content: center; }
 .modal-content { background: white; width: 100%; height: 100%; padding: 15px; padding-top: 45px; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
 .modal-close { position: absolute; top: 5px; left: 15px; font-size: 35px; border: none; background: transparent; color: #333; cursor: pointer; z-index: 10; font-weight: bold; }
 .modal-content h3 { margin: 0 0 10px 0; font-size: 2.2vh; color: #333; text-align: center; }
 
-/* Компоненты остатков (Stock) — Всегда полноэкранные для максимума информации */
+/* Компоненты остатков (Stock) */
 #stock-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
 #stock-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
 .modal-table { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; -webkit-overflow-scrolling: touch; }
@@ -41,7 +41,7 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .modal-table tr { cursor: pointer; }
 .modal-table tr:hover { background: #f1f5f9; }
 
-/* Компоненты клавиатуры (Numpad) — На смартфонах во всю ширину */
+/* Компоненты клавиатуры (Numpad) */
 #numpad-view { display: flex; flex-direction: column; height: 100%; width: 100%; box-sizing: border-box; gap: 8px; margin: 0 auto; }
 .item-info-badge { background: #e2e8f0; padding: 8px; border-radius: 8px; font-size: 1.5vh; font-weight: bold; color: #1e293b; text-align: center; border-left: 5px solid #4285f4; flex-shrink: 0; }
 
@@ -56,7 +56,7 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .numpad-grid button:active { background: #cbd5e1; }
 .numpad-grid .btn-clear { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
 
-/* Две большие кнопки действий в вертикальном режиме — Сбалансированы по высоте */
+/* Две большие кнопки действий */
 .numpad-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
 .user-select-trigger { background: #4285f4; color: white; border: none; border-radius: 10px; font-size: 1.8vh; font-weight: bold; text-transform: uppercase; cursor: pointer; height: 6vh; min-height: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; box-shadow: 0 4px 10px rgba(66,133,244,0.2); width: 100%; }
 .user-select-trigger span { font-weight: normal; font-size: 1.5vh; opacity: 0.9; margin-top: 2px; color: #fff; }
@@ -72,11 +72,9 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .user-list-grid button:active { background: #e2e8f0; }
 .user-list-grid .btn-back { background: #64748b; color: white; text-align: center; margin-top: auto; border: none; }
 
-/* Подсветка активного режима возврата на кнопке в шапке */
-.btn-icon.return-mode-active { color: #ff9800; text-shadow: 0 0 10px #ff9800; transform: scale(1.1); }
+/* Компоненты выбора возвратов */
 .return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
 .return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
-
 .btn-return-action { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 .btn-return-action:active { transform: translateY(1px); }
 .return-full { background: #3b82f6; color: white; }
@@ -92,88 +90,41 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
 
 /* СТИЛИ ДЛЯ РЕЖИМА ПРЯМОЙ КОРРЕКТИРОВКИ ОСТАТКОВ СТРАНИЦЫ */
-* Мигающая оранжево-красная надпись активации режима */
-.stock-mode-badge {
-  color: #ef4444;
-  font-weight: bold;
-  font-size: 1.6vh;
-  margin-top: 4px;
-  animation: pulseEditMode 1.5s infinite;
-}
+.stock-mode-badge { color: #ef4444; font-weight: bold; font-size: 1.6vh; margin-top: 4px; animation: pulseEditMode 1.5s infinite; }
+@keyframes pulseEditMode { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-@keyframes pulseEditMode {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
-}
+/* ВЫРАВНЕННАЯ И УВЕЛИЧЕННАЯ В 2 РАЗА КНОПКА КОРРЕКТИРОВКИ */
+/* ВЫРАВНЕННАЯ И УВЕЛИЧЕННАЯ В 2 РАЗА КНОПКА КОРРЕКТИРОВКИ */
 
-/* Кнопка включения режима в окне остатков */
 .btn-edit-trigger {
   width: 100%;
+  height: 9.6vh;             /* Увеличена высота кнопки в 2 раза под размер шапки */
+  min-height: 55px;
   padding: 10px;
-  background: #64748b;
+  background: #475569;
   color: white;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 2.8vh;          /* Шрифт увеличен в 2 раза для идеальной читаемости */
   font-weight: bold;
   cursor: pointer;
-  margin-bottom: 8px;
-}
-.btn-edit-trigger:active { background: #475569; }
-
-/* Подсветка редактируемых ячеек в 5-м столбце (индекс 4) */
-.editable-stock-cell {
-  background: #fef08a !important; /* Нежно-желтый фон */
-  border: 2px solid #eab308 !important;
-  color: #000000 !important;
-  font-weight: bold !important;
-  border-radius: 4px;
-}
-
-/* Инпуты ввода, которые динамически появляются вместо текста остатка */
-.cell-stock-input {
-  width: 70px;
-  background: transparent;
-  border: none;
-  text-align: center;
-  font-family: monospace;
-  font-size: 1.4vh;
-  font-weight: bold;
-  color: #000;
-  outline: none;
-  padding: 0;
-  margin: 0;
-}
-
-/* Горизонтальный блок для кнопок Отмена и Сохранить */
-.stock-edit-actions-row {
+  margin-bottom: 12px;
+  box-sizing: border-box;
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transition: background-color 0.2s, transform 0.1s;
 }
 
-.btn-stock-cancel {
-  flex: 1;
-  padding: 12px;
-  background: #94a3b8;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
+.btn-edit-trigger:active {
+  background: #334155;
+  transform: scale(0.98);    /* Визуальный отклик на нажатие экрана */
 }
-.btn-stock-cancel:active { background: #64748b; }
 
-.btn-stock-save {
-  flex: 2;
-  padding: 12px;
-  background: #f97316; /* Насыщенный оранжевый */
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(249,115,22,0.2);
+/* Адаптивное увеличение элементов формы действий в режиме изменения */
+.stock-edit-actions-row button {
+  padding: 16px 10px;
+  font-size: 2vh;
+  border-radius: 10px;
 }
-.btn-stock-save:active { background: #ea580c; }
