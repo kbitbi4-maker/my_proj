@@ -1,4 +1,3 @@
-// Инициализация глобального флага режима возврата (0 - выдача, 1 - возврат)
 if (typeof window.isReturnActive === 'undefined') {
   window.isReturnActive = false;
 }
@@ -33,7 +32,7 @@ function toggleReturnMode() {
 }
 
 /**
- * Функция сохранения записи и отправки пакета данных в Google Таблицу
+ * Функция сохранения записи
  */
 function saveEntry() {
   const numDisplay = document.getElementById("numDisplay");
@@ -45,71 +44,55 @@ function saveEntry() {
     return;
   }
 
-  // Подготавливаем данные для отправки в Google Таблицы
   const id = Date.now(); 
-  
-  // Берем артикул и параметр, которые были вытащены через разделитель "!" в файле camera.js
   const art = window.currentScannedArt || "Не указан";
   const param = window.currentScannedParam || "Не указан";
-  
   const user = window.currentSelectedUser || "Не выбран";
   const dateStr = window.currentSelectedDate || new Date().toLocaleDateString("ru-RU");
 
-  // ОПРЕДЕЛЕНИЕ РЕЖИМА: Если кнопка возврата нажата — делаем число ОТРИЦАТЕЛЬНЫМ
+  // ОПРЕДЕЛЕНИЕ КОЛИЧЕСТВА: При возврате улетает знак МИНУС
   const isReturnMode = window.isReturnActive === true;
   const finalQty = isReturnMode ? -Math.abs(qty) : Math.abs(qty);
   const statusText = isReturnMode ? "Возврат" : "Выдача";
 
-  // Строго собираем 12 ячеек строки для Листа 2 Google Таблицы
+  // Сборка 12-колоночной строки
   const rowData = [
-    id,          // 1. Порядковый номер транзакции (Колонка A)
-    art,         // 2. Выделенный артикул (Колонка B)
-    param,       // 3. Выделенный параметр (Колонка C)
-    dateStr,     // 4. Дата проведения (Колонка D)
-    user,        // 5. Выбравший сотрудник (Колонка E)
-    finalQty,    // 6. КОЛИЧЕСТВО (Колонка F -> Сюда пишется МИНУС при возврате!)
-    "",          // 7. Пустая ячейка
-    "",          // 8. Пустая ячейка
-    "",          // 9. Пустая ячейка
-    "",          // 10. Пустая ячейка
-    "",          // 11. Пустая ячейка
-    statusText   // 12. Текстовый статус операции (Колонка L)
+    id,          // 1. Порядковый номер операции
+    art,         // 2. Артикул
+    param,       // 3. Параметр
+    dateStr,     // 4. Дата
+    user,        // 5. Сотрудник
+    finalQty,    // 6. Количество (содержит минус, если это возврат)
+    "", "", "", "", "", // Технический резерв
+    statusText   // 12. Статус операции
   ];
 
   const addBtn = document.getElementById("addBtn");
   if (addBtn) addBtn.disabled = true;
 
-  // Отправляем сформированный массив в вашу функцию POST-запроса из api.js
   if (typeof sendPostToGoogle === "function") {
     sendPostToGoogle(rowData)
       .then(response => {
         if (response === "Success") {
-          // Очищаем экран ввода нумпада
           numDisplay.innerText = "0";
           if (typeof clearNumpad === "function") clearNumpad();
           
-          // Если мы находились в режиме возврата — выключаем его для следующего сканирования
-          if (window.isReturnActive) {
-            toggleReturnMode();
-          }
+          if (window.isReturnActive) toggleReturnMode();
 
-          // Закрываем модальное окно нумпада
           if (typeof handleBackButton === "function") handleBackButton();
-
-          // Вызываем облачную синхронизацию данных для обновления интерфейса
           if (typeof syncFromGoogle === "function") syncFromGoogle();
         } else {
-          alert("Ответ сервера Google: " + response);
+          alert("Ошибка сервера Google: " + response);
         }
       })
       .catch(err => {
-        alert("Ошибка сети при сохранении: " + err);
+        alert("Ошибка сети: " + err);
       })
       .finally(() => {
         if (addBtn) addBtn.disabled = false;
       });
   } else {
-    alert("Критическая ошибка фронтенда: Функция sendPostToGoogle не найдена.");
+    alert("Ошибка: Функция sendPostToGoogle не найдена.");
     if (addBtn) addBtn.disabled = false;
   }
 }
