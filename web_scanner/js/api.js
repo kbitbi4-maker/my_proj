@@ -1,6 +1,5 @@
 // URL вашего Google Apps Script (берем из старого проекта)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-
 // Инициализация баз данных в глобальной области видимости
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
@@ -10,13 +9,19 @@ function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
-  if (!window.qrLogs || !window.qrLogs.length) { body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; return; }
+  if (!window.qrLogs || !window.qrLogs.length) { 
+    body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; 
+    return; 
+  }
 
-  // Отрисовка шапки из первой строки массива
-  head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  // Заголовок всегда берем из поля data первой записи в массиве логов
+  if (window.qrLogs[0] && window.qrLogs[0].data) {
+    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  }
 
-  // Отрисовка тела (все кроме первой строки, в обратном порядке)
+  // Отрисовка тела: берем всё, кроме первой строки, переворачиваем и выводим
   body.innerHTML = window.qrLogs.slice(1).reverse().map(item => {
+    if (!item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
     return `<tr ${bg}>${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
@@ -47,7 +52,7 @@ async function syncFromGoogle() {
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
   for (let i = 0; i < window.qrLogs.length; i++) {
-    if (window.qrLogs[i].status === 'wait') {
+    if (window.qrLogs[i] && window.qrLogs[i].status === 'wait') {
       window.qrLogs[i].status = 'syncing'; 
       try {
         await fetch(SCRIPT_URL, {
@@ -67,7 +72,7 @@ async function sendUnsynced() {
   }
 }
 
-// Запуск отрисовки логов при первой загрузке скрипта
+// Безопасный запуск отрисовки при загрузке DOM
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
