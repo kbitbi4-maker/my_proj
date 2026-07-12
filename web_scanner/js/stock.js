@@ -1,5 +1,5 @@
 /**
- * Функция отрисовки таблицы остатков на складе (Лист 1) с живым поиском
+ * Функция отрисовки таблицы остатков на складе (Лист 1)
  */
 function renderStock() {
   const tbody = document.getElementById("stock-body");
@@ -9,26 +9,23 @@ function renderStock() {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  // Получаем кэшированные при синхронизации данные остатков склада
-  const stock = window.cachedStockData || [];
+  // Поддерживаем все варианты названий глобального кэша для стабильности
+  const stock = window.cachedStockData || window.stockData || [];
   if (!Array.isArray(stock) || stock.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='100%'>Данные склада отсутствуют или не синхронизированы</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='100%'>Синхронизируйте данные остатков...</td></tr>";
     return;
   }
 
-  // Рендерим заголовки колонок из первой строки массива (если они еще не отрисованы)
-  if (thead && thead.children.length === 0 && stock[0]) {
-    thead.innerHTML = stock[0].map(h => `<th>${h}</th>`).join("");
+  if (thead && thead.children.length === 0 && stock) {
+    thead.innerHTML = stock.map(h => `<th>${h}</th>`).join("");
   }
 
   const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
-  // Перебираем строки склада, начиная со второй (индекс 1), пропуская шапку
   for (let i = 1; i < stock.length; i++) {
     const row = stock[i];
     if (!Array.isArray(row)) continue;
     
-    // Фильтрация по поисковому запросу
     if (query) {
       const rowString = row.join(" ").toLowerCase();
       if (rowString.indexOf(query) === -1) continue;
@@ -41,7 +38,7 @@ function renderStock() {
 }
 
 /**
- * Переключение модального интерфейса на экран просмотра остатков склада
+ * Открытие экрана остатков в модальном окне
  */
 function showStock() {
   const modal = document.getElementById("modal");
@@ -64,9 +61,7 @@ function showStock() {
 }
 
 /**
- * Функция отрисовки Журнала выдачи на главном экране веб-приложения
- * Безопасно обрабатывает пустые данные и подсвечивает возвраты светло-красным
- * @param {Array} logs - Массив строк (Лист 2), полученный через doGet
+ * Функция отрисовки Журнала выдачи на главном экране (Лист 2)
  */
 function renderLogs(logs) {
   const tbody = document.getElementById("logs-body");
@@ -75,39 +70,38 @@ function renderLogs(logs) {
 
   tbody.innerHTML = "";
   
-  // Кэшируем массив логов в глобальной области видимости
+  // Записываем данные в глобальный кэш вашего приложения PRO_26
   window.cachedLogsData = logs;
+  window.logsData = logs;
 
-  // Безопасная проверка: если данных нет или пришел не массив, пишем заглушку и не крашим скрипт
   if (!logs || !Array.isArray(logs) || logs.length <= 1) {
-    tbody.innerHTML = "<tr><td colspan='100%' style='text-align:center; padding:15px;'>Журнал выдачи пуст. Синхронизируйте данные.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='100%'>Журнал выдачи пуст</td></tr>";
     return;
   }
 
-  // Генерируем шапку таблицы (Заголовки из первой строки logs[0])
-  if (thead && logs[0]) {
-    thead.innerHTML = logs[0].map(h => `<th>${h}</th>`).join("");
+  // Отрисовка заголовков таблицы
+  if (thead && logs) {
+    thead.innerHTML = logs.map(h => `<th>${h}</th>`).join("");
   }
 
-  // Отрисовываем лог в обратном порядке (свежие записи сверху), исключая индекс 0 (шапку)
+  // Рендеринг строк журнала снизу вверх (новые сверху)
   for (let i = logs.length - 1; i >= 1; i--) {
     const row = logs[i];
     if (!Array.isArray(row)) continue;
 
     const tr = document.createElement("tr");
 
-    // Извлекаем значение количества из 6-й колонки (индекс 5)
+    // Индекс 5 — это количество товара
     const qty = parseInt(row[5], 10) || 0;
 
-    // ПРОВЕРКА НА ВОЗВРАТ: Если число отрицательное, перекрашиваем строку веб-интерфейса
+    // Безопасное окрашивание: если количество меньше нуля, строка красится в светло-красный
     if (qty < 0) {
-      tr.style.backgroundColor = "#FCE4D6"; // Светло-красный пастельный цвет
+      tr.style.backgroundColor = "#FCE4D6"; 
       tr.classList.add("return-row");       
     } else {
       tr.style.backgroundColor = "#FFFFFF"; 
     }
 
-    // Безопасно наполняем ячейки текстом
     tr.innerHTML = row.map(cell => `<td>${cell}</td>`).join("");
     tbody.appendChild(tr);
   }
