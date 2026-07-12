@@ -31,7 +31,6 @@ function handleLogClick(originalIndex) {
   if (!window.isReturnMode) return;
   
   const logItem = window.qrLogs[originalIndex];
-  // Игнорируем технические маркеры удаления, если они вдруг еще находятся в массиве
   if (!logItem || !logItem.data || logItem.action === 'delete') return; 
   
   window.currentReturnLogIndex = originalIndex;
@@ -90,9 +89,13 @@ function processReturn(actionType) {
   if (actionType === 'full') {
     // ---- ЛОГИКА 1: ПОЛНЫЙ ВОЗВРАТ ----
     
-    // 1. Изменяем локальную базу остатков (возвращаем товар на склад)
+    // 1. Изменяем локальную базу остатков (Приведение типов к String!)
     window.inventoryData = window.inventoryData.map(row => {
-      if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
+      if (row && 
+          String(row[0]).trim() == String(itemKeys[0]).trim() && 
+          String(row[1]).trim() == String(itemKeys[1]).trim() && 
+          String(row[2]).trim() == String(itemKeys[2]).trim() && 
+          String(row[3]).trim() == String(itemKeys[3]).trim()) {
         row[4] = (parseInt(row[4]) || 0) + qty; 
       }
       return row;
@@ -104,7 +107,7 @@ function processReturn(actionType) {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // 3. Формируем запись лога с отрицательным количеством для бэкенда
+    // 3. Формируем запись лога с отрицательным количеством
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, time, day, month, year];
 
     // 4. Пишем в локальный журнал выданных товаров
@@ -121,21 +124,25 @@ function processReturn(actionType) {
 
   } else if (actionType === 'delete') {
     // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ ЧЕРЕЗ ФОНОВЫЙ БУФЕР ----
-    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}? Товар вернется на склад локально, а команда удаления уйдет в облако.`)) return;
+    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}? Товар вернется на склад локально.`)) return;
 
-    // ШАГ 1: Корректируем локальный склад (Лист 1)
+    // ШАГ 1: Корректируем локальный склад (Лист 1) с безопасным сравнением типов строк
     window.inventoryData = window.inventoryData.map(row => {
-      if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
-        row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад локально
+      if (row && 
+          String(row[0]).trim() == String(itemKeys[0]).trim() && 
+          String(row[1]).trim() == String(itemKeys[1]).trim() && 
+          String(row[2]).trim() == String(itemKeys[2]).trim() && 
+          String(row[3]).trim() == String(itemKeys[3]).trim()) {
+        row[4] = (parseInt(row[4]) || 0) + qty; // Увеличиваем локальный остаток товара
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    // ШАГ 2: Физически удаляем старую строку из локального массива видимых логов смартфона
+    // ШАГ 2: Физически удаляем старую строку из локального массива логов
     window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
 
-    // ШАГ 3: Добавляем в этот же массив скрытый маркер удаления для нашей функции sendUnsynced()
+    // ШАГ 3: Добавляем в массив маркер удаления для фоновой отправки
     window.qrLogs.push({
       action: "delete",
       id: targetId,
@@ -145,7 +152,7 @@ function processReturn(actionType) {
     });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
-    // Мгновенно обновляем интерфейс телефона — строка исчезает с экрана
+    // Мгновенно перерисовываем экран — строка исчезает, остаток обновлен
     if (typeof renderLogs === 'function') renderLogs();
 
     // Закрываем модальные окна
@@ -153,7 +160,7 @@ function processReturn(actionType) {
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
 
-    // ШАГ 4: Запускаем автоматическую фоновую выгрузку накопленных изменений в Google Таблицу
+    // ШАГ 4: Запускаем автоматическую фоновую выгрузку изменений в Google
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'part') {
