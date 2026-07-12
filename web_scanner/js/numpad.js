@@ -52,7 +52,6 @@ function handleBackButton() {
   }
   
   if (!document.getElementById('numpad-view').classList.contains('hidden')) {
-    // Если мы выходим назад из режима частичного возврата — сбрасываем флаги
     if (window.isPartialReturnInput) {
       window.isPartialReturnInput = false;
       const addBtnEl = document.getElementById('addBtn');
@@ -131,7 +130,6 @@ function pressNum(n) {
     if (typeof numDisplay !== 'undefined' && numDisplay) numDisplay.innerText = window.currentQty;
     
     if (typeof addBtn !== 'undefined' && addBtn) {
-      // КОРРЕКЦИЯ ТЕКСТА КНОПКИ ДЛЯ ЧАСТИЧНОГО ВОЗВРАТА
       if (window.isPartialReturnInput) {
         addBtn.innerText = `ВЕРНУТЬ ЧАСТЬ: ${window.currentQty} (${window.currentUser || 'Не указан'})`;
       } else {
@@ -171,7 +169,6 @@ function closeModal() {
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
   
-  // Дополнительный сброс на случай закрытия модалки крестиком
   window.isPartialReturnInput = false;
   const addBtnEl = document.getElementById('addBtn');
   if (addBtnEl) addBtnEl.style.background = "#22c55e";
