@@ -9,22 +9,27 @@ function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
-  if (!window.qrLogs || !window.qrLogs.length) { 
+  
+  // Фильтруем логи: для отображения на экране берем только реальные строки данных (где нет action === 'delete')
+  const visibleLogs = window.qrLogs.filter(item => item && item.data);
+
+  if (!visibleLogs.length) { 
     body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; 
     return; 
   }
 
   // Заголовок всегда берем из поля data первой записи в массиве логов
-  if (window.qrLogs[0] && window.qrLogs[0].data) {
-    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  if (visibleLogs[0] && visibleLogs[0].data) {
+    head.innerHTML = visibleLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела с сохранением оригинального индекса строки
-  body.innerHTML = window.qrLogs.map((item, i) => {
-    if (i === 0 || !item || !item.data) return '';
+  // Отрисовка тела: берем всё, кроме первой строки, переворачиваем и выводим
+  // Привязываем handleLogClick к ОРИГИНАЛЬНОМУ индексу в window.qrLogs, чтобы возвраты работали корректно
+  body.innerHTML = window.qrLogs.map((item, originalIndex) => {
+    if (originalIndex === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
-    return `<tr ${bg} onclick="handleLogClick(${i})">${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+    return `<tr ${bg} onclick="handleLogClick(${originalIndex})">${item.data.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
   }).filter(Boolean).reverse().join('');
 }
 
@@ -51,35 +56,58 @@ async function syncFromGoogle() {
 
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
+  
   for (let i = 0; i < window.qrLogs.length; i++) {
-    if (window.qrLogs[i] && window.qrLogs[i].status === 'wait') {
-      window.qrLogs[i].status = 'syncing'; 
+    const item = window.qrLogs[i];
+    if (!item || item.status !== 'wait') continue;
+
+    item.status = 'syncing'; 
+    
+    try {
+      let payload = {};
       
-      // Определяем тип действия для Google Скрипта
-      const actionType = window.qrLogs[i].action || 'insert';
-      
-      try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ 
-            action: actionType,
-            row: window.qrLogs[i].data 
-          })
-        });
-        window.qrLogs[i].status = 'ok';
-        localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
-        renderLogs();
-      } catch (e) {
-        window.qrLogs[i].status = 'wait'; 
-        localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
-        break; 
+      // Проверяем тип задачи в буфере
+      if (item.action === 'delete') {
+        // Если это маркер удаления — формируем команду удаления для Google Script
+        payload = {
+          action: "delete",
+          id: item.id,
+          itemKeys: item.itemKeys,
+          qty: item.qty
+        };
+      } else if (item.data) {
+        // Если это обычная строка выдачи или возврата
+        payload = { row: item.data };
       }
+
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify(payload)
+      });
+
+      // Если это было удаление — мы можем полностью стереть этот маркер из локальной базы, он больше не нужен
+      if (item.action === 'delete') {
+        window.qrLogs.splice(i, 1);
+        i--; // Корректируем индекс после удаления элемента из массива
+      } else {
+        item.status = 'ok';
+      }
+      
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      renderLogs();
+    } catch (e) {
+      // При ошибке связи возвращаем статус обратно в 'wait' для следующей попытки
+      item.status = 'wait'; 
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      break; 
     }
   }
 }
 
+// Безопасный запуск отрисовки при загрузке DOM
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
 });
+
