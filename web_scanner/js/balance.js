@@ -1,10 +1,9 @@
-// js/balance.js — Модуль импорта и обработки Сальдо (Лист 3)
+// js/balance.js — Модуль импорта и обработки Сальдо (Лист 3) через прямую вставку
 
-// Инициализация третьей локальной базы данных
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
 
 /**
- * Открытие диалогового окна Сальдо
+ * Открытие стартового диалогового окна Сальдо
  */
 function openBalanceMenu() {
   if (typeof stopCamera === 'function') stopCamera();
@@ -15,14 +14,36 @@ function openBalanceMenu() {
   document.getElementById('user-view').classList.add('hidden');
   if (document.getElementById('return-view')) document.getElementById('return-view').classList.add('hidden');
   
-  // Возвращаем кнопке загрузки сальдо её первоначальный текст на случай повторного открытия
-  const loadBtn = document.getElementById('btn-load-balance-action');
-  if (loadBtn) {
-    loadBtn.innerText = "ЗАГРУЗИТЬ САЛЬДО";
-    loadBtn.disabled = false;
+  // Возвращаем исходный вид меню
+  document.getElementById('balance-menu-buttons').classList.remove('hidden');
+  document.getElementById('balance-paste-container').classList.add('hidden');
+  document.getElementById('balance-view').classList.remove('hidden');
+}
+
+/**
+ * Переключение интерфейса на окно ввода текста таблицы
+ */
+function showBalancePasteArea() {
+  document.getElementById('balance-menu-buttons').classList.add('hidden');
+  
+  const textArea = document.getElementById('balance-text-area');
+  if (textArea) textArea.value = ""; // Очищаем старый текст
+  
+  const importBtn = document.getElementById('btn-confirm-balance-import');
+  if (importBtn) {
+    importBtn.innerText = "ПОДТВЕРДИТЬ ИМПОРТ";
+    importBtn.disabled = false;
   }
 
-  document.getElementById('balance-view').classList.remove('hidden');
+  document.getElementById('balance-paste-container').classList.remove('hidden');
+}
+
+/**
+ * Возврат из окна ввода текста к главным кнопкам Сальдо
+ */
+function hideBalancePasteArea() {
+  document.getElementById('balance-paste-container').classList.add('hidden');
+  document.getElementById('balance-menu-buttons').classList.remove('hidden');
 }
 
 /**
@@ -33,94 +54,87 @@ function runCompareAlert() {
 }
 
 /**
- * Вызов системного окна выбора файлов смартфона/ПК
+ * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА
  */
-function triggerExcelFileChoice() {
-  const fileInput = document.getElementById('excel-file-input');
-  if (fileInput) {
-    fileInput.value = ""; // Очищаем старый выбор
-    fileInput.click();
-  }
-}
-
-/**
- * Обработчик чтения Excel файла и его импорта
- */
-function handleExcelImport(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const loadBtn = document.getElementById('btn-load-balance-action');
-  if (loadBtn) {
-    loadBtn.innerText = "⏳ Читаю Excel...";
-    loadBtn.disabled = true;
+async function processTextTableImport() {
+  const textArea = document.getElementById('balance-text-area');
+  if (!textArea || textArea.value.trim() === "") {
+    alert("Ошибка: Поле ввода пустое! Сначала скопируйте ячейки в Excel и вставьте их сюда.");
+    return;
   }
 
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+  const importBtn = document.getElementById('btn-confirm-balance-import');
+  if (importBtn) {
+    importBtn.innerText = "⏳ Обработка ячеек...";
+    importBtn.disabled = true;
+  }
 
-      // Берем самый первый лист из загруженного Excel файла
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
+  // Даем браузеру 50мс на перерисовку текста кнопки перед тяжелым расчетом
+  await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Превращаем лист Excel в двумерный массив массивов
-      const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-      if (!rawRows || rawRows.length === 0) {
-        alert("Ошибка: Выбранный Excel файл пустой.");
-        if (loadBtn) {
-          loadBtn.innerText = "ЗАГРУЗИТЬ САЛЬДО";
-          loadBtn.disabled = false;
-        }
-        return;
-      }
-
-      // Очищаем пустые строки
-      const cleanRows = rawRows.filter(row => row && row.length > 0);
-
-      // 1. ЗАПИСЫВАЕМ ДАННЫЕ В ТРЕТЬЮ ЛОКАЛЬНУЮ БАЗУ ДАННЫХ НА ТЕЛЕФОНЕ
-      window.balanceData = cleanRows;
-      localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
-
-      if (loadBtn) {
-        loadBtn.innerText = "☁️ Отправляю в Google...";
-      }
-
-      // 2. ВЫГРУЖАЕМ ДАННЫЕ В ГУГЛ ТАБЛИЦУ (ЛИСТ 3)
-      if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
-        const textPayload = "BALANCE_IMPORT|" + JSON.stringify(cleanRows);
-
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-          },
-          body: textPayload
-        });
-
-        const serverText = await response.text();
-        alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО:\n\n" + serverText);
-        
-        // Закрываем модальное окно после успешного импорта
-        if (typeof closeModal === 'function') closeModal();
-
-      } else {
-        alert("Внимание: Нет сети. Данные сохранены в третью базу только локально на телефоне.");
-        if (typeof closeModal === 'function') closeModal();
-      }
-
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка при разборе Excel-файла: " + err.message);
-      if (loadBtn) {
-        loadBtn.innerText = "ЗАГРУЗИТЬ САЛЬДО";
-        loadBtn.disabled = false;
+  try {
+    const rawText = textArea.value;
+    
+    // Разделяем монолитный текст по строкам (поддерживаем \r\n из Windows и чистый \n)
+    const lines = rawText.split(/\r?\n/);
+    
+    let matrix = [];
+    
+    // Бежим по строкам и разбиваем каждую строку по знаку табуляции (\t)
+    for (let i = 0; i < lines.length; i++) {
+      const lineStr = lines[i];
+      if (lineStr && lineStr.trim() !== "") {
+        const cells = lineStr.split('\t'); // Разделение ячеек Excel в строке
+        matrix.push(cells);
       }
     }
-  };
 
-  reader.readAsArrayBuffer(file);
+    if (matrix.length === 0) {
+      alert("Ошибка: Не удалось распознать строки таблицы.");
+      if (importBtn) {
+        importBtn.innerText = "ПОДТВЕРДИТЬ ИМПОРТ";
+        importBtn.disabled = false;
+      }
+      return;
+    }
+
+    // 1. СОХРАНЯЕМ МАТРИЦУ ЯЧЕЕК В ТРЕТЬЮ ЛОКАЛЬНУЮ БАЗУ ДАННЫХ
+    window.balanceData = matrix;
+    localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
+
+    if (importBtn) {
+      importBtn.innerText = "☁️ Отправка в облако Google...";
+    }
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // 2. ОТПРАВЛЯЕМ СФОРМИРОВАННЫЙ ТЕКСТ В ГУГЛ ТАБЛИЦУ (ЛИСТ 3)
+    if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
+      const textPayload = "BALANCE_IMPORT|" + JSON.stringify(matrix);
+
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: textPayload
+      });
+
+      const serverText = await response.text();
+      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО:\n\n" + serverText);
+      
+      if (typeof closeModal === 'function') closeModal();
+
+    } else {
+      alert(`Импорт завершен локально! В третью базу записано: ${matrix.length} строк.\nВнимание: Данные ушли только в память телефона, так как интернет отсутствует.`);
+      if (typeof closeModal === 'function') closeModal();
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Критическая ошибка парсинга текста: " + err.message);
+    if (importBtn) {
+      importBtn.innerText = "ПОДТВЕРДИТЬ ИМПОРТ";
+      importBtn.disabled = false;
+    }
+  }
 }
