@@ -125,7 +125,6 @@
       <div id="balance-view" class="hidden">
         <h3>Управление Сальдо</h3>
         <div class="return-actions-grid" style="margin-top: 20px;">
-          <!-- Добавлен id="btn-load-balance-action" для плавного изменения текста во время загрузки -->
           <button id="btn-load-balance-action" class="btn-return-action return-full" style="background: #2563eb;" onclick="triggerExcelFileChoice()">ЗАГРУЗИТЬ САЛЬДО</button>
           <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="runCompareAlert()">СРАВНИТЬ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
@@ -135,8 +134,8 @@
     </div>
   </div>
 
-  <!-- Внешняя официальная библиотека парсинга Excel файлов -->
-  <script src="https://cloudflare.com"></script>
+  <!-- ИСПРАВЛЕНО: Ссылка заменена на официальный открытый CDN-unpkg для полной совместимости с GitHub Pages -->
+  <script src="https://unpkg.com"></script>
   <script src="js/jsQR.js"></script>
   <script src="js/network.js"></script>
   <script src="js/api.js"></script>
