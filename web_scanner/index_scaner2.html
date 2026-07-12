@@ -12,14 +12,11 @@
     <a class="btn-icon" href="../index.html">←</a>
     <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
     <button id="return-mode-btn" class="btn-icon" title="Режим возврата" onclick="toggleReturnMode()">🔄</button>
-    <button class="btn-icon" title="Импорт Excel" onclick="openBalanceMenu()">📊</button>
+    <button class="btn-icon" title="Импорт Сальдо" onclick="openBalanceMenu()">📊</button>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
-
-  <!-- Скрытый инпут для системного выбора файла Excel -->
-  <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)">
 
   <main class="content">
     <div class="camera-preview"><video id="video" autoplay playsinline></video></div>
@@ -121,21 +118,29 @@
         </div>
       </div>
 
-      <!-- ЭКРАН 5: Диалоговое окно Сальдо -->
-      <div id="balance-view" class="hidden">
+      <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы -->
+      <div id="balance-view" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
         <h3>Управление Сальдо</h3>
-        <div class="return-actions-grid" style="margin-top: 20px;">
-          <button id="btn-load-balance-action" class="btn-return-action return-full" style="background: #2563eb;" onclick="triggerExcelFileChoice()">ЗАГРУЗИТЬ САЛЬДО</button>
+        
+        <!-- Двухрежимный контейнер -->
+        <div id="balance-menu-buttons" class="return-actions-grid" style="margin-top: 20px;">
+          <button class="btn-return-action return-full" style="background: #2563eb;" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
           <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="runCompareAlert()">СРАВНИТЬ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
+        </div>
+
+        <!-- Скрытая по умолчанию область прямой вставки скопированных ячеек Excel -->
+        <div id="balance-paste-container" class="hidden" style="display: flex; flex-direction: column; flex-grow: 1; gap: 10px;">
+          <p style="font-size: 1.4vh; color: #475569; margin: 0; text-align: center;">Скопируйте ячейки в Excel (Ctrl+C) и вставьте в поле ниже (Ctrl+V):</p>
+          <textarea id="balance-text-area" placeholder="Вставьте скопированную таблицу сюда..." style="width: 100%; flex-grow: 1; min-height: 40vh; padding: 10px; font-family: monospace; font-size: 1.2vh; border: 2px solid #cbd5e1; border-radius: 8px; resize: none; box-sizing: border-box; outline: none;"></textarea>
+          <button id="btn-confirm-balance-import" class="btn-submit" style="background: #22c55e; height: 50px; flex-shrink: 0;" onclick="processTextTableImport()">ПОДТВЕРДИТЬ ИМПОРТ</button>
+          <button class="btn-back" style="margin-top: 0; height: 40px;" onclick="hideBalancePasteArea()">← Назад</button>
         </div>
       </div>
 
     </div>
   </div>
 
-  <!-- ИСПРАВЛЕНО: Ссылка заменена на официальный открытый CDN-unpkg для полной совместимости с GitHub Pages -->
-  <script src="https://unpkg.com"></script>
   <script src="js/jsQR.js"></script>
   <script src="js/network.js"></script>
   <script src="js/api.js"></script>
