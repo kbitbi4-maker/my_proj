@@ -7,7 +7,7 @@ function openNumpadView() {
   if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) return;
 
   const itemTitle = window.currentSelectedRowData.slice(0, 4).join(' ');
-  const currentStock = window.currentSelectedRowData || '0';
+  const currentStock = window.currentSelectedRowData[4] || '0';
 
   document.getElementById('qr-data-display').innerText = `ТОВАР: ${itemTitle} (Ост: ${currentStock})`;
   
@@ -38,7 +38,16 @@ function openNumpadView() {
 }
 
 function handleBackButton() {
-  // 1. Если мы в окне просмотра таблицы отличий (возврат к меню сальдо)
+  // 1. Если мы внутри поля ввода текста сальдо — возвращаемся к кнопкам меню сальдо
+  const pasteContainer = document.getElementById('balance-paste-container');
+  if (pasteContainer && !pasteContainer.classList.contains('hidden')) {
+    if (typeof hideBalancePasteArea === 'function') {
+      hideBalancePasteArea();
+    }
+    return;
+  }
+
+  // 2. Если мы в окне просмотра таблицы отличий (возврат к меню сальдо)
   const diffTableView = document.getElementById('diff-table-view');
   if (diffTableView && !diffTableView.classList.contains('hidden')) {
     diffTableView.classList.add('hidden');
@@ -46,7 +55,7 @@ function handleBackButton() {
     return;
   }
 
-  // 2. Если мы в меню Сальдо
+  // 3. Если мы в главном меню Сальдо (закрываем модалку)
   const balanceView = document.getElementById('balance-view');
   if (balanceView && !balanceView.classList.contains('hidden')) {
     balanceView.classList.add('hidden');
@@ -54,7 +63,7 @@ function handleBackButton() {
     return;
   }
 
-  // 3. Если мы находимся в окне управления возвратом
+  // 4. Если мы находимся в окне управления возвратом
   const returnView = document.getElementById('return-view');
   if (returnView && !returnView.classList.contains('hidden')) {
     returnView.classList.add('hidden');
@@ -112,9 +121,9 @@ function toggleDateMode() {
 }
 
 function updateDateDisplay(str) {
-  const d1 = str || '_', d2 = str || '_';
-  const m1 = str || '_', m2 = str || '_';
-  const y1 = str || '_', y2 = str || '_';
+  const d1 = str[0] || '_', d2 = str[1] || '_';
+  const m1 = str[2] || '_', m2 = str[3] || '_';
+  const y1 = str[4] || '_', y2 = str[5] || '_';
   const dateBtn = document.getElementById('date-select-btn');
   if (dateBtn) dateBtn.innerText = `Дата: ${d1}${d2}.${m1}${m2}.${y1}${y2}`;
 }
