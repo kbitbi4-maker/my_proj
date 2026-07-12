@@ -1,13 +1,10 @@
 // URL вашего Google Apps Script
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
-// Инициализация баз данных в глобальной области видимости
+
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
 
-/**
- * Отрисовка журнала выданных товаров на главном экране
- */
 function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
@@ -20,8 +17,8 @@ function renderLogs() {
     return; 
   }
 
-  if (window.qrLogs && window.qrLogs[0] && window.qrLogs[0].data) {
-    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  if (visibleLogs && visibleLogs.data) {
+    head.innerHTML = visibleLogs.data.map(h => `<th>${h}</th>`).join('');
   }
 
   body.innerHTML = window.qrLogs.map((item, i) => {
@@ -32,9 +29,6 @@ function renderLogs() {
   }).filter(Boolean).reverse().join('');
 }
 
-/**
- * Принудительное скачивание актуальной базы из Google Таблиц (Кнопка «Облачко»)
- */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
@@ -57,7 +51,7 @@ async function syncFromGoogle() {
 }
 
 /**
- * ФОНОВАЯ АВТОМАТИЧЕСКАЯ СИНХРОНИЗАЦИЯ: Разделяет POST для выдач и GET для удалений
+ * АВТОМАТИЧЕСКАЯ ФОНОВАЯ СИНХРОНИЗАЦИЯ С ТЕКСТОВЫМ ПРОБИТИЕМ ДЛЯ УДАЛЕНИЯ
  */
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
@@ -69,26 +63,35 @@ async function sendUnsynced() {
     item.status = 'syncing'; 
     
     try {
+      let bodyData = "";
+      
       if (item.action === 'delete') {
-        // ЕСЛИ ЭТО УДАЛЕНИЕ: собираем параметры в прямую GET-строку
-        const art = encodeURIComponent(item.itemKeys[0] || "");
-        const param = encodeURIComponent(item.itemKeys[1] || "");
-        const deleteUrl = `${SCRIPT_URL}?action=delete&id=${item.id}&qty=${item.qty}&art=${art}&param=${param}`;
-        
-        // Отправляем легкий GET-запрос (он никогда не блокируется CORS)
-        await fetch(deleteUrl, { method: 'GET' });
+        // ЕСЛИ ЭТО УДАЛЕНИЕ: упаковываем данные в монолитную текстовую строку через разделитель "*"
+        const art = item.itemKeys || "";
+        const param = item.itemKeys || "";
+        bodyData = `DELETE*${item.id}*${item.qty}*${art}*${param}`;
+      } else if (item.data) {
+        // ЕСЛИ ЭТО ОБЫЧНАЯ ВЫДАЧА: упаковываем в стандартный JSON-текст
+        bodyData = JSON.stringify({ row: item.data });
+      }
 
-        // Успешно выполнено в облаке — вырезаем маркер задачи из очереди телефона
+      // Отправляем пакет как чистый текст text/plain. Это на 100% обходит любые CORS блокировки
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: bodyData
+      });
+
+      const serverResponseText = await response.text();
+
+      if (item.action === 'delete') {
+        // Выводим подтверждение успешного физического удаления из облака
+        alert("ОТВЕТ СЕРВЕРА GOOGLE:\n\n" + serverResponseText);
         window.qrLogs.splice(i, 1);
         i--; 
-      } else if (item.data) {
-        // ЕСЛИ ЭТО ОБЫЧНАЯ ВЫДАЧА/ВОЗВРАТ: используем ваш оригинальный рабочий POST
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ row: item.data })
-        });
-        
+      } else {
         item.status = 'ok';
       }
       
