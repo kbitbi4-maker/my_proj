@@ -1,10 +1,8 @@
-// js/stock.js — Модуль журнала остатков (до 100 строк)
-
-// Хранилище для чистой копии ячеек выбранного товара (без разделителей)
+// js/stock.js — Модуль журнала остатков целиком
 let currentSelectedRowData = [];
 
 function showStock() {
-  if (!inventoryData || inventoryData.length === 0) { 
+  if (!window.inventoryData || window.inventoryData.length === 0) { 
     alert("Сначала нажмите кнопку синхронизации ☁"); 
     return; 
   }
@@ -25,13 +23,13 @@ function renderStock() {
   const searchInput = document.getElementById('stock-search');
   const term = searchInput ? searchInput.value.toLowerCase() : "";
   
-  if (!inventoryData.length) return;
+  if (!window.inventoryData || !window.inventoryData.length) return;
   
-  // Всегда берем заголовок из первой строки массива
-  head.innerHTML = inventoryData[0].map(h => `<th>${h}</th>`).join('');
+  // Исправлено: берем строго первую строку массива для шапки таблицы
+  head.innerHTML = window.inventoryData[0].map(h => `<th>${h}</th>`).join('');
   
-  // Отрисовка строк с передачей оригинального индекса массива (избегаем слэшей)
-  body.innerHTML = inventoryData.map((row, index) => {
+  // Отрисовка строк с передачей оригинального индекса массива
+  body.innerHTML = window.inventoryData.map((row, index) => {
     if (index === 0) return ''; // Пропускаем заголовок
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
@@ -47,10 +45,13 @@ function renderStock() {
 
 function selectFromStockDirect(index) {
   // Копируем чистый массив ячеек выбранной строки остатков
-  currentSelectedRowData = [...inventoryData[index]]; 
+  currentSelectedRowData = [...window.inventoryData[index]]; 
   
   // Скрываем остатки и передаем управление модулю нумпада
   document.getElementById('stock-view').classList.add('hidden');
-  openNumpadView();
+  if (typeof openNumpadView === 'function') {
+    openNumpadView();
+  } else {
+    console.error("Функция openNumpadView не найдена. Проверьте подключение js/numpad.js");
+  }
 }
-
