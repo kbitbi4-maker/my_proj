@@ -1,11 +1,10 @@
-// Инициализация глобального флага режима возврата, если он отсутствует
+// Глобальный флаг режима возврата
 if (typeof window.isReturnActive === 'undefined') {
   window.isReturnActive = false;
 }
 
 /**
  * Переключение режима возврата по кнопке в Хедере
- * Меняет цвет элементов управления и обновляет текст главной кнопки
  */
 function toggleReturnMode() {
   window.isReturnActive = !window.isReturnActive;
@@ -17,20 +16,14 @@ function toggleReturnMode() {
   const currentQty = numDisplay ? (parseInt(numDisplay.innerText, 10) || 0) : 0;
 
   if (window.isReturnActive) {
-    if (btn) {
-      btn.style.backgroundColor = "#FCE4D6"; 
-      btn.title = "Режим ВОЗВРАТА активен";
-    }
+    if (btn) btn.style.backgroundColor = "#FCE4D6"; 
     if (addBtn) {
       addBtn.style.backgroundColor = "#d9534f";
       addBtn.style.color = "#ffffff";
       addBtn.innerText = "ВЕРНУТЬ " + currentQty;
     }
   } else {
-    if (btn) {
-      btn.style.backgroundColor = ""; 
-      btn.title = "Режим выдачи";
-    }
+    if (btn) btn.style.backgroundColor = ""; 
     if (addBtn) {
       addBtn.style.backgroundColor = "";
       addBtn.style.color = "";
@@ -40,88 +33,69 @@ function toggleReturnMode() {
 }
 
 /**
- * Функция формирования строки данных и ее отправки в Google Таблицы
+ * Функция сохранения записи (Оригинальная логика со сканером на разделителе !)
  */
 function saveEntry() {
   const numDisplay = document.getElementById("numDisplay");
-  if (!numDisplay) {
-    alert("Критическая ошибка: Экран ввода количества не найден.");
-    return;
-  }
+  if (!numDisplay) return;
 
-  // Получаем введенное на нумпаде количество товара
   let qty = parseInt(numDisplay.innerText, 10) || 0;
   if (qty <= 0) {
     alert("Введите количество больше 0");
     return;
   }
 
-  // Сбор данных из глобального контекста вашего веб-сканера
+  // Извлекаем сохраненные при сканировании данные QR (разбитые через !)
   const id = Date.now(); 
   const art = window.currentScannedArt || "Не указан";
   const param = window.currentScannedParam || "Не указан";
   const user = window.currentSelectedUser || "Не выбран";
   const dateStr = window.currentSelectedDate || new Date().toLocaleDateString("ru-RU");
 
-  // Если активирован режим возврата — силой превращаем число в ОТРИЦАТЕЛЬНОЕ
-  const isReturnMode = window.isReturnActive === true;
-  const finalQty = isReturnMode ? -Math.abs(qty) : Math.abs(qty);
-  const statusText = isReturnMode ? "Возврат" : "Выдача";
+  // Если активен режим возврата — делаем количество отрицательным
+  const finalQty = window.isReturnActive ? -Math.abs(qty) : Math.abs(qty);
+  const statusText = window.isReturnActive ? "Возврат" : "Выдача";
 
-  // Строго формируем структуру из 12 ячеек для отправки на Лист 2
+  // Пакет из 12 колонок для отправки в Google Таблицу (Лист 2)
   const rowData = [
-    id,          // 1. Порядковый номер / ID (Колонка A)
-    art,         // 2. Артикул (Колонка B)
-    param,       // 3. Параметр (Колонка C)
-    dateStr,     // 4. Дата (Колонка D)
-    user,        // 5. Сотрудник (Колонка E)
-    finalQty,    // 6. Количество (Колонка F -> улетит МИНУС, если это возврат!)
-    "",          // 7. Резерв
-    "",          // 8. Резерв
-    "",          // 9. Резерв
-    "",          // 10. Резерв
-    "",          // 11. Резерв
-    statusText   // 12. Текстовый маркер операции (Колонка L)
+    id,          // 1. Порядковый номер / ID
+    art,         // 2. Артикул (вытащенный по разделителю !)
+    param,       // 3. Параметр (вытащенный по разделителю !)
+    dateStr,     // 4. Дата
+    user,        // 5. Сотрудник
+    finalQty,    // 6. Количество (Колонка F -> улетает минус при возврате)
+    "", "", "", "", "", // Пустые технические колонки
+    statusText   // 12. Текстовый статус
   ];
 
-  // Защита кнопки от повторных случайных кликов в момент отправки
   const addBtn = document.getElementById("addBtn");
   if (addBtn) addBtn.disabled = true;
 
-  // Вызов вашей глобальной функции отправки POST-запроса (в api.js)
+  // Отправка запроса через вашу стандартную функцию в api.js
   if (typeof sendPostToGoogle === "function") {
     sendPostToGoogle(rowData)
       .then(response => {
         if (response === "Success") {
-          // Сброс экрана нумпада
-          if (typeof clearNumpad === "function") {
-            clearNumpad();
-          } else {
-            numDisplay.innerText = "0";
-          }
+          numDisplay.innerText = "0";
+          if (typeof clearNumpad === "function") clearNumpad();
           
-          // Если был возврат — автоматически выключаем этот режим для следующей операции
-          if (window.isReturnActive) {
-            toggleReturnMode();
-          }
+          // Если был оформлен возврат — сбрасываем режим на обычную выдачу
+          if (window.isReturnActive) toggleReturnMode();
 
-          // Закрываем модальное окно нумпада
           if (typeof handleBackButton === "function") handleBackButton();
-
-          // Вызов вашей функции обновления данных на фронтенде
           if (typeof syncFromGoogle === "function") syncFromGoogle();
         } else {
-          alert("Ошибка сервера Google: " + response);
+          alert("Ошибка сервера: " + response);
         }
       })
       .catch(err => {
-        alert("Ошибка сети при передаче данных: " + err);
+        alert("Ошибка сети: " + err);
       })
       .finally(() => {
         if (addBtn) addBtn.disabled = false;
       });
   } else {
-    alert("Ошибка архитектуры приложения: Функция sendPostToGoogle не найдена.");
+    alert("Ошибка: Функция sendPostToGoogle не найдена.");
     if (addBtn) addBtn.disabled = false;
   }
 }
