@@ -99,3 +99,6 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
   .user-select-trigger span { font-size: 1.8vh; }
   .btn-submit { flex: 1; height: auto !important; min-height: 35px; font-size: 2.2vh; }
 }
+/* Визуальный индикатор активного режима возврата на главной таблице логов */
+.table-wrapper.return-active tr:not(:first-child) { cursor: pointer; border: 2px dashed #ef4444 !important; animation: pulse-border 1.5s infinite; }
+@keyframes pulse-border { 0% { opacity: 0.8; } 50% { opacity: 1; background-color: #fdf2f2; } 100% { opacity: 0.8; } }
