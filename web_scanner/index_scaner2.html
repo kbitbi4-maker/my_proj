@@ -34,7 +34,6 @@
   <!-- Единое модальное окно для всех подэкранов -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
-      <!-- Новая кнопка Назад в виде стрелочки -->
       <button class="modal-close" onclick="handleBackButton()">←</button>
 
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
@@ -53,32 +52,36 @@
       <div id="numpad-view" class="hidden">
         <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>
         
-        <div class="numpad-display-row">
-          <div id="numDisplay" class="numpad-screen">0</div>
-          
-          <div class="numpad-meta-buttons">
-            <button class="meta-trigger" onclick="openUserMenu()">
-              Сотрудник: <span id="whoLabel">...</span>
-            </button>
-            <!-- Новая кнопка выбора/изменения даты -->
-            <button id="date-select-btn" class="meta-trigger" onclick="toggleDateMode()">
-              Дата: --.--.--
-            </button>
+        <!-- Левая/Верхняя часть: Ввод данных -->
+        <div class="numpad-input-block">
+          <div class="numpad-display-row">
+            <div id="numDisplay" class="numpad-screen">0</div>
+            <div class="numpad-meta-buttons">
+              <button id="date-select-btn" class="meta-trigger" onclick="toggleDateMode()">Дата: --.--.--</button>
+            </div>
+          </div>
+
+          <div class="numpad-grid">
+            <button onclick="pressNum(1)">1</button>
+            <button onclick="pressNum(2)">2</button>
+            <button onclick="pressNum(3)">3</button>
+            <button onclick="pressNum(4)">4</button>
+            <button onclick="pressNum(5)">5</button>
+            <button onclick="pressNum(6)">6</button>
+            <button onclick="pressNum(7)">7</button>
+            <button onclick="pressNum(8)">8</button>
+            <button onclick="pressNum(9)">9</button>
+            <button class="btn-clear" onclick="pressNum('C')">C</button>
+            <button onclick="pressNum(0)">0</button>
           </div>
         </div>
 
-        <div class="numpad-grid">
-          <button onclick="pressNum(1)">1</button>
-          <button onclick="pressNum(2)">2</button>
-          <button onclick="pressNum(3)">3</button>
-          <button onclick="pressNum(4)">4</button>
-          <button onclick="pressNum(5)">5</button>
-          <button onclick="pressNum(6)">6</button>
-          <button onclick="pressNum(7)">7</button>
-          <button onclick="pressNum(8)">8</button>
-          <button onclick="pressNum(9)">9</button>
-          <button class="btn-clear" onclick="pressNum('C')">C</button>
-          <button onclick="pressNum(0)">0</button>
+        <!-- Правая/Нижняя часть: Главные кнопки действий -->
+        <div class="numpad-actions">
+          <button class="user-select-trigger" onclick="openUserMenu()">
+            СОТРУДНИК
+            <span id="whoLabel">...</span>
+          </button>
           <button id="addBtn" class="btn-submit" onclick="saveEntry()">ДОБАВИТЬ 0</button>
         </div>
       </div>
