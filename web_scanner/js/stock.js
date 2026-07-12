@@ -1,8 +1,7 @@
-// js/stock.js — Модуль журнала остатков целиком (с защитой от изоляции переменных)
+// js/stock.js — Модуль журнала остатков целиком
 
 function showStock() {
-  // Проверяем как глобальную переменную window, так и обычную локальную область видимости
-  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+  const currentData = window.inventoryData;
 
   if (!currentData || currentData.length === 0) { 
     alert("Сначала нажмите кнопку синхронизации ☁"); 
@@ -25,10 +24,10 @@ function renderStock() {
   const searchInput = document.getElementById('stock-search');
   const term = searchInput ? searchInput.value.toLowerCase() : "";
   
-  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+  const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // Отрисовка шапки из первой строки массива данных
+  // Правильно: берем именно первую строку (массив заголовков) из inventoryData
   head.innerHTML = currentData[0].map(h => `<th>${h}</th>`).join('');
   
   // Отрисовка строк таблицы по оригинальному индексу
@@ -47,7 +46,7 @@ function renderStock() {
 }
 
 function selectFromStockDirect(index) {
-  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+  const currentData = window.inventoryData;
   if (!currentData) return;
 
   // Копируем чистый массив ячеек выбранной строки остатков без использования разделителей
