@@ -1,52 +1,27 @@
-// Переменные состояния камеры
-let stream = null;
-scanning = false;
-let canvas = null;
-let context = null;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <title>ВЕБ-СКАНЕР PRO — Тест</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
-// Функции управления
-function toggleCamera() {
-    if (scanning) { stopCamera(); } 
-    else { startScanner(); }
-}
+  <header class="header">
+    <a class="btn-icon" href="../index.html">←</a>
+    <h2>ВЕБ-СКАНЕР PRO</h2>
+    <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
+  </header>
 
-function stopCamera() {
-    scanning = false;
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-    }
-    video.srcObject = null;
-    const sBtn = document.getElementById('start-camera');
-    sBtn.innerText = "Найти QR";
-    sBtn.disabled = false;
-}
+  <main class="content">
+    <div class="camera-preview">
+      <video id="video" autoplay playsinline></video>
+    </div>
+  </main>
 
-async function startScanner() {
-    if (scanning) return;
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        video.srcObject = stream;
-        scanning = true;
-        const sBtn = document.getElementById('start-camera');
-        sBtn.innerText = "ВЫКЛ КАМЕРУ";
-        sBtn.disabled = false;
-        requestAnimationFrame(tick);
-    } catch (e) { alert("Ошибка камеры"); }
-}
+  <script src="https://unpkg.com"></script>
+  <script src="js/camera.js"></script>
 
-function tick() {
-    if (video.readyState === video.HAVE_ENOUGH_DATA && scanning) {
-        if (!canvas) { canvas = document.createElement('canvas'); context = canvas.getContext('2d'); }
-        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const code = jsQR(context.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-        
-        if (code) { 
-            currentQR = code.data; 
-            stopCamera(); 
-            openModal(); 
-            return; 
-        }
-    }
-    if (scanning) requestAnimationFrame(tick);
-}
+</body>
+</html>
