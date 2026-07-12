@@ -19,7 +19,7 @@
   <main class="content">
     <div class="camera-preview"><video id="video" autoplay playsinline></video></div>
     
-    <!-- НОВАЯ ОБЛАСТЬ: Журнал выданных товаров (как в Excel) -->
+    <!-- Журнал выданных товаров -->
     <div id="result">
       <div class="log-title">Журнал выдачи:</div>
       <div class="table-wrapper">
@@ -30,6 +30,66 @@
       </div>
     </div>
   </main>
+
+  <!-- Единое модальное окно для всех подэкранов -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+
+      <!-- ЭКРАН 1: Просмотр и поиск остатков -->
+      <div id="stock-view" class="hidden">
+        <h3>Остатки на складе</h3>
+        <input type="text" id="stock-search" oninput="renderStock()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off">
+        <div class="table-wrapper modal-table">
+          <table>
+            <thead><tr id="stock-head"></tr></thead>
+            <tbody id="stock-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ЭКРАН 2: Цифровая клавиатура (Нумпад) -->
+      <div id="numpad-view" class="hidden">
+        <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>
+        
+        <div class="numpad-display-row">
+          <div id="numDisplay" class="numpad-screen">0</div>
+          <button class="user-select-trigger" onclick="openUserMenu()">
+            Сотрудник: <span id="whoLabel">...</span>
+          </button>
+        </div>
+
+        <div class="numpad-grid">
+          <button onclick="pressNum(1)">1</button>
+          <button onclick="pressNum(2)">2</button>
+          <button onclick="pressNum(3)">3</button>
+          <button onclick="pressNum(4)">4</button>
+          <button onclick="pressNum(5)">5</button>
+          <button onclick="pressNum(6)">6</button>
+          <button onclick="pressNum(7)">7</button>
+          <button onclick="pressNum(8)">8</button>
+          <button onclick="pressNum(9)">9</button>
+          <button class="btn-clear" onclick="pressNum('C')">C</button>
+          <button onclick="pressNum(0)">0</button>
+          <button id="addBtn" class="btn-submit" onclick="saveEntry()">ДОБАВИТЬ 0</button>
+        </div>
+      </div>
+
+      <!-- ЭКРАН 3: Выбор сотрудника -->
+      <div id="user-view" class="hidden">
+        <h3>Выберите сотрудника</h3>
+        <div class="user-list-grid">
+          <!-- Имена сотрудников подставьте под свои нужды -->
+          <button onclick="selectUser('Иванов И.И.')">Иванов И.И.</button>
+          <button onclick="selectUser('Петров П.П.')">Петров П.П.</button>
+          <button onclick="selectUser('Сидоров С.С.')">Сидоров С.С.</button>
+          <button onclick="selectUser('Кузнецов А.В.')">Кузнецов А.В.</button>
+          <button class="btn-back" onclick="closeUserMenu()">← Назад</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
   <script src="js/jsQR.js"></script>
   <script src="js/network.js"></script>
