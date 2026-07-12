@@ -1,80 +1,115 @@
 let stream = null;
-let scanning = false;
-let canvas = null;
-let context = null;
-let currentQR = "";
 
-// Привязываем элементы только после полной загрузки страницы
-let video = null;
-let sBtn = null;
-
-window.addEventListener('DOMContentLoaded', () => {
-    video = document.getElementById('video');
-    sBtn = document.getElementById('start-camera');
-});
-
+/**
+ * Включение/выключение камеры через кнопку в хедере
+ */
 function toggleCamera() {
-    if (scanning) { 
-        stopCamera(); 
-    } else { 
-        startScanner(); 
-    }
+  const video = document.getElementById("video");
+  const btn = document.getElementById("start-camera");
+  if (!video) return;
+
+  if (stream) {
+    stopCamera();
+    if (btn) btn.innerText = "Найти QR";
+  } else {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(s => {
+        stream = s;
+        video.srcObject = stream;
+        if (btn) btn.innerText = "Стоп Камера";
+        requestAnimationFrame(tick);
+      })
+      .catch(err => {
+        alert("Не удалось включить камеру: " + err);
+      });
+  }
 }
 
+/**
+ * Остановка видеопотока
+ */
 function stopCamera() {
-    scanning = false;
-    if (stream) { 
-        stream.getTracks().forEach(track => track.stop()); 
-        stream = null;
-    }
-    if (video) { video.srcObject = null; }
-    if (sBtn) { sBtn.innerText = "Найти QR"; }
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    stream = null;
+  }
+  const video = document.getElementById("video");
+  if (video) video.srcObject = null;
 }
 
-async function startScanner() {
-    if (scanning) return;
-    try {
-        // Запрашиваем доступ к камере
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        if (video) { video.srcObject = stream; }
-        scanning = true;
-        if (sBtn) { sBtn.innerText = "ВЫКЛ КАМЕРУ"; }
-        requestAnimationFrame(tick);
-    } catch (e) { 
-        alert("Ошибка камеры: " + e.message); 
-    }
-}
-
+/**
+ * Постоянный анализ кадров с камеры с помощью jsQR
+ */
 function tick() {
-    if (!video || !scanning) return;
+  const video = document.getElementById("video");
+  if (!stream || !video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+    if (stream) requestAnimationFrame(tick);
+    return;
+  }
+
+  // Создаем виртуальный холст для считывания картинки
+  const canvas = document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: "dontInvert",
+  });
+
+  if (code && code.data) {
+    // QR-код успешно считан, останавливаем камеру и отправляем данные на обработку
+    stopCamera();
+    const btn = document.getElementById("start-camera");
+    if (btn) btn.innerText = "Найти QR";
     
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        if (!canvas) { 
-            canvas = document.createElement('canvas'); 
-            context = canvas.getContext('2d'); 
-        }
-        
-        // Подстраиваем размеры холста под реальное видео
-        canvas.width = video.videoWidth; 
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Извлекаем массив пикселей кадра
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        
-        // Вызываем библиотеку и передаем обязательные параметры: данные, ширину, высоту
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-        
-        if (code) { 
-            currentQR = code.data; 
-            stopCamera(); 
-            
-            // Выводим всплывающее окно с расшифровкой QR-кода
-            alert("QR-код успешно считан!\n\nРасшифровка:\n" + currentQR); 
-            return; 
-        }
-    }
-    if (scanning) {
-        requestAnimationFrame(tick);
-    }
+    handleQRCode(code.data);
+  } else {
+    requestAnimationFrame(tick);
+  }
+}
+
+/**
+ * ФУНКЦИОНАЛ СКАНЕРА С РАЗДЕЛИТЕЛЕМ "!"
+ * Принимает сырую строку из QR-кода, делит её и запускает нумпад
+ */
+function handleQRCode(rawData) {
+  if (!rawData) return;
+
+  // Разделяем строку из QR-кода по знаку "!"
+  const parts = rawData.split("!");
+  const scannedArt = parts[0] ? parts[0].trim() : "";
+  const scannedParam = parts[1] ? parts[1].trim() : "";
+
+  if (!scannedArt) {
+    alert("Ошибка: В QR-коде не найден артикул.");
+    return;
+  }
+
+  // Записываем распознанные данные в глобальные переменные для save.js
+  window.currentScannedArt = scannedArt;
+  window.currentScannedParam = scannedParam;
+
+  // Обновляем текстовую плашку в нумпаде, чтобы пользователь видел, какой товар выбран
+  const displayBadge = document.getElementById("qr-data-display");
+  if (displayBadge) {
+    displayBadge.innerText = `Арт: ${scannedArt} | Парам: ${scannedParam || "нет"}`;
+  }
+
+  // Открываем подэкран нумпада (Экран 2) внутри вашего единого модального окна
+  const modal = document.getElementById("modal");
+  const numpadView = document.getElementById("numpad-view");
+  const stockView = document.getElementById("stock-view");
+  const userView = document.getElementById("user-view");
+  const numDisplay = document.getElementById("numDisplay");
+
+  if (modal) modal.classList.remove("hidden");
+  if (numpadView) numpadView.classList.remove("hidden");
+  if (stockView) stockView.classList.add("hidden");
+  if (userView) userView.classList.add("hidden");
+  
+  // Сбрасываем дисплей ввода количества на ноль
+  if (numDisplay) numDisplay.innerText = "0";
 }
