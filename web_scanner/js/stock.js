@@ -1,8 +1,10 @@
-// js/stock.js — Модуль журнала остатков целиком
-let currentSelectedRowData = [];
+// js/stock.js — Модуль журнала остатков целиком (с защитой от изоляции переменных)
 
 function showStock() {
-  if (!window.inventoryData || window.inventoryData.length === 0) { 
+  // Проверяем как глобальную переменную window, так и обычную локальную область видимости
+  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+
+  if (!currentData || currentData.length === 0) { 
     alert("Сначала нажмите кнопку синхронизации ☁"); 
     return; 
   }
@@ -23,14 +25,15 @@ function renderStock() {
   const searchInput = document.getElementById('stock-search');
   const term = searchInput ? searchInput.value.toLowerCase() : "";
   
-  if (!window.inventoryData || !window.inventoryData.length) return;
+  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+  if (!currentData || !currentData.length) return;
   
-  // Исправлено: берем строго первую строку массива для шапки таблицы
-  head.innerHTML = window.inventoryData[0].map(h => `<th>${h}</th>`).join('');
+  // Отрисовка шапки из первой строки массива данных
+  head.innerHTML = currentData[0].map(h => `<th>${h}</th>`).join('');
   
-  // Отрисовка строк с передачей оригинального индекса массива
-  body.innerHTML = window.inventoryData.map((row, index) => {
-    if (index === 0) return ''; // Пропускаем заголовок
+  // Отрисовка строк таблицы по оригинальному индексу
+  body.innerHTML = currentData.map((row, index) => {
+    if (index === 0) return ''; // Пропускаем заголовок таблицы
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
     if (!isMatch && term !== "") return '';
@@ -44,14 +47,17 @@ function renderStock() {
 }
 
 function selectFromStockDirect(index) {
-  // Копируем чистый массив ячеек выбранной строки остатков
-  currentSelectedRowData = [...window.inventoryData[index]]; 
+  const currentData = window.inventoryData || (typeof inventoryData !== 'undefined' ? inventoryData : null);
+  if (!currentData) return;
+
+  // Копируем чистый массив ячеек выбранной строки остатков без использования разделителей
+  window.currentSelectedRowData = [...currentData[index]]; 
   
-  // Скрываем остатки и передаем управление модулю нумпада
+  // Переключаем экраны: скрываем остатки и вызываем форму нумпада
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
     openNumpadView();
   } else {
-    console.error("Функция openNumpadView не найдена. Проверьте подключение js/numpad.js");
+    console.error("Функция openNumpadView не найдена. Убедитесь, что файл js/numpad.js подключен.");
   }
 }
