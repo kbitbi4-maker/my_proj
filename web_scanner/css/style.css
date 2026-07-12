@@ -72,6 +72,19 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 .user-list-grid button:active { background: #e2e8f0; }
 .user-list-grid .btn-back { background: #64748b; color: white; text-align: center; margin-top: auto; border: none; }
 
+/* Новые стили для режима возврата */
+.btn-icon.return-mode-active { color: #ff9800; text-shadow: 0 0 10px #ff9800; transform: scale(1.1); }
+.return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
+.return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
+.btn-return-action { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.btn-return-action:active { transform: translateY(1px); }
+.return-full { background: #3b82f6; color: white; }
+.return-full:active { background: #2563eb; }
+.return-part { background: #eab308; color: white; }
+.return-part:active { background: #ca8a04; }
+.return-delete { background: #ef4444; color: white; }
+.return-delete:active { background: #dc2626; }
+
 /* Изолированное ограничение только для блока Нумпада на больших мониторах (ПК) */
 @media (min-width: 600px) {
   #numpad-view { max-width: 450px; max-height: 80vh; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
@@ -80,22 +93,4 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 /* Настройки горизонтального режима для мобильных устройств */
 @media (max-height: 500px) and (orientation: landscape) {
   .modal-content { padding-top: 35px; }
-  .item-info-badge { padding: 4px; font-size: 1.4vh; }
-  
-  /* Разделяем нумпад на 2 колонки */
-  #numpad-view { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; height: 100%; max-width: 100% !important; max-height: 100% !important; border: none !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; }
-  
-  /* Левый блок (экран, дата, цифры) */
-  .numpad-input-block { grid-column: 1; gap: 4px; height: 100%; }
-  .numpad-display-row { height: 10vh; min-height: 30px; }
-  .numpad-screen { font-size: 4vh; }
-  .meta-trigger { font-size: 1.4vh; }
-  .numpad-grid { gap: 4px; }
-  .numpad-grid button { font-size: 3.5vh; min-height: 25px; border-radius: 6px; }
-  
-  /* Правый блок (Две абсолютно равные по высоте кнопки) */
-  .numpad-actions { grid-column: 2; display: flex; flex-direction: column; gap: 6px; height: 100%; justify-content: stretch; }
-  .user-select-trigger { flex: 1; height: auto !important; min-height: 35px; font-size: 2.2vh; }
-  .user-select-trigger span { font-size: 1.8vh; }
-  .btn-submit { flex: 1; height: auto !important; min-height: 35px; font-size: 2.2vh; }
 }
