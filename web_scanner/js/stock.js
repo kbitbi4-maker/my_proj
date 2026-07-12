@@ -11,6 +11,11 @@ function showStock() {
   const searchInput = document.getElementById('stock-search');
   if (searchInput) searchInput.value = "";
 
+  // Принудительно сбрасываем режим редактирования остатков при каждом новом открытии окна
+  if (typeof window.isStockEditMode !== 'undefined') {
+    window.isStockEditMode = false;
+  }
+
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('stock-view').classList.remove('hidden');
@@ -27,17 +32,67 @@ function renderStock() {
   const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // Правильно: берем именно первую строку (массив заголовков) из inventoryData
+  // 1. ДИНАМИЧЕСКИЙ ВЫВОД КНОПОК УПРАВЛЕНИЯ РЕДАКТИРОВАНИЕМ ВНУТРИ ОКНА
+  // Проверяем, добавлены ли уже кнопки управления над таблицей остатков. Если нет — создаем их.
+  let controlsWrapper = document.getElementById('stock-edit-controls-wrapper');
+  if (!controlsWrapper) {
+    controlsWrapper = document.createElement('div');
+    controlsWrapper.id = 'stock-edit-controls-wrapper';
+    controlsWrapper.style.width = '100%';
+    controlsWrapper.style.flexShrink = '0';
+    
+    // Вставляем блок управления прямо перед строкой поиска остатков
+    const searchInputEl = document.getElementById('stock-search');
+    if (searchInputEl && searchInputEl.parentNode) {
+      searchInputEl.parentNode.insertBefore(controlsWrapper, searchInputEl);
+    }
+  }
+
+  // Обновляем HTML-содержимое блока кнопок в зависимости от того, активен ли режим изменения
+  const isEdit = !!window.isStockEditMode;
+  controlsWrapper.innerHTML = `
+    <div id="stock-edit-badge" class="stock-mode-badge ${isEdit ? '' : 'hidden'}" style="text-align: center; margin-bottom: 8px;">
+      ⚠️ РЕЖИМ ИЗМЕНЕНИЯ ОСТАТКОВ АКТИВЕН
+    </div>
+    <button id="stock-edit-trigger-btn" class="btn-edit-trigger ${isEdit ? 'hidden' : ''}" onclick="toggleStockEditMode(true)">
+      📝 Внести изменения
+    </button>
+    <div id="stock-edit-actions" class="stock-edit-actions-row ${isEdit ? '' : 'hidden'}">
+      <button class="btn-stock-cancel" onclick="cancelStockChanges()">Отмена</button>
+      <button class="btn-stock-save" onclick="saveStockChangesCloud()">Сохранить изменения</button>
+    </div>
+  `;
+  
+  // 2. ОТРИСОВКА ЗАГОЛОВКОВ ТАБЛИЦЫ
   head.innerHTML = currentData[0].map(h => `<th>${h}</th>`).join('');
   
-  // Отрисовка строк таблицы по оригинальному индексу
+  // 3. ОТРИСОВКА СТРОК ТАБЛИЦЫ ОСТАТКОВ
   body.innerHTML = currentData.map((row, index) => {
     if (index === 0) return ''; // Пропускаем заголовок таблицы
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
     if (!isMatch && term !== "") return '';
 
-    return `<tr onclick="selectFromStockDirect(${index})">${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    // Генерируем ячейки строки
+    const cellsHtml = row.map((cell, cellIndex) => {
+      // Пятый столбец (индекс 4 в JS) — это Количество на остатке
+      if (cellIndex === 4 && isEdit) {
+        // Если активирован режим редактирования — подставляем инпут с уникальным ID вместо текста
+        return `
+          <td class="editable-stock-cell" onclick="event.stopPropagation();">
+            <input type="number" id="stock-input-${index}" class="cell-stock-input" value="${cell}" min="0" autocomplete="off">
+          </td>
+        `;
+      }
+      // Для всех остальных столбцов или в обычном режиме — выводим стандартный текст ячейки
+      return `<td>${cell}</td>`;
+    }).join('');
+
+    // Если активен режим редактирования остатков, клик по строке заблокирован, чтобы не открывался нумпад
+    const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
+    const rowStyle = isEdit ? 'style="cursor: default;"' : '';
+
+    return `<tr ${clickAction} ${rowStyle}>${cellsHtml}</tr>`;
   }).join('');
   
   if (body.innerHTML.trim() === "") {
@@ -49,10 +104,9 @@ function selectFromStockDirect(index) {
   const currentData = window.inventoryData;
   if (!currentData) return;
 
-  // Копируем чистый массив ячеек выбранной строки остатков без использования разделителей
+  // Копируем чистый массив ячеек выбранной строки остатков
   window.currentSelectedRowData = [...currentData[index]]; 
   
-  // Переключаем экраны: скрываем остатки и вызываем форму нумпада
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
     openNumpadView();
