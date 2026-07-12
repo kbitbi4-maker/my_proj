@@ -1,19 +1,22 @@
-// js/numpad.js — Модуль нумпада и прямой выдачи материала (до 100 строк)
+// js/numpad.js — Модуль нумпада и прямой выдачи материала целиком
 
 function openNumpadView() {
-  // Первые 4 столбца — это чистые данные товара (например: Артикул, Название, Тип, Параметр)
+  if (!currentSelectedRowData || currentSelectedRowData.length === 0) return;
+
+  // Первые 4 столбца — это чистые данные товара (Артикул, Название, Тип, Параметр)
   const itemTitle = currentSelectedRowData.slice(0, 4).join(' ');
   // 5-й столбец (индекс 4) — актуальный остаток на складе
   const currentStock = currentSelectedRowData[4] || '0';
 
   document.getElementById('qr-data-display').innerText = `ТОВАР: ${itemTitle} (Ост: ${currentStock})`;
   
-  // Сброс состояния ввода
-  currentQty = "0"; 
-  numDisplay.innerText = "0"; 
-  currentUser = "Не указан"; 
-  whoLabel.innerText = "...";
-  addBtn.innerText = "ДОБАВИТЬ 0";
+  // Сброс глобального состояния ввода количества и пользователя
+  window.currentQty = "0"; 
+  window.currentUser = "Не указан"; 
+  
+  if (typeof numDisplay !== 'undefined' && numDisplay) numDisplay.innerText = "0"; 
+  if (typeof whoLabel !== 'undefined' && whoLabel) whoLabel.innerText = "...";
+  if (typeof addBtn !== 'undefined' && addBtn) addBtn.innerText = "ДОБАВИТЬ 0";
   
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('numpad-view').classList.remove('hidden');
@@ -21,12 +24,15 @@ function openNumpadView() {
 
 function pressNum(n) {
   if (n === 'C') {
-    currentQty = "0";
+    window.currentQty = "0";
   } else {
-    currentQty = currentQty === "0" ? String(n) : currentQty + n;
+    window.currentQty = window.currentQty === "0" ? String(n) : window.currentQty + n;
   }
-  numDisplay.innerText = currentQty;
-  addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`;
+  
+  if (typeof numDisplay !== 'undefined' && numDisplay) numDisplay.innerText = window.currentQty;
+  if (typeof addBtn !== 'undefined' && addBtn) {
+    addBtn.innerText = `ДОБАВИТЬ ${window.currentQty} (${window.currentUser || 'Не указан'})`;
+  }
 }
 
 function openUserMenu() {
@@ -40,16 +46,17 @@ function closeUserMenu() {
 }
 
 function selectUser(name) {
-  currentUser = name;
-  whoLabel.innerText = name;
-  addBtn.innerText = `ДОБАВИТЬ ${currentQty} (${currentUser})`;
+  window.currentUser = name;
+  if (typeof whoLabel !== 'undefined' && whoLabel) whoLabel.innerText = name;
+  if (typeof addBtn !== 'undefined' && addBtn) {
+    addBtn.innerText = `ДОБАВИТЬ ${window.currentQty} (${window.currentUser})`;
+  }
   closeUserMenu();
 }
 
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
-  if (typeof scanning !== 'undefined') scanning = false;
+  window.scanning = false;
   const camBtn = document.getElementById('start-camera');
   if (camBtn) camBtn.disabled = false;
 }
-
