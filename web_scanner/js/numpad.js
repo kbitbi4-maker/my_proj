@@ -35,6 +35,15 @@ function openNumpadView() {
 }
 
 function handleBackButton() {
+  // Если мы в меню подтверждения возврата — закрываем модалку и сбрасываем режим возврата
+  if (!document.getElementById('return-view').classList.contains('hidden')) {
+    document.getElementById('return-view').classList.add('hidden');
+    closeModal();
+    if (typeof toggleReturnMode === 'function' && window.isReturnMode) {
+      toggleReturnMode();
+    }
+    return;
+  }
   // Если мы находимся в меню выбора пользователя, возвращаемся в нумпад
   if (!document.getElementById('user-view').classList.contains('hidden')) {
     closeUserMenu();
@@ -62,7 +71,6 @@ function toggleDateMode() {
   } else {
     if (dateBtn) dateBtn.style.borderColor = "#cbd5e1";
     if (window.customDateStr.length < 6) {
-      // Если ввод не до конца, сбрасываем на текущую дату
       window.customDateStr = "";
       const now = new Date();
       const day = now.getDate().toString().padStart(2, '0');
@@ -83,7 +91,6 @@ function updateDateDisplay(str) {
 
 function pressNum(n) {
   if (window.isEditingDate) {
-    // Режим ввода даты (максимум 6 цифр: ДДММГГ)
     if (n === 'C') {
       if (window.customDateStr.length > 0) {
         window.customDateStr = window.customDateStr.slice(0, -1);
@@ -97,14 +104,12 @@ function pressNum(n) {
     let displayMask = window.customDateStr + "______".slice(window.customDateStr.length);
     updateDateDisplay(displayMask);
     
-    // Если дата введена полностью, отключаем режим редактирования даты автоматически
     if (window.customDateStr.length === 6) {
       window.isEditingDate = false;
       const dateBtn = document.getElementById('date-select-btn');
       if (dateBtn) dateBtn.style.borderColor = "#cbd5e1";
     }
   } else {
-    // Обычный режим ввода количества
     if (n === 'C') {
       window.currentQty = "0";
     } else {
