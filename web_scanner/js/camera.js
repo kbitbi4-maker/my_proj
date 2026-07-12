@@ -120,6 +120,16 @@ function processScannedQR(qrText) {
     // Копируем чистый массив данных строки, как это делается при ручном выборе
     window.currentSelectedRowData = [...currentData[foundIndex]];
 
+    // Сохраняем исходный артикул и параметр в глобальные переменные для корректной работы save.js
+    window.currentScannedArt = currentData[foundIndex][0];
+    window.currentScannedParam = currentData[foundIndex][1];
+
+    // Обновляем текстовую плашку над нумпадом, чтобы было видно, какой товар найден
+    const displayBadge = document.getElementById("qr-data-display");
+    if (displayBadge) {
+      displayBadge.innerText = `Арт: ${window.currentScannedArt} | Парам: ${window.currentScannedParam || "нет"}`;
+    }
+
     // Открываем модальное окно и сразу переключаем на экран ввода количества (нумпад)
     if (typeof openNumpadView === 'function') {
       openNumpadView();
