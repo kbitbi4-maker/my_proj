@@ -10,7 +10,9 @@
 
   <header class="header">
     <a class="btn-icon" href="../index.html">←</a>
-    <h2><div id="indicator" class="net-indicator"></div> ВЕБ-СКАНЕР PRO</h2>
+    <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
+    <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
+    <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
 
@@ -22,7 +24,7 @@
 
   <script src="js/jsQR.js"></script>
   <script src="js/network.js"></script>
-  <script src="js/api.js"></script> <!-- Подключили модуль баз данных и API -->
+  <script src="js/api.js"></script>
   <script src="js/camera.js"></script>
 
 </body>
