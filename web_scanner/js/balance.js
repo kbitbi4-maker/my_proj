@@ -39,12 +39,16 @@ function hideBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.remove('hidden');
 }
 
+function runCompareAlert() {
+  alert("Опция 'Сравнить сальдо' находится в разработке.");
+}
+
 /**
- * ЛОГИКА АВТОМАТИЧЕСКОГО СРАВНЕНИЯ БАЗ ДАННЫХ И ФОРМИРОВАНИЯ ЛИСТА 4
+ * ИСПРАВЛЕННАЯ ЛОГИКА АВТОМАТИЧЕСКОГО СРАВНЕНИЯ БАЗ (С ОЧИСТКОЙ РАЗРЯДОВ ТЫСЯЧ)
  */
-async function runCompareAlert() {
-  const stock = window.inventoryData; // База "планшетика" (Лист 1)
-  const balance = window.balanceData;  // База загруженного сальдо (Лист 3)
+async function executeDatabaseComparison() {
+  const stock = window.inventoryData; 
+  const balance = window.balanceData;  
 
   if (!stock || stock.length <= 1) {
     alert("Ошибка: База остатков ('планшетик') пуста. Синхронизируйте облачко ☁");
@@ -55,22 +59,20 @@ async function runCompareAlert() {
     return;
   }
 
-  // Создаем массив для хранения результатов расхождений
   let diffMatrix = [];
-  
-  // Добавляем шапку для новой таблицы (копируем 5 первых заголовков из "планшетика")
-  diffMatrix.push([...stock[0].slice(0, 5)]);
+  diffMatrix.push([...stock[0].slice(0, 5)]); // Шапка таблицы
 
-  // Бежим по строкам "планшетика" (пропуская заголовки i=0)
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
     const sArt = String(sRow[0]).trim();
     const sParam = String(sRow[1]).trim();
-    const sQty = parseInt(sRow[4]) || 0; // 5-й столбец (индекс 4)
+    
+    // БЕЗОПАСНО: Вырезаем любые разделители тысяч и пробелы из планшетика
+    const cleanStockStr = String(sRow[4]).replace(/\s+/g, '');
+    const sQty = parseInt(cleanStockStr) || 0; 
 
-    // Ищем этот же товар в базе сальдо по первым двум столбцам
     let foundInBalance = false;
     let bQty = 0;
 
@@ -80,37 +82,33 @@ async function runCompareAlert() {
 
       if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
         foundInBalance = true;
-        bQty = parseInt(bRow[4]) || 0; // 5-й столбец сальдо
+        
+        // КРИТИЧЕСКИЙ ФИКС: Удаляем все скрытые пробелы разрядов тысяч из Excel строки
+        const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
+        bQty = parseInt(cleanBalanceStr) || 0; 
         break;
       }
     }
 
-    // Рассчитываем разницу
     const difference = sQty - bQty;
-
-    // Если количества совпадают — строку игнорируем, идем дальше
     if (difference === 0) continue;
 
-    // Формируем строку: берем первые 5 столбцов текущего товара
     let newDiffRow = [...sRow.slice(0, 5)];
     
-    // В 5-й столбец записываем разницу с соответствующим знаком (+ или -)
     if (difference > 0) {
       newDiffRow[4] = "+" + difference;
     } else {
-      newDiffRow[4] = String(difference); // Знак минус подставится автоматически
+      newDiffRow[4] = String(difference); 
     }
 
     diffMatrix.push(newDiffRow);
   }
 
-  // 1. ЗАПИСЫВАЕМ СФОРМИРОВАННУЮ РАЗНИЦУ В ЧЕТВЕРТУЮ ЛОКАЛЬНУЮ БАЗУ
   window.diffData = diffMatrix;
   localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
 
   alert(`Сверка завершена!\nОбнаружено расхождений: ${diffMatrix.length - 1} позиций.\nОтправляем отчет на Лист 4 в облако...`);
 
-  // 2. ОТПРАВЛЯЕМ МАТРИЦУ РАЗНИЦЫ В GOOGLE ТАБЛИЦУ (ЛИСТ 4)
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
       const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
@@ -125,7 +123,6 @@ async function runCompareAlert() {
 
       const serverText = await response.text();
       alert("ОТВЕТ СЕРВЕРА GOOGLE ПО СВЕРКЕ:\n\n" + serverText);
-      
       if (typeof closeModal === 'function') closeModal();
 
     } catch (e) {
