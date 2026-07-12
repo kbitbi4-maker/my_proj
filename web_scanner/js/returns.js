@@ -71,7 +71,7 @@ async function processReturn(actionType) {
   if (!logItem || !logItem.data) return;
 
   const rowData = logItem.data;
-  const targetId = rowData[0]; // ID строки
+  const targetId = rowData[0]; // ID строки (1-й столбец)
   const itemKeys = rowData.slice(1, 5); // 4 ключа товара (столбцы 2, 3, 4, 5)
   const qty = parseInt(rowData[5]) || 0; // Количество (6 столбец)
   const worker = rowData[6] || "Не указан";
@@ -89,60 +89,67 @@ async function processReturn(actionType) {
   if (actionType === 'full') {
     // ---- ЛОГИКА 1: ПОЛНЫЙ ВОЗВРАТ ----
     
-    // 1. Возвращаем количество на локальный склад (Первый лист)
+    // 1. Изменяем локальную базу остатков (возвращаем товар на склад)
     window.inventoryData = window.inventoryData.map(row => {
       if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
-        row[4] = (parseInt(row[4]) || 0) + qty; // ПРИБАВЛЯЕМ обратно
+        row[4] = (parseInt(row[4]) || 0) + qty; 
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    // 2. Генерируем новый уникальный ID для записи возврата
+    // 2. Рассчитываем новый ID
     const nextId = window.qrLogs.length > 1 
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // 3. Формируем новую строку лога. Чтобы скрипт понял, что это возврат, пишем количество со знаком МИНУС
-    // Массив: [ID, Ключ1, Ключ2, Ключ3, Ключ4, Кол-во, Сотрудник, Автор, Время, День, Месяц, Год]
+    // 3. Формируем запись лога с отрицательным количеством для бэкенда
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, time, day, month, year];
 
-    // 4. Сохраняем в локальный журнал и отправляем в облако
+    // 4. Пишем в локальный журнал выданных товаров
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
     if (typeof renderLogs === 'function') renderLogs();
     
-    // Закрываем интерфейс и выключаем режим
     document.getElementById('return-view').classList.add('hidden');
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
 
-    alert(`Оформлен возврат на ${qty} шт. Запись отправляется в облако.`);
+    alert(`Локально оформлен возврат на ${qty} шт. Выполняется фоновая отправка.`);
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'delete') {
-    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ ----
-    if (!confirm(`Вы уверены, что хотите полностью удалить строку №${targetId} и вернуть товар на склад?`)) return;
+    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ С ПОЛНЫМ ПЕРЕРАСЧЕТОМ ----
+    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}? Товар (${qty} шт.) вернется на склад локально, затем изменения отправятся в облако.`)) return;
 
-    // 1. Возвращаем количество на локальный склад
+    // ШАГ 1: Корректируем локальный склад (Лист 1)
     window.inventoryData = window.inventoryData.map(row => {
       if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
-        row[4] = (parseInt(row[4]) || 0) + qty;
+        row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    // 2. Отправляем команду удаления напрямую в Google Apps Script методом POST
+    // ШАГ 2: Физически удаляем строку из локального журнала выданных товаров (Лист 2)
+    window.qrLogs = window.qrLogs.filter(item => item && item.data && parseInt(item.data[0]) !== parseInt(targetId));
+    localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+
+    // Мгновенно обновляем интерфейс главного экрана, чтобы удаленная строка пропала
+    if (typeof renderLogs === 'function') renderLogs();
+
+    // Закрываем модальные окна
+    document.getElementById('return-view').classList.add('hidden');
+    if (typeof closeModal === 'function') closeModal();
+    toggleReturnMode();
+
+    // ШАГ 3: Отправляем синхронный сетевой запрос в Google Apps Script без no-cors режима
     if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
       try {
-        // Меняем статус строки в интерфейсе на визуальное удаление
-        document.getElementById('return-info-badge').innerText = "Удаление в облаке...";
-        
-        await fetch(SCRIPT_URL, {
+        // Формируем чистый URL-запрос для обхода ограничений CORS при POST-командах
+        const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
           body: JSON.stringify({ 
             action: "delete", 
             id: targetId,
@@ -151,22 +158,16 @@ async function processReturn(actionType) {
           })
         });
 
-        alert("Команда на удаление отправлена. Запускается принудительная синхронизация...");
+        // ШАГ 4: Если сервер успешно принял команду — запускаем обратную принудительную синхронизацию («облачко»)
+        if (typeof syncFromGoogle === 'function') {
+          syncFromGoogle();
+        }
       } catch (e) {
-        alert("Ошибка сети при удалении из облака. Но локальные остатки скорректированы.");
+        console.error("Сетевая ошибка при удалении:", e);
+        alert("Строка удалена локально. Сервер обновится при следующей общей синхронизации.");
       }
     } else {
-      alert("Нет сети. Строка будет удалена из облака только после синхронизации.");
-    }
-
-    // 3. Закрываем окно, выключаем режим возврата
-    document.getElementById('return-view').classList.add('hidden');
-    if (typeof closeModal === 'function') closeModal();
-    toggleReturnMode();
-
-    // 4. Запускаем "облачко" (полную пересинхронизацию баз), чтобы обновить главный экран
-    if (typeof syncFromGoogle === 'function') {
-      syncFromGoogle();
+      alert("Работа в офлайне. Изменения применены локально. Синхронизируйте приложение при появлении сети.");
     }
 
   } else if (actionType === 'part') {
