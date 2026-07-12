@@ -34,7 +34,7 @@ async function executePhysicalDeletion() {
   });
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-  // 2. УДАЛЯЕМ МГНОВЕННО СТРОКУ ИЗ ЛОКАЛЬНОГО ЖУРНАЛА ВЫДАЧИНА ТЕЛЕФОНЕ
+  // 2. УДАЛЯЕМ МГНОВЕННО СТРОКУ ИЗ ЛОКАЛЬНОГО ЖУРНАЛА ВЫДАЧИ НА ТЕЛЕФОНЕ
   window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
   localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
@@ -46,19 +46,24 @@ async function executePhysicalDeletion() {
   if (typeof closeModal === 'function') closeModal();
   if (typeof toggleReturnMode === 'function' && window.isReturnMode) toggleReturnMode();
 
-  // 5. ПРЯМОЙ ИЗОЛИРОВАННЫЙ СЕТЕВОЙ ЗАПРОС НА УДАЛЕНИЕ В ОБЛАКО GOOGLE
+  // 5. ПРЯМОЙ ИЗОЛИРОВАННЫЙ ТЕКСТОВЫЙ ПОСТ-ЗАПРОС НА УДАЛЕНИЕ В ОБЛАКО GOOGLE
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
-      // Собираем чистую прямую ссылку со всеми параметрами для doGet
-      const encArt = encodeURIComponent(art);
-      const encParam = encodeURIComponent(param);
-      const deleteQueryUrl = `${SCRIPT_URL}?action=deleteRow&id=${targetId}&qty=${qty}&art=${encArt}&param=${encParam}`;
+      // Собираем данные в одну текстовую строку через разделитель "|"
+      const textPayload = `DELETE_ROW|${targetId}|${qty}|${art}|${param}`;
 
-      // Выполняем легкий сетевой выстрел
-      const response = await fetch(deleteQueryUrl);
+      // Стреляем методом POST с типом text/plain. Это гарантированно пробивает CORS
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: textPayload
+      });
+      
       const serverText = await response.text();
 
-      // Выводим финальный алерт об успехе удаления строки в облаке
+      // Выводим финальное подтверждение выполнения операции на сервере
       alert("ОТВЕТ СЕРВЕРА GOOGLE:\n\n" + serverText);
 
     } catch (e) {
@@ -69,4 +74,3 @@ async function executePhysicalDeletion() {
     alert("Вы работаете офлайн. Строка удалена только на вашем устройстве.");
   }
 }
-
