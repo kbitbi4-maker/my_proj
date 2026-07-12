@@ -19,7 +19,7 @@ function renderLogs() {
     head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела: берем всё, кроме первой строки, передаем индекс клика i
+  // Отрисовка тела с сохранением оригинального индекса строки
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
@@ -54,11 +54,18 @@ async function sendUnsynced() {
   for (let i = 0; i < window.qrLogs.length; i++) {
     if (window.qrLogs[i] && window.qrLogs[i].status === 'wait') {
       window.qrLogs[i].status = 'syncing'; 
+      
+      // Определяем тип действия для Google Скрипта
+      const actionType = window.qrLogs[i].action || 'insert';
+      
       try {
         await fetch(SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
-          body: JSON.stringify({ row: window.qrLogs[i].data })
+          body: JSON.stringify({ 
+            action: actionType,
+            row: window.qrLogs[i].data 
+          })
         });
         window.qrLogs[i].status = 'ok';
         localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
@@ -72,7 +79,6 @@ async function sendUnsynced() {
   }
 }
 
-// Безопасный запуск отрисовки при загрузке DOM
 document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
