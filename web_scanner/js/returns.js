@@ -31,7 +31,8 @@ function handleLogClick(originalIndex) {
   if (!window.isReturnMode) return;
   
   const logItem = window.qrLogs[originalIndex];
-  if (!logItem || !logItem.data || logItem.action === 'delete') return; // Игнорируем маркеры удаления
+  // Игнорируем технические маркеры удаления, если они вдруг еще находятся в массиве
+  if (!logItem || !logItem.data || logItem.action === 'delete') return; 
   
   window.currentReturnLogIndex = originalIndex;
   const rowData = logItem.data;
@@ -73,7 +74,7 @@ function processReturn(actionType) {
   const rowData = logItem.data;
   const targetId = rowData[0]; // ID строки (1-й столбец)
   const itemKeys = rowData.slice(1, 5); // 4 ключа товара (столбцы 2, 3, 4, 5)
-  const qty = parseInt(rowData[5]) || 0; // Количество (6 столбец)
+  const qty = parseInt(rowData[5]) || 0; // Количество (6-й столбец)
   const worker = rowData[6] || "Не указан";
 
   // Время и дата для новой записи возврата
@@ -119,22 +120,22 @@ function processReturn(actionType) {
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'delete') {
-    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ (ЧЕРЕЗ ЛОКАЛЬНЫЙ БУФЕР ОТПРАВКИ) ----
-    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}?`)) return;
+    // ---- ЛОГИКА 2: УДАЛИТЬ СТРОКУ ЧЕРЕЗ ФОНОВЫЙ БУФЕР ----
+    if (!confirm(`Вы уверены, что хотите удалить строку №${targetId}? Товар вернется на склад локально, а команда удаления уйдет в облако.`)) return;
 
     // ШАГ 1: Корректируем локальный склад (Лист 1)
     window.inventoryData = window.inventoryData.map(row => {
       if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
-        row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад
+        row[4] = (parseInt(row[4]) || 0) + qty; // Возвращаем товар на склад локально
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    // ШАГ 2: Удаляем старую строку из локального массива видимых логов
+    // ШАГ 2: Физически удаляем старую строку из локального массива видимых логов смартфона
     window.qrLogs = window.qrLogs.filter((item, idx) => idx !== window.currentReturnLogIndex);
 
-    // ШАГ 3: Добавляем в этот же массив специальный скрытый маркер удаления для фоновой синхронизации
+    // ШАГ 3: Добавляем в этот же массив скрытый маркер удаления для нашей функции sendUnsynced()
     window.qrLogs.push({
       action: "delete",
       id: targetId,
@@ -144,7 +145,7 @@ function processReturn(actionType) {
     });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
-    // Мгновенно обновляем интерфейс главного экрана — строка пропала
+    // Мгновенно обновляем интерфейс телефона — строка исчезает с экрана
     if (typeof renderLogs === 'function') renderLogs();
 
     // Закрываем модальные окна
@@ -152,7 +153,7 @@ function processReturn(actionType) {
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
 
-    // ШАГ 4: Запускаем автоматическую выгрузку накопленных изменений в Google Таблицу
+    // ШАГ 4: Запускаем автоматическую фоновую выгрузку накопленных изменений в Google Таблицу
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'part') {
