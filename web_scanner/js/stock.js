@@ -1,4 +1,4 @@
-// js/stock.js — Модуль журнала остатков целиком
+// js/stock.js — Модуль журнала остатков целиком 
 
 function showStock() {
   const currentData = window.inventoryData;
