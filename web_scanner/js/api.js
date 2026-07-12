@@ -1,6 +1,7 @@
-// URL вашего Google Apps Script (берем из старого проекта) 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyHcs3ReX7S1jVvj86fZjWbsJHLbi2njurLJAHr8WWu31_0MDjFZiOLfIcgp5mdOyRMgw/exec';
-// Инициализация баз данных в глобальной области видимости
+// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации
+
+const SCRIPT_URL = 'https://google.com';
+
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
@@ -9,17 +10,18 @@ function renderLogs() {
   const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
   if (!head || !body) return;
-  if (!window.qrLogs || !window.qrLogs.length) { 
+  
+  const visibleLogs = window.qrLogs.filter(item => item && item.data);
+
+  if (!visibleLogs.length) { 
     body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; 
     return; 
   }
 
-  // Заголовок всегда берем из поля data первой записи в массиве логов
-  if (window.qrLogs[0] && window.qrLogs[0].data) {
-    head.innerHTML = window.qrLogs[0].data.map(h => `<th>${h}</th>`).join('');
+  if (visibleLogs && visibleLogs[0] && visibleLogs[0].data) {
+    head.innerHTML = visibleLogs[0].data.map(h => `<th>${h}</th>`).join('');
   }
 
-  // Отрисовка тела с сохранением оригинального индекса строки
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
@@ -28,53 +30,86 @@ function renderLogs() {
   }).filter(Boolean).reverse().join('');
 }
 
+/**
+ * МОДЕРНИЗИРОВАННАЯ ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ (ОБНОВЛЯЕТ ВСЕ 4 БАЗЫ ДАННЫХ ИЗ ОБЛАКА)
+ */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
     
+    // 1. Синхронизируем Лист 2 (Журнал выдачи)
     if (data.logs) {
       window.qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     }
+    // 2. Синхронизируем Лист 1 (Остатки на складе)
     if (data.stock) {
       window.inventoryData = data.stock;
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     }
+    // 3. Синхронизируем Лист 3 (Загруженное сальдо)
+    if (data.balance) {
+      window.balanceData = data.balance;
+      localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
+    }
+    // 4. Синхронизируем Лист 4 (Таблица отличий)
+    if (data.diff) {
+      window.diffData = data.diff;
+      localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
+    }
+
     renderLogs();
-    alert("Синхронизация успешно завершена!");
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
   } catch (e) { 
-    alert("Ошибка при синхронизации"); 
+    alert("Ошибка при синхронизации данных из облака"); 
   }
 }
 
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
+  
   for (let i = 0; i < window.qrLogs.length; i++) {
-    if (window.qrLogs[i] && window.qrLogs[i].status === 'wait') {
-      window.qrLogs[i].status = 'syncing'; 
+    const item = window.qrLogs[i];
+    if (!item || item.status !== 'wait') continue;
+
+    item.status = 'syncing'; 
+    
+    try {
+      let bodyData = "";
       
-      // Определяем тип действия для Google Скрипта
-      const actionType = window.qrLogs[i].action || 'insert';
-      
-      try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({ 
-            action: actionType,
-            row: window.qrLogs[i].data 
-          })
-        });
-        window.qrLogs[i].status = 'ok';
-        localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
-        renderLogs();
-      } catch (e) {
-        window.qrLogs[i].status = 'wait'; 
-        localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
-        break; 
+      if (item.action === 'delete') {
+        const art = item.itemKeys[0] || "";
+        const param = item.itemKeys[1] || "";
+        bodyData = `DELETE_ROW|${item.id}|${item.qty}|${art}|${param}`;
+      } else if (item.data) {
+        bodyData = JSON.stringify({ row: item.data });
       }
+
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: bodyData
+      });
+
+      if (item.action === 'delete') {
+        window.qrLogs.splice(i, 1);
+        i--; 
+      } else {
+        item.status = 'ok';
+      }
+      
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      renderLogs();
+      
+    } catch (e) {
+      console.error("Ошибка при фоновой отправке:", e);
+      item.status = 'wait'; 
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      break; 
     }
   }
 }
