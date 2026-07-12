@@ -1,5 +1,5 @@
 // URL вашего Google Apps Script (берем из старого проекта)
-const SCRIPT_URL = 'https://google.com';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWWliIxyk0BxXNE8VriVtLaUbQB31VY8WoAl0hCIoR7fKK_98a70q6C6ioFLlgEofUDw/exec';
 
 // Инициализация двух баз данных в локальном хранилище (v10 — новая версия для ВЕБ-СКАНЕР PRO)
 let qrLogs = JSON.parse(localStorage.getItem('pro_logs_v10')) || [];
