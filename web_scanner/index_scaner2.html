@@ -12,7 +12,6 @@
     <a class="btn-icon" href="../index.html">←</a>
     <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
     <button id="return-mode-btn" class="btn-icon" title="Режим возврата" onclick="toggleReturnMode()">🔄</button>
-    <!-- НОВАЯ КНОПКА ФАЙЛОВОГО МЕНЕДЖЕРА / ИМПОРТА САЛЬДО -->
     <button class="btn-icon" title="Импорт Excel" onclick="openBalanceMenu()">📊</button>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
@@ -122,11 +121,12 @@
         </div>
       </div>
 
-      <!-- НОВЫЙ ЭКРАН 5: Диалоговое окно Сальдо -->
+      <!-- ЭКРАН 5: Диалоговое окно Сальдо -->
       <div id="balance-view" class="hidden">
         <h3>Управление Сальдо</h3>
         <div class="return-actions-grid" style="margin-top: 20px;">
-          <button class="btn-return-action return-full" style="background: #2563eb;" onclick="triggerExcelFileChoice()">ЗАГРУЗИТЬ САЛЬДО</button>
+          <!-- Добавлен id="btn-load-balance-action" для плавного изменения текста во время загрузки -->
+          <button id="btn-load-balance-action" class="btn-return-action return-full" style="background: #2563eb;" onclick="triggerExcelFileChoice()">ЗАГРУЗИТЬ САЛЬДО</button>
           <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="runCompareAlert()">СРАВНИТЬ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
@@ -147,7 +147,6 @@
   <script src="js/returns.js"></script>
   <script src="js/delete_task.js"></script>
   <script src="js/edit_stock.js"></script>
-  <!-- ПОДКЛЮЧАЕМ НАШ НОВЫЙ МОДУЛЬ САЛЬДО -->
   <script src="js/balance.js"></script>
 
 </body>
