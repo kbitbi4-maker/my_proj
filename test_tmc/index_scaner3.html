@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
   <header class="header">
     <a class="btn-icon" href="../index.html">←</a>
     <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
@@ -17,10 +16,8 @@
     <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
-
   <main class="content">
     <div class="camera-preview"><video id="video" autoplay playsinline></video></div>
-    
     <!-- Журнал выданных товаров -->
     <div id="result">
       <div class="log-title">Журнал выдачи:</div>
@@ -32,12 +29,10 @@
       </div>
     </div>
   </main>
-
   <!-- Единое модальное окно для всех подэкранов -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
       <button class="modal-close" onclick="handleBackButton()">←</button>
-
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
       <div id="stock-view" class="hidden">
         <h3>Остатки на складе</h3>
@@ -49,11 +44,9 @@
           </table>
         </div>
       </div>
-
       <!-- ЭКРАН 2: Цифровая клавиатура (Нумпад) -->
       <div id="numpad-view" class="hidden">
-        <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>
-        
+        <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>  
         <!-- Левая/Верхняя часть: Ввод данных -->
         <div class="numpad-input-block">
           <div class="numpad-display-row">
@@ -103,7 +96,6 @@
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
       </div>
-
       <!-- ЭКРАН 4: Подтверждение возврата / Действия со строкой журнала -->
       <div id="return-view" class="hidden">
         <h3>Управление выдачей</h3>
@@ -117,7 +109,6 @@
           <button class="btn-back" onclick="handleBackButton()">← Отмена</button>
         </div>
       </div>
-
       <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы -->
       <div id="balance-view" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
         <h3>Управление Сальдо</h3>
