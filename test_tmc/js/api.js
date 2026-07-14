@@ -14,7 +14,7 @@ function renderLogs() {
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
-    body.innerHTML = '<tr><td colspan="11">Пусто</td></tr>'; 
+    body.innerHTML = '<tr><td colspan="12">Пусто</td></tr>'; 
     return; 
   }
 
