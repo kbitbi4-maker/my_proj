@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-  <title>ВЕБ-СКАНЕР PRO</title>
+  <title>SKLAD_ver001</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="header">
     <a class="btn-icon" href="../index.html">←</a>
-    <h2><div id="indicator" class="net-indicator"></div> PRO_26</h2>
+    <h2><div id="indicator" class="net-indicator"></div>SKLAD_ver001</h2>
     <button id="return-mode-btn" class="btn-icon" title="Режим возврата" onclick="toggleReturnMode()">🔄</button>
     <button class="btn-icon" title="Импорт Сальдо" onclick="openBalanceMenu()">📊</button>
     <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
@@ -33,6 +33,7 @@
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
       <button class="modal-close" onclick="handleBackButton()">←</button>
+      
       <!-- ЭКРАН 1: Просмотр и поиск остатков -->
       <div id="stock-view" class="hidden">
         <h3>Остатки на складе</h3>
@@ -44,6 +45,7 @@
           </table>
         </div>
       </div>
+      
       <!-- ЭКРАН 2: Цифровая клавиатура (Нумпад) -->
       <div id="numpad-view" class="hidden">
         <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>  
@@ -77,6 +79,12 @@
             СОТРУДНИК
             <span id="whoLabel">...</span>
           </button>
+          
+          <button class="user-select-trigger" style="background: #7c3aed; box-shadow: 0 4px 10px rgba(124,58,237,0.15);" onclick="openWhereMenu()">
+            КУДА
+            <span id="whereLabel">...</span>
+          </button>
+          
           <button id="addBtn" class="btn-submit" onclick="saveEntry()">ДОБАВИТЬ 0</button>
         </div>
       </div>
@@ -96,6 +104,15 @@
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
       </div>
+
+      <!-- ЭКРАН 3.5: Ввод объекта (Куда) -->
+      <div id="where-view" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+        <h3>Куда потрачено / Объект</h3>
+        <input type="text" id="where-input" placeholder="Введите название объекта или направление..." style="width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" autocomplete="off">
+        <button class="btn-submit" style="background: #22c55e; margin-bottom: 10px;" onclick="saveWhereValue()">Сохранить</button>
+        <button class="btn-back" style="background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; width: 100%; height: 50px; text-align: center; display: flex; align-items: center; justify-content: center;" onclick="closeWhereMenu()">← Назад</button>
+      </div>
+
       <!-- ЭКРАН 4: Подтверждение возврата / Действия со строкой журнала -->
       <div id="return-view" class="hidden">
         <h3>Управление выдачей</h3>
@@ -109,18 +126,16 @@
           <button class="btn-back" onclick="handleBackButton()">← Отмена</button>
         </div>
       </div>
+
       <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы -->
       <div id="balance-view" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
         <h3>Управление Сальдо</h3>
-        
         <div id="balance-menu-buttons" class="return-actions-grid" style="margin-top: 20px;">
           <button class="btn-return-action return-full" style="background: #2563eb;" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
           <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
-          <!-- НАША НОВАЯ ТРЕТЬЯ КНОПКА ОТЧЕТА СВЕРКИ -->
           <button class="btn-return-action return-full" style="background: #0284c7;" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
-
         <div id="balance-paste-container" class="hidden" style="display: flex; flex-direction: column; flex-grow: 1; gap: 10px;">
           <p style="font-size: 1.4vh; color: #475569; margin: 0; text-align: center;">Скопируйте ячейки в Excel (Ctrl+C) и вставьте в поле ниже (Ctrl+V):</p>
           <textarea id="balance-text-area" placeholder="Вставьте скопированную таблицу сюда..." style="width: 100%; flex-grow: 1; min-height: 40vh; padding: 10px; font-family: monospace; font-size: 1.2vh; border: 2px solid #cbd5e1; border-radius: 8px; resize: none; box-sizing: border-box; outline: none;"></textarea>
@@ -155,6 +170,5 @@
   <script src="js/delete_task.js"></script>
   <script src="js/edit_stock.js"></script>
   <script src="js/balance.js"></script>
-
 </body>
 </html>
