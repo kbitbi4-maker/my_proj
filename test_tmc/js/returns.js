@@ -41,6 +41,7 @@ function handleLogClick(originalIndex) {
   document.getElementById('stock-view').classList.add('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('user-view').classList.add('hidden');
+  if (document.getElementById('where-view')) document.getElementById('where-view').classList.add('hidden');
   document.getElementById('return-view').classList.remove('hidden');
 }
 
@@ -66,7 +67,7 @@ function processReturn(actionType) {
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const year = now.getFullYear().toString().slice(-2);
   
-  // ИСПРАВЛЕНО: Меняем автора полного возврата на Неугодникову
+  // Меняем автора полного возврата на Неугодникову
   const author = "Неугодникова"; 
 
   if (actionType === 'full') {
@@ -86,7 +87,8 @@ function processReturn(actionType) {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    const returnRowData = [nextId, ...itemKeys, -qty, worker, author, time, day, month, year];
+    // Вставляем значение "Полный возврат" в новый 8-й столбец (индекс 7)
+    const returnRowData = [nextId, ...itemKeys, -qty, worker, author, "Полный возврат", time, day, month, year];
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     if (typeof renderLogs === 'function') renderLogs();
