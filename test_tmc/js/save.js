@@ -23,8 +23,10 @@ async function saveEntry() {
     }
     
     const currentWorker = window.currentUser || "Не указан";
-    // ИСПРАВЛЕНО: Меняем автора выдачи на Неугодникову
+    // Фиксируем автора операций на "Неугодникова"
     const author = "Неугодникова"; 
+    // Забираем значение из глобальной переменной "Куда"
+    const targetDestination = window.currentWhere || "Не указан";
     
     if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) {
       alert("Ошибка: Товар не выбран!");
@@ -71,8 +73,8 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // 3. Формируем запись: количество записываем со знаком МИНУС
-      const returnPartRowData = [nextId, ...itemKeys, -enteredQty, currentWorker, author, time, day, month, year];
+      // 3. Формируем запись: добавлен targetDestination (индекс 7), количество со знаком МИНУС
+      const returnPartRowData = [nextId, ...itemKeys, -enteredQty, currentWorker, author, targetDestination, time, day, month, year];
 
       // 4. Сохраняем в локальный буфер
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
@@ -108,7 +110,8 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    const newRowData = [nextId, ...itemKeys, enteredQty, currentWorker, author, time, day, month, year];
+    // Формируем новую строку выдачи с учётом добавленного столбца "Куда" (индекс 7)
+    const newRowData = [nextId, ...itemKeys, enteredQty, currentWorker, author, targetDestination, time, day, month, year];
 
     window.qrLogs.push({ data: newRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
