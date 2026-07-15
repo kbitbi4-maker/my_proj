@@ -61,7 +61,7 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix.map((h, idx) => {
+  head.innerHTML = diffMatrix[0].map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -158,7 +158,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix;
+  const header = diffMatrix[0];
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -209,10 +209,9 @@ async function executeDatabaseComparison() {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[0]).trim();
-    const sParam = String(sRow[1]).trim();
+    const sArt = String(sRow[1]).trim();
+    const sParam = String(sRow[2]).trim();
     
-    // Суммируем скл.1 и скл.2 для сравнения (индексы 6 и 7)
     const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
     const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
     const sQty = q1 + q2; 
@@ -224,7 +223,7 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 5) continue;
 
-      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+      if (String(bRow[1]).trim() === sArt && String(bRow[2]).trim() === sParam) {
         foundInBalance = true;
         const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
         bQty = parseInt(cleanBalanceStr) || 0; 
@@ -236,7 +235,6 @@ async function executeDatabaseComparison() {
     if (difference === 0) continue;
 
     let newDiffRow = [...sRow.slice(0, 5)];
-    // Помещаем расчетное количество разницы на место 5-го столбца
     if (difference > 0) {
       newDiffRow[4] = "+" + difference;
     } else {
@@ -270,7 +268,7 @@ async function executeDatabaseComparison() {
 }
 
 /**
- * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА С КОРРЕКТИРОВКОЙ из.SUP
+ * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ С КОРРЕКТИРОВКОЙ из.SUP
  */
 async function processTextTableImport() {
   const textArea = document.getElementById('balance-text-area');
@@ -279,7 +277,7 @@ async function processTextTableImport() {
     return;
   }
 
-    const importBtn = document.getElementById('btn-confirm-balance-import');
+   const importBtn = document.getElementById('btn-confirm-balance-import');
   if (importBtn) {
     importBtn.innerText = "⏳ Обработка ячеек...";
     importBtn.disabled = true;
@@ -309,7 +307,7 @@ async function processTextTableImport() {
       return;
     }
 
-    // Сохраняем сальдо локально
+    // Сохраняем сальдо локально в буфер устройства
     window.balanceData = matrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
@@ -320,7 +318,7 @@ async function processTextTableImport() {
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
         const sRow = stock[i];
-        if (!sRow || sRow.length < 2) continue;
+        if (!sRow || sRow.length < 3) continue;
 
         const sArt = String(sRow[0]).trim().toLowerCase();
         const sParam = String(sRow[1]).trim().toLowerCase();
