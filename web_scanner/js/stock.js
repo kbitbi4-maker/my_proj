@@ -78,18 +78,17 @@ function renderStock() {
     if (!isMatch && term !== "") return '';
 
     const cellsHtml = row.map((cell, cellIndex) => {
-      // Округляем цену за единицу (индекс 8 в JS) ровно до 3 знаков
       if (cellIndex === 8) {
         const parsedPrice = parseFloat(String(cell).replace(/,/g, '.').replace(/\s+/g, ''));
         const formattedPrice = !isNaN(parsedPrice) ? parsedPrice.toFixed(3) : cell;
         return `<td>${formattedPrice}</td>`;
       }
 
-      // ВОЗВРАЩАЕМ И РАСШИРЯЕМ ФУНКЦИОНАЛ: Инпуты для 5, 7 и 8 столбцов (индексы 4, 6 и 7 в JS)
+      // Добавлено событие oninput для точечной фиксации измененной строки склада
       if ((cellIndex === 4 || cellIndex === 6 || cellIndex === 7) && isEdit) {
         return `
           <td class="editable-stock-cell" onclick="event.stopPropagation();">
-            <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" value="${parseInt(cell) || 0}" min="0" autocomplete="off">
+            <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" value="${parseInt(cell) || 0}" min="0" autocomplete="off" oninput="markStockRowAsEdited(${index})">
           </td>
         `;
       }
@@ -112,11 +111,11 @@ function selectFromStockDirect(index) {
   if (!currentData || !currentData[index]) return;
 
   const row = currentData[index];
-  const q1 = parseInt(row[6]) || 0; // скл.1
-  const q2 = parseInt(row[7]) || 0; // скл.2
+  const q1 = parseInt(row[6]) || 0; 
+  const q2 = parseInt(row[7]) || 0; 
   const totalStock = q1 + q2;
 
-  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
+  window.currentSelectedRowData = [row[1], row[2], row[3], row[4], totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
