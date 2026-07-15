@@ -76,10 +76,10 @@ async function saveLogCellChangesCloud(event, logIndex) {
   
   if (!logItem || !logItem.data) return;
 
-  // ИСПРАВЛЕНО: Берем точный ID из первого элемента массива данных [0]
+  // ИСПРАВЛЕНО: Берем точный уникальный ID строки из первого элемента массива данных (индекс 0)
   const targetId = logItem.data[0]; 
 
-  // Обновляем данные локально в памяти (Куда — это 9-й столбец, индекс 8)
+  // Обновляем данные локально в памяти телефона (Куда выдано — это 9-й столбец, индекс 8 в массиве)
   logItem.data[8] = newValue;
   localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
@@ -89,7 +89,7 @@ async function saveLogCellChangesCloud(event, logIndex) {
   parentTd.style.background = "#ffffff";
   parentTd.innerHTML = `<span style="color: #64748b; font-style: italic; font-size: 1.2vh;">⏳ Отправка...</span>`;
 
-  // ИСПРАВЛЕНО: Сбрасываем индекс редактирования перед рендером
+  // Сбрасываем индекс редактирования, чтобы открыть доступ к другим кликам
   window.activeEditLogIndex = null;
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
@@ -107,7 +107,7 @@ async function saveLogCellChangesCloud(event, logIndex) {
       const serverText = await response.text();
       console.log("Сервер ответил:", serverText);
       
-      // Возвращаем стандартный цвет строки лога
+      // Возвращаем стандартный цвет строки лога (зеленый/светло-зеленый)
       renderLogs();
 
     } catch (e) {
