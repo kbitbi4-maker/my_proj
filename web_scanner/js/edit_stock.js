@@ -19,7 +19,7 @@ function toggleStockEditMode(activate) {
   } else {
     if (badge) badge.classList.add('hidden');
     if (triggerBtn) triggerBtn.classList.remove('hidden');
-    if (actionsRow) actionsRow.classList.add('hidden');
+    if (actionsRow) actionsRow.classList.remove('hidden');
   }
   
   if (typeof renderStock === 'function') {
@@ -28,14 +28,14 @@ function toggleStockEditMode(activate) {
 }
 
 /**
- * Функция-триггер, вызываемая при изменении любого инпута остатков
+ * ГЛОБАЛЬНЫЙ ТРИГГЕР: явно привязываем функцию к window, чтобы HTML её видел
  */
-function markStockRowAsEdited(rowIndex) {
+window.markStockRowAsEdited = function(rowIndex) {
   const idx = parseInt(rowIndex);
-  if (!window.editedStockRows.includes(idx)) {
+  if (!isNaN(idx) && !window.editedStockRows.includes(idx)) {
     window.editedStockRows.push(idx);
   }
-}
+};
 
 function cancelStockChanges() {
   if (!confirm("Отменить все внесенные изменения остатков?")) return;
@@ -47,7 +47,31 @@ async function saveStockChangesCloud() {
   const currentData = window.inventoryData;
   if (!currentData || currentData.length <= 1) return;
 
-  // Если пользователь ничего не изменил, просто выходим из режима без отправки сетевых запросов
+  // ПОДСТРАХОВКА: Если массив пуст, делаем быструю сверку по всем строкам с кэшем,
+  // чтобы обнаружить изменения, даже если событие oninput не сработало
+  if (window.editedStockRows.length === 0) {
+    for (let i = 1; i < currentData.length; i++) {
+      const inputTotal = document.getElementById(`stock-input-${i}-4`);
+      const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
+      const inputSkl2 = document.getElementById(`stock-input-${i}-7`);
+      
+      if (inputTotal && inputSkl1 && inputSkl2) {
+        const tVal = parseInt(inputTotal.value) || 0;
+        const s1Val = parseInt(inputSkl1.value) || 0;
+        const s2Val = parseInt(inputSkl2.value) || 0;
+        
+        if (tVal !== parseInt(currentData[i]) || 
+            s1Val !== parseInt(currentData[i]) || 
+            s2Val !== parseInt(currentData[i])) {
+          if (!window.editedStockRows.includes(i)) {
+            window.editedStockRows.push(i);
+          }
+        }
+      }
+    }
+  }
+
+  // Если изменений действительно нет — просто выходим
   if (window.editedStockRows.length === 0) {
     alert("Информация:\nВы не изменили ни одной ячейки остатков.");
     toggleStockEditMode(false);
@@ -75,12 +99,12 @@ async function saveStockChangesCloud() {
       }
       
       // Обновляем ячейки в локальном массиве памяти устройства
-      currentData[i][4] = valTotal;
-      currentData[i][6] = val1;
-      currentData[i][7] = val2;
+      currentData[i] = valTotal;
+      currentData[i] = val1;
+      currentData[i] = val2;
       
-      const art = String(currentData[i][1]).trim();
-      const param = String(currentData[i][2]).trim();
+      const art = String(currentData[i]).trim();
+      const param = String(currentData[i]).trim();
       
       // Собираем расширенный пакет данных: Артикул*Параметр*ОбщийЗапас*скл1*скл2
       updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
@@ -90,7 +114,6 @@ async function saveStockChangesCloud() {
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
   
-  // Сбрасываем массив изменений перед закрытием
   window.editedStockRows = [];
   toggleStockEditMode(false);
 
