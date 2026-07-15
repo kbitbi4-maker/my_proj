@@ -16,6 +16,48 @@ table {
   border-spacing: 0 !important;
 }
 
+/* НОВАЯ ЛОГИКА ДЛЯ ТАБЛИЦЫ ОСТАТКОВ СКЛАДА (ЛИСТ 1) */
+#stock-head th {
+  white-space: normal !important;   /* Разрешаем перенос строк слов */
+  word-wrap: break-word !important; /* Автоматический перенос длинных слов */
+  vertical-align: middle;
+  line-height: 1.2;
+  font-size: 1.2vh;
+  padding: 4px 2px;
+}
+
+/* Ограничиваем ширину столбцов с переносами для сужения ячеек */
+#stock-head th:nth-child(5) {
+  max-width: 80px !important;
+  width: 80px !important;
+}
+
+#stock-head th:nth-child(7), 
+#stock-head th:nth-child(8) {
+  max-width: 65px !important;
+  width: 65px !important;
+}
+
+#stock-head th:nth-child(9) {
+  max-width: 75px !important;
+  width: 75px !important;
+}
+
+/* Стили инпутов для одновременного редактирования 7 и 8 столбцов (скл.1 и скл.2) */
+.cell-stock-dual-input {
+  width: 55px;
+  padding: 3px;
+  font-size: 1.3vh;
+  font-family: monospace;
+  font-weight: bold;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #000000;
+  text-align: center;
+  outline: none;
+}
+
 /* Компоненты выбора возвратов */
 .return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
 .return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
