@@ -1,7 +1,6 @@
 // js/edit_stock.js — Модуль прямого редактирования остатков в таблице
 
 window.isStockEditMode = false;
-window.editedStockRows = [];
 
 function toggleStockEditMode(activate) {
   window.isStockEditMode = activate;
@@ -11,7 +10,6 @@ function toggleStockEditMode(activate) {
   const actionsRow = document.getElementById('stock-edit-actions');
   
   if (window.isStockEditMode) {
-    window.editedStockRows = []; 
     if (badge) badge.classList.remove('hidden');
     if (triggerBtn) triggerBtn.classList.add('hidden');
     if (actionsRow) actionsRow.classList.remove('hidden');
@@ -26,16 +24,8 @@ function toggleStockEditMode(activate) {
   }
 }
 
-window.markStockRowAsEdited = function(rowIndex) {
-  const idx = parseInt(rowIndex);
-  if (!isNaN(idx) && !window.editedStockRows.includes(idx)) {
-    window.editedStockRows.push(idx);
-  }
-};
-
 function cancelStockChanges() {
   if (!confirm("Отменить все внесенные изменения остатков?")) return;
-  window.editedStockRows = [];
   toggleStockEditMode(false);
 }
 
@@ -43,41 +33,11 @@ async function saveStockChangesCloud() {
   const currentData = window.inventoryData;
   if (!currentData || currentData.length <= 1) return;
 
-  // ИСПРАВЛЕНО: Корректное фоновое сравнение ячеек по точным индексам массива
-  if (window.editedStockRows.length === 0) {
-    for (let i = 1; i < currentData.length; i++) {
-      const inputTotal = document.getElementById(`stock-input-${i}-4`);
-      const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
-      const inputSkl2 = document.getElementById(`stock-input-${i}-7`);
-      
-      if (inputTotal && inputSkl1 && inputSkl2) {
-        const tVal = parseInt(inputTotal.value) || 0;
-        const s1Val = parseInt(inputSkl1.value) || 0;
-        const s2Val = parseInt(inputSkl2.value) || 0;
-        
-        // Сравниваем строго с конкретными индексами ячеек внутри строки массива
-        if (tVal !== (parseInt(currentData[i][4]) || 0) || 
-            s1Val !== (parseInt(currentData[i][6]) || 0) || 
-            s2Val !== (parseInt(currentData[i][7]) || 0)) {
-          if (!window.editedStockRows.includes(i)) {
-            window.editedStockRows.push(i);
-          }
-        }
-      }
-    }
-  }
-
-  if (window.editedStockRows.length === 0) {
-    alert("Информация:\nВы не изменили ни одной ячейки остатков.");
-    toggleStockEditMode(false);
-    return;
-  }
-
   let updatePayloadParts = [];
+  let localChangedCounter = 0;
 
-  for (let k = 0; k < window.editedStockRows.length; k++) {
-    const i = window.editedStockRows[k];
-    
+  // АНАЛОГИЧНО СТАРЫМ МЕТОДАМ: Сканируем всю таблицу построчно
+  for (let i = 1; i < currentData.length; i++) {
     const inputTotal = document.getElementById(`stock-input-${i}-4`);
     const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
     const inputSkl2 = document.getElementById(`stock-input-${i}-7`);
@@ -92,22 +52,35 @@ async function saveStockChangesCloud() {
         return;
       }
       
-      currentData[i][4] = valTotal;
-      currentData[i][6] = val1;
-      currentData[i][7] = val2;
-      
-      const art = String(currentData[i][1]).trim();
-      const param = String(currentData[i][2]).trim();
-      
-      updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
+      // Сравниваем строго по ячейкам строки (Общий=индекс 4, скл1=индекс 6, скл2=индекс 7)
+      if (valTotal !== (parseInt(currentData[i][4]) || 0) || 
+          val1 !== (parseInt(currentData[i][6]) || 0) || 
+          val2 !== (parseInt(currentData[i][7]) || 0)) {
+            
+        // Обновляем локальный кэш
+        currentData[i][4] = valTotal;
+        currentData[i][6] = val1;
+        currentData[i][7] = val2;
+        
+        // Исправлено извлечение Артикула и Параметра как в старом коде
+        const art = String(currentData[i][0]).trim();
+        const param = String(currentData[i][1]).trim();
+        
+        updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
+        localChangedCounter++;
+      }
     }
   }
 
+  if (updatePayloadParts.length === 0) {
+    alert("Информация:\nВы не изменили ни одной ячейки остатков.");
+    toggleStockEditMode(false);
+    return;
+  }
+
+  // Записываем обновленный массив в локальную память телефона
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  
-  // Принудительно выключаем режим ДО отправки тяжелого сетевого fetch-запроса
-  window.editedStockRows = [];
   toggleStockEditMode(false);
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
@@ -128,6 +101,6 @@ async function saveStockChangesCloud() {
       alert("Остатки изменены локально на устройстве, но в облаке произошла сетевая ошибка: " + e.message);
     }
   } else {
-    alert("Вы работаете офлайн. Изменения остатков применены только локально на этом устройстве.");
+    alert(`Изменения остатков (${localChangedCounter} поз.) применены локально офлайн.`);
   }
 }
