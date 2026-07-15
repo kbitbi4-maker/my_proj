@@ -7,11 +7,25 @@ window.isPartialReturnInput = false;
 function toggleReturnMode() {
   window.isReturnMode = !window.isReturnMode;
   const btn = document.getElementById('return-mode-btn');
+  const badge = document.getElementById('status-text-badge');
+  const titleText = document.getElementById('project-title-text');
+  
   if (window.isReturnMode) {
     if (btn) btn.classList.add('return-mode-active');
     if (typeof stopCamera === 'function') stopCamera();
+    
+    // Скрываем оригинальное название "PRO_26" и зажигаем красную плашку возврата
+    if (titleText) titleText.classList.add('hidden');
+    if (badge) {
+      badge.innerText = "Активен режим возврата";
+      badge.className = "status-badge badge-return-active";
+    }
   } else {
     if (btn) btn.classList.remove('return-mode-active');
+    
+    // Убираем плашку возврата и возвращаем название проекта обратно на экран
+    if (badge) badge.className = "status-badge hidden";
+    if (titleText) titleText.classList.remove('hidden');
   }
 }
 
@@ -23,16 +37,17 @@ function handleLogClick(originalIndex) {
   window.currentReturnLogIndex = originalIndex;
   const rowData = logItem.data;
   
-  const id = rowData[0] !== undefined ? rowData[0] : '---';
-  const name = rowData[4] !== undefined ? rowData[4] : '';
-  const qty = rowData[5] !== undefined ? rowData[5] : '0';
+  const id = rowData !== undefined ? rowData : '---';
+  const col4 = rowData !== undefined ? rowData : '';
+  const col5 = rowData !== undefined ? rowData : '';
+  const col6 = rowData !== undefined ? rowData : '0';
   
   const infoBadge = document.getElementById('return-info-badge');
   if (infoBadge) {
     infoBadge.innerHTML = `
       <strong>ВЫДАЧА №:</strong> ${id}<br>
-      <strong>ТОВАР:</strong> ${name}<br>
-      <strong>КОЛ-ВО В СТРОКЕ:</strong> ${qty} шт.
+      <strong>ТОВАР:</strong> ${col4} ${col5}<br>
+      <strong>КОЛ-ВО В СТРОКЕ:</strong> ${col6} шт.
     `;
   }
   
@@ -53,10 +68,10 @@ function processReturn(actionType) {
   if (!logItem || !logItem.data) return;
 
   const rowData = logItem.data;
-  const targetId = rowData[0]; 
+  const targetId = rowData; 
   const itemKeys = rowData.slice(1, 5); 
-  const qty = parseInt(rowData[5]) || 0; 
-  const worker = rowData[6] || "Не указан";
+  const qty = parseInt(rowData) || 0; 
+  const worker = rowData || "Не указан";
 
   const now = new Date();
   const hh = now.getHours().toString().padStart(2, '0');
@@ -65,29 +80,27 @@ function processReturn(actionType) {
   const day = now.getDate().toString().padStart(2, '0');
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const year = now.getFullYear().toString().slice(-2);
-  const fullDateStr = `${day}.${month}.${year} ${time}`;
   
   const author = "Неугодникова"; 
 
   if (actionType === 'full') {
     window.inventoryData = window.inventoryData.map(row => {
       if (row && 
-          String(row[0]).trim() == String(itemKeys[0]).trim() && 
-          String(row[1]).trim() == String(itemKeys[1]).trim() && 
-          String(row[2]).trim() == String(itemKeys[2]).trim() && 
-          String(row[3]).trim() == String(itemKeys[3]).trim()) {
-        row[4] = (parseInt(row[4]) || 0) + qty; 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim() && 
+          String(row).trim() == String(itemKeys).trim()) {
+        row = (parseInt(row) || 0) + qty; 
       }
       return row;
     });
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
     const nextId = window.qrLogs.length > 1 
-      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
+      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data))).map(r => parseInt(r.data) || 0)) + 1 
       : 1;
 
-    // Строго 10 элементов: КУДА идет под индексом 8
-    const returnRowData = [nextId, ...itemKeys, -qty, worker, author, "Полный возврат", fullDateStr];
+    const returnRowData = [nextId, ...itemKeys, -qty, worker, author, "Полный возврат", time, day, month, year];
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     if (typeof renderLogs === 'function') renderLogs();
@@ -110,7 +123,7 @@ function processReturn(actionType) {
     
     if (typeof openNumpadView === 'function') {
       openNumpadView();
-      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeys[3]} (Доступно: ${qty} шт.)`;
+      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeys} ${itemKeys} (Доступно: ${qty} шт.)`;
       const addBtn = document.getElementById('addBtn');
       if (addBtn) {
         addBtn.innerText = "ВЕРНУТЬ ЧАСТЬ: 0";
