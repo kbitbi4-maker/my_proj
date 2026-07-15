@@ -61,7 +61,7 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix[0].map((h, idx) => {
+  head.innerHTML = diffMatrix.map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -158,7 +158,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix[0];
+  const header = diffMatrix;
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -203,14 +203,14 @@ async function executeDatabaseComparison() {
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock[0].slice(0, 5)]); 
+  diffMatrix.push([...stock.slice(0, 5)]); 
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[1]).trim();
-    const sParam = String(sRow[2]).trim();
+    const sArt = String(sRow[0]).trim();
+    const sParam = String(sRow[1]).trim();
     
     const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
     const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
@@ -223,7 +223,7 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 5) continue;
 
-      if (String(bRow[1]).trim() === sArt && String(bRow[2]).trim() === sParam) {
+      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
         foundInBalance = true;
         const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
         bQty = parseInt(cleanBalanceStr) || 0; 
@@ -277,13 +277,13 @@ async function processTextTableImport() {
     return;
   }
 
-   const importBtn = document.getElementById('btn-confirm-balance-import');
+  const importBtn = document.getElementById('btn-confirm-balance-import');
   if (importBtn) {
     importBtn.innerText = "⏳ Обработка ячеек...";
     importBtn.disabled = true;
   }
 
-  await new Promise(resolve => setTimeout(resolve, 50));
+   await new Promise(resolve => setTimeout(resolve, 50));
 
   try {
     const rawText = textArea.value;
@@ -307,29 +307,24 @@ async function processTextTableImport() {
       return;
     }
 
-    // Сохраняем сальдо локально в буфер устройства
     window.balanceData = matrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // =========================================================================
-    // ЛОКАЛЬНОЕ СОПОСТАВЛЕНИЕ И ПЕРЕНОС ДАННЫХ В СТОЛБЕЦ из.SUP (ИНДЕКС 5)
-    // =========================================================================
+    // КРИТИЧЕСКИЙ ФИКС: Записываем значение строго в ячейку [5] строки массива, не ломая её структуру
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
-        const sRow = stock[i];
-        if (!sRow || sRow.length < 3) continue;
+        if (!stock[i] || stock[i].length < 3) continue;
 
-        const sArt = String(sRow[0]).trim().toLowerCase();
-        const sParam = String(sRow[1]).trim().toLowerCase();
+        const sArt = String(stock[i][1]).trim().toLowerCase();
+        const sParam = String(stock[i][2]).trim().toLowerCase();
 
         for (let j = 1; j < matrix.length; j++) {
-          const bRow = matrix[j];
-          if (!bRow || bRow.length < 5) continue;
+          if (!matrix[j] || matrix[j].length < 5) continue;
 
-          if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
-            const cleanVal = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0;
-            sRow[5] = cleanVal; // Записываем остаток в 6-й столбец (из.SUP) локально
+          if (String(matrix[j][0]).trim().toLowerCase() === sArt && String(matrix[j][1]).trim().toLowerCase() === sParam) {
+            const cleanVal = parseInt(String(matrix[j][4]).replace(/\s+/g, '')) || 0;
+            stock[i][5] = cleanVal; // Записываем остаток локально строго в 6-й столбец (из.SUP)
             break;
           }
         }
@@ -343,7 +338,6 @@ async function processTextTableImport() {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
-      // Отправляем пакетную команду импорта сальдо с автообновлением Листа 1
       const textPayload = "BALANCE_WITH_SUP_IMPORT|" + JSON.stringify(matrix);
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
