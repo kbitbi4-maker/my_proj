@@ -10,13 +10,13 @@ function toggleStockEditMode(activate) {
   const actionsRow = document.getElementById('stock-edit-actions');
   
   if (window.isStockEditMode) {
-    if (badge) badge.classList.remove('hidden');
-    if (triggerBtn) triggerBtn.classList.add('hidden');
-    if (actionsRow) actionsRow.classList.remove('hidden');
+    if (badge) badge.className = "stock-mode-badge";
+    if (triggerBtn) triggerBtn.className = "btn-edit-trigger hidden";
+    if (actionsRow) actionsRow.className = "stock-edit-actions-row";
   } else {
-    if (badge) badge.classList.add('hidden');
-    if (triggerBtn) triggerBtn.classList.remove('hidden');
-    if (actionsRow) actionsRow.classList.add('hidden');
+    if (badge) badge.className = "stock-mode-badge hidden";
+    if (triggerBtn) triggerBtn.className = "btn-edit-trigger";
+    if (actionsRow) actionsRow.className = "stock-edit-actions-row hidden";
   }
   
   if (typeof renderStock === 'function') {
@@ -36,22 +36,30 @@ async function saveStockChangesCloud() {
   let updatePayloadParts = [];
 
   for (let i = 1; i < currentData.length; i++) {
-    const inputEl = document.getElementById(`stock-input-${i}`);
-    if (inputEl) {
-      // Безопасно очищаем от любых пробелов перед парсингом числа
-      const cleanInputVal = String(inputEl.value).replace(/\s+/g, '');
-      const newValue = parseInt(cleanInputVal);
+    const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
+    const inputSkl2 = document.getElementById(`stock-input-${i}-7`);
+    
+    if (inputSkl1 && inputSkl2) {
+      const val1 = parseInt(String(inputSkl1.value).replace(/\s+/g, ''));
+      const val2 = parseInt(String(inputSkl2.value).replace(/\s+/g, ''));
       
-      if (isNaN(newValue) || newValue < 0) {
-        alert(`Ошибка: В строке №${i} указано некорректное число остатка.`);
+      if (isNaN(val1) || val1 < 0 || isNaN(val2) || val2 < 0) {
+        alert(`Ошибка: В строке №${i} указаны некорректные числа остатков.`);
         return;
       }
       
-      currentData[i][4] = newValue;
+      // Обновляем ячейки хранения в массиве памяти телефона
+      currentData[i][6] = val1;
+      currentData[i][7] = val2;
+      
+      // Перерасчет общего количества запаса (столбец 5, индекс 4)
+      currentData[i][4] = val1 + val2;
       
       const art = String(currentData[i][0]).trim();
       const param = String(currentData[i][1]).trim();
-      updatePayloadParts.push(`${art}*${param}*${newValue}`);
+      
+      // Собираем пакет данных: Артикул*Параметр*скл1*скл2
+      updatePayloadParts.push(`${art}*${param}*${val1}*${val2}`);
     }
   }
 
@@ -70,9 +78,7 @@ async function saveStockChangesCloud() {
 
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
 
