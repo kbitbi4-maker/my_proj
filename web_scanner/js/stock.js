@@ -11,7 +11,6 @@ function showStock() {
   const searchInput = document.getElementById('stock-search');
   if (searchInput) searchInput.value = "";
 
-  // Принудительно сбрасываем режим редактирования остатков при каждом новом открытии окна
   if (typeof window.isStockEditMode !== 'undefined') {
     window.isStockEditMode = false;
   }
@@ -32,8 +31,7 @@ function renderStock() {
   const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // 1. ДИНАМИЧЕСКИЙ ВЫВОД КНОПОК УПРАВЛЕНИЯ РЕДАКТИРОВАНИЕМ ВНУТРИ ОКНА
-  // Проверяем, добавлены ли уже кнопки управления над таблицей остатков. Если нет — создаем их.
+  // 1. ДИНАМИЧЕСКИЙ ВЫВОД КНОПОК УПРАВЛЕНИЯ РЕДАКТИРОВАНИЕМ
   let controlsWrapper = document.getElementById('stock-edit-controls-wrapper');
   if (!controlsWrapper) {
     controlsWrapper = document.createElement('div');
@@ -41,17 +39,15 @@ function renderStock() {
     controlsWrapper.style.width = '100%';
     controlsWrapper.style.flexShrink = '0';
     
-    // Вставляем блок управления прямо перед строкой поиска остатков
     const searchInputEl = document.getElementById('stock-search');
     if (searchInputEl && searchInputEl.parentNode) {
       searchInputEl.parentNode.insertBefore(controlsWrapper, searchInputEl);
     }
   }
 
-  // Обновляем HTML-содержимое блока кнопок в зависимости от того, активен ли режим изменения
   const isEdit = !!window.isStockEditMode;
   controlsWrapper.innerHTML = `
-    <div id="stock-edit-badge" class="stock-mode-badge ${isEdit ? '' : 'hidden'}" style="text-align: center; margin-bottom: 8px;">
+    <div id="stock-edit-badge" class="stock-mode-badge ${isEdit ? '' : 'hidden'}">
       ⚠️ РЕЖИМ ИЗМЕНЕНИЯ ОСТАТКОВ АКТИВЕН
     </div>
     <button id="stock-edit-trigger-btn" class="btn-edit-trigger ${isEdit ? 'hidden' : ''}" onclick="toggleStockEditMode(true)">
@@ -63,32 +59,39 @@ function renderStock() {
     </div>
   `;
   
-  // 2. ОТРИСОВКА ЗАГОЛОВКОВ ТАБЛИЦЫ
-  head.innerHTML = currentData[0].map(h => `<th>${h}</th>`).join('');
+  // 2. ОТРИСОВКА ОСОБЫХ ЗАГОВОРОВ ШАПКИ С ПЕРЕНОСАМИ (19 СТОЛБЦОВ)
+  head.innerHTML = `
+    <th>Партия</th><th>Материал</th><th>КрТекстМатериала</th><th>Базисная ЕИ</th>
+    <th>Кол-во<br>запаса<br>в конце<br>периода</th>
+    <th>из.SUP</th>
+    <th>скл.1</th>
+    <th>скл.2</th>
+    <th>цена<br>за<br>единицу</th>
+    <th>лок.ID</th>
+    <th>Ст-ть<br>запаса<br>в конце<br>периода</th>
+    <th>Завод</th><th>Склад</th><th>Особый запас</th><th>СПП-элемент</th><th>Группа материалов</th>
+    <th>Дата поступления на склад</th><th>Золото</th><th>Серебро</th>
+  `;
   
   // 3. ОТРИСОВКА СТРОК ТАБЛИЦЫ ОСТАТКОВ
   body.innerHTML = currentData.map((row, index) => {
-    if (index === 0) return ''; // Пропускаем заголовок таблицы
+    if (index === 0) return ''; // Пропускаем заголовок из облака
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
     if (!isMatch && term !== "") return '';
 
-    // Генерируем ячейки строки
     const cellsHtml = row.map((cell, cellIndex) => {
-      // Пятый столбец (индекс 4 в JS) — это Количество на остатке
-      if (cellIndex === 4 && isEdit) {
-        // Если активирован режим редактирования — подставляем инпут с уникальным ID вместо текста
+      // Подставляем инпуты в 7-й и 8-й столбцы (индексы 6 и 7 в JS)
+      if ((cellIndex === 6 || cellIndex === 7) && isEdit) {
         return `
           <td class="editable-stock-cell" onclick="event.stopPropagation();">
-            <input type="number" id="stock-input-${index}" class="cell-stock-input" value="${cell}" min="0" autocomplete="off">
+            <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" value="${parseInt(cell) || 0}" min="0" autocomplete="off">
           </td>
         `;
       }
-      // Для всех остальных столбцов или в обычном режиме — выводим стандартный текст ячейки
       return `<td>${cell}</td>`;
     }).join('');
 
-    // Если активен режим редактирования остатков, клик по строке заблокирован, чтобы не открывался нумпад
     const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
     const rowStyle = isEdit ? 'style="cursor: default;"' : '';
 
@@ -96,21 +99,26 @@ function renderStock() {
   }).join('');
   
   if (body.innerHTML.trim() === "") {
-    body.innerHTML = '<tr><td colspan="11">Ничего не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="19">Ничего не найдено</td></tr>';
   }
 }
 
 function selectFromStockDirect(index) {
   const currentData = window.inventoryData;
-  if (!currentData) return;
+  if (!currentData || !currentData[index]) return;
 
-  // Копируем чистый массив ячеек выбранной строки остатков
-  window.currentSelectedRowData = [...currentData[index]]; 
+  const row = currentData[index];
+  const q1 = parseInt(row[6]) || 0;
+  const q2 = parseInt(row[7]) || 0;
+  const totalStock = q1 + q2;
+
+  // Формируем чистый виртуальный массив для нумпада: Парам1, Парам2, Парам3, Парам4, ОбщийОстаток, ИндексСтроки
+  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
     openNumpadView();
   } else {
-    console.error("Функция openNumpadView не найдена. Убедитесь, что файл js/numpad.js подключен.");
+    console.error("Функция openNumpadView не найдена.");
   }
 }
