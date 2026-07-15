@@ -1,7 +1,6 @@
 // js/edit_stock.js — Модуль прямого редактирования остатков в таблице
 
 window.isStockEditMode = false;
-// Массив для хранения индексов строк, которые были отредактированы пользователем
 window.editedStockRows = [];
 
 function toggleStockEditMode(activate) {
@@ -12,14 +11,14 @@ function toggleStockEditMode(activate) {
   const actionsRow = document.getElementById('stock-edit-actions');
   
   if (window.isStockEditMode) {
-    window.editedStockRows = []; // Очищаем массив измененных строк при старте режима
+    window.editedStockRows = []; 
     if (badge) badge.classList.remove('hidden');
     if (triggerBtn) triggerBtn.classList.add('hidden');
     if (actionsRow) actionsRow.classList.remove('hidden');
   } else {
     if (badge) badge.classList.add('hidden');
     if (triggerBtn) triggerBtn.classList.remove('hidden');
-    if (actionsRow) actionsRow.classList.remove('hidden');
+    if (actionsRow) actionsRow.classList.add('hidden');
   }
   
   if (typeof renderStock === 'function') {
@@ -27,9 +26,6 @@ function toggleStockEditMode(activate) {
   }
 }
 
-/**
- * ГЛОБАЛЬНЫЙ ТРИГГЕР: явно привязываем функцию к window, чтобы HTML её видел
- */
 window.markStockRowAsEdited = function(rowIndex) {
   const idx = parseInt(rowIndex);
   if (!isNaN(idx) && !window.editedStockRows.includes(idx)) {
@@ -47,8 +43,7 @@ async function saveStockChangesCloud() {
   const currentData = window.inventoryData;
   if (!currentData || currentData.length <= 1) return;
 
-  // ПОДСТРАХОВКА: Если массив пуст, делаем быструю сверку по всем строкам с кэшем,
-  // чтобы обнаружить изменения, даже если событие oninput не сработало
+  // ИСПРАВЛЕНО: Корректное фоновое сравнение ячеек по точным индексам массива
   if (window.editedStockRows.length === 0) {
     for (let i = 1; i < currentData.length; i++) {
       const inputTotal = document.getElementById(`stock-input-${i}-4`);
@@ -60,9 +55,10 @@ async function saveStockChangesCloud() {
         const s1Val = parseInt(inputSkl1.value) || 0;
         const s2Val = parseInt(inputSkl2.value) || 0;
         
-        if (tVal !== parseInt(currentData[i]) || 
-            s1Val !== parseInt(currentData[i]) || 
-            s2Val !== parseInt(currentData[i])) {
+        // Сравниваем строго с конкретными индексами ячеек внутри строки массива
+        if (tVal !== (parseInt(currentData[i][4]) || 0) || 
+            s1Val !== (parseInt(currentData[i][6]) || 0) || 
+            s2Val !== (parseInt(currentData[i][7]) || 0)) {
           if (!window.editedStockRows.includes(i)) {
             window.editedStockRows.push(i);
           }
@@ -71,7 +67,6 @@ async function saveStockChangesCloud() {
     }
   }
 
-  // Если изменений действительно нет — просто выходим
   if (window.editedStockRows.length === 0) {
     alert("Информация:\nВы не изменили ни одной ячейки остатков.");
     toggleStockEditMode(false);
@@ -80,7 +75,6 @@ async function saveStockChangesCloud() {
 
   let updatePayloadParts = [];
 
-  // Перебираем СТРОГО только те индексы строк, которые были изменены вручную
   for (let k = 0; k < window.editedStockRows.length; k++) {
     const i = window.editedStockRows[k];
     
@@ -98,15 +92,13 @@ async function saveStockChangesCloud() {
         return;
       }
       
-      // Обновляем ячейки в локальном массиве памяти устройства
-      currentData[i] = valTotal;
-      currentData[i] = val1;
-      currentData[i] = val2;
+      currentData[i][4] = valTotal;
+      currentData[i][6] = val1;
+      currentData[i][7] = val2;
       
-      const art = String(currentData[i]).trim();
-      const param = String(currentData[i]).trim();
+      const art = String(currentData[i][1]).trim();
+      const param = String(currentData[i][2]).trim();
       
-      // Собираем расширенный пакет данных: Артикул*Параметр*ОбщийЗапас*скл1*скл2
       updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
     }
   }
@@ -114,6 +106,7 @@ async function saveStockChangesCloud() {
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
   
+  // Принудительно выключаем режим ДО отправки тяжелого сетевого fetch-запроса
   window.editedStockRows = [];
   toggleStockEditMode(false);
 
