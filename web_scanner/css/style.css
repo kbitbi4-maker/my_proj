@@ -4,10 +4,10 @@ body { display: flex; flex-direction: column; background: url('../fon_s.jpg') no
 
 /* Шапка приложения */
 .header { display: flex; align-items: center; padding: 0 10px; background: #475569; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-.header h2 { margin: 0; font-size: 2.7vh; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 7px; overflow: hidden; }
+.header h2 { margin: 0; font-size: 2.7vh; flex-grow: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 7px; overflow: hidden; position: relative; }
 .net-indicator { width: 14px; height: 14px; border-radius: 50%; background: #ff4b2b; border: 2px solid white; flex-shrink: 0; display: inline-block; box-sizing: border-box; transition: background 0.3s, box-shadow 0.3s; }
 .net-online { background: #00e676; box-shadow: 0 0 10px #00e676; }
-.btn-icon { background: transparent; border: none; color: white; font-size: 3.6vh; cursor: pointer; padding: 5px; display: flex; align-items: center; text-decoration: none; }
+.btn-icon { background: transparent; border: none; color: white; font-size: 3.6vh; cursor: pointer; padding: 5px; display: flex; align-items: center; text-decoration: none; border-radius: 8px; transition: background-color 0.2s, box-shadow 0.2s; }
 #start-camera { font-size: 1.6vh; border: 1px solid white; border-radius: 6px; padding: 0.7vh 1.3vh; text-transform: uppercase; font-weight: bold; background: transparent; color: white; cursor: pointer; transition: background-color 0.2s; margin-left: auto; }
 #start-camera:active { background: rgba(255,255,255,0.2); }
 
@@ -75,55 +75,3 @@ td { padding: 6px 5px; border: 1px solid #888; text-align: center; color: #000; 
 #where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
 .btn-where-save { background: #22c55e; margin-bottom: 10px; height: 50px; }
 .btn-where-back { background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; }
-
-/* Компоненты выбора возвратов */
-.return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
-.return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
-.btn-return-action { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.btn-return-action:active { transform: translateY(1px); }
-.return-full { background: #3b82f6; color: white; }
-.return-full:active { background: #2563eb; }
-.return-part { background: #eab308; color: white; }
-.return-part:active { background: #ca8a04; }
-.return-delete { background: #ef4444; color: white; }
-.return-delete:active { background: #dc2626; }
-
-/* Экран 5: Управление Сальдо */
-#balance-view { height: 100%; display: flex; flex-direction: column; }
-#balance-view .return-actions-grid { margin-top: 20px; }
-.btn-load-balance { background: #2563eb; }
-.btn-compare-balance { background: #7c3aed; }
-.btn-diff-balance { background: #0284c7; }
-#balance-paste-container { display: flex; flex-direction: column; flex-grow: 1; gap: 10px; }
-.balance-helper-text { font-size: 1.4vh; color: #475569; margin: 0; text-align: center; }
-#balance-text-area { width: 100%; flex-grow: 1; min-height: 40vh; padding: 10px; font-family: monospace; font-size: 1.2vh; border: 2px solid #cbd5e1; border-radius: 8px; resize: none; box-sizing: border-box; outline: none; }
-.btn-confirm-import { background: #22c55e; height: 50px; flex-shrink: 0; }
-.btn-balance-back { margin-top: 0; height: 40px; }
-
-/* Экран 6: Таблица отличий (Diff) */
-#diff-table-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
-#diff-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
-.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; }
-.table-diff-content { width: max-content; min-width: 100%; }
-.btn-diff-back { margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0; }
-
-/* Контекстное меню фильтрации/сортировки поповера */
-.filter-popover { position: absolute; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 3000; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
-.filter-popover button { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 1.4vh; font-weight: 600; border-radius: 6px; cursor: pointer; text-align: left; color: #334155; }
-.filter-popover button:hover { background: #cbd5e1; }
-.filter-popover .color-opt-green { border-left: 5px solid #dcfce7; }
-.filter-popover .color-opt-red { border-left: 5px solid #fee2e2; }
-.filter-popover .color-opt-none { border-left: 5px solid #f1f5f9; }
-
-/* Стили окон изменений склада */
-.stock-mode-badge { color: #ef4444; font-weight: bold; font-size: 1.6vh; margin-top: 4px; animation: pulseEditMode 1.5s infinite; text-align: center; margin-bottom: 8px; }
-@keyframes pulseEditMode { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-
-.btn-edit-trigger { width: 100%; height: 9.6vh; min-height: 55px; padding: 10px; background: #475569; color: white; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 2.8vh; font-weight: bold; cursor: pointer; margin-bottom: 12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: background-color 0.2s, transform 0.1s; }
-.btn-edit-trigger:active { background: #334155; transform: scale(0.98); }
-.stock-edit-actions-row button { padding: 16px 10px; font-size: 2vh; border-radius: 10px; }
-
-@media (min-width: 600px) {
-  #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
-}
-@media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
