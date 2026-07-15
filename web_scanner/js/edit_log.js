@@ -1,6 +1,6 @@
 // js/edit_log.js — Модуль прямого изменения ячейки КУДА в журнале выдачи 
 
-window.activeEditLogIndex = null;
+window.activeEditLogIndex = null; 
 
 /**
  * Переводит ячейку "Куда" конкретной строки журнала в режим редактирования при клике
