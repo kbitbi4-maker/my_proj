@@ -13,14 +13,14 @@ function renderLogs() {
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
-    body.innerHTML = '<tr><td colspan="13">Пусто</td></tr>'; 
+    body.innerHTML = '<tr><td colspan="13" style="background: rgba(255,255,255,0.85); color: #000;">Пусто</td></tr>'; 
     return; 
   }
 
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
-    const bg = isSynced ? 'style="background:#d4edda;"' : '';
+    const bgClass = isSynced ? 'class="log-row-synced"' : 'class="log-row-wait"';
     
     const cellsHtml = item.data.map((cell, cellIndex) => {
       if (cellIndex === 8) {
@@ -29,7 +29,8 @@ function renderLogs() {
       return `<td onclick="handleLogClick(${i})">${cell}</td>`;
     }).join('');
 
-    return `<tr ${bg}>${cellsHtml}</tr>`;
+    // Рендерим строки с зазорами (каждая tbody/tr — отдельный прозрачный элемент)
+    return `<tr ${bgClass}>${cellsHtml}</tr><tr class="table-spacer"></tr>`;
   }).filter(Boolean).reverse().join('');
 }
 
@@ -42,8 +43,10 @@ async function syncFromGoogle() {
   const badge = document.getElementById('status-text-badge');
   const indicatorEl = document.getElementById('indicator');
   const titleText = document.getElementById('project-title-text');
+  const syncBtn = document.getElementById('sync-btn');
   
-  // ВКЛЮЧАЕМ ЭФФЕКТЫ НАЧАЛА СИНХРОНИЗАЦИИ И СКРЫВАЕМ НАЗВАНИЕ ПРОЕКТА
+  // ВКЛЮЧАЕМ ЭФФЕКТЫ: Кнопка горит красным, название скрывается, плашка активна
+  if (syncBtn) syncBtn.classList.add('sync-active-highlight');
   if (titleText) titleText.classList.add('hidden');
   if (badge) {
     badge.innerText = "Идет синхронизация";
@@ -76,14 +79,16 @@ async function syncFromGoogle() {
 
     renderLogs();
     
-    // ОТКЛЮЧАЕМ ЭФФЕКТЫ И ВОЗВРАЩАЕМ НАЗВАНИЕ ТЕКСТА
+    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПОСЛЕ УСПЕШНОГО ОКОНЧАНИЯ
+    if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
     
     alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
   } catch (e) { 
-    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПРИ ОШИБКЕ И ВОЗВРАЩАЕМ НАЗВАНИЕ
+    // ОТКЛЮЧАЕМ ЭФФЕКТЫ БЕЗ РАЗНИЦЫ ПРИ ОШИБКЕ БЕЗ ВЫЛЕТА ПРОГРАММЫ
+    if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
