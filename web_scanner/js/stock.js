@@ -84,8 +84,8 @@ function renderStock() {
         return `<td>${formattedPrice}</td>`;
       }
 
-      // На старый проверенный лад убираем события oninput
-      if ((cellIndex === 4 || cellIndex === 6 || cellIndex === 7) && isEdit) {
+      // МАКСИМАЛЬНО ПРОСТО: инпуты создаются ТОЛЬКО для скл.1 и скл.2 (индексы 6 и 7)
+      if ((cellIndex === 6 || cellIndex === 7) && isEdit) {
         return `
           <td class="editable-stock-cell" onclick="event.stopPropagation();">
             <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" value="${parseInt(cell) || 0}" min="0" autocomplete="off">
@@ -111,11 +111,11 @@ function selectFromStockDirect(index) {
   if (!currentData || !currentData[index]) return;
 
   const row = currentData[index];
-  const q1 = parseInt(row[6]) || 0; 
-  const q2 = parseInt(row[7]) || 0; 
+  const q1 = parseInt(row) || 0; 
+  const q2 = parseInt(row) || 0; 
   const totalStock = q1 + q2;
 
-  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
+  window.currentSelectedRowData = [row, row, row, row, totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
