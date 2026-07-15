@@ -24,16 +24,15 @@ function handleLogClick(originalIndex) {
   const rowData = logItem.data;
   
   const id = rowData[0] !== undefined ? rowData[0] : '---';
-  const col4 = rowData[3] !== undefined ? rowData[3] : '';
-  const col5 = rowData[4] !== undefined ? rowData[4] : '';
-  const col6 = rowData[5] !== undefined ? rowData[5] : '0';
+  const name = rowData[4] !== undefined ? rowData[4] : '';
+  const qty = rowData[5] !== undefined ? rowData[5] : '0';
   
   const infoBadge = document.getElementById('return-info-badge');
   if (infoBadge) {
     infoBadge.innerHTML = `
       <strong>ВЫДАЧА №:</strong> ${id}<br>
-      <strong>ТОВАР:</strong> ${col4} ${col5}<br>
-      <strong>КОЛ-ВО В СТРОКЕ:</strong> ${col6} шт.
+      <strong>ТОВАР:</strong> ${name}<br>
+      <strong>КОЛ-ВО В СТРОКЕ:</strong> ${qty} шт.
     `;
   }
   
@@ -57,7 +56,7 @@ function processReturn(actionType) {
   const targetId = rowData[0]; 
   const itemKeys = rowData.slice(1, 5); 
   const qty = parseInt(rowData[5]) || 0; 
-  const worker = rowData[7] || "Не указан";
+  const worker = rowData[6] || "Не указан";
 
   const now = new Date();
   const hh = now.getHours().toString().padStart(2, '0');
@@ -66,6 +65,7 @@ function processReturn(actionType) {
   const day = now.getDate().toString().padStart(2, '0');
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const year = now.getFullYear().toString().slice(-2);
+  const fullDateStr = `${day}.${month}.${year} ${time}`;
   
   const author = "Неугодникова"; 
 
@@ -86,8 +86,8 @@ function processReturn(actionType) {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // Массив 13 столбцов: поле "КУДА" заполняется константой "Полный возврат"
-    const returnRowData = [nextId, ...itemKeys, -qty, "Полный возврат", worker, author, time, day, month, year];
+    // Строго 10 элементов: КУДА идет под индексом 8
+    const returnRowData = [nextId, ...itemKeys, -qty, worker, author, "Полный возврат", fullDateStr];
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     if (typeof renderLogs === 'function') renderLogs();
@@ -110,7 +110,7 @@ function processReturn(actionType) {
     
     if (typeof openNumpadView === 'function') {
       openNumpadView();
-      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeys[0]} ${itemKeys[1]} (Доступно: ${qty} шт.)`;
+      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeys[3]} (Доступно: ${qty} шт.)`;
       const addBtn = document.getElementById('addBtn');
       if (addBtn) {
         addBtn.innerText = "ВЕРНУТЬ ЧАСТЬ: 0";
