@@ -31,7 +31,6 @@ function renderStock() {
   const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // 1. ДИНАМИЧЕСКИЙ ВЫВОД КНОПОК УПРАВЛЕНИЯ РЕДАКТИРОВАНИЕМ
   let controlsWrapper = document.getElementById('stock-edit-controls-wrapper');
   if (!controlsWrapper) {
     controlsWrapper = document.createElement('div');
@@ -59,7 +58,6 @@ function renderStock() {
     </div>
   `;
   
-  // 2. ОТРИСОВКА ОСОБЫХ ЗАГОВОРОВ ШАПКИ С ПЕРЕНОСАМИ (19 СТОЛБЦОВ)
   head.innerHTML = `
     <th>Партия</th><th>Материал</th><th>КрТекстМатериала</th><th>Базисная ЕИ</th>
     <th>Кол-во<br>запаса<br>в конце<br>периода</th>
@@ -73,16 +71,22 @@ function renderStock() {
     <th>Дата поступления на склад</th><th>Золото</th><th>Серебро</th>
   `;
   
-  // 3. ОТРИСОВКА СТРОК ТАБЛИЦЫ ОСТАТКОВ
   body.innerHTML = currentData.map((row, index) => {
-    if (index === 0) return ''; // Пропускаем заголовок из облака
+    if (index === 0) return ''; 
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
     if (!isMatch && term !== "") return '';
 
     const cellsHtml = row.map((cell, cellIndex) => {
-      // Подставляем инпуты в 7-й и 8-й столбцы (индексы 6 и 7 в JS)
-      if ((cellIndex === 6 || cellIndex === 7) && isEdit) {
+      // Округляем цену за единицу (индекс 8 в JS) ровно до 3 знаков
+      if (cellIndex === 8) {
+        const parsedPrice = parseFloat(String(cell).replace(/,/g, '.').replace(/\s+/g, ''));
+        const formattedPrice = !isNaN(parsedPrice) ? parsedPrice.toFixed(3) : cell;
+        return `<td>${formattedPrice}</td>`;
+      }
+
+      // ВОЗВРАЩАЕМ И РАСШИРЯЕМ ФУНКЦИОНАЛ: Инпуты для 5, 7 и 8 столбцов (индексы 4, 6 и 7 в JS)
+      if ((cellIndex === 4 || cellIndex === 6 || cellIndex === 7) && isEdit) {
         return `
           <td class="editable-stock-cell" onclick="event.stopPropagation();">
             <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" value="${parseInt(cell) || 0}" min="0" autocomplete="off">
@@ -108,11 +112,10 @@ function selectFromStockDirect(index) {
   if (!currentData || !currentData[index]) return;
 
   const row = currentData[index];
-  const q1 = parseInt(row[6]) || 0;
-  const q2 = parseInt(row[7]) || 0;
+  const q1 = parseInt(row[6]) || 0; // скл.1
+  const q2 = parseInt(row[7]) || 0; // скл.2
   const totalStock = q1 + q2;
 
-  // Формируем чистый виртуальный массив для нумпада: Парам1, Парам2, Парам3, Парам4, ОбщийОстаток, ИндексСтроки
   window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
