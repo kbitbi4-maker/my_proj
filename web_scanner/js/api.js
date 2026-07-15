@@ -13,13 +13,14 @@ function renderLogs() {
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
-    body.innerHTML = '<tr><td colspan="13" style="background: rgba(255,255,255,0.85); color: #000;">Пусто</td></tr>'; 
+    body.innerHTML = '<tr><td colspan="13" style="background: #ffffff; color: #000;">Пусто</td></tr>'; 
     return; 
   }
 
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
+    // Назначаем класс: новые строки белые, прогруженные — зеленые с зебра-эффектом
     const bgClass = isSynced ? 'class="log-row-synced"' : 'class="log-row-wait"';
     
     const cellsHtml = item.data.map((cell, cellIndex) => {
@@ -29,8 +30,8 @@ function renderLogs() {
       return `<td onclick="handleLogClick(${i})">${cell}</td>`;
     }).join('');
 
-    // Рендерим строки с зазорами (каждая tbody/tr — отдельный прозрачный элемент)
-    return `<tr ${bgClass}>${cellsHtml}</tr><tr class="table-spacer"></tr>`;
+    // Рендерим строки сплошным массивом без зазоров
+    return `<tr ${bgClass}>${cellsHtml}</tr>`;
   }).filter(Boolean).reverse().join('');
 }
 
@@ -87,7 +88,7 @@ async function syncFromGoogle() {
     
     alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
   } catch (e) { 
-    // ОТКЛЮЧАЕМ ЭФФЕКТЫ БЕЗ РАЗНИЦЫ ПРИ ОШИБКЕ БЕЗ ВЫЛЕТА ПРОГРАММЫ
+    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПРИ ОШИБКЕ БЕЗ ИСКЛЮЧЕНИЙ СРЕДЫ
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
@@ -147,4 +148,3 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLogs();
   sendUnsynced();
 });
-
