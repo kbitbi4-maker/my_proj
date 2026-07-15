@@ -3,9 +3,8 @@
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
 window.diffData = JSON.parse(localStorage.getItem('qr_diff_v1')) || [];
 
-// Состояния фильтрации и сортировки для Листа 4 (Таблицы отличий)
-window.diffFilterColor = "all"; // "all", "green" (профицит), "red" (дефицит), "none" (нет)
-window.diffSortDirection = {};  // Направление сортировки по индексам столбцов
+window.diffFilterColor = "all"; 
+window.diffSortDirection = {};  
 
 /**
  * Открытие стартового диалогового окна Сальдо
@@ -58,12 +57,10 @@ function showDiffTable() {
   const head = document.getElementById('diff-head');
   if (!head) return;
 
-  // Очищаем поисковую строку при первом открытии
   const searchInput = document.getElementById('diff-search');
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  // Рендерим заголовки с триггером вызова меню сортировки/фильтрации при клике
   head.innerHTML = diffMatrix[0].map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
@@ -87,17 +84,14 @@ function renderDiffTableBody() {
   const searchInput = document.getElementById('diff-search');
   const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
-  // Копируем строки данных без строки заголовка для трансформаций
   let rowsData = diffMatrix.slice(1);
 
-  // 1. ПРИМЕНЯЕМ ТЕКСТОВЫЙ ФИЛЬТР (Поиск по всей строке)
   if (term !== "") {
     rowsData = rowsData.filter(row => {
       return row.some(cell => String(cell).toLowerCase().includes(term));
     });
   }
 
-  // 2. ПРИМЕНЯЕМ ФИЛЬТР ПО ЦВЕТУ (Определяется по знаку последнего столбца разницы)
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(row => {
       const lastCell = String(row[row.length - 1] || '').trim();
@@ -108,7 +102,6 @@ function renderDiffTableBody() {
     });
   }
 
-  // 3. ОТРИСОВКА СФИЛЬТРОВАННОГО И ОТСОРТИРОВАННОГО МАССИВА СТРОК
   if (rowsData.length === 0) {
     body.innerHTML = '<tr><td colspan="6">Совпадений или расхождений не найдено</td></tr>';
     return;
@@ -120,9 +113,9 @@ function renderDiffTableBody() {
     let bgStyle = '';
 
     if (lastCell.indexOf('-') === 0) {
-      bgStyle = 'style="background: #fee2e2;"'; // Дефицит
+      bgStyle = 'style="background: #fee2e2;"'; 
     } else if (lastCell.indexOf('+') === 0) {
-      bgStyle = 'style="background: #dcfce7;"'; // Профицит
+      bgStyle = 'style="background: #dcfce7;"'; 
     }
 
     return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
@@ -137,7 +130,6 @@ function openDiffFilterMenu(event, colIndex) {
   const popover = document.getElementById('filter-popover-menu');
   if (!popover) return;
 
-  // Размещаем поповер прямо под местом клика по шапке
   popover.style.top = `${event.clientY + window.scrollY + 10}px`;
   popover.style.left = `${Math.min(event.clientX, window.innerWidth - 200)}px`;
   
@@ -152,7 +144,6 @@ function openDiffFilterMenu(event, colIndex) {
 
   popover.classList.remove('hidden');
 
-  // Закрытие поповера при любом клике по экрану мимо него
   const closeMenuHandler = () => {
     popover.classList.add('hidden');
     document.removeEventListener('click', closeMenuHandler);
@@ -174,7 +165,6 @@ function sortDiffByColumn(colIndex, direction) {
     let valA = String(rowA[colIndex] || '').toLowerCase().trim();
     let valB = String(rowB[colIndex] || '').toLowerCase().trim();
 
-    // Проверяем, является ли значение числом для корректной числовой сортировки
     const numA = parseFloat(valA.replace(/[+]/g, ''));
     const numB = parseFloat(valB.replace(/[+]/g, ''));
     
@@ -187,14 +177,10 @@ function sortDiffByColumn(colIndex, direction) {
     return 0;
   });
 
-  // Перезаписываем глобальную матрицу отсортированным результатом
   window.diffData = [header, ...dataRows];
   renderDiffTableBody();
 }
 
-/**
- * УСТАНОВКА ФИЛЬТРА ЦВЕТА
- */
 function filterDiffByColor(colorType) {
   window.diffFilterColor = colorType;
   renderDiffTableBody();
@@ -258,7 +244,9 @@ async function executeDatabaseComparison() {
 
   window.diffData = diffMatrix;
   localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
-    alert(`Сверка завершена!\nОбнаружено расхождений: ${diffMatrix.length - 1} позиций.\nОтправляем отчет на Лист 4 в облако...`);
+
+  // Фикс: Мы убрали вызов closeModal(), оставаясь на подэкране кнопок сальдо
+  alert(`Сверка завершена!\nОбнаружено расхождений: ${diffMatrix.length - 1} позиций.\nОтправляем отчет на Лист 4 в облако...`);
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
@@ -270,14 +258,12 @@ async function executeDatabaseComparison() {
       });
       const serverText = await response.text();
       alert("ОТВЕТ СЕРВЕРА GOOGLE ПО СВЕРКЕ:\n\n" + serverText);
-      if (typeof closeModal === 'function') closeModal();
     } catch (e) {
       console.error(e);
       alert("Отчет сохранен на устройстве, но произошла ошибка отправки в облако: " + e.message);
     }
   } else {
     alert("Нет сети. Результаты сравнения сохранены локально в четвертую базу данных.");
-    if (typeof closeModal === 'function') closeModal();
   }
 }
 
@@ -336,10 +322,10 @@ async function processTextTableImport() {
       });
       const serverText = await response.text();
       alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО:\n\n" + serverText);
-      if (typeof closeModal === 'function') closeModal();
+      hideBalancePasteArea(); // Не закрываем модалку, а возвращаем к кнопкам управления сальдо
     } else {
       alert(`Импорт завершен локально! В третью базу записано: ${matrix.length} строк.\nВнимание: Данные ушли только в память телефона, так как интернет отсутствует.`);
-      if (typeof closeModal === 'function') closeModal();
+      hideBalancePasteArea(); // Возвращаем к кнопкам сальдо
     }
   } catch (err) {
     console.error(err);
