@@ -61,7 +61,7 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix[0].map((h, idx) => {
+  head.innerHTML = diffMatrix.map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -158,7 +158,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix[0];
+  const header = diffMatrix;
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -212,8 +212,10 @@ async function executeDatabaseComparison() {
     const sArt = String(sRow[0]).trim();
     const sParam = String(sRow[1]).trim();
     
-    const cleanStockStr = String(sRow[4]).replace(/\s+/g, '');
-    const sQty = parseInt(cleanStockStr) || 0; 
+    // Суммируем скл.1 и скл.2 для сравнения (индексы 6 и 7)
+    const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
+    const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
+    const sQty = q1 + q2; 
 
     let foundInBalance = false;
     let bQty = 0;
@@ -234,6 +236,7 @@ async function executeDatabaseComparison() {
     if (difference === 0) continue;
 
     let newDiffRow = [...sRow.slice(0, 5)];
+    // Помещаем расчетное количество разницы на место 5-го столбца
     if (difference > 0) {
       newDiffRow[4] = "+" + difference;
     } else {
@@ -245,7 +248,6 @@ async function executeDatabaseComparison() {
   window.diffData = diffMatrix;
   localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
 
-  // Фикс: Мы убрали вызов closeModal(), оставаясь на подэкране кнопок сальдо
   alert(`Сверка завершена!\nОбнаружено расхождений: ${diffMatrix.length - 1} позиций.\nОтправляем отчет на Лист 4 в облако...`);
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
@@ -268,7 +270,7 @@ async function executeDatabaseComparison() {
 }
 
 /**
- * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА
+ * ВЫСОКОПРОИЗВОДИТЕЛЬНЫЙ ПАРСЕР И ТЕКСТОВЫЙ ИМПОРТ ТАБЛИЦЫ ИЗ БУФЕРА ОБМЕНА С КОРРЕКТИРОВКОЙ из.SUP
  */
 async function processTextTableImport() {
   const textArea = document.getElementById('balance-text-area');
@@ -277,7 +279,7 @@ async function processTextTableImport() {
     return;
   }
 
-  const importBtn = document.getElementById('btn-confirm-balance-import');
+    const importBtn = document.getElementById('btn-confirm-balance-import');
   if (importBtn) {
     importBtn.innerText = "⏳ Обработка ячеек...";
     importBtn.disabled = true;
@@ -307,25 +309,55 @@ async function processTextTableImport() {
       return;
     }
 
+    // Сохраняем сальдо локально
     window.balanceData = matrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
+
+    // =========================================================================
+    // ЛОКАЛЬНОЕ СОПОСТАВЛЕНИЕ И ПЕРЕНОС ДАННЫХ В СТОЛБЕЦ из.SUP (ИНДЕКС 5)
+    // =========================================================================
+    const stock = window.inventoryData;
+    if (stock && stock.length > 1) {
+      for (let i = 1; i < stock.length; i++) {
+        const sRow = stock[i];
+        if (!sRow || sRow.length < 2) continue;
+
+        const sArt = String(sRow[0]).trim().toLowerCase();
+        const sParam = String(sRow[1]).trim().toLowerCase();
+
+        for (let j = 1; j < matrix.length; j++) {
+          const bRow = matrix[j];
+          if (!bRow || bRow.length < 5) continue;
+
+          if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
+            const cleanVal = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0;
+            sRow[5] = cleanVal; // Записываем остаток в 6-й столбец (из.SUP) локально
+            break;
+          }
+        }
+      }
+      window.inventoryData = stock;
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+      if (typeof renderStock === 'function') renderStock();
+    }
 
     if (importBtn) importBtn.innerText = "☁️ Отправка в облако Google...";
     await new Promise(resolve => setTimeout(resolve, 50));
 
     if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
-      const textPayload = "BALANCE_IMPORT|" + JSON.stringify(matrix);
+      // Отправляем пакетную команду импорта сальдо с автообновлением Листа 1
+      const textPayload = "BALANCE_WITH_SUP_IMPORT|" + JSON.stringify(matrix);
       const response = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
       const serverText = await response.text();
-      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО:\n\n" + serverText);
-      hideBalancePasteArea(); // Не закрываем модалку, а возвращаем к кнопкам управления сальдо
+      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО С ОБНОВЛЕНИЕМ из.SUP:\n\n" + serverText);
+      hideBalancePasteArea();
     } else {
-      alert(`Импорт завершен локально! В третью базу записано: ${matrix.length} строк.\nВнимание: Данные ушли только в память телефона, так как интернет отсутствует.`);
-      hideBalancePasteArea(); // Возвращаем к кнопкам сальдо
+      alert(`Импорт завершен локально! Столбец из.SUP обновлен на устройстве.\nВнимание: В облако данные не ушли, так как интернет отсутствует.`);
+      hideBalancePasteArea();
     }
   } catch (err) {
     console.error(err);
