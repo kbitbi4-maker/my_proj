@@ -2,6 +2,20 @@
    ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ)
    ========================================================================= */
 
+/* КРИТИЧЕСКИЙ ФИКС: Убираем белый фон пустующего пространства окна выдачи материалов */
+.table-wrapper {
+  background: transparent !important; /* Делаем контейнер полностью прозрачным */
+  border: none !important;            /* Убираем темную рамку вокруг пустого пространства */
+  box-shadow: none !important;        /* Убираем тяжелую тень */
+}
+
+/* Настраиваем саму таблицу, чтобы у неё была аккуратная рамка, а фон не сливался */
+table {
+  background: transparent !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
 /* Компоненты выбора возвратов */
 .return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
 .return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
@@ -60,20 +74,14 @@
 .sync-pulse { animation: syncBlink 0.6s infinite alternate !important; }
 @keyframes syncBlink { from { background: #0284c7; box-shadow: 0 0 4px #0284c7; } to { background: #38bdf8; box-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8; } }
 
-/* ЖЕСТКИЙ ФИКС: Подсветка кнопки режима возврата и кнопки синхронизации облачка в красный цвет */
+/* Подсветка кнопки режима возврата и кнопки синхронизации облачка в красный цвет */
 .return-mode-active { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 #sync-btn.sync-active-highlight { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 
-/* КОРРЕКТИРОВКА СТИЛЕЙ ЖУРНАЛА: ВОЗВРАТ ЦВЕТОВ И ЗЕБРА-ЭФФЕКТ С ШАГОМ 20% */
+/* Компоненты журнала: матовые фоны для строк и зебра-эффект с шагом 20% */
 #logs-body tr { background: #ffffff; border-bottom: 1px solid #cbd5e1; }
-
-/* Строки со статусом 'wait' (новые выданные товары до отправки в облако) — строго белые */
 #logs-body tr.log-row-wait { background: #ffffff !important; }
-
-/* Нечетные прогруженные строки (ok) — стандартный нежно-зеленый цвет */
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: #c3e6cb !important; }
-
-/* Четные прогруженные строки (ok) — на 20% светлее для идеальной визуальной читаемости */
 #logs-body tr.log-row-synced:nth-of-type(even) { background: #e2f3e7 !important; }
 
 @media (min-width: 600px) {
