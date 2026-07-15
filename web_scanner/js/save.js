@@ -25,6 +25,7 @@ async function saveEntry() {
     const currentWorker = window.currentUser || "Не указан";
     const author = "Неугодникова"; 
     const targetDestination = window.currentWhere || "Не указан";
+    const fullDateStr = `${day}.${month}.${year} ${time}`;
     
     if (!window.currentSelectedRowData || window.currentSelectedRowData.length === 0) {
       alert("Ошибка: Товар не выбран!");
@@ -32,6 +33,7 @@ async function saveEntry() {
       return;
     }
 
+    // Собираем ключи товара (Артикул, Параметр1, Параметр2, Наименование)
     const itemKeys = window.currentSelectedRowData.slice(0, 4);
     const enteredQty = parseInt(window.currentQty) || 0;
 
@@ -59,7 +61,7 @@ async function saveEntry() {
             String(row[1]).trim() == String(itemKeys[1]).trim() && 
             String(row[2]).trim() == String(itemKeys[2]).trim() && 
             String(row[3]).trim() == String(itemKeys[3]).trim()) {
-          row[4] = (parseInt(row[4]) || 0) + enteredQty;
+          row[4] = (parseInt(row[4]) || 0) + enteredQty; 
         }
         return row;
       });
@@ -69,8 +71,8 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // Формируем 13 столбцов [ID, Арт, Парам, Имя1, Имя2, Кол-во, КУДА, Сотр, Автор, Время, Д, М, Г]
-      const returnPartRowData = [nextId, ...itemKeys, -enteredQty, targetDestination, currentWorker, author, time, day, month, year];
+      // Строго 10 элементов: КУДА идет под индексом 8
+      const returnPartRowData = [nextId, ...itemKeys, -enteredQty, currentWorker, author, "Частичный возврат", fullDateStr];
 
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
@@ -90,7 +92,7 @@ async function saveEntry() {
     }
 
     // =========================================================================
-    // ВЕТКА Б: СТАНДАРТНЫЙ РЕЖИМ ОБЫЧНОЙ ВЫДАЧИ ТОВАРОВ (13 СТОЛБЦОВ)
+    // ВЕТКА Б: СТАНДАРТНЫЙ РЕЖИМ ОБЫЧНОЙ ВЫДАЧИ ТОВАРОВ
     // =========================================================================
     window.inventoryData = window.inventoryData.map(row => {
       if (row && row[0] === itemKeys[0] && row[1] === itemKeys[1] && row[2] === itemKeys[2] && row[3] === itemKeys[3]) {
@@ -105,7 +107,8 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    const newRowData = [nextId, ...itemKeys, enteredQty, targetDestination, currentWorker, author, time, day, month, year];
+    // Строго 10 элементов: КУДА идет под индексом 8
+    const newRowData = [nextId, ...itemKeys, enteredQty, currentWorker, author, targetDestination, fullDateStr];
 
     window.qrLogs.push({ data: newRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
