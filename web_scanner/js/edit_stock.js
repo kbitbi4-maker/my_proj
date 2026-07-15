@@ -1,6 +1,8 @@
 // js/edit_stock.js — Модуль прямого редактирования остатков в таблице
 
 window.isStockEditMode = false;
+// Массив для хранения индексов строк, которые были отредактированы пользователем
+window.editedStockRows = [];
 
 function toggleStockEditMode(activate) {
   window.isStockEditMode = activate;
@@ -9,8 +11,8 @@ function toggleStockEditMode(activate) {
   const triggerBtn = document.getElementById('stock-edit-trigger-btn');
   const actionsRow = document.getElementById('stock-edit-actions');
   
-  // КРИТИЧЕСКИЙ ФИКС: Используем безопасный classList вместо ломающего className
   if (window.isStockEditMode) {
+    window.editedStockRows = []; // Очищаем массив измененных строк при старте режима
     if (badge) badge.classList.remove('hidden');
     if (triggerBtn) triggerBtn.classList.add('hidden');
     if (actionsRow) actionsRow.classList.remove('hidden');
@@ -25,8 +27,19 @@ function toggleStockEditMode(activate) {
   }
 }
 
+/**
+ * Функция-триггер, вызываемая при изменении любого инпута остатков
+ */
+function markStockRowAsEdited(rowIndex) {
+  const idx = parseInt(rowIndex);
+  if (!window.editedStockRows.includes(idx)) {
+    window.editedStockRows.push(idx);
+  }
+}
+
 function cancelStockChanges() {
   if (!confirm("Отменить все внесенные изменения остатков?")) return;
+  window.editedStockRows = [];
   toggleStockEditMode(false);
 }
 
@@ -34,10 +47,19 @@ async function saveStockChangesCloud() {
   const currentData = window.inventoryData;
   if (!currentData || currentData.length <= 1) return;
 
+  // Если пользователь ничего не изменил, просто выходим из режима без отправки сетевых запросов
+  if (window.editedStockRows.length === 0) {
+    alert("Информация:\nВы не изменили ни одной ячейки остатков.");
+    toggleStockEditMode(false);
+    return;
+  }
+
   let updatePayloadParts = [];
 
-  for (let i = 1; i < currentData.length; i++) {
-    // Считываем значения из трех полей ввода: общий запас (индекс 4), скл1 (индекс 6) и скл2 (индекс 7)
+  // Перебираем СТРОГО только те индексы строк, которые были изменены вручную
+  for (let k = 0; k < window.editedStockRows.length; k++) {
+    const i = window.editedStockRows[k];
+    
     const inputTotal = document.getElementById(`stock-input-${i}-4`);
     const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
     const inputSkl2 = document.getElementById(`stock-input-${i}-7`);
@@ -57,21 +79,19 @@ async function saveStockChangesCloud() {
       currentData[i][6] = val1;
       currentData[i][7] = val2;
       
-      const art = String(currentData[i][0]).trim();
-      const param = String(currentData[i][1]).trim();
+      const art = String(currentData[i][1]).trim();
+      const param = String(currentData[i][2]).trim();
       
       // Собираем расширенный пакет данных: Артикул*Параметр*ОбщийЗапас*скл1*скл2
       updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
     }
   }
 
-  if (updatePayloadParts.length === 0) {
-    toggleStockEditMode(false);
-    return;
-  }
-
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+  
+  // Сбрасываем массив изменений перед закрытием
+  window.editedStockRows = [];
   toggleStockEditMode(false);
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
