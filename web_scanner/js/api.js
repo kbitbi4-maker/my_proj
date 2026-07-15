@@ -7,34 +7,32 @@ window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || []
 window.isSaving = false;
 
 function renderLogs() {
-  const head = document.getElementById('logs-head');
   const body = document.getElementById('logs-body');
-  if (!head || !body) return;
+  if (!body) return;
   
   const visibleLogs = window.qrLogs.filter(item => item && item.data);
 
   if (!visibleLogs.length) { 
-    body.innerHTML = '<tr><td colspan="10">Пусто</td></tr>'; 
+    body.innerHTML = '<tr><td colspan="13">Пусто</td></tr>'; 
     return; 
   }
 
-  // Фиксированная безопасная шапка журнала (10 колонок)
-  head.innerHTML = `
-    <th>ID</th><th>Артикул</th><th>Парам 1</th><th>Парам 2</th>
-    <th>Наименование</th><th>Кол-во</th><th>Сотрудник</th>
-    <th>Автор</th><th>Куда выдано</th><th>Дата/Время</th>
-  `;
+  // КРИТИЧЕСКИЙ ФИКС: Мы полностью убрали динамическую перезапись элемента "logs-head".
+  // Теперь шапка берется строго из HTML-файла index_scaner3.html и никогда не сбивается.
 
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
     
+    // Генерируем стандартные текстовые ячейки
     const cellsHtml = item.data.map((cell, cellIndex) => {
-      // КУДА ВЫДАНО теперь железно под индексом 8
+      // 9-й столбец таблицы (индекс 8 в JS) — это "Куда выдано"
       if (cellIndex === 8) {
-        return `<td class="log-where-cell" onclick="if(!window.isReturnMode){ enableLogCellEdit(event, ${i}); } else { handleLogClick(${i}); }">${cell}</td>`;
+        // При клике в обычном режиме запускается трансформация ячейки в белый инпут
+        return `<td class="log-where-cell" data-index="${i}" onclick="if(!window.isReturnMode){ enableLogCellEdit(event, ${i}); } else { handleLogClick(${i}); }">${cell}</td>`;
       }
+      // Обычные ячейки вызывают стандартное окно возврата (если включен режим возврата)
       return `<td onclick="handleLogClick(${i})">${cell}</td>`;
     }).join('');
 
@@ -42,31 +40,38 @@ function renderLogs() {
   }).filter(Boolean).reverse().join('');
 }
 
+/**
+ * МОДЕРНИЗИРОВАННАЯ ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ (ОБНОВЛЯЕТ ВСЕ 4 БАЗЫ ДАННЫХ ИЗ ОБЛАКА)
+ */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   try {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
     
+    // 1. Синхронизируем Лист 2 (Журнал выдачи)
     if (data.logs) {
       window.qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     }
+    // 2. Синхронизируем Лист 1 (Остатки на складе)
     if (data.stock) {
       window.inventoryData = data.stock;
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     }
+    // 3. Синхронизируем Лист 3 (Загруженное сальдо)
     if (data.balance) {
       window.balanceData = data.balance;
       localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
     }
+    // 4. Синхронизируем Лист 4 (Таблица отличий)
     if (data.diff) {
       window.diffData = data.diff;
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
     renderLogs();
-    alert("Глобальная синхронизация успешно завершена!");
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
   } catch (e) { 
     alert("Ошибка при синхронизации данных из облака"); 
   }
@@ -85,14 +90,18 @@ async function sendUnsynced() {
       let bodyData = "";
       
       if (item.action === 'delete') {
-        bodyData = `DELETE_ROW|${item.id}|${item.qty}|${item.itemKeys[0]}|${item.itemKeys[1]}`;
+        const art = item.itemKeys || "";
+        const param = item.itemKeys || "";
+        bodyData = `DELETE_ROW|${item.id}|${item.qty}|${art}|${param}`;
       } else if (item.data) {
         bodyData = JSON.stringify({ row: item.data });
       }
 
       await fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
         body: bodyData
       });
 
