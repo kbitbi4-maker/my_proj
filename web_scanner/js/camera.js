@@ -1,3 +1,5 @@
+// js/camera.js — Модуль управления камерой и распознавания QR-кодов
+
 let stream = null;
 let scanning = false;
 let canvas = null;
@@ -29,17 +31,17 @@ function stopCamera() {
     if (video) { video.srcObject = null; }
     if (sBtn) { sBtn.innerText = "Найти QR"; }
     
-    // ИСПРАВЛЕНО: Скрываем контейнер камеры, когда она выключена
-    const camContainer = document.getElementById('camera-container');
-    if (camContainer) camContainer.classList.add('hidden');
+    // СКРЫВАЕМ ОКНО КАМЕРЫ, освобождая 100% пространства главного экрана
+    const camBox = document.querySelector('.camera-preview');
+    if (camBox) camBox.classList.add('hidden');
 }
 
 async function startScanner() {
     if (scanning) return;
     try {
-        // ИСПРАВЛЕНО: Показываем окно камеры на главном экране перед включением видеопотока
-        const camContainer = document.getElementById('camera-container');
-        if (camContainer) camContainer.classList.remove('hidden');
+        // ПОКАЗЫВАЕМ ОКНО КАМЕРЫ только на время сканирования
+        const camBox = document.querySelector('.camera-preview');
+        if (camBox) camBox.classList.remove('hidden');
 
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         if (video) { video.srcObject = stream; }
@@ -48,9 +50,9 @@ async function startScanner() {
         requestAnimationFrame(tick);
     } catch (e) { 
         alert("Ошибка камеры: " + e.message); 
-        // Скрываем обратно при сбое доступа
-        const camContainer = document.getElementById('camera-container');
-        if (camContainer) camContainer.classList.add('hidden');
+        // Скрываем контейнер обратно при ошибке разрешений доступа
+        const camBox = document.querySelector('.camera-preview');
+        if (camBox) camBox.classList.add('hidden');
     }
 }
 
