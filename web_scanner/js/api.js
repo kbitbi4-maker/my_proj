@@ -17,22 +17,15 @@ function renderLogs() {
     return; 
   }
 
-  // КРИТИЧЕСКИЙ ФИКС: Мы полностью убрали динамическую перезапись элемента "logs-head".
-  // Теперь шапка берется строго из HTML-файла index_scaner3.html и никогда не сбивается.
-
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
     const bg = isSynced ? 'style="background:#d4edda;"' : '';
     
-    // Генерируем стандартные текстовые ячейки
     const cellsHtml = item.data.map((cell, cellIndex) => {
-      // 9-й столбец таблицы (индекс 8 в JS) — это "Куда выдано"
       if (cellIndex === 8) {
-        // При клике в обычном режиме запускается трансформация ячейки в белый инпут
         return `<td class="log-where-cell" data-index="${i}" onclick="if(!window.isReturnMode){ enableLogCellEdit(event, ${i}); } else { handleLogClick(${i}); }">${cell}</td>`;
       }
-      // Обычные ячейки вызывают стандартное окно возврата (если включен режим возврата)
       return `<td onclick="handleLogClick(${i})">${cell}</td>`;
     }).join('');
 
@@ -45,34 +38,55 @@ function renderLogs() {
  */
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
+  
+  const badge = document.getElementById('status-text-badge');
+  const indicatorEl = document.getElementById('indicator');
+  const titleText = document.getElementById('project-title-text');
+  
+  // ВКЛЮЧАЕМ ЭФФЕКТЫ НАЧАЛА СИНХРОНИЗАЦИИ И СКРЫВАЕМ НАЗВАНИЕ ПРОЕКТА
+  if (titleText) titleText.classList.add('hidden');
+  if (badge) {
+    badge.innerText = "Идет синхронизация";
+    badge.className = "status-badge badge-sync-active";
+  }
+  if (indicatorEl) {
+    indicatorEl.classList.add('sync-pulse');
+  }
+
   try {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
     
-    // 1. Синхронизируем Лист 2 (Журнал выдачи)
     if (data.logs) {
       window.qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     }
-    // 2. Синхронизируем Лист 1 (Остатки на складе)
     if (data.stock) {
       window.inventoryData = data.stock;
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     }
-    // 3. Синхронизируем Лист 3 (Загруженное сальдо)
     if (data.balance) {
       window.balanceData = data.balance;
       localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
     }
-    // 4. Синхронизируем Лист 4 (Таблица отличий)
     if (data.diff) {
       window.diffData = data.diff;
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
     renderLogs();
+    
+    // ОТКЛЮЧАЕМ ЭФФЕКТЫ И ВОЗВРАЩАЕМ НАЗВАНИЕ ТЕКСТА
+    if (badge) badge.className = "status-badge hidden";
+    if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
+    if (titleText) titleText.classList.remove('hidden');
+    
     alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
   } catch (e) { 
+    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПРИ ОШИБКЕ И ВОЗВРАЩАЕМ НАЗВАНИЕ
+    if (badge) badge.className = "status-badge hidden";
+    if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
+    if (titleText) titleText.classList.remove('hidden');
     alert("Ошибка при синхронизации данных из облака"); 
   }
 }
