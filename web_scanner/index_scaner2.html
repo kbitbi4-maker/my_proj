@@ -23,12 +23,22 @@
       <div class="log-title">Журнал выдачи:</div>
       <div class="table-wrapper">
         <table>
-          <thead><tr id="logs-head"></tr></thead>
+          <thead>
+            <tr id="logs-head">
+              <th>ID</th><th>Парам 1</th><th>Парам 2</th><th>Парам 3</th><th>Парам 4</th>
+              <th>Кол-во</th><th>Сотрудник</th><th>Автор</th><th>Куда выдано</th>
+              <th>Время</th><th>День</th><th>Месяц</th><th>Год</th>
+            </tr>
+          </thead>
           <tbody id="logs-body"></tbody>
         </table>
       </div>
     </div>
   </main>
+
+  <!-- Динамический всплывающий контейнер для меню сортировки/фильтрации отличий -->
+  <div id="filter-popover-menu" class="filter-popover hidden"></div>
+
   <!-- Единое модальное окно для всех подэкранов -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
@@ -45,11 +55,10 @@
           </table>
         </div>
       </div>
-      
+
       <!-- ЭКРАН 2: Цифровая клавиатура (Нумпад) -->
       <div id="numpad-view" class="hidden">
         <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>  
-        <!-- Левая/Верхняя часть: Ввод данных -->
         <div class="numpad-input-block">
           <div class="numpad-display-row">
             <div id="numDisplay" class="numpad-screen">0</div>
@@ -57,7 +66,6 @@
               <button id="date-select-btn" class="meta-trigger" onclick="toggleDateMode()">Дата: --.--.--</button>
             </div>
           </div>
-
           <div class="numpad-grid">
             <button onclick="pressNum(1)">1</button>
             <button onclick="pressNum(2)">2</button>
@@ -72,19 +80,15 @@
             <button onclick="pressNum(0)">0</button>
           </div>
         </div>
-
-        <!-- Правая/Нижняя часть: Главные кнопки действий -->
         <div class="numpad-actions">
           <button class="user-select-trigger" onclick="openUserMenu()">
             СОТРУДНИК
             <span id="whoLabel">...</span>
           </button>
-          
-          <button class="user-select-trigger" style="background: #7c3aed; box-shadow: 0 4px 10px rgba(124,58,237,0.15);" onclick="openWhereMenu()">
+          <button class="user-select-trigger btn-where-trigger" onclick="openWhereMenu()">
             КУДА
             <span id="whereLabel">...</span>
           </button>
-          
           <button id="addBtn" class="btn-submit" onclick="saveEntry()">ДОБАВИТЬ 0</button>
         </div>
       </div>
@@ -106,11 +110,11 @@
       </div>
 
       <!-- ЭКРАН 3.5: Ввод объекта (Куда) -->
-      <div id="where-view" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+      <div id="where-view" class="hidden">
         <h3>Куда потрачено / Объект</h3>
-        <input type="text" id="where-input" placeholder="Введите название объекта или направление..." style="width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px;" autocomplete="off">
-        <button class="btn-submit" style="background: #22c55e; margin-bottom: 10px;" onclick="saveWhereValue()">Сохранить</button>
-        <button class="btn-back" style="background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; width: 100%; height: 50px; text-align: center; display: flex; align-items: center; justify-content: center;" onclick="closeWhereMenu()">← Назад</button>
+        <input type="text" id="where-input" placeholder="Введите название объекта или направление..." autocomplete="off">
+        <button class="btn-submit btn-where-save" onclick="saveWhereValue()">Сохранить</button>
+        <button class="btn-back btn-where-back" onclick="closeWhereMenu()">← Назад</button>
       </div>
 
       <!-- ЭКРАН 4: Подтверждение возврата / Действия со строкой журнала -->
@@ -128,32 +132,33 @@
       </div>
 
       <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы -->
-      <div id="balance-view" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+      <div id="balance-view" class="hidden">
         <h3>Управление Сальдо</h3>
-        <div id="balance-menu-buttons" class="return-actions-grid" style="margin-top: 20px;">
-          <button class="btn-return-action return-full" style="background: #2563eb;" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
-          <button class="btn-return-action return-part" style="background: #7c3aed;" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
-          <button class="btn-return-action return-full" style="background: #0284c7;" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
+        <div id="balance-menu-buttons" class="return-actions-grid">
+          <button class="btn-return-action return-full btn-load-balance" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
+          <button class="btn-return-action return-part btn-compare-balance" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
+          <button class="btn-return-action return-full btn-diff-balance" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
-        <div id="balance-paste-container" class="hidden" style="display: flex; flex-direction: column; flex-grow: 1; gap: 10px;">
-          <p style="font-size: 1.4vh; color: #475569; margin: 0; text-align: center;">Скопируйте ячейки в Excel (Ctrl+C) и вставьте в поле ниже (Ctrl+V):</p>
-          <textarea id="balance-text-area" placeholder="Вставьте скопированную таблицу сюда..." style="width: 100%; flex-grow: 1; min-height: 40vh; padding: 10px; font-family: monospace; font-size: 1.2vh; border: 2px solid #cbd5e1; border-radius: 8px; resize: none; box-sizing: border-box; outline: none;"></textarea>
-          <button id="btn-confirm-balance-import" class="btn-submit" style="background: #22c55e; height: 50px; flex-shrink: 0;" onclick="processTextTableImport()">ПОДТВЕРДИТЬ ИМПОРТ</button>
-          <button class="btn-back" style="margin-top: 0; height: 40px;" onclick="hideBalancePasteArea()">← Назад</button>
+        <div id="balance-paste-container" class="hidden">
+          <p class="balance-helper-text">Скопируйте ячейки в Excel (Ctrl+C) и вставьте в поле ниже (Ctrl+V):</p>
+          <textarea id="balance-text-area" placeholder="Вставьте скопированную таблицу сюда..." autocomplete="off"></textarea>
+          <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" onclick="processTextTableImport()">ПОДТВЕРДИТЬ ИМПОРТ</button>
+          <button class="btn-back btn-balance-back" onclick="hideBalancePasteArea()">← Назад</button>
         </div>
       </div>
 
-      <!-- НОВЫЙ ЭКРАН 6: Просмотр Таблицы Отличий (Лист 4) -->
-      <div id="diff-table-view" class="hidden" style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden;">
+      <!-- НОВЫЙ ЭКРАН 6: Просмотр Таблицы Отличий (С ФИЛЬТРОМ И ПОИСКОМ) -->
+      <div id="diff-table-view" class="hidden">
         <h3>Таблица отличий остатков</h3>
-        <div class="table-wrapper modal-table" style="flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;">
-          <table style="width: max-content; min-width: 100%;">
+        <input type="text" id="diff-search" oninput="renderDiffTableBody()" placeholder="Поиск отличий по наименованию или артикулу..." autocomplete="off">
+        <div class="table-wrapper modal-table table-diff-wrapper">
+          <table class="table-diff-content">
             <thead><tr id="diff-head"></tr></thead>
             <tbody id="diff-body"></tbody>
           </table>
         </div>
-        <button class="btn-back" style="margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0;" onclick="handleBackButton()">← Назад</button>
+        <button class="btn-back btn-diff-back" onclick="handleBackButton()">← Назад</button>
       </div>
 
     </div>
