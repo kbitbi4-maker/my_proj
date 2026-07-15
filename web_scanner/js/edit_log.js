@@ -8,7 +8,6 @@ window.activeEditLogIndex = null;
 function enableLogCellEdit(event, logIndex) {
   event.stopPropagation();
   
-  // Если уже есть открытая для редактирования ячейка — сбрасываем её перед переключением
   if (window.activeEditLogIndex !== null) {
     window.activeEditLogIndex = null;
     renderLogs();
@@ -21,7 +20,7 @@ function enableLogCellEdit(event, logIndex) {
 
   const currentVal = targetTd.innerText.trim();
 
-  // Делаем фон БЕЛЫМ только на время редактирования
+  // При активации временно перекрываем прозрачность белым матовым фоном ячейки для удобства ввода
   targetTd.style.background = "#ffffff";
   targetTd.style.padding = "2px";
   
@@ -46,14 +45,10 @@ function enableLogCellEdit(event, logIndex) {
     </div>
   `;
 
-  // Устанавливаем фокус в поле ввода
   const inputEl = document.getElementById(`log-edit-input-${logIndex}`);
   if (inputEl) inputEl.focus();
 }
 
-/**
- * Быстрая подстановка пресетов текста ("Объект" / "Склад")
- */
 function changeLogTextValue(logIndex, type) {
   const inputEl = document.getElementById(`log-edit-input-${logIndex}`);
   if (!inputEl) return;
@@ -62,9 +57,6 @@ function changeLogTextValue(logIndex, type) {
   if (type === 'склад') inputEl.value = "Склад";
 }
 
-/**
- * Отправляет изменения в облако и оставляет ячейку белой до ответа сервера
- */
 async function saveLogCellChangesCloud(event, logIndex) {
   event.stopPropagation();
 
@@ -76,20 +68,16 @@ async function saveLogCellChangesCloud(event, logIndex) {
   
   if (!logItem || !logItem.data) return;
 
-  // ИСПРАВЛЕНО: Берем точный уникальный ID строки из первого элемента массива данных (индекс 0)
   const targetId = logItem.data[0]; 
 
-  // Обновляем данные локально в памяти телефона (Куда выдано — это 9-й столбец, индекс 8 в массиве)
-  logItem.data[8] = newValue;
+  logItem.data[8] = newValue; // Запись в 9-й столбец массива памяти телефона
   localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
 
-  // Находим контейнер ячейки и фиксируем белый цвет на время отправки
   const inputContainer = inputEl.parentNode;
   const parentTd = inputContainer.parentNode;
   parentTd.style.background = "#ffffff";
   parentTd.innerHTML = `<span style="color: #64748b; font-style: italic; font-size: 1.2vh;">⏳ Отправка...</span>`;
 
-  // Сбрасываем индекс редактирования, чтобы открыть доступ к другим кликам
   window.activeEditLogIndex = null;
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
@@ -106,8 +94,6 @@ async function saveLogCellChangesCloud(event, logIndex) {
 
       const serverText = await response.text();
       console.log("Сервер ответил:", serverText);
-      
-      // Возвращаем стандартный цвет строки лога (зеленый/светло-зеленый)
       renderLogs();
 
     } catch (e) {
