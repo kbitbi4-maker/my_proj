@@ -111,3 +111,118 @@ function handleExcelCellSelectWithCtrl(event, row, col) {
     }
   }
 }
+// js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 2
+
+document.addEventListener('paste', function (e) {
+  if (window.selectedCell.row === null || window.selectedCell.col === null) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+  e.preventDefault();
+  
+  const clipboardData = e.clipboardData || window.clipboardData;
+  const pastedText = clipboardData.getData('text');
+  if (!pastedText) return;
+
+  const lines = pastedText.split(/\r?\n/);
+  const startRow = window.selectedCell.row;
+  const startCol = window.selectedCell.col;
+
+  let changed = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === "" && i === lines.length - 1) continue; 
+    
+    const targetRow = startRow + i;
+    if (targetRow >= EXCEL_ROWS) break;
+
+    const cells = lines[i].split('\t');
+    for (let j = 0; j < cells.length; j++) {
+      const targetCol = startCol + j;
+      if (targetCol >= EXCEL_COLS) break;
+
+      const valueStr = String(cells[j] || "").trim();
+      window.excelMatrix[targetRow][targetCol] = valueStr;
+      
+      const key = `${targetRow},${targetCol}`;
+      window.excelChangedCells[key] = valueStr;
+      
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    renderExcelGrid();
+  }
+});
+
+function clearExcelGridData() {
+  if (!confirm("Вы уверены, что хотите полностью очистить текущую сетку Сальдо?")) return;
+  
+  window.excelMatrix = [];
+  for (let r = 0; r < EXCEL_ROWS; r++) {
+    let rowData = [];
+    for (let c = 0; c < EXCEL_COLS; c++) {
+      rowData.push("");
+    }
+    window.excelMatrix.push(rowData);
+  }
+  window.selectedCell = { row: null, col: null };
+  window.excelChangedCells = {}; 
+  window.ctrlSelectedCells = []; 
+  renderExcelGrid();
+}
+
+document.addEventListener('keydown', function(e) {
+  if (window.selectedCell.row === null || window.selectedCell.col === null) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+  let r = window.selectedCell.row;
+  let c = window.selectedCell.col;
+
+  if (e.key === 'ArrowUp') { r = Math.max(0, r - 1); e.preventDefault(); }
+  else if (e.key === 'ArrowDown') { r = Math.min(EXCEL_ROWS - 1, r + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft') { c = Math.max(0, c - 1); e.preventDefault(); }
+  else if (e.key === 'ArrowRight') { c = Math.min(EXCEL_COLS - 1, c + 1); e.preventDefault(); }
+  else return;
+
+  handleExcelCellSelectWithCtrl(e, r, c);
+  
+  const cellEl = document.getElementById(`ex-cell-${r}-${c}`);
+  if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+});
+
+/**
+ * ГАРАНТИЯ ПРЯМОУГОЛЬНОСТИ: Превращает любые разрозненные или полные ячейки 
+ * в идеальную прямоугольную сетку (двумерный массив равной ширины) для setValues()
+ */
+function buildRectangularPayload(cellsArray, dataSourceMatrix) {
+  if (!cellsArray || cellsArray.length === 0) return null;
+
+  let minR = Infinity, maxR = -Infinity;
+  let minC = Infinity, maxC = -Infinity;
+
+  cellsArray.forEach(cell => {
+    if (cell.r < minR) minR = cell.r;
+    if (cell.r > maxR) maxR = cell.r;
+    if (cell.c < minC) minC = cell.c;
+    if (cell.c > maxC) maxC = cell.c;
+  });
+
+  let exportMatrix = [];
+  for (let r = minR; r <= maxR; r++) {
+    let rowData = [];
+    for (let c = minC; c <= maxC; c++) {
+      let currentVal = dataSourceMatrix[r] && dataSourceMatrix[r][c] !== undefined ? dataSourceMatrix[r][c] : "";
+      rowData.push(String(currentVal));
+    }
+    exportMatrix.push(rowData);
+  }
+
+  return {
+    startRow: minR + 1, 
+    startCol: minC + 1,
+    numRows: (maxR - minR) + 1,
+    numCols: (maxC - minC) + 1,
+    values2D: exportMatrix
+  };
+}
