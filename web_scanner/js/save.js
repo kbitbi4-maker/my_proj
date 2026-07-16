@@ -32,6 +32,7 @@ async function saveEntry() {
       return;
     }
 
+    // Извлекаем ключи товара (Артикул — индекс 0, Параметр — индекс 1 на Листе 1)
     const p1 = window.currentSelectedRowData[0] || "";
     const p2 = window.currentSelectedRowData[1] || "";
     const p3 = window.currentSelectedRowData[2] || "";
@@ -45,7 +46,7 @@ async function saveEntry() {
       return;
     }
 
-    // Опеределяем индекс строки Листа 1 в памяти телефона для проведения расчетов остатков
+    // Жестко находим точный порядковый номер строки товара в базе телефона window.inventoryData
     let originalRowIndex = -1;
     for (let i = 1; i < window.inventoryData.length; i++) {
       if (window.inventoryData[i] && 
@@ -69,11 +70,18 @@ async function saveEntry() {
         return;
       }
 
-      // ФИКС: Товар зачисляется на скл.1 (индекс 6), Общий запас (индекс 4) обновляется как сумма
+      // КРИТИЧЕСКИЙ ФИКС ИНДЕКСОВ: Товар железно начисляется на скл.1 (индекс 6)
       if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
-        window.inventoryData[originalRowIndex][6] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + enteredQty;
-        window.inventoryData[originalRowIndex][4] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + (parseInt(window.inventoryData[originalRowIndex][7]) || 0);
+        let currentSkl1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
+        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0;
+        
+        // 1. Прибавляем возвращенное количество на Склад 1
+        window.inventoryData[originalRowIndex][6] = currentSkl1 + enteredQty;
+        // 2. Пересчитываем Общий запас (индекс 4 = скл.1 + скл.2)
+        window.inventoryData[originalRowIndex][4] = (currentSkl1 + enteredQty) + currentSkl2;
       }
+      
+      // Записываем обновленный массив в локальную память телефона
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
       const nextId = window.qrLogs.length > 0 
@@ -87,6 +95,7 @@ async function saveEntry() {
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
       
+      // ОБНОВЛЯЕМ ЭКРАНЫ: перерисовываем журнал выдачи и таблицу остатков на телефоне
       if (typeof renderLogs === 'function') renderLogs(); 
       if (typeof renderStock === 'function') renderStock(); 
       
