@@ -1,4 +1,4 @@
-// js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк)
+// js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 1
 
 window.excelMatrix = []; // Двумерный массив данных грида
 window.selectedCell = { row: null, col: null };
@@ -35,14 +35,14 @@ function initExcelMatrixData() {
 }
 
 /**
- * Отрисовка Excel сетки внутри HTML
+ * Отрисовка Excel сетки внутри HTML с поддержкой скроллинга
  */
 function renderExcelGrid() {
   const head = document.getElementById('excel-grid-head');
   const body = document.getElementById('excel-grid-body');
   if (!head || !body) return;
 
-  // Формируем шапку (Угловатая пустая ячейка + Буквы)
+  // Формируем шапку (Угловатая ячейка + Буквы)
   let headHtml = `<tr><th class="excel-corner-header"></th>`;
   for (let c = 0; c < EXCEL_COLS; c++) {
     headHtml += `<th>${getExcelColumnName(c)}</th>`;
@@ -67,7 +67,6 @@ function renderExcelGrid() {
 }
 
 function focusExcelCell(row, col) {
-  // Убираем старое выделение визуально
   if (window.selectedCell.row !== null && window.selectedCell.col !== null) {
     const oldCell = document.getElementById(`ex-cell-${window.selectedCell.row}-${window.selectedCell.col}`);
     if (oldCell) oldCell.classList.remove('excel-cell-selected');
@@ -78,14 +77,13 @@ function focusExcelCell(row, col) {
   const newCell = document.getElementById(`ex-cell-${row}-${col}`);
   if (newCell) newCell.classList.add('excel-cell-selected');
 }
+// js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 2
 
 /**
  * Глобальный перехватчик события вставки Ctrl+V для активной ячейки
  */
 document.addEventListener('paste', function (e) {
   if (window.selectedCell.row === null || window.selectedCell.col === null) return;
-  
-  // Проверяем, что фокус не находится в стандартных поисковых инпутах
   if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
   e.preventDefault();
@@ -101,7 +99,7 @@ document.addEventListener('paste', function (e) {
   let changed = false;
 
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === "" && i === lines.length - 1) continue; // Игнорируем пустую строку в конце буфера
+    if (lines[i].trim() === "" && i === lines.length - 1) continue; 
     
     const targetRow = startRow + i;
     if (targetRow >= EXCEL_ROWS) break;
@@ -155,8 +153,6 @@ document.addEventListener('keydown', function(e) {
 
   focusExcelCell(r, c);
   
-  // Автоматический скролл к ячейке внутри контейнера для удобства
   const cellEl = document.getElementById(`ex-cell-${r}-${c}`);
   if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
-
