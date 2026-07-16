@@ -5,7 +5,7 @@ window.diffFilterColor = "all";
 function showDiffTable() {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) {
-    alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ'.");
+    alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ', чтобы рассчитать разницу остатков.");
     return;
   }
   
@@ -14,8 +14,9 @@ function showDiffTable() {
   if (document.getElementById('diff-search')) document.getElementById('diff-search').value = "";
   window.diffFilterColor = "all";
 
-  const headers = ["Партия", "Материал", "КрТекстМатериала", "Базисная ЕИ", "Разница остатка"];
-  head.innerHTML = headers.map((h, idx) => `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`).join('');
+  head.innerHTML = diffMatrix[0].map((h, idx) => {
+    return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
+  }).join('');
 
   renderDiffTableBody();
   document.getElementById('balance-view').classList.add('hidden');
@@ -33,31 +34,34 @@ function renderDiffTableBody() {
   let rowsData = diffMatrix.slice(1);
 
   if (term !== "") {
-    rowsData = rowsData.filter(row => row.slice(0, 5).some(cell => String(cell).toLowerCase().includes(term)));
+    rowsData = rowsData.filter(row => {
+      return row.some(cell => String(cell).toLowerCase().includes(term));
+    });
   }
 
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(row => {
-      const lastCell = String(row[4] || '').trim();
+      const lastCell = String(row[row.length - 1] || '').trim();
       if (window.diffFilterColor === "green") return lastCell.indexOf('+') === 0;
       if (window.diffFilterColor === "red") return lastCell.indexOf('-') === 0;
+      if (window.diffFilterColor === "none") return (lastCell.indexOf('+') !== 0 && lastCell.indexOf('-') !== 0);
       return true;
     });
   }
 
   if (rowsData.length === 0) {
-    body.innerHTML = '<tr><td colspan="5">Совпадений или расхождений не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="6">Совпадений или расхождений не найдено</td></tr>';
     return;
   }
 
   body.innerHTML = rowsData.map(row => {
     if (!row) return '';
-    const lastCell = String(row[4] || '').trim();
+    const lastCell = String(row[row.length - 1] || '').trim();
     let bgStyle = '';
     if (lastCell.indexOf('-') === 0) bgStyle = 'style="background: #fee2e2;"'; 
     else if (lastCell.indexOf('+') === 0) bgStyle = 'style="background: #dcfce7;"'; 
 
-    return `<tr ${bgStyle}>${row.slice(0, 5).map(c => `<td>${c}</td>`).join('')}</tr>`;
+    return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
   }).join('');
 }
 
@@ -98,4 +102,3 @@ function sortDiffByColumn(colIndex, direction) {
 }
 
 function filterDiffByColor(colorType) { window.diffFilterColor = colorType; renderDiffTableBody(); }
-
