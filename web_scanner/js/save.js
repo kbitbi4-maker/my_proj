@@ -32,12 +32,12 @@ async function saveEntry() {
       return;
     }
 
-    // Извлекаем строго плоские одиночные значения ячеек из выбранной строки
-    const p1 = String(window.currentSelectedRowData[0] || "").trim(); // Партия
-    const p2 = String(window.currentSelectedRowData[1] || "").trim(); // Артикул
-    const p3 = String(window.currentSelectedRowData[2] || "").trim(); // Наименование
-    const p4 = String(window.currentSelectedRowData[3] || "").trim(); // Базисная ЕИ
-    const originalRowIndex = window.currentSelectedRowData[5];
+    // ИСПРАВЛЕНО: Возвращены строгие квадратные скобки индексов одиночных ячеек выбранной строки
+    const p1 = window.currentSelectedRowData[0] || ""; // ID / Партия
+    const p2 = window.currentSelectedRowData[1] || ""; // Артикул / Материал
+    const p3 = window.currentSelectedRowData[2] || ""; // Наименование / КрТекстМатериала
+    const p4 = window.currentSelectedRowData[3] || ""; // Базисная ЕИ
+    const originalRowIndex = window.currentSelectedRowData[5]; // Локальный ID строки в массиве
     
     const enteredQty = parseInt(window.currentQty) || 0;
 
@@ -59,6 +59,7 @@ async function saveEntry() {
         return;
       }
 
+      // При возврате возвращаем товар на скл.1 (индекс 6) и обновляем общую сумму остатка (индекс 4)
       if (originalRowIndex !== undefined && window.inventoryData[originalRowIndex]) {
         window.inventoryData[originalRowIndex][6] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + enteredQty;
         window.inventoryData[originalRowIndex][4] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + (parseInt(window.inventoryData[originalRowIndex][7]) || 0);
@@ -69,7 +70,6 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // Чистый плоский диапазон ячеек для возврата
       const returnPartRowData = [
         nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
       ];
@@ -107,6 +107,7 @@ async function saveEntry() {
         window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem);
       }
       
+      // Синхронизируем общее количество остатка (индекс 4)
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
     }
 
@@ -116,7 +117,7 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // Формируем идеальный прямоугольный диапазон из 13 ячеек, как в Excel
+    // Сборка идеального плоского массива из 13 изолированных ячеек
     const newRowData = [
       nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination, time, day, month, year
     ];
