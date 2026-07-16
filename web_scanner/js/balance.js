@@ -6,6 +6,9 @@ window.diffData = JSON.parse(localStorage.getItem('qr_diff_v1')) || [];
 window.diffFilterColor = "all"; 
 window.diffSortDirection = {};  
 
+/**
+ * Открытие стартового диалогового окна Сальдо
+ */
 function openBalanceMenu() {
   if (typeof stopCamera === 'function') stopCamera();
 
@@ -23,6 +26,9 @@ function openBalanceMenu() {
   document.getElementById('balance-view').classList.remove('hidden');
 }
 
+/**
+ * Показ области импорта в стиле Excel с инициализацией сетки
+ */
 function showBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.add('hidden');
   
@@ -41,6 +47,9 @@ function showBalancePasteArea() {
   document.getElementById('balance-paste-container').classList.remove('hidden');
 }
 
+/**
+ * Возврат из сетки импорта в главное меню управления сальдо
+ */
 function hideBalancePasteArea() {
   const pasteContainer = document.getElementById('balance-paste-container');
   if (pasteContainer) pasteContainer.classList.add('hidden');
@@ -49,6 +58,9 @@ function hideBalancePasteArea() {
   if (menuButtons) menuButtons.classList.remove('hidden');
 }
 
+/**
+ * ИНИЦИАЛИЗАЦИЯ И ОТРИСОВКА ШАПКИ ТАБЛИЦЫ ОТЛИЧИЙ (ЛИСТ 4)
+ */
 function showDiffTable() {
   const diffMatrix = window.diffData;
 
@@ -64,7 +76,7 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix[0].map((h, idx) => {
+  head.innerHTML = diffMatrix.map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -74,6 +86,9 @@ function showDiffTable() {
   document.getElementById('diff-table-view').classList.remove('hidden');
 }
 
+/**
+ * РЕНДЕРИНГ СТРОК ТАБЛИЦЫ ОТЛИЧИЙ С УЧЕТОМ СОРТИРОВКИ, ФИЛЬТРА ЦВЕТА И ТЕКСТОВОГО ПОИСКА
+ */
 function renderDiffTableBody() {
   const body = document.getElementById('diff-body');
   if (!body) return;
@@ -153,7 +168,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix[0];
+  const header = diffMatrix;
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -195,14 +210,14 @@ async function executeDatabaseComparison() {
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock[0].slice(0, 5)]); 
+  diffMatrix.push([...stock.slice(0, 5)]); 
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[0]).trim();
-    const sParam = String(sRow[1]).trim();
+    const sArt = String(sRow[0]).trim().toLowerCase();
+    const sParam = String(sRow[1]).trim().toLowerCase();
     
     const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
     const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
@@ -213,7 +228,7 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 3) continue;
 
-      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+      if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
         bQty = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0; 
         break;
       }
@@ -245,6 +260,9 @@ async function executeDatabaseComparison() {
   }
 }
 
+/**
+ * ИСПРАВЛЕННЫЙ ТАБЛИЦНЫЙ ИМПОРТ ИЗ EXCELMATRIX ЗАПАЗУХИ
+ */
 async function processTextTableImport() {
   let targetCells = [];
   
@@ -260,14 +278,17 @@ async function processTextTableImport() {
   if (targetCells.length === 0) {
     for (let r = 0; r < window.excelMatrix.length; r++) {
       if (window.excelMatrix[r].some(c => c && c.trim() !== "")) {
-        for (let c = 0; c < 20; c++) targetCells.push({ r, c });
+        for (let c = 0; c < 20; c++) targetCells.push({ r: r, c: c });
       }
     }
   }
 
-  const rangePayload = buildRectangularPayload(targetCells, window.excelMatrix);
+  const rangePayload = typeof buildRectangularPayload === 'function' 
+    ? buildRectangularPayload(targetCells, window.excelMatrix) 
+    : null;
+
   if (!rangePayload) {
-    alert("Ошибка: Таблица Excel пуста!");
+    alert("Ошибка: Таблица Excel пуста или ячейки не выбраны!");
     return;
   }
 
@@ -278,11 +299,10 @@ async function processTextTableImport() {
   }
 
   try {
-    // Сохраняем полную чистую матрицу 20х800 в кэш телефона
     window.balanceData = window.excelMatrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // Локальное обновление Листа 1 (столбец из.SUP) на основании структуры Сальдо
+    // Локальный перерасчет из.SUP (столбец 6, индекс 5)
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
