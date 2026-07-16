@@ -1,5 +1,5 @@
 /* =========================================================================
-   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ)
+   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 1
    ========================================================================= */
 
 /* КРИТИЧЕСКИЙ ФИКС: Убираем белый фон пустующего пространства окна выдачи материалов */
@@ -57,6 +57,9 @@ table {
   text-align: center;
   outline: none;
 }
+/* =========================================================================
+   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 2
+   ========================================================================= */
 
 /* Компоненты выбора возвратов */
 .return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
@@ -78,9 +81,6 @@ table {
 .btn-diff-balance { background: #0284c7; }
 #balance-paste-container { display: flex; flex-direction: column; flex-grow: 1; gap: 10px; }
 .balance-helper-text { font-size: 1.4vh; color: #475569; margin: 0; text-align: center; }
-#balance-text-area { width: 100%; flex-grow: 1; min-height: 40vh; padding: 10px; font-family: monospace; font-size: 1.2vh; border: 2px solid #cbd5e1; border-radius: 8px; resize: none; box-sizing: border-box; outline: none; }
-.btn-confirm-import { background: #22c55e; height: 50px; flex-shrink: 0; }
-.btn-balance-back { margin-top: 0; height: 40px; }
 
 /* Экран 6: Table diff */
 #diff-table-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
@@ -130,3 +130,101 @@ table {
   #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
+/* =========================================================================
+   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 3
+   ========================================================================= */
+
+/* КРИТИЧЕСКИЙ ФИКС ПРОКРУТКИ И СКРОЛЛИНГА EXCEL-ГРИДА */
+.excel-grid-wrapper {
+  display: block !important;
+  flex-grow: 1 !important;
+  height: 50vh !important; /* Фиксированная высота для срабатывания скроллбаров */
+  max-height: 50vh !important;
+  width: 100% !important;
+  overflow: auto !important; /* Включает вертикальную и горизонтальную прокрутку */
+  -webkit-overflow-scrolling: touch !important; /* Инерционная прокрутка на iOS/Android */
+  touch-action: auto !important; /* Восстанавливает сенсорный скролл пальцем */
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.excel-grid-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  font-family: monospace;
+  font-size: 1.3vh;
+  width: max-content;
+  background: #ffffff;
+}
+
+.excel-grid-table th {
+  background: #e2e8f0 !important;
+  color: #334155 !important;
+  font-weight: bold;
+  text-align: center;
+  padding: 4px 8px;
+  border-right: 1px solid #cbd5e1 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  user-select: none;
+}
+
+.excel-grid-table th.excel-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  background: #e2e8f0 !important;
+  min-width: 40px;
+}
+
+.excel-grid-table th.excel-corner-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 12;
+  background: #cbd5e1 !important;
+}
+
+.excel-grid-table td {
+  padding: 4px 6px;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  min-width: 85px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #ffffff;
+  color: #000000;
+  text-align: left;
+  user-select: none;
+}
+
+.excel-grid-table tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.excel-grid-table td.excel-cell-selected {
+  outline: 2px solid #22c55e !important;
+  outline-offset: -2px;
+  background: #e2f3e7 !important;
+}
+
+.excel-grid-wrapper::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.excel-grid-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.excel-grid-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+  border: 3px solid #f1f5f9;
+}
