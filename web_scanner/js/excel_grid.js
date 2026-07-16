@@ -1,23 +1,24 @@
 // js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 1
 
-window.excelMatrix = []; // Двумерный массив данных грида
+window.excelMatrix = []; 
 window.selectedCell = { row: null, col: null };
+window.excelChangedCells = {}; 
+window.ctrlSelectedCells = []; 
 
 const EXCEL_COLS = 20;
 const EXCEL_ROWS = 800;
 
-// Генерация буквенных имен колонок (A, B, C... T)
 function getExcelColumnName(colIndex) {
   let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   if (colIndex < 26) return alphabet[colIndex];
   return alphabet[Math.floor(colIndex / 26) - 1] + alphabet[colIndex % 26];
 }
 
-/**
- * Инициализация матрицы данными из кэша Сальдо или создание пустой структуры
- */
 function initExcelMatrixData() {
   window.excelMatrix = [];
+  window.excelChangedCells = {};
+  window.ctrlSelectedCells = [];
+  
   const savedBalance = window.balanceData || [];
 
   for (let r = 0; r < EXCEL_ROWS; r++) {
@@ -34,15 +35,11 @@ function initExcelMatrixData() {
   window.selectedCell = { row: null, col: null };
 }
 
-/**
- * Отрисовка Excel сетки внутри HTML с поддержкой скроллинга и множественного выделения
- */
 function renderExcelGrid() {
   const head = document.getElementById('excel-grid-head');
   const body = document.getElementById('excel-grid-body');
   if (!head || !body) return;
 
-  // Формируем шапку (Угловатая ячейка + Буквы)
   let headHtml = `<tr><th class="excel-corner-header"></th>`;
   for (let c = 0; c < EXCEL_COLS; c++) {
     headHtml += `<th>${getExcelColumnName(c)}</th>`;
@@ -50,14 +47,12 @@ function renderExcelGrid() {
   headHtml += `</tr>`;
   head.innerHTML = headHtml;
 
-  // Формируем строки (Номер + Ячейки матрицы)
   let bodyHtml = "";
   for (let r = 0; r < EXCEL_ROWS; r++) {
     bodyHtml += `<tr><th class="excel-row-header">${r + 1}</th>`;
     for (let c = 0; c < EXCEL_COLS; c++) {
       const cellValue = window.excelMatrix[r][c];
       
-      // Проверяем, находится ли ячейка в массиве множественного выделения ctrlSelectedCells
       let isSelected = false;
       if (window.ctrlSelectedCells && window.ctrlSelectedCells.length > 0) {
         isSelected = window.ctrlSelectedCells.some(cell => cell.r === r && cell.c === c);
@@ -66,8 +61,6 @@ function renderExcelGrid() {
       }
       
       const selectClass = isSelected ? 'class="excel-cell-selected"' : '';
-      
-      // Клик по ячейке теперь вызывает умный метод выделения с зажатым Ctrl из excel_selection.js
       bodyHtml += `<td id="ex-cell-${r}-${c}" ${selectClass} onclick="handleExcelCellSelectWithCtrl(event, ${r}, ${c})">${cellValue}</td>`;
     }
     bodyHtml += `</tr>`;
@@ -75,9 +68,6 @@ function renderExcelGrid() {
   body.innerHTML = bodyHtml;
 }
 
-/**
- * Стандартный фокус на одиночную ячейку
- */
 function focusExcelCell(row, col) {
   if (window.selectedCell.row !== null && window.selectedCell.col !== null) {
     const oldCell = document.getElementById(`ex-cell-${window.selectedCell.row}-${window.selectedCell.col}`);
@@ -91,9 +81,6 @@ function focusExcelCell(row, col) {
 }
 // js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 2
 
-/**
- * Глобальный перехватчик события вставки Ctrl+V для активной ячейки
- */
 document.addEventListener('paste', function (e) {
   if (window.selectedCell.row === null || window.selectedCell.col === null) return;
   if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
@@ -121,12 +108,11 @@ document.addEventListener('paste', function (e) {
       const targetCol = startCol + j;
       if (targetCol >= EXCEL_COLS) break;
 
-      window.excelMatrix[targetRow][targetCol] = cells[j];
+      const valueStr = String(cells[j] || "").trim();
+      window.excelMatrix[targetRow][targetCol] = valueStr;
       
-      // ИНТЕГРАЦИЯ: Регистрируем изменение ячейки в пул точечной отправки данных
-      if (typeof trackExcelCellChange === 'function') {
-        trackExcelCellChange(targetRow, targetCol, cells[j]);
-      }
+      const key = `${targetRow},${targetCol}`;
+      window.excelChangedCells[key] = valueStr;
       
       changed = true;
     }
@@ -137,9 +123,6 @@ document.addEventListener('paste', function (e) {
   }
 });
 
-/**
- * Кнопка Очистить таблицу
- */
 function clearExcelGridData() {
   if (!confirm("Вы уверены, что хотите полностью очистить текущую сетку Сальдо?")) return;
   
@@ -152,12 +135,11 @@ function clearExcelGridData() {
     window.excelMatrix.push(rowData);
   }
   window.selectedCell = { row: null, col: null };
-  window.excelChangedCells = {}; // Полностью очищаем пул изменений
-  window.ctrlSelectedCells = []; // Очищаем множественный выбор
+  window.excelChangedCells = {}; 
+  window.ctrlSelectedCells = []; 
   renderExcelGrid();
 }
 
-// Глобальная поддержка перемещения по ячейкам кнопками стрелок клавиатуры
 document.addEventListener('keydown', function(e) {
   if (window.selectedCell.row === null || window.selectedCell.col === null) return;
   if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
@@ -171,7 +153,6 @@ document.addEventListener('keydown', function(e) {
   else if (e.key === 'ArrowRight') { c = Math.min(EXCEL_COLS - 1, c + 1); e.preventDefault(); }
   else return;
 
-  // Если подключен модуль множественного выделения, передаем событие клика туда
   if (typeof handleExcelCellSelectWithCtrl === 'function') {
     handleExcelCellSelectWithCtrl(e, r, c);
   } else {
