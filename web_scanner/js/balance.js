@@ -61,7 +61,9 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix.map((h, idx) => {
+  // Жестко фиксируем 5 колонок сверки без дублирования и съезжания
+  const headers = ["Партия", "Материал", "КрТекстМатериала", "Базисная ЕИ", "Разница остатка"];
+  head.innerHTML = headers.map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -88,28 +90,27 @@ function renderDiffTableBody() {
 
   if (term !== "") {
     rowsData = rowsData.filter(row => {
-      return row.some(cell => String(cell).toLowerCase().includes(term));
+      return row.slice(0, 5).some(cell => String(cell).toLowerCase().includes(term));
     });
   }
 
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(row => {
-      const lastCell = String(row[row.length - 1] || '').trim();
+      const lastCell = String(row[4] || '').trim();
       if (window.diffFilterColor === "green") return lastCell.indexOf('+') === 0;
       if (window.diffFilterColor === "red") return lastCell.indexOf('-') === 0;
-      if (window.diffFilterColor === "none") return (lastCell.indexOf('+') !== 0 && lastCell.indexOf('-') !== 0);
       return true;
     });
   }
 
   if (rowsData.length === 0) {
-    body.innerHTML = '<tr><td colspan="6">Совпадений или расхождений не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="5">Совпадений или расхождений не найдено</td></tr>';
     return;
   }
 
   body.innerHTML = rowsData.map(row => {
     if (!row) return '';
-    const lastCell = String(row[row.length - 1] || '').trim();
+    const lastCell = String(row[4] || '').trim();
     let bgStyle = '';
 
     if (lastCell.indexOf('-') === 0) {
@@ -118,7 +119,8 @@ function renderDiffTableBody() {
       bgStyle = 'style="background: #dcfce7;"'; 
     }
 
-    return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
+    // Рендерим строго 5 колонок, отсекая любые лишние остаточные хвосты из памяти
+    return `<tr ${bgStyle}>${row.slice(0, 5).map(c => `<td>${c}</td>`).join('')}</tr>`;
   }).join('');
 }
 
@@ -158,7 +160,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix;
+  const header = diffMatrix[0];
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -187,7 +189,7 @@ function filterDiffByColor(colorType) {
 }
 
 /**
- * АВТОМАТИЧЕСКОЕ СРАВНЕНИЕ БАЗ ДАННЫХ С ОЧИСТКОЙ РАЗРЯДОВ ТЫСЯЧ
+ * ИСПРАВЛЕННОЕ АВТОМАТИЧЕСКОЕ СРАВНЕНИЕ БАЗ ДАННЫХ НАПРЯМУЮ ЧЕРЕЗ СУММУ ЗАПАСА (СТОЛБЕЦ 5)
  */
 async function executeDatabaseComparison() {
   const stock = window.inventoryData; 
@@ -203,18 +205,19 @@ async function executeDatabaseComparison() {
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock.slice(0, 5)]); 
+  // Создаем чистую фиксированную шапку для отчета расхождений
+  diffMatrix.push(["Партия", "Материал", "КрТекстМатериала", "Базисная ЕИ", "Разница остатка"]); 
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[0]).trim();
-    const sParam = String(sRow[1]).trim();
+    // ПРАВИЛЬНЫЕ КЛЮЧИ СОПОСТАВЛЕНИЯ: Код материала (индекс 1) и Текст (индекс 2)
+    const sArt = String(sRow[1]).trim().toLowerCase();
+    const sParam = String(sRow[2]).trim().toLowerCase();
     
-    const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
-    const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
-    const sQty = q1 + q2; 
+    // ИДЕАЛЬНЫЙ ТРИГГЕР: Берем уже посчитанную сумму запаса напрямую из 5-го столбца (индекс 4)
+    const sQty = parseInt(String(sRow[4]).replace(/\s+/g, '')) || 0; 
 
     let foundInBalance = false;
     let bQty = 0;
@@ -223,7 +226,8 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 5) continue;
 
-      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+      // Сверяем с Сальдо Excel по тем же ключам (Материал и Текст)
+      if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
         foundInBalance = true;
         const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
         bQty = parseInt(cleanBalanceStr) || 0; 
@@ -232,9 +236,9 @@ async function executeDatabaseComparison() {
     }
 
     const difference = sQty - bQty;
-    if (difference === 0) continue;
+    if (difference === 0) continue; // Если расхождений нет — пропускаем строку
 
-    let newDiffRow = [...sRow.slice(0, 5)];
+    let newDiffRow = [...sRow.slice(0, 4)]; // Берем Партия, Материал, Текст, ЕИ
     if (difference > 0) {
       newDiffRow[4] = "+" + difference;
     } else {
@@ -283,7 +287,7 @@ async function processTextTableImport() {
     importBtn.disabled = true;
   }
 
-   await new Promise(resolve => setTimeout(resolve, 50));
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   try {
     const rawText = textArea.value;
@@ -310,16 +314,16 @@ async function processTextTableImport() {
     window.balanceData = matrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // КРИТИЧЕСКИЙ ФИКС: Записываем значение строго в ячейку [5] строки массива, не ломая её структуру
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
         if (!stock[i] || stock[i].length < 3) continue;
 
+        // Ключи сопоставления: Материал (индекс 1) и Текст (индекс 2)
         const sArt = String(stock[i][1]).trim().toLowerCase();
         const sParam = String(stock[i][2]).trim().toLowerCase();
 
-        for (let j = 1; j < matrix.length; j++) {
+        for (var j = 1; j < matrix.length; j++) {
           if (!matrix[j] || matrix[j].length < 5) continue;
 
           if (String(matrix[j][0]).trim().toLowerCase() === sArt && String(matrix[j][1]).trim().toLowerCase() === sParam) {
@@ -348,7 +352,7 @@ async function processTextTableImport() {
       alert("ОТВЕТ СЕРВЕРА GOOGLE ПО САЛЬДО С ОБНОВЛЕНИЕМ из.SUP:\n\n" + serverText);
       hideBalancePasteArea();
     } else {
-      alert(`Импорт завершен локально! Столбец из.SUP обновлен на устройстве.\nВнимание: В облако данные не ушли, так как интернет отсутствует.`);
+      alert(`Импорт завершен локально! Столбец из.SUP обновлен на устройстве.\nВнимание: В облако данные не ушли, так как internet отсутствует.`);
       hideBalancePasteArea();
     }
   } catch (err) {
