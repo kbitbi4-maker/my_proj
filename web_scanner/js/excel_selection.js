@@ -1,38 +1,24 @@
-// js/excel_selection.js — Модуль продвинутого выделения и табличной отправки данных
+// js/excel_selection.js — Модуль выделения и формирования прямоугольных матриц
 
-window.excelChangedCells = {}; // Хранилище измененных ячеек вида {"r,c": "значение"}
-window.ctrlSelectedCells = []; // Список координат выделенных ячеек [{r, c}, ...]
-
-/**
- * Фиксирует изменение значения в матрице и запоминает его для точечной или диапазонной отправки
- */
-function trackExcelCellChange(row, col, value) {
-  const key = `${row},${col}`;
-  window.excelChangedCells[key] = String(value);
-}
-
-/**
- * Модернизированный метод выделения ячеек (поддерживает зажатый Ctrl / Cmd)
- */
 function handleExcelCellSelectWithCtrl(event, row, col) {
+  if (!window.ctrlSelectedCells) window.ctrlSelectedCells = [];
   const isCtrl = event.ctrlKey || event.metaKey;
   
   if (!isCtrl) {
-    // Если Ctrl не зажат, очищаем множественное выделение
-    clearCtrlSelectionVisuals();
+    window.ctrlSelectedCells.forEach(cell => {
+      const cellEl = document.getElementById(`ex-cell-${cell.r}-${cell.c}`);
+      if (cellEl) cellEl.classList.remove('excel-cell-selected');
+    });
     window.ctrlSelectedCells = [];
   }
 
-  // Проверяем, нет ли уже этой ячейки в выделении
   const existsIdx = window.ctrlSelectedCells.findIndex(cell => cell.r === row && cell.c === col);
   
   if (existsIdx !== -1 && isCtrl) {
-    // Повторный клик с Ctrl снимает выделение с конкретной ячейки
     window.ctrlSelectedCells.splice(existsIdx, 1);
     const cellEl = document.getElementById(`ex-cell-${row}-${col}`);
     if (cellEl) cellEl.classList.remove('excel-cell-selected');
   } else {
-    // Добавляем ячейку в пул выделения
     window.ctrlSelectedCells.push({ r: row, c: col });
     if (typeof focusExcelCell === 'function' && !isCtrl) {
       focusExcelCell(row, col);
@@ -44,23 +30,12 @@ function handleExcelCellSelectWithCtrl(event, row, col) {
 }
 
 /**
- * Очистка визуальных эффектов множественного выделения
- */
-function clearCtrlSelectionVisuals() {
-  window.ctrlSelectedCells.forEach(cell => {
-    const cellEl = document.getElementById(`ex-cell-${cell.r}-${cell.c}`);
-    if (cellEl) cellEl.classList.remove('excel-cell-selected');
-  });
-}
-
-/**
- * ПРЕОБРАЗОВАНИЕ ПУЛА ДАННЫХ В СТРОГИЙ ДВУМЕРНЫЙ ПРЯМОУГОЛЬНЫЙ ФОРМАТ (ПРАВИЛО setValues)
- * Берет любые измененные или выделенные ячейки и строит из них идеальную мини-таблицу
+ * ГАРАНТИЯ ПРЯМОУГОЛЬНОСТИ: Метод превращает любые разрозненные или полные ячейки 
+ * в идеальную прямоугольную сетку (двумерный массив равной ширины) для setValues
  */
 function buildRectangularPayload(cellsArray, dataSourceMatrix) {
   if (!cellsArray || cellsArray.length === 0) return null;
 
-  // 1. Находим границы диапазона (минимум и максимум по строкам и колонкам)
   let minR = Infinity, maxR = -Infinity;
   let minC = Infinity, maxC = -Infinity;
 
@@ -71,25 +46,21 @@ function buildRectangularPayload(cellsArray, dataSourceMatrix) {
     if (cell.c > maxC) maxC = cell.c;
   });
 
-  // 2. Создаем идеальную прямоугольную сетку под размеры диапазона
   let exportMatrix = [];
   for (let r = minR; r <= maxR; r++) {
     let rowData = [];
     for (let c = minC; c <= maxC; c++) {
-      // Брем актуальное значение из рабочей матрицы Excel
-      let currentVal = dataSourceMatrix[r][c] !== undefined ? dataSourceMatrix[r][c] : "";
+      let currentVal = dataSourceMatrix[r] && dataSourceMatrix[r][c] !== undefined ? dataSourceMatrix[r][c] : "";
       rowData.push(String(currentVal));
     }
     exportMatrix.push(rowData);
   }
 
-  // Возвращаем объект с метаданными координат для Google скрипта, чтобы он знал, куда вставлять
   return {
-    startRow: minR + 1, // Переводим в 1-индексацию Google Таблиц
+    startRow: minR + 1, 
     startCol: minC + 1,
     numRows: (maxR - minR) + 1,
     numCols: (maxC - minC) + 1,
     values2D: exportMatrix
   };
 }
-
