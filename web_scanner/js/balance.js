@@ -216,11 +216,11 @@ async function executeDatabaseComparison() {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[0]).trim().toLowerCase();
-    const sParam = String(sRow[1]).trim().toLowerCase();
+    const sArt = String(sRow).trim().toLowerCase();
+    const sParam = String(sRow).trim().toLowerCase();
     
-    const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
-    const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
+    const q1 = parseInt(String(sRow).replace(/\s+/g, '')) || 0;
+    const q2 = parseInt(String(sRow).replace(/\s+/g, '')) || 0;
     const sQty = q1 + q2; 
 
     let bQty = 0;
@@ -228,8 +228,8 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 3) continue;
 
-      if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
-        bQty = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0; 
+      if (String(bRow).trim().toLowerCase() === sArt && String(bRow).trim().toLowerCase() === sParam) {
+        bQty = parseInt(String(bRow).replace(/\s+/g, '')) || 0; 
         break;
       }
     }
@@ -238,7 +238,7 @@ async function executeDatabaseComparison() {
     if (difference === 0) continue;
 
     let newDiffRow = [...sRow.slice(0, 5)];
-    newDiffRow[4] = difference > 0 ? "+" + difference : String(difference); 
+    newDiffRow = difference > 0 ? "+" + difference : String(difference); 
     diffMatrix.push(newDiffRow);
   }
 
@@ -261,48 +261,35 @@ async function executeDatabaseComparison() {
 }
 
 /**
- * ИСПРАВЛЕННЫЙ ТАБЛИЦНЫЙ ИМПОРТ ИЗ EXCELMATRIX ЗАПАЗУХИ
+ * ИСПРАВЛЕННЫЙ ИМПОРТ: НАПРАВЛЯЕТ ВЕСЬ МАССИВ 20 НА 800 СТРОГО ПРЯМОУГОЛЬНИКОМ
  */
 async function processTextTableImport() {
-  let targetCells = [];
-  
-  if (window.ctrlSelectedCells && window.ctrlSelectedCells.length > 0) {
-    targetCells = [...window.ctrlSelectedCells];
-  } else {
-    Object.keys(window.excelChangedCells || {}).forEach(key => {
-      const parts = key.split(',');
-      targetCells.push({ r: parseInt(parts[0]), c: parseInt(parts[1]) });
-    });
-  }
-
-  if (targetCells.length === 0) {
-    for (let r = 0; r < window.excelMatrix.length; r++) {
-      if (window.excelMatrix[r].some(c => c && c.trim() !== "")) {
-        for (let c = 0; c < 20; c++) targetCells.push({ r: r, c: c });
-      }
-    }
-  }
-
-  const rangePayload = typeof buildRectangularPayload === 'function' 
-    ? buildRectangularPayload(targetCells, window.excelMatrix) 
-    : null;
-
-  if (!rangePayload) {
-    alert("Ошибка: Таблица Excel пуста или ячейки не выбраны!");
+  if (!window.excelMatrix || window.excelMatrix.length === 0) {
+    alert("Ошибка: Сетка Excel пуста или не инициализирована.");
     return;
   }
 
+  // Принудительно генерируем прямоугольный пакет от ячейки A1 до самого конца матрицы (строка 800, колонка 20)
+  const rangePayload = {
+    startRow: 1, 
+    startCol: 1,
+    numRows: window.excelMatrix.length, // 800
+    numCols: window.excelMatrix[0].length, // 20
+    values2D: window.excelMatrix
+  };
+
   const importBtn = document.getElementById('btn-confirm-balance-import');
   if (importBtn) {
-    importBtn.innerText = "⏳ Формирование...";
+    importBtn.innerText = "⏳ Формирование матрицы...";
     importBtn.disabled = true;
   }
 
   try {
+    // Сохраняем полный массив локально в кэш телефона
     window.balanceData = window.excelMatrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // Локальный перерасчет из.SUP (столбец 6, индекс 5)
+    // Локальное сопоставление со складом Листа 1 (для мгновенного заполнения из.SUP)
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
@@ -341,11 +328,11 @@ async function processTextTableImport() {
       window.ctrlSelectedCells = [];
       hideBalancePasteArea();
     } else {
-      alert("Сохранено локально офлайн.");
+      alert("Сохранено локально на телефоне офлайн.");
       hideBalancePasteArea();
     }
   } catch (err) {
-    alert("Ошибка: " + err.message);
+    alert("Критическая ошибка отправки матрицы: " + err.message);
     if (importBtn) {
       importBtn.innerText = "ВНЕСТИ ИЗМЕНЕНИЯ";
       importBtn.disabled = false;
