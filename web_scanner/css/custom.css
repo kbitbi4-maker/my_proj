@@ -1,6 +1,11 @@
 /* =========================================================================
    ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ)
    ========================================================================= */
+/* Экран 3.5: Куда выдано */
+#where-view { display: flex; flex-direction: column; height: 100%; }
+#where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
+.btn-where-save { background: #22c55e; margin-bottom: 10px; height: 50px; }
+.btn-where-back { background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; }
 
 /* КРИТИЧЕСКИЙ ФИКС: Убираем белый фон пустующего пространства окна выдачи материалов */
 .table-wrapper {
