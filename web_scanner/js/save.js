@@ -32,10 +32,11 @@ async function saveEntry() {
       return;
     }
 
-    const p1 = window.currentSelectedRowData[0] || "";
-    const p2 = window.currentSelectedRowData[1] || "";
-    const p3 = window.currentSelectedRowData[2] || "";
-    const p4 = window.currentSelectedRowData[3] || "";
+    // Считываем ячейки строго по фиксированным индексам, исключая склеивание
+    const p1 = window.currentSelectedRowData[0] || ""; // Партия
+    const p2 = window.currentSelectedRowData[1] || ""; // Артикул
+    const p3 = window.currentSelectedRowData[2] || ""; // Наименование
+    const p4 = window.currentSelectedRowData[3] || ""; // Базисная ЕИ
     const originalRowIndex = window.currentSelectedRowData[5];
     
     const enteredQty = parseInt(window.currentQty) || 0;
@@ -58,7 +59,6 @@ async function saveEntry() {
         return;
       }
 
-      // При возврате возвращаем товар на скл.1 (индекс 6) и обновляем общую сумму остатка (индекс 4)
       if (originalRowIndex !== undefined && window.inventoryData[originalRowIndex]) {
         window.inventoryData[originalRowIndex][6] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + enteredQty;
         window.inventoryData[originalRowIndex][4] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + (parseInt(window.inventoryData[originalRowIndex][7]) || 0);
@@ -70,7 +70,7 @@ async function saveEntry() {
         : 1;
 
       const returnPartRowData = [
-        nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
+        nextId, p2, p1, p4, p3, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
       ];
 
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
@@ -106,7 +106,6 @@ async function saveEntry() {
         window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem);
       }
       
-      // Синхронизируем общее количество остатка (индекс 4)
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
     }
 
@@ -116,8 +115,9 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
+    // Сборка упорядоченной поколоночной строки лога для отображения и отправки
     const newRowData = [
-      nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination, time, day, month, year
+      nextId, p2, p1, p4, p3, enteredQty, currentWorker, author, targetDestination, time, day, month, year
     ];
 
     window.qrLogs.push({ data: newRowData, status: 'wait' });
