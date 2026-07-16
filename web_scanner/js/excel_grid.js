@@ -35,7 +35,7 @@ function initExcelMatrixData() {
 }
 
 /**
- * Отрисовка Excel сетки внутри HTML с поддержкой скроллинга
+ * Отрисовка Excel сетки внутри HTML с поддержкой скроллинга и множественного выделения
  */
 function renderExcelGrid() {
   const head = document.getElementById('excel-grid-head');
@@ -56,16 +56,28 @@ function renderExcelGrid() {
     bodyHtml += `<tr><th class="excel-row-header">${r + 1}</th>`;
     for (let c = 0; c < EXCEL_COLS; c++) {
       const cellValue = window.excelMatrix[r][c];
-      const isSelected = window.selectedCell.row === r && window.selectedCell.col === c;
+      
+      // Проверяем, находится ли ячейка в массиве множественного выделения ctrlSelectedCells
+      let isSelected = false;
+      if (window.ctrlSelectedCells && window.ctrlSelectedCells.length > 0) {
+        isSelected = window.ctrlSelectedCells.some(cell => cell.r === r && cell.c === c);
+      } else {
+        isSelected = window.selectedCell.row === r && window.selectedCell.col === c;
+      }
+      
       const selectClass = isSelected ? 'class="excel-cell-selected"' : '';
       
-      bodyHtml += `<td id="ex-cell-${r}-${c}" ${selectClass} onclick="focusExcelCell(${r}, ${c})">${cellValue}</td>`;
+      // Клик по ячейке теперь вызывает умный метод выделения с зажатым Ctrl из excel_selection.js
+      bodyHtml += `<td id="ex-cell-${r}-${c}" ${selectClass} onclick="handleExcelCellSelectWithCtrl(event, ${r}, ${c})">${cellValue}</td>`;
     }
     bodyHtml += `</tr>`;
   }
   body.innerHTML = bodyHtml;
 }
 
+/**
+ * Стандартный фокус на одиночную ячейку
+ */
 function focusExcelCell(row, col) {
   if (window.selectedCell.row !== null && window.selectedCell.col !== null) {
     const oldCell = document.getElementById(`ex-cell-${window.selectedCell.row}-${window.selectedCell.col}`);
@@ -110,6 +122,12 @@ document.addEventListener('paste', function (e) {
       if (targetCol >= EXCEL_COLS) break;
 
       window.excelMatrix[targetRow][targetCol] = cells[j];
+      
+      // ИНТЕГРАЦИЯ: Регистрируем изменение ячейки в пул точечной отправки данных
+      if (typeof trackExcelCellChange === 'function') {
+        trackExcelCellChange(targetRow, targetCol, cells[j]);
+      }
+      
       changed = true;
     }
   }
@@ -134,6 +152,8 @@ function clearExcelGridData() {
     window.excelMatrix.push(rowData);
   }
   window.selectedCell = { row: null, col: null };
+  window.excelChangedCells = {}; // Полностью очищаем пул изменений
+  window.ctrlSelectedCells = []; // Очищаем множественный выбор
   renderExcelGrid();
 }
 
@@ -151,7 +171,12 @@ document.addEventListener('keydown', function(e) {
   else if (e.key === 'ArrowRight') { c = Math.min(EXCEL_COLS - 1, c + 1); e.preventDefault(); }
   else return;
 
-  focusExcelCell(r, c);
+  // Если подключен модуль множественного выделения, передаем событие клика туда
+  if (typeof handleExcelCellSelectWithCtrl === 'function') {
+    handleExcelCellSelectWithCtrl(e, r, c);
+  } else {
+    focusExcelCell(r, c);
+  }
   
   const cellEl = document.getElementById(`ex-cell-${r}-${c}`);
   if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
