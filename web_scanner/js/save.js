@@ -32,11 +32,10 @@ async function saveEntry() {
       return;
     }
 
-    // Считываем ячейки строго по фиксированным индексам, исключая склеивание
-    const p1 = window.currentSelectedRowData[0] || ""; // Партия
-    const p2 = window.currentSelectedRowData[1] || ""; // Артикул
-    const p3 = window.currentSelectedRowData[2] || ""; // Наименование
-    const p4 = window.currentSelectedRowData[3] || ""; // Базисная ЕИ
+    const p1 = window.currentSelectedRowData[0] || "";
+    const p2 = window.currentSelectedRowData[1] || "";
+    const p3 = window.currentSelectedRowData[2] || "";
+    const p4 = window.currentSelectedRowData[3] || "";
     const originalRowIndex = window.currentSelectedRowData[5];
     
     const enteredQty = parseInt(window.currentQty) || 0;
@@ -70,7 +69,7 @@ async function saveEntry() {
         : 1;
 
       const returnPartRowData = [
-        nextId, p2, p1, p4, p3, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
+        nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
       ];
 
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
@@ -115,9 +114,8 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // Сборка упорядоченной поколоночной строки лога для отображения и отправки
     const newRowData = [
-      nextId, p2, p1, p4, p3, enteredQty, currentWorker, author, targetDestination, time, day, month, year
+      nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination, time, day, month, year
     ];
 
     window.qrLogs.push({ data: newRowData, status: 'wait' });
