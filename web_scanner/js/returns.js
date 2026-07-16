@@ -1,4 +1,4 @@
-// js/returns.js — Модуль управления возвратами
+// js/returns.js — Модуль управления возвратами — ЧАСТЬ 1
 
 window.isReturnMode = false;
 window.currentReturnLogIndex = null;
@@ -14,7 +14,6 @@ function toggleReturnMode() {
     if (btn) btn.classList.add('return-mode-active');
     if (typeof stopCamera === 'function') stopCamera();
     
-    // Скрываем оригинальное название "PRO_26" и зажигаем красную плашку возврата
     if (titleText) titleText.classList.add('hidden');
     if (badge) {
       badge.innerText = "Активен режим возврата";
@@ -22,8 +21,6 @@ function toggleReturnMode() {
     }
   } else {
     if (btn) btn.classList.remove('return-mode-active');
-    
-    // Убираем плашку возврата и возвращаем название проекта обратно на экран
     if (badge) badge.className = "status-badge hidden";
     if (titleText) titleText.classList.remove('hidden');
   }
@@ -37,16 +34,16 @@ function handleLogClick(originalIndex) {
   window.currentReturnLogIndex = originalIndex;
   const rowData = logItem.data;
   
-  const id = rowData !== undefined ? rowData : '---';
-  const col4 = rowData !== undefined ? rowData : '';
-  const col5 = rowData !== undefined ? rowData : '';
-  const col6 = rowData !== undefined ? rowData : '0';
+  const id = rowData[0] !== undefined ? rowData[0] : '---';
+  const col4 = rowData[4] !== undefined ? rowData[4] : '';
+  const col5 = rowData[1] !== undefined ? rowData[1] : ''; 
+  const col6 = rowData[5] !== undefined ? rowData[5] : '0';
   
   const infoBadge = document.getElementById('return-info-badge');
   if (infoBadge) {
     infoBadge.innerHTML = `
       <strong>ВЫДАЧА №:</strong> ${id}<br>
-      <strong>ТОВАР:</strong> ${col4} ${col5}<br>
+      <strong>ТОВАР:</strong> ${col4} (Арт: ${col5})<br>
       <strong>КОЛ-ВО В СТРОКЕ:</strong> ${col6} шт.
     `;
   }
@@ -58,6 +55,7 @@ function handleLogClick(originalIndex) {
   if (document.getElementById('where-view')) document.getElementById('where-view').classList.add('hidden');
   document.getElementById('return-view').classList.remove('hidden');
 }
+// js/returns.js — Модуль управления возвратами — ЧАСТЬ 2
 
 function processReturn(actionType) {
   if (window.currentReturnLogIndex === null) {
@@ -68,10 +66,12 @@ function processReturn(actionType) {
   if (!logItem || !logItem.data) return;
 
   const rowData = logItem.data;
-  const targetId = rowData; 
-  const itemKeys = rowData.slice(1, 5); 
-  const qty = parseInt(rowData) || 0; 
-  const worker = rowData || "Не указан";
+  const qty = parseInt(rowData[5]) || 0; 
+  const worker = rowData[6] || "Не указан";
+
+  // Сборка ключей сопоставления склада (Артикул и Параметр из строки лога Листа 2)
+  const logArt = String(rowData[1]).trim().toLowerCase();
+  const logParam = String(rowData[2]).trim().toLowerCase();
 
   const now = new Date();
   const hh = now.getHours().toString().padStart(2, '0');
@@ -84,26 +84,43 @@ function processReturn(actionType) {
   const author = "Неугодникова"; 
 
   if (actionType === 'full') {
+    if (qty <= 0) {
+      alert("Ошибка: Данная строка уже является возвратом!");
+      return;
+    }
+
+    let foundInStock = false;
+    // КОРРЕКТИРУЕМ ЛОКАЛЬНЫЙ СКЛАД НА ТЕЛЕФОНЕ (ЛИСТ 1)
     window.inventoryData = window.inventoryData.map(row => {
-      if (row && 
-          String(row).trim() == String(itemKeys).trim() && 
-          String(row).trim() == String(itemKeys).trim() && 
-          String(row).trim() == String(itemKeys).trim() && 
-          String(row).trim() == String(itemKeys).trim()) {
-        row = (parseInt(row) || 0) + qty; 
+      if (row && String(row[0]).trim().toLowerCase() === logArt && String(row[1]).trim().toLowerCase() === logParam) {
+        // Увеличиваем скл.1 (индекс 6)
+        row[6] = (parseInt(row[6]) || 0) + qty;
+        // Пересчитываем Общий запас (индекс 4 = скл.1 + скл.2)
+        row[4] = (parseInt(row[6]) || 0) + (parseInt(row[7]) || 0);
+        foundInStock = true;
       }
       return row;
     });
+
+    if (!foundInStock) {
+      console.warn("Внимание: Возвращаемый товар не найден в текущей базе остатков склада.");
+    }
+
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    const nextId = window.qrLogs.length > 1 
-      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data))).map(r => parseInt(r.data) || 0)) + 1 
+    const nextId = window.qrLogs.length > 0 
+      ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
+    // Формируем чистую строку лога возврата (Количество идет со знаком минус)
+    const itemKeys = rowData.slice(1, 5); 
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, "Полный возврат", time, day, month, year];
+    
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+    
     if (typeof renderLogs === 'function') renderLogs();
+    if (typeof renderStock === 'function') renderStock();
     
     document.getElementById('return-view').classList.add('hidden');
     if (typeof closeModal === 'function') closeModal();
@@ -116,14 +133,16 @@ function processReturn(actionType) {
       return;
     }
 
-    window.currentSelectedRowData = [...rowData.slice(1, 5), qty]; 
+    // Передаем в нумпад метаданные: Артикул, Параметр, Парам2, Наименование, Макс.кол-во выдачи
+    window.currentSelectedRowData = [rowData[1], rowData[2], rowData[3], rowData[4], qty]; 
     window.isPartialReturnInput = true; 
 
     document.getElementById('return-view').classList.add('hidden');
     
     if (typeof openNumpadView === 'function') {
       openNumpadView();
-      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeys} ${itemKeys} (Доступно: ${qty} шт.)`;
+      const itemKeysText = `${rowData[4]} (${rowData[1]})`;
+      document.getElementById('qr-data-display').innerText = `ЧАСТИЧНЫЙ ВОЗВРАТ: ${itemKeysText} (Доступно: ${qty} шт.)`;
       const addBtn = document.getElementById('addBtn');
       if (addBtn) {
         addBtn.innerText = "ВЕРНУТЬ ЧАСТЬ: 0";
