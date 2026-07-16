@@ -121,3 +121,214 @@ function renderDiffTableBody() {
     return `<tr ${bgStyle}>${row.map(c => `<td>${c}</td>`).join('')}</tr>`;
   }).join('');
 }
+// js/balance.js — Модуль импорта Сальдо (Лист 3) и Сравнения остатков (Лист 4) — ЧАСТЬ 2
+
+function openDiffFilterMenu(event, colIndex) {
+  event.stopPropagation();
+  const popover = document.getElementById('filter-popover-menu');
+  if (!popover) return;
+
+  popover.style.top = `${event.clientY + window.scrollY + 10}px`;
+  popover.style.left = `${Math.min(event.clientX, window.innerWidth - 200)}px`;
+  
+  popover.innerHTML = `
+    <button onclick="sortDiffByColumn(${colIndex}, 'asc')">🔤 Сортировка (А → Я)</button>
+    <button onclick="sortDiffByColumn(${colIndex}, 'desc')">🔤 Сортировка (Я → А)</button>
+    <div style="border-top: 1px solid #e2e8f0; margin: 4px 0;"></div>
+    <button class="color-opt-green" onclick="filterDiffByColor('green')">🟢 Только Профицит (+)</button>
+    <button class="color-opt-red" onclick="filterDiffByColor('red')">🔴 Только Дефицит (-)</button>
+    <button class="color-opt-none" onclick="filterDiffByColor('all')">⚪ Сбросить все фильтры</button>
+  `;
+
+  popover.classList.remove('hidden');
+
+  const closeMenuHandler = () => {
+    popover.classList.add('hidden');
+    document.removeEventListener('click', closeMenuHandler);
+  };
+  setTimeout(() => document.addEventListener('click', closeMenuHandler), 50);
+}
+
+function sortDiffByColumn(colIndex, direction) {
+  const diffMatrix = window.diffData;
+  if (!diffMatrix || diffMatrix.length <= 1) return;
+
+  const header = diffMatrix[0];
+  let dataRows = diffMatrix.slice(1);
+
+  dataRows.sort((rowA, rowB) => {
+    let valA = String(rowA[colIndex] || '').toLowerCase().trim();
+    let valB = String(rowB[colIndex] || '').toLowerCase().trim();
+
+    const numA = parseFloat(valA.replace(/[+]/g, ''));
+    const numB = parseFloat(valB.replace(/[+]/g, ''));
+    
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return direction === 'asc' ? numA - numB : numB - numA;
+    }
+
+    if (valA < valB) return direction === 'asc' ? -1 : 1;
+    if (valA > valB) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  window.diffData = [header, ...dataRows];
+  renderDiffTableBody();
+}
+
+function filterDiffByColor(colorType) {
+  window.diffFilterColor = colorType;
+  renderDiffTableBody();
+}
+
+async function executeDatabaseComparison() {
+  const stock = window.inventoryData; 
+  const balance = window.balanceData;  
+
+  if (!stock || stock.length <= 1) {
+    alert("Ошибка: База остатков пуста.");
+    return;
+  }
+  if (!balance || balance.length <= 1) {
+    alert("Ошибка: Сначала загрузите сальдо.");
+    return;
+  }
+
+  let diffMatrix = [];
+  diffMatrix.push([...stock[0].slice(0, 5)]); 
+
+  for (let i = 1; i < stock.length; i++) {
+    const sRow = stock[i];
+    if (!sRow || sRow.length < 5) continue;
+
+    const sArt = String(sRow[0]).trim();
+    const sParam = String(sRow[1]).trim();
+    
+    const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
+    const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
+    const sQty = q1 + q2; 
+
+    let bQty = 0;
+    for (let j = 0; j < balance.length; j++) {
+      const bRow = balance[j];
+      if (!bRow || bRow.length < 3) continue;
+
+      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+        bQty = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0; 
+        break;
+      }
+    }
+
+    const difference = sQty - bQty;
+    if (difference === 0) continue;
+
+    let newDiffRow = [...sRow.slice(0, 5)];
+    newDiffRow[4] = difference > 0 ? "+" + difference : String(difference); 
+    diffMatrix.push(newDiffRow);
+  }
+
+  window.diffData = diffMatrix;
+  localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
+
+  if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
+    try {
+      const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: textPayload
+      });
+      alert("Сверка отправлена в облако.");
+    } catch (e) {
+      alert("Ошибка отправки: " + e.message);
+    }
+  }
+}
+
+async function processTextTableImport() {
+  let targetCells = [];
+  
+  if (window.ctrlSelectedCells && window.ctrlSelectedCells.length > 0) {
+    targetCells = [...window.ctrlSelectedCells];
+  } else {
+    Object.keys(window.excelChangedCells || {}).forEach(key => {
+      const parts = key.split(',');
+      targetCells.push({ r: parseInt(parts[0]), c: parseInt(parts[1]) });
+    });
+  }
+
+  if (targetCells.length === 0) {
+    for (let r = 0; r < window.excelMatrix.length; r++) {
+      if (window.excelMatrix[r].some(c => c && c.trim() !== "")) {
+        for (let c = 0; c < 20; c++) targetCells.push({ r, c });
+      }
+    }
+  }
+
+  const rangePayload = buildRectangularPayload(targetCells, window.excelMatrix);
+  if (!rangePayload) {
+    alert("Ошибка: Таблица Excel пуста!");
+    return;
+  }
+
+  const importBtn = document.getElementById('btn-confirm-balance-import');
+  if (importBtn) {
+    importBtn.innerText = "⏳ Формирование...";
+    importBtn.disabled = true;
+  }
+
+  try {
+    // Сохраняем полную чистую матрицу 20х800 в кэш телефона
+    window.balanceData = window.excelMatrix;
+    localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
+
+    // Локальное обновление Листа 1 (столбец из.SUP) на основании структуры Сальдо
+    const stock = window.inventoryData;
+    if (stock && stock.length > 1) {
+      for (let i = 1; i < stock.length; i++) {
+        const sRow = stock[i];
+        if (!sRow || sRow.length < 3) continue;
+
+        const sArt = String(sRow[0]).trim().toLowerCase();
+        const sParam = String(sRow[1]).trim().toLowerCase();
+
+        for (let j = 0; j < window.excelMatrix.length; j++) {
+          const bRow = window.excelMatrix[j];
+          if (!bRow || bRow.length < 5) continue;
+
+          if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
+            sRow[5] = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0; 
+            break;
+          }
+        }
+      }
+      window.inventoryData = stock;
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+      if (typeof renderStock === 'function') renderStock();
+    }
+
+    if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
+      const textPayload = "TABLE_RANGE_EXPORT|" + JSON.stringify(rangePayload);
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: textPayload
+      });
+      const serverText = await response.text();
+      alert("ОТВЕТ СЕРВЕРА GOOGLE:\n\n" + serverText);
+      
+      window.excelChangedCells = {};
+      window.ctrlSelectedCells = [];
+      hideBalancePasteArea();
+    } else {
+      alert("Сохранено локально офлайн.");
+      hideBalancePasteArea();
+    }
+  } catch (err) {
+    alert("Ошибка: " + err.message);
+    if (importBtn) {
+      importBtn.innerText = "ВНЕСТИ ИЗМЕНЕНИЯ";
+      importBtn.disabled = false;
+    }
+  }
+}
