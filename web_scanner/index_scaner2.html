@@ -22,7 +22,7 @@
     <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
   </header>
   <main class="content">
-    <!-- ИСПРАВЛЕНО: Камера по умолчанию скрыта с помощью класса hidden -->
+    <!-- Камера по умолчанию скрыта с помощью класса hidden -->
     <div id="camera-container" class="camera-preview hidden"><video id="video" autoplay playsinline></video></div>
     
     <!-- Журнал выданных товаров (теперь занимает весь экран) -->
@@ -55,7 +55,6 @@
 
   <!-- Динамический всплывающий контейнер для меню сортировки/фильтрации отличий -->
   <div id="filter-popover-menu" class="filter-popover hidden"></div>
-
   <!-- Единое модальное окно для всех подэкранов -->
   <div id="modal" class="modal-overlay hidden">
     <div class="modal-content">
@@ -109,8 +108,7 @@
           <button id="addBtn" class="btn-submit" onclick="saveEntry()">ДОБАВИТЬ 0</button>
         </div>
       </div>
-
-      <!-- ЭКРАН 3: Выбор сотрудника -->
+      <!-- ЭКРАН 3: Выберите сотрудника -->
       <div id="user-view" class="hidden">
         <h3>Выберите сотрудника</h3>
         <div class="user-list-grid">
@@ -148,36 +146,41 @@
         </div>
       </div>
 
-            <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы (Excel-style) -->
+      <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы (Excel-style) -->
       <div id="balance-view" class="hidden">
         <h3>Управление Сальдо</h3>
+        
+        <!-- Стартовое меню из 3-х кнопок -->
         <div id="balance-menu-buttons" class="return-actions-grid">
           <button class="btn-return-action return-full btn-load-balance" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
           <button class="btn-return-action return-part btn-compare-balance" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
           <button class="btn-return-action return-full btn-diff-balance" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
-        <div id="balance-paste-container" class="hidden">
-          <p class="balance-helper-text">Кликните на ячейку и нажмите Ctrl+V для вставки данных из Excel:</p>
+
+        <!-- Контейнер импорта (Сетка и её кнопки управления) -->
+        <div id="balance-paste-container" class="hidden" style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+          <p class="balance-helper-text" style="margin: 0; padding: 2px 0;">Кликните на ячейку и нажмите Ctrl+V для вставки из Excel:</p>
           
-          <!-- Контейнер интерактивного Excel-грида -->
-          <div class="excel-grid-wrapper modal-table">
+          <!-- Контейнер интерактивного Excel-грида со скроллом -->
+          <div class="excel-grid-wrapper">
             <table class="excel-grid-table">
-              <thead id="excel-grid-head"></tbody>
+              <thead id="excel-grid-head"></thead>
               <tbody id="excel-grid-body"></tbody>
             </table>
           </div>
 
-          <div class="stock-edit-actions-row" style="margin-top: 10px; display: flex; gap: 8px;">
-            <button class="btn-stock-cancel" style="background: #ef4444; color: white; flex: 1;" onclick="clearExcelGridData()">ОЧИСТИТЬ ТАБЛИЦУ</button>
-            <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" style="flex: 1; height: auto; min-height: 45px; margin: 0;" onclick="processTextTableImport()">ВНЕСТИ ИЗМЕНЕНИЯ</button>
+          <!-- Нижняя панель действий (Очистить, Внести изменения, Назад) -->
+          <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: auto; padding-bottom: 5px;">
+            <div style="display: flex; gap: 8px; width: 100%;">
+              <button class="btn-return-action return-delete" style="flex: 1; padding: 12px; font-size: 1.5vh; margin: 0;" onclick="clearExcelGridData()">ОЧИСТИТЬ ТАБЛИЦУ</button>
+              <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" style="flex: 1; height: auto; min-height: 42px; font-size: 1.5vh; margin: 0;" onclick="processTextTableImport()">ВНЕСТИ ИЗМЕНЕНИЯ</button>
+            </div>
+            <button class="btn-back btn-balance-back" style="margin: 0; width: 100%; height: 40px; padding: 5px;" onclick="hideBalancePasteArea()">← Назад</button>
           </div>
-          <button class="btn-back btn-balance-back" style="margin-top: 8px;" onclick="hideBalancePasteArea()">← Назад</button>
         </div>
       </div>
-
-
-      <!-- НОВЫЙ ЭКРАН 6: Просмотр Таблицы Отличий (С ФИЛЬТРОМ И ПОИСКОМ) -->
+      <!-- ЭКРАН 6: Просмотр Таблицы Отличий (С ФИЛЬТРОМ И ПОИСКОМ) -->
       <div id="diff-table-view" class="hidden">
         <h3>Таблица отличий остатков</h3>
         <input type="text" id="diff-search" oninput="renderDiffTableBody()" placeholder="Поиск отличий по наименованию или артикулу..." autocomplete="off">
@@ -204,6 +207,7 @@
   <script src="js/delete_task.js"></script>
   <script src="js/edit_stock.js"></script>
   <script src="js/edit_log.js"></script>
+  <!-- Важно: Сетка excel_grid подключается строго раньше логики balance -->
   <script src="js/excel_grid.js"></script>
   <script src="js/balance.js"></script>
 </body>
