@@ -27,7 +27,6 @@ function showBalancePasteArea() {
     importBtn.disabled = false;
   }
   document.getElementById('balance-paste-container').classList.remove('hidden');
-  setTimeout(() => { if (textArea) textArea.focus(); }, 50);
 }
 
 function hideBalancePasteArea() {
