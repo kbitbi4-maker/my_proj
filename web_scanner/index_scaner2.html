@@ -148,7 +148,7 @@
         </div>
       </div>
 
-      <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы -->
+            <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы (Excel-style) -->
       <div id="balance-view" class="hidden">
         <h3>Управление Сальдо</h3>
         <div id="balance-menu-buttons" class="return-actions-grid">
@@ -158,12 +158,24 @@
           <button class="btn-back" onclick="handleBackButton()">← Назад</button>
         </div>
         <div id="balance-paste-container" class="hidden">
-          <p class="balance-helper-text">Скопируйте ячейки в Excel (Ctrl+C) и вставьте в поле ниже (Ctrl+V):</p>
-          <textarea id="balance-text-area" placeholder="Вставьте скопированную таблицу сюда..." autocomplete="off"></textarea>
-          <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" onclick="processTextTableImport()">ПОДТВЕРДИТЬ ИМПОРТ</button>
-          <button class="btn-back btn-balance-back" onclick="hideBalancePasteArea()">← Назад</button>
+          <p class="balance-helper-text">Кликните на ячейку и нажмите Ctrl+V для вставки данных из Excel:</p>
+          
+          <!-- Контейнер интерактивного Excel-грида -->
+          <div class="excel-grid-wrapper modal-table">
+            <table class="excel-grid-table">
+              <thead id="excel-grid-head"></tbody>
+              <tbody id="excel-grid-body"></tbody>
+            </table>
+          </div>
+
+          <div class="stock-edit-actions-row" style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="btn-stock-cancel" style="background: #ef4444; color: white; flex: 1;" onclick="clearExcelGridData()">ОЧИСТИТЬ ТАБЛИЦУ</button>
+            <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" style="flex: 1; height: auto; min-height: 45px; margin: 0;" onclick="processTextTableImport()">ВНЕСТИ ИЗМЕНЕНИЯ</button>
+          </div>
+          <button class="btn-back btn-balance-back" style="margin-top: 8px;" onclick="hideBalancePasteArea()">← Назад</button>
         </div>
       </div>
+
 
       <!-- НОВЫЙ ЭКРАН 6: Просмотр Таблицы Отличий (С ФИЛЬТРОМ И ПОИСКОМ) -->
       <div id="diff-table-view" class="hidden">
