@@ -49,14 +49,12 @@ function showBalancePasteArea() {
 }
 
 /**
- * КРИТИЧЕСКИЙ ФИКС: Возврат из сетки импорта в главное меню управления сальдо
+ * Возврат из сетки импорта в главное меню управления сальдо
  */
 function hideBalancePasteArea() {
-  // Закрываем и прячем контейнер с интерактивной Excel-сеткой
   const pasteContainer = document.getElementById('balance-paste-container');
   if (pasteContainer) pasteContainer.classList.add('hidden');
   
-  // ВОЗВРАЩАЕМ ВИДИМОСТЬ: Включаем обратно блок стартового меню с тремя кнопками
   const menuButtons = document.getElementById('balance-menu-buttons');
   if (menuButtons) menuButtons.classList.remove('hidden');
 }
@@ -225,8 +223,8 @@ async function executeDatabaseComparison() {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow[0]).trim();
-    const sParam = String(sRow[1]).trim();
+    const sArt = String(sRow[1]).trim();
+    const sParam = String(sRow[2]).trim();
     
     const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
     const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
@@ -239,7 +237,7 @@ async function executeDatabaseComparison() {
       const bRow = balance[j];
       if (!bRow || bRow.length < 5) continue;
 
-      if (String(bRow[0]).trim() === sArt && String(bRow[1]).trim() === sParam) {
+      if (String(bRow[1]).trim() === sArt && String(bRow[2]).trim() === sParam) {
         foundInBalance = true;
         const cleanBalanceStr = String(bRow[4]).replace(/\s+/g, '');
         bQty = parseInt(cleanBalanceStr) || 0; 
@@ -284,7 +282,7 @@ async function executeDatabaseComparison() {
 }
 
 /**
- * МОДЕРНИЗИРОВАННЫЙ ИМПОРТ ИЗ ИНТЕРАКТИВНОГО EXCEL-ГРИДА (МАТРИЦЫ EXCELMATRIX)
+ * ИМПОРТ ИЗ ИНТЕРАКТИВНОГО EXCEL-ГРИДА С АВТОФИЛЬТРАЦИЕЙ ПУСТЫХ СТРОК
  */
 async function processTextTableImport() {
   if (!window.excelMatrix || window.excelMatrix.length === 0) {
