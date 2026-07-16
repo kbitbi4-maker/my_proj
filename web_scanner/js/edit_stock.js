@@ -53,17 +53,15 @@ async function saveStockChangesCloud() {
       // АВТОМАТИЧЕСКИЙ ПЕРЕРАСЧЕТ: Суммируем материалы на двух складах
       const autoTotal = val1 + val2;
 
-      // Сравниваем новые значения с текущими в памяти (скл1=индекс 6, скл2=индекс 7)
-      if (val1 !== (parseInt(currentData[i]) || 0) || 
-          val2 !== (parseInt(currentData[i]) || 0)) {
+      // Проверяем, изменились ли значения по сравнению с базой в памяти
+      if (val1 !== parseInt(currentData[i][6]) || val2 !== parseInt(currentData[i][7])) {
             
-        // Записываем сумму в 5-й столбец (индекс 4), а склады в 7 и 8 столбцы (индексы 6 и 7)
-        currentData[i] = autoTotal;
-        currentData[i] = val1;
-        currentData[i] = val2;
+        currentData[i][4] = autoTotal; // Общая сумма остатка (Столбец 5)
+        currentData[i][6] = val1;      // Склад 1 (Столбец 7)
+        currentData[i][7] = val2;      // Склад 2 (Столбец 8)
         
-        const art = String(currentData[i]).trim();
-        const param = String(currentData[i]).trim();
+        const art = String(currentData[i][0]).trim();
+        const param = String(currentData[i][1]).trim();
         
         // Пакуем данные для отправки в Google таблицу
         updatePayloadParts.push(`${art}*${param}*${autoTotal}*${val1}*${val2}`);
@@ -80,7 +78,7 @@ async function saveStockChangesCloud() {
 
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  toggleStockEditMode(false);
+  toggleStockEditMode(false); // Выключаем режим редактирования интерфейса
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
