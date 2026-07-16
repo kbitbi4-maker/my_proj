@@ -32,10 +32,11 @@ async function saveEntry() {
       return;
     }
 
-    const p1 = window.currentSelectedRowData[0] || "";
-    const p2 = window.currentSelectedRowData[1] || "";
-    const p3 = window.currentSelectedRowData[2] || "";
-    const p4 = window.currentSelectedRowData[3] || "";
+    // Извлекаем строго плоские одиночные значения ячеек из выбранной строки
+    const p1 = String(window.currentSelectedRowData[0] || "").trim(); // Партия
+    const p2 = String(window.currentSelectedRowData[1] || "").trim(); // Артикул
+    const p3 = String(window.currentSelectedRowData[2] || "").trim(); // Наименование
+    const p4 = String(window.currentSelectedRowData[3] || "").trim(); // Базисная ЕИ
     const originalRowIndex = window.currentSelectedRowData[5];
     
     const enteredQty = parseInt(window.currentQty) || 0;
@@ -68,6 +69,7 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
+      // Чистый плоский диапазон ячеек для возврата
       const returnPartRowData = [
         nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination, time, day, month, year
       ];
@@ -114,6 +116,7 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
+    // Формируем идеальный прямоугольный диапазон из 13 ячеек, как в Excel
     const newRowData = [
       nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination, time, day, month, year
     ];
