@@ -1,4 +1,4 @@
-// js/save.js — Модуль сохранения данных выдачи и возвратов
+// js/save.js — Модуль сохранения данных выдачи и возвратов — ЧАСТЬ 1
 
 async function saveEntry() {
   if (window.isSaving) return; 
@@ -36,7 +36,6 @@ async function saveEntry() {
     const p2 = window.currentSelectedRowData[1] || "";
     const p3 = window.currentSelectedRowData[2] || "";
     const p4 = window.currentSelectedRowData[3] || "";
-    const originalRowIndex = window.currentSelectedRowData[5];
     
     const enteredQty = parseInt(window.currentQty) || 0;
 
@@ -45,6 +44,18 @@ async function saveEntry() {
       window.isSaving = false;
       return;
     }
+
+    // Опеределяем индекс строки Листа 1 в памяти телефона для проведения расчетов остатков
+    let originalRowIndex = -1;
+    for (let i = 1; i < window.inventoryData.length; i++) {
+      if (window.inventoryData[i] && 
+          String(window.inventoryData[i][0]).trim().toLowerCase() === String(p1).trim().toLowerCase() && 
+          String(window.inventoryData[i][1]).trim().toLowerCase() === String(p2).trim().toLowerCase()) {
+        originalRowIndex = i;
+        break;
+      }
+    }
+// js/save.js — Модуль сохранения данных выдачи и возвратов — ЧАСТЬ 2
 
     // =========================================================================
     // ВЕТКА А: ЕСЛИ ВКЛЮЧЕН РЕЖИМ «ВЕРНУТЬ ЧАСТЬ» ЧЕРЕЗ НУМПАД
@@ -58,15 +69,15 @@ async function saveEntry() {
         return;
       }
 
-      // При возврате возвращаем товар на скл.1 (индекс 6) и обновляем общую сумму остатка (индекс 4)
-      if (originalRowIndex !== undefined && window.inventoryData[originalRowIndex]) {
+      // ФИКС: Товар зачисляется на скл.1 (индекс 6), Общий запас (индекс 4) обновляется как сумма
+      if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
         window.inventoryData[originalRowIndex][6] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + enteredQty;
         window.inventoryData[originalRowIndex][4] = (parseInt(window.inventoryData[originalRowIndex][6]) || 0) + (parseInt(window.inventoryData[originalRowIndex][7]) || 0);
       }
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-      const nextId = window.qrLogs.length > 1 
-        ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
+      const nextId = window.qrLogs.length > 0 
+        ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
       const returnPartRowData = [
@@ -77,6 +88,7 @@ async function saveEntry() {
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
       
       if (typeof renderLogs === 'function') renderLogs(); 
+      if (typeof renderStock === 'function') renderStock(); 
       
       window.isPartialReturnInput = false;
       const addBtnEl = document.getElementById('addBtn');
@@ -93,7 +105,7 @@ async function saveEntry() {
     // =========================================================================
     // ВЕТКА Б: СТАНДАРТНЫЙ РЕЖИМ ОБЫЧНОЙ ВЫДАЧИ ТОВАРОВ (СПИСАНИЕ СКЛ1 -> СКЛ2)
     // =========================================================================
-    if (originalRowIndex !== undefined && window.inventoryData[originalRowIndex]) {
+    if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
       let s2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0;
@@ -106,14 +118,14 @@ async function saveEntry() {
         window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem);
       }
       
-      // Синхронизируем общее количество остатка (индекс 4)
+      // Пересчитываем общее количество остатка (индекс 4 = скл.1 + скл.2)
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
     }
 
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-    const nextId = window.qrLogs.length > 1 
-      ? Math.max(...window.qrLogs.filter(r => r.status === 'ok' || (r.data && !isNaN(r.data[0]))).map(r => parseInt(r.data[0]) || 0)) + 1 
+    const nextId = window.qrLogs.length > 0 
+      ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
     const newRowData = [
@@ -124,6 +136,7 @@ async function saveEntry() {
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
     
     if (typeof renderLogs === 'function') renderLogs(); 
+    if (typeof renderStock === 'function') renderStock(); 
     closeModal();
     
     window.isSaving = false; 
