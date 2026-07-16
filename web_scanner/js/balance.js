@@ -59,13 +59,13 @@ function hideBalancePasteArea() {
 }
 
 /**
- * ИНИЦИАЛИЗАЦИЯ И ОТРИСОВКА ШАПКИ ТАБЛИЦЫ ОТЛИЧИЙ (ЛИСТ 4)
+ * КРИТИЧЕСКИЙ ФИКС: Исправлена кнопка "ТАБЛИЦА ОТЛИЧИЙ". Теперь заголовки корректно извлекаются из первой строки матрицы window.diffData.
  */
 function showDiffTable() {
   const diffMatrix = window.diffData;
 
   if (!diffMatrix || diffMatrix.length <= 1) {
-    alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ'.");
+    alert("Информация:\nТаблица отличий пуста.\n\nПожалуйста, сначала выполните операцию 'СРАВНИТЬ', чтобы рассчитать разницу остатков.");
     return;
   }
 
@@ -76,7 +76,8 @@ function showDiffTable() {
   if (searchInput) searchInput.value = "";
   window.diffFilterColor = "all";
 
-  head.innerHTML = diffMatrix.map((h, idx) => {
+  // Динамически извлекаем заголовки из первой строки (индекс 0) Листа 4
+  head.innerHTML = diffMatrix[0].map((h, idx) => {
     return `<th onclick="openDiffFilterMenu(event, ${idx})" style="cursor: pointer; position: relative;">${h} ▾</th>`;
   }).join('');
 
@@ -94,7 +95,10 @@ function renderDiffTableBody() {
   if (!body) return;
 
   const diffMatrix = window.diffData;
-  if (!diffMatrix || diffMatrix.length <= 1) return;
+  if (!diffMatrix || diffMatrix.length <= 1) {
+    body.innerHTML = '<tr><td colspan="5">Таблица отличий пуста</td></tr>';
+    return;
+  }
 
   const searchInput = document.getElementById('diff-search');
   const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
@@ -112,13 +116,12 @@ function renderDiffTableBody() {
       const lastCell = String(row[row.length - 1] || '').trim();
       if (window.diffFilterColor === "green") return lastCell.indexOf('+') === 0;
       if (window.diffFilterColor === "red") return lastCell.indexOf('-') === 0;
-      if (window.diffFilterColor === "none") return (lastCell.indexOf('+') !== 0 && lastCell.indexOf('-') !== 0);
       return true;
     });
   }
 
   if (rowsData.length === 0) {
-    body.innerHTML = '<tr><td colspan="6">Совпадений или расхождений не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="5">Совпадений или расхождений не найдено</td></tr>';
     return;
   }
 
@@ -168,7 +171,7 @@ function sortDiffByColumn(colIndex, direction) {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) return;
 
-  const header = diffMatrix;
+  const header = diffMatrix[0];
   let dataRows = diffMatrix.slice(1);
 
   dataRows.sort((rowA, rowB) => {
@@ -196,72 +199,92 @@ function filterDiffByColor(colorType) {
   renderDiffTableBody();
 }
 
-async function executeDatabaseComparison() {
+/**
+ * МОДЕРНИЗИРОВАННАЯ СВЕРКА: Автопереход убран. Формируется полный и детальный информационный алерт о статусе локальной памяти и облака.
+ */
+function executeDatabaseComparison() {
   const stock = window.inventoryData; 
   const balance = window.balanceData;  
 
   if (!stock || stock.length <= 1) {
-    alert("Ошибка: База остатков пуста.");
+    alert("Ошибка: База остатков склада пуста. Синхронизируйте облачко ☁");
     return;
   }
   if (!balance || balance.length <= 1) {
-    alert("Ошибка: Сначала загрузите сальдо.");
+    alert("Ошибка: База Сальдо пуста. Сначала внесите изменения или импортируйте её!");
     return;
   }
 
   let diffMatrix = [];
-  diffMatrix.push([...stock.slice(0, 5)]); 
+  // Формируем жесткий корректный массив шапки Листа 4
+  diffMatrix.push(["Партия", "Материал", "КрТекстМатериала", "Базисная ЕИ", "Разница Остатка"]); 
 
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    const sArt = String(sRow).trim().toLowerCase();
-    const sParam = String(sRow).trim().toLowerCase();
+    const sArt = String(sRow[0]).trim().toLowerCase();   
+    const sParam = String(sRow[1]).trim().toLowerCase(); 
     
-    const q1 = parseInt(String(sRow).replace(/\s+/g, '')) || 0;
-    const q2 = parseInt(String(sRow).replace(/\s+/g, '')) || 0;
+    const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
+    const q2 = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
     const sQty = q1 + q2; 
 
     let bQty = 0;
-    for (let j = 0; j < balance.length; j++) {
+    for (let j = 1; j < balance.length; j++) {
       const bRow = balance[j];
-      if (!bRow || bRow.length < 3) continue;
+      if (!bRow || bRow.length < 5) continue;
 
-      if (String(bRow).trim().toLowerCase() === sArt && String(bRow).trim().toLowerCase() === sParam) {
-        bQty = parseInt(String(bRow).replace(/\s+/g, '')) || 0; 
+      if (String(bRow[0]).trim().toLowerCase() === sArt && String(bRow[1]).trim().toLowerCase() === sParam) {
+        bQty = parseInt(String(bRow[4]).replace(/\s+/g, '')) || 0; 
         break;
       }
     }
 
     const difference = sQty - bQty;
-    if (difference === 0) continue;
+    if (difference === 0) continue; 
 
-    let newDiffRow = [...sRow.slice(0, 5)];
-    newDiffRow = difference > 0 ? "+" + difference : String(difference); 
+    let newDiffRow = [...sRow.slice(0, 4)];
+    newDiffRow.push(difference > 0 ? "+" + difference : String(difference)); 
     diffMatrix.push(newDiffRow);
   }
 
+  // Фиксируем результаты локально в буфер устройства
   window.diffData = diffMatrix;
   localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
+  
+  var totalDiffsCount = diffMatrix.length - 1;
+  var alertMessage = "РЕЗУЛЬТАТЫ СВЕРКИ ОСТАТКОВ:\n\n" +
+                     "1. Расчеты: Завершено.\n" +
+                     "2. Выявлено расхождений: " + totalDiffsCount + " поз.\n" +
+                     "3. Локальное хранилище телефона: УСПЕШНО ЗАПИСАНО.\n";
 
+  // Запуск фоновой отправки сформированного пакета в облако Google Таблиц
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
-    try {
-      const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
-      await fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: textPayload
-      });
-      alert("Сверка отправлена в облако.");
-    } catch (e) {
-      alert("Ошибка отправки: " + e.message);
-    }
+    alertMessage += "4. Статус сети: Онлайн.\n5. Облако Google: Идет отправка пакета COMPARE_EXPORT...";
+    alert(alertMessage); // Выдаем предварительный статус
+
+    const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: textPayload
+    })
+    .then(function(res) { return res.text(); })
+    .then(function(serverText) {
+      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО СВЕРКЕ:\n\n" + serverText + "\n\nТаблица отличий сохранена и готова к просмотру через меню.");
+    })
+    .catch(function(err) {
+      alert("Внимание: Данные сохранены на телефоне, но произошла ошибка выгрузки в облако: " + err.message);
+    });
+  } else {
+    alertMessage += "4. Статус сети: Офлайн.\n5. Облако Google: Данные не отправлены (нет интернета).";
+    alert(alertMessage);
   }
 }
 
 /**
- * ИСПРАВЛЕННЫЙ ИМПОРТ: НАПРАВЛЯЕТ ВЕСЬ МАССИВ 20 НА 800 СТРОГО ПРЯМОУГОЛЬНИКОМ
+ * ИМПОРТ: НАПРАВЛЯЕТ ВЕСЬ МАССИВ 20 НА 800 СТРОГО ПРЯМОУГОЛЬНИКОМ
  */
 async function processTextTableImport() {
   if (!window.excelMatrix || window.excelMatrix.length === 0) {
@@ -269,12 +292,11 @@ async function processTextTableImport() {
     return;
   }
 
-  // Принудительно генерируем прямоугольный пакет от ячейки A1 до самого конца матрицы (строка 800, колонка 20)
   const rangePayload = {
     startRow: 1, 
     startCol: 1,
-    numRows: window.excelMatrix.length, // 800
-    numCols: window.excelMatrix[0].length, // 20
+    numRows: window.excelMatrix.length, 
+    numCols: window.excelMatrix[0].length, 
     values2D: window.excelMatrix
   };
 
@@ -285,11 +307,9 @@ async function processTextTableImport() {
   }
 
   try {
-    // Сохраняем полный массив локально в кэш телефона
     window.balanceData = window.excelMatrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // Локальное сопоставление со складом Листа 1 (для мгновенного заполнения из.SUP)
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
