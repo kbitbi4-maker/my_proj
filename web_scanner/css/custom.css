@@ -1,6 +1,3 @@
-/* =========================================================================
-   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ)
-   ========================================================================= */
 /* Экран 3.5: Куда выдано */
 #where-view { display: flex; flex-direction: column; height: 100%; }
 #where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
@@ -9,10 +6,9 @@
 
 /* КРИТИЧЕСКИЙ ФИКС: Убираем белый фон пустующего пространства окна выдачи материалов */
 .table-wrapper {
-  background: transparent !important; /* Делаем контейнер полностью прозрачным */
-  border: none !important;            /* Убираем темную рамку вокруг пустого пространства */
-  box-shadow: none !important;        /* Убираем тяжелую тень */
-}
+  background: transparent !important; 
+  border: none !important;            
+  box-shadow: none !important;        
 
 /* Настраиваем саму таблицу, чтобы у неё была аккуратная рамка, а фон не сливался */
 table {
@@ -23,8 +19,8 @@ table {
 
 /* НОВАЯ ЛОГИКА ДЛЯ ТАБЛИЦЫ ОСТАТКОВ СКЛАДА (ЛИСТ 1) */
 #stock-head th {
-  white-space: normal !important;   /* Разрешаем перенос строк слов */
-  word-wrap: break-word !important; /* Автоматический перенос длинных слов */
+  white-space: normal !important;   
+  word-wrap: break-word !important; 
   vertical-align: middle;
   line-height: 1.2;
   font-size: 1.2vh;
