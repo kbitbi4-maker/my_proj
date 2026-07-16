@@ -20,7 +20,7 @@ async function executeDatabaseComparison() {
     const sRow = stock[i];
     if (!sRow || sRow.length < 5) continue;
 
-    // Считываем ключи и количество строго по одинаковым индексам (0 и 1)
+    // Считываем ключи и количество строго по одинаковым индексам (0, 1 и 4)
     const sPart = String(sRow[0]).trim().toLowerCase(); // Партия
     const sArt = String(sRow[1]).trim().toLowerCase();  // Материал (Артикул)
     const sQty = parseInt(String(sRow[4]).replace(/\s+/g, '')) || 0; // Готовое количество запаса (индекс 4)
@@ -100,7 +100,8 @@ async function processTextTableImport() {
           if (!matrix[j] || matrix[j].length < 5) continue;
           if (String(matrix[j][1]).trim().toLowerCase() === sArt && String(matrix[j][0]).trim().toLowerCase() === sPart) {
             const cleanVal = parseInt(String(matrix[j][4]).replace(/\s+/g, '')) || 0;
-            stock[i][5] = cleanVal; // На Складе (Лист 1) обновляем локально столбец из.SUP (индекс 5)
+            // КРИТИЧЕСКИЙ ФИКС: Пишем значение строго в 6-й столбец (из.SUP - индекс 5), НЕ ломая структуру строки!
+            stock[i][5] = cleanVal; 
             break;
           }
         }
