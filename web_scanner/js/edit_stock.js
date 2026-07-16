@@ -36,7 +36,6 @@ async function saveStockChangesCloud() {
   let updatePayloadParts = [];
   let localChangedCounter = 0;
 
-  // АНАЛОГИЧНО СТАРЫМ МЕТОДАМ: Сканируем всю таблицу построчно
   for (let i = 1; i < currentData.length; i++) {
     const inputTotal = document.getElementById(`stock-input-${i}-4`);
     const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
@@ -52,20 +51,20 @@ async function saveStockChangesCloud() {
         return;
       }
       
-      // Сравниваем строго по ячейкам строки (Общий=индекс 4, скл1=индекс 6, скл2=индекс 7)
+      // Проверяем, изменились ли значения по сравнению со старой базой телефона
       if (valTotal !== (parseInt(currentData[i][4]) || 0) || 
           val1 !== (parseInt(currentData[i][6]) || 0) || 
           val2 !== (parseInt(currentData[i][7]) || 0)) {
             
-        // Обновляем локальный кэш
+        // Обновляем локальный кэш устройства
         currentData[i][4] = valTotal;
         currentData[i][6] = val1;
         currentData[i][7] = val2;
         
-        // Исправлено извлечение Артикула и Параметра как в старом коде
         const art = String(currentData[i][0]).trim();
         const param = String(currentData[i][1]).trim();
         
+        // Упаковываем данные в проверенную пакетную строку STOCK_UPDATE
         updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
         localChangedCounter++;
       }
@@ -78,7 +77,6 @@ async function saveStockChangesCloud() {
     return;
   }
 
-  // Записываем обновленный массив в локальную память телефона
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
   toggleStockEditMode(false);
