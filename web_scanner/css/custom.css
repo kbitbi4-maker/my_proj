@@ -1,3 +1,6 @@
+/* =========================================================================
+   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ)
+   ========================================================================= */
 /* Экран 3.5: Куда выдано */
 #where-view { display: flex; flex-direction: column; height: 100%; }
 #where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
@@ -9,6 +12,7 @@
   background: transparent !important; 
   border: none !important;            
   box-shadow: none !important;        
+}
 
 /* Настраиваем саму таблицу, чтобы у неё была аккуратная рамка, а фон не сливался */
 table {
@@ -83,11 +87,13 @@ table {
 .btn-confirm-import { background: #22c55e; height: 50px; flex-shrink: 0; }
 .btn-balance-back { margin-top: 0; height: 40px; }
 
-/* Экран 6: Table diff */
+/* Экран 6: Table diff (ФИКСАЦИЯ ШАПКИ И ИСКЛЮЧЕНИЕ ДУБЛИРОВАНИЯ КОЛОНОК) */
 #diff-table-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
 #diff-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
-.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; }
-.table-diff-content { width: max-content; min-width: 100%; }
+.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; -webkit-overflow-scrolling: touch; }
+.table-diff-content { width: 100%; border-collapse: collapse !important; table-layout: fixed; }
+.table-diff-content th { background: #475569 !important; color: white !important; font-size: 1.3vh; padding: 8px 4px; border: 1px solid #cbd5e1 !important; text-align: center; white-space: normal !important; word-wrap: break-word; }
+.table-diff-content td { padding: 8px 4px; font-size: 1.3vh; border: 1px solid #cbd5e1 !important; text-align: center; font-family: monospace; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #000; }
 .btn-diff-back { margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0; }
 
 /* Поповер фильтрации */
@@ -106,22 +112,18 @@ table {
 .btn-edit-trigger:active { background: #334155; transform: scale(0.98); }
 .stock-edit-actions-row button { padding: 16px 10px; font-size: 2vh; border-radius: 10px; }
 
-/* Стили визуальных статусных плашек в шапке */
+/* Стили статусных плашек */
 .status-badge { font-size: 1.4vh; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px; animation: pulseBadge 1.5s infinite; }
 .badge-return-active { background: #ef4444; color: white; border: 1px solid #fee2e2; }
 .badge-sync-active { background: #0284c7; color: white; border: 1px solid #e0f2fe; }
 
 @keyframes pulseBadge { 0% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.03); } 100% { opacity: 0.8; transform: scale(1); } }
-
-/* Эффект мигания индикатора при синхронизации облачком */
 .sync-pulse { animation: syncBlink 0.6s infinite alternate !important; }
 @keyframes syncBlink { from { background: #0284c7; box-shadow: 0 0 4px #0284c7; } to { background: #38bdf8; box-shadow: 0 0 15px #38bdf8, 0 0 25px #38bdf8; } }
 
-/* Подсветка кнопки режима возврата и кнопки синхронизации облачка в красный цвет */
 .return-mode-active { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 #sync-btn.sync-active-highlight { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 
-/* Компоненты журнала: матовые фоны для строк и зебра-эффект с шагом 20% */
 #logs-body tr { background: #ffffff; border-bottom: 1px solid #cbd5e1; }
 #logs-body tr.log-row-wait { background: #ffffff !important; }
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: #c3e6cb !important; }
