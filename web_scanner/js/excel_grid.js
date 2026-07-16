@@ -79,86 +79,35 @@ function focusExcelCell(row, col) {
   const newCell = document.getElementById(`ex-cell-${row}-${col}`);
   if (newCell) newCell.classList.add('excel-cell-selected');
 }
-// js/excel_grid.js — Универсальный движок Excel-таблиц (20 столбцов х 800 строк) — ЧАСТЬ 2
 
-document.addEventListener('paste', function (e) {
-  if (window.selectedCell.row === null || window.selectedCell.col === null) return;
-  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-
-  e.preventDefault();
+/**
+ * ИЗОЛИРОВАННОЕ ВЫДЕЛЕНИЕ ЯЧЕЕК (КЛИК / CTRL+КЛИК) ТЕПЕРЬ НАПРЯМУЮ ТУТ
+ */
+function handleExcelCellSelectWithCtrl(event, row, col) {
+  if (!window.ctrlSelectedCells) window.ctrlSelectedCells = [];
+  const isCtrl = event.ctrlKey || event.metaKey;
   
-  const clipboardData = e.clipboardData || window.clipboardData;
-  const pastedText = clipboardData.getData('text');
-  if (!pastedText) return;
-
-  const lines = pastedText.split(/\r?\n/);
-  const startRow = window.selectedCell.row;
-  const startCol = window.selectedCell.col;
-
-  let changed = false;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === "" && i === lines.length - 1) continue; 
-    
-    const targetRow = startRow + i;
-    if (targetRow >= EXCEL_ROWS) break;
-
-    const cells = lines[i].split('\t');
-    for (let j = 0; j < cells.length; j++) {
-      const targetCol = startCol + j;
-      if (targetCol >= EXCEL_COLS) break;
-
-      const valueStr = String(cells[j] || "").trim();
-      window.excelMatrix[targetRow][targetCol] = valueStr;
-      
-      const key = `${targetRow},${targetCol}`;
-      window.excelChangedCells[key] = valueStr;
-      
-      changed = true;
-    }
+  if (!isCtrl) {
+    window.ctrlSelectedCells.forEach(cell => {
+      const cellEl = document.getElementById(`ex-cell-${cell.r}-${cell.c}`);
+      if (cellEl) cellEl.classList.remove('excel-cell-selected');
+    });
+    window.ctrlSelectedCells = [];
   }
 
-  if (changed) {
-    renderExcelGrid();
-  }
-});
-
-function clearExcelGridData() {
-  if (!confirm("Вы уверены, что хотите полностью очистить текущую сетку Сальдо?")) return;
+  const existsIdx = window.ctrlSelectedCells.findIndex(cell => cell.r === row && cell.c === col);
   
-  window.excelMatrix = [];
-  for (let r = 0; r < EXCEL_ROWS; r++) {
-    let rowData = [];
-    for (let c = 0; c < EXCEL_COLS; c++) {
-      rowData.push("");
-    }
-    window.excelMatrix.push(rowData);
-  }
-  window.selectedCell = { row: null, col: null };
-  window.excelChangedCells = {}; 
-  window.ctrlSelectedCells = []; 
-  renderExcelGrid();
-}
-
-document.addEventListener('keydown', function(e) {
-  if (window.selectedCell.row === null || window.selectedCell.col === null) return;
-  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-
-  let r = window.selectedCell.row;
-  let c = window.selectedCell.col;
-
-  if (e.key === 'ArrowUp') { r = Math.max(0, r - 1); e.preventDefault(); }
-  else if (e.key === 'ArrowDown') { r = Math.min(EXCEL_ROWS - 1, r + 1); e.preventDefault(); }
-  else if (e.key === 'ArrowLeft') { c = Math.max(0, c - 1); e.preventDefault(); }
-  else if (e.key === 'ArrowRight') { c = Math.min(EXCEL_COLS - 1, c + 1); e.preventDefault(); }
-  else return;
-
-  if (typeof handleExcelCellSelectWithCtrl === 'function') {
-    handleExcelCellSelectWithCtrl(e, r, c);
+  if (existsIdx !== -1 && isCtrl) {
+    window.ctrlSelectedCells.splice(existsIdx, 1);
+    const cellEl = document.getElementById(`ex-cell-${row}-${col}`);
+    if (cellEl) cellEl.classList.remove('excel-cell-selected');
   } else {
-    focusExcelCell(r, c);
+    window.ctrlSelectedCells.push({ r: row, c: col });
+    if (!isCtrl) {
+      focusExcelCell(row, col);
+    } else {
+      const cellEl = document.getElementById(`ex-cell-${row}-${col}`);
+      if (cellEl) cellEl.classList.add('excel-cell-selected');
+    }
   }
-  
-  const cellEl = document.getElementById(`ex-cell-${r}-${c}`);
-  if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-});
+}
