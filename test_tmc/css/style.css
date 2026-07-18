@@ -1,5 +1,5 @@
 /* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 1
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 1
    АВТОР: AI DEVELOPER
    ========================================================================= */
 
@@ -142,8 +142,11 @@ video {
 
 
 
+
+
+
 /* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 2
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 2
    АВТОР: AI DEVELOPER
    ========================================================================= */
 
@@ -307,8 +310,11 @@ td {
 
 
 
+
+
+
 /* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 3
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 3
    АВТОР: AI DEVELOPER
    ========================================================================= */
 
@@ -335,11 +341,18 @@ td {
   font-weight: bold;
   border: 1px solid #3b82f6;
   border-radius: 4px;
-  background: #ffffff;
   color: #000000;
   text-align: center;
   outline: none;
   transition: background-color 0.2s, border-color 0.2s;
+  
+  /* ИСПРАВЛЕНИЕ: Инпут прозрачен и наследует матовую зебру фона строки */
+  background: transparent !important;
+}
+
+/* При фокусе (клике ввода) ячейка становится белой */
+.cell-stock-dual-input:focus {
+  background: #ffffff !important;
 }
 
 /* Класс жёлтого черновика изменения ячеек */
@@ -354,8 +367,8 @@ td {
 }
 
 @keyframes flashSaved {
-  0% { background: #4ade80 !important; } 
-  100% { background: #ffffff !important; }
+  0% { background: #4ade80 !important; border-color: #22c55e !important; } 
+  100% { background: transparent !important; }
 }
 
 /* Адаптивный контейнер нумпада */
@@ -438,6 +451,23 @@ td {
   min-height: 0; 
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 4
+   АВТОР: AI DEVELOPER
+   ========================================================================= */
+
 .numpad-grid button { 
   background: #f8fafc; 
   border: 1px solid #cbd5e1; 
@@ -456,19 +486,6 @@ td {
 
 .numpad-grid button:active { background: #cbd5e1; }
 .numpad-grid .btn-clear { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
-
-
-
-
-
-
-
-
-
-/* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 4
-   АВТОР: AI DEVELOPER
-   ========================================================================= */
 
 /* Кнопки действий нумпада */
 .numpad-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
@@ -544,6 +561,23 @@ td {
 .btn-where-save { background: #22c55e; margin-bottom: 10px; height: 50px; }
 .btn-where-back { background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 5
+   АВТОР: AI DEVELOPER
+   ========================================================================= */
+
 /* Компоненты выбора возвратов */
 .return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
 .return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
@@ -567,21 +601,6 @@ td {
 .return-part:active { background: #ca8a04; }
 .return-delete { background: #ef4444; color: white; }
 .return-delete:active { background: #dc2626; }
-
-
-
-
-
-
-
-
-
-
-
-/* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 5
-   АВТОР: AI DEVELOPER
-   ========================================================================= */
 
 /* Экран 5: Управление Сальдо */
 #balance-view { height: 100%; display: flex; flex-direction: column; }
@@ -615,6 +634,23 @@ td {
 .btn-edit-trigger:active { background: #334155; transform: scale(0.98); }
 .stock-edit-actions-row button { padding: 16px 10px; font-size: 2vh; border-radius: 10px; }
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 6
+   АВТОР: AI DEVELOPER
+   ========================================================================= */
+
 /* Стили визуальных статусных плашек в шапке */
 .status-badge { font-size: 1.4vh; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px; animation: pulseBadge 1.5s infinite; }
 .badge-return-active { background: #ef4444; color: white; border: 1px solid #fee2e2; }
@@ -636,33 +672,15 @@ td {
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: #c3e6cb !important; }
 #logs-body tr.log-row-synced:nth-of-type(even) { background: #e2f3e7 !important; }
 
-/* ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА */
+/* ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА (ТЕПЕРЬ НАВСЕГДА АКТИВНА) */
 #stock-body tr { border-bottom: 1px solid #cbd5e1; transition: background-color 0.3s; }
 #stock-body tr:nth-of-type(odd) { background: #c3e6cb !important; }
 #stock-body tr:nth-of-type(even) { background: #e2f3e7 !important; }
-#stock-body tr.editing-stock-row { background: #ffffff !important; }
 
 @media (min-width: 600px) {
   #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* =========================================================================
-   ОБЪЕДИНЁННЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ ПРИЛОЖЕНИЯ — ЧАСТЬ 6
-   АВТОР: AI DEVELOPER
-   ========================================================================= */
 
 /* КРИТИЧЕСКИЙ ФИКС ПРОКРУТКИ И СКРОЛЛИНГА EXCEL-ГРИДА */
 .excel-grid-wrapper {
@@ -703,21 +721,8 @@ td {
   user-select: none;
 }
 
-.excel-grid-table th.excel-row-header {
-  position: sticky;
-  left: 0;
-  z-index: 11;
-  background: #e2e8f0 !important;
-  min-width: 40px;
-}
-
-.excel-grid-table th.excel-corner-header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  z-index: 12;
-  background: #cbd5e1 !important;
-}
+.excel-grid-table th.excel-row-header { position: sticky; left: 0; z-index: 11; background: #e2e8f0 !important; min-width: 40px; }
+.excel-grid-table th.excel-corner-header { position: sticky; top: 0; left: 0; z-index: 12; background: #cbd5e1 !important; }
 
 .excel-grid-table td {
   padding: 4px 6px;
@@ -734,27 +739,9 @@ td {
   user-select: none;
 }
 
-.excel-grid-table tr:nth-child(even) td {
-  background: #f8fafc;
-}
+.excel-grid-table tr:nth-child(even) td { background: #f8fafc; }
+.excel-grid-table td.excel-cell-selected { outline: 2px solid #22c55e !important; outline-offset: -2px; background: #e2f3e7 !important; }
+.excel-grid-wrapper::-webkit-scrollbar { width: 12px; height: 12px; }
+.excel-grid-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
+.excel-grid-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid #f1f5f9; }
 
-.excel-grid-table td.excel-cell-selected {
-  outline: 2px solid #22c55e !important;
-  outline-offset: -2px;
-  background: #e2f3e7 !important;
-}
-
-.excel-grid-wrapper::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-.excel-grid-wrapper::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-.excel-grid-wrapper::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 6px;
-  border: 3px solid #f1f5f9;
-}
