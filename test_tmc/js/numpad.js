@@ -184,6 +184,13 @@ function pushCurrentToBasket() {
   const qty = parseInt(window.currentQty) || 0;
   if (qty <= 0) { alert("Ошибка: Количество должно быть больше 0!"); return; }
 
+
+
+
+
+
+  
+
   // Если это режим частичного возврата, то проводим его сразу без корзины по старой логике
   if (window.isPartialReturnInput) {
     saveEntry();
