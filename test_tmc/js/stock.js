@@ -1,6 +1,6 @@
-// js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 1
+// js/stock.js — Модуль остатков склада целиком — ЧАСТЬ 1
 // АВТОР: AI DEVELOPER
-// ГАРАНТИЯ ПОЛНОГО ФАЙЛА И СОХРАНЕНИЯ МАТОВОЙ ЗЕБРЫ ПРИ РЕДАКТИРОВАНИИ
+// ИСПРАВЛЕН МАППИНГ ИНДЕКСОВ row ДЛЯ ИСКЛЮЧЕНИЯ ДУБЛИРОВАНИЯ СТРОК В ТАБЛИЦЕ И badge
 
 function showStock() {
   const currentData = window.inventoryData;
@@ -81,9 +81,12 @@ function renderStock() {
 
 
 
-// js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 2
+
+
+
+// js/stock.js — Модуль остатков склада целиком — ЧАСТЬ 2
 // АВТОР: AI DEVELOPER
-// ИНТЕГРАЦИЯ УМНЫХ ИНПУТОВ, СОХРАНЯЮЩИХ ФОН ЗЕБРЫ СТРОКИ ДО МОМЕНТА ИЗМЕНЕНИЯ
+// ОЧИЩЕНА БИЛЕБЕРДА ИЗ КЛЮЧЕЙ window.currentSelectedRowData ПУТЕМ ВОЗВРАТА ЧЕТКОЙ ИНДЕКСАЦИИ row[...]
 
   body.innerHTML = currentData.map((row, index) => {
     if (index === 0) return ''; 
@@ -122,8 +125,6 @@ function renderStock() {
     }).join('');
 
     const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
-    
-    // КРИТИЧЕСКИЙ ФИКС: Строка БОЛЬШЕ НЕ СБРАСЫВАЕТ свой класс зебры при переходе в режим изменения
     return `<tr ${clickAction}>${cellsHtml}</tr>`;
   }).join('');
   
@@ -137,11 +138,12 @@ function selectFromStockDirect(index) {
   if (!currentData || !currentData[index]) return;
 
   const row = currentData[index];
-  const q1 = parseInt(row) || 0; 
-  const q2 = parseInt(row) || 0; 
+  const q1 = parseInt(row[6]) || 0; 
+  const q2 = parseInt(row[7]) || 0; 
   const totalStock = q1 + q2;
 
-  window.currentSelectedRowData = [row, row, row, row, totalStock, index]; 
+  // КРИТИЧЕСКИЙ ФИКС: Извлекаем конкретные ячейки строки, а не дублируем всю строку целиком!
+  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
