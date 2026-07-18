@@ -1,6 +1,6 @@
-// js/edit_stock.js — Полный монолитный модуль изменения остатков в таблице
+// js/edit_stock.js — Модуль изменения остатков в таблице склада целиком — ЧАСТЬ 3
 // АВТОР: AI DEVELOPER
-// УБРАНЫ ВСЕ АЛЕРТЫ УСПЕХА. РЕАЛИЗОВАНЫ ЗЕ ЛЁНЫЕ ВСПЫШКИ СОХРАНЕНИЯ ЯЧЕЕК
+// ФИКС ЦВЕТОВОГО ТАЙМИНГА: ЖЁЛТЫЙ ЦВЕТ ЗАПИРАЕТСЯ ДО ТЕХ ПОР, ПОКА FETCH НЕ ПОЛУЧИТ ОТВЕТ ОТ GOOGLE
 
 window.isStockEditMode = false;
 
@@ -75,33 +75,43 @@ async function saveStockChangesCloud() {
     return;
   }
 
+  // Фиксируем локально в кэше телефона
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
-  // Очищаем жёлтые черновики и запускаем зелёные вспышки сохранения ячеек
-  trackingCells.forEach(input => {
-    if (input) {
-      input.classList.remove('cell-stock-dirty');
-      input.classList.add('cell-stock-saved-flash');
-    }
-  });
-
-  // Закрываем панель редактирования и возвращаем матовую зебру через 1 секунду после вспышки
-  setTimeout(() => {
-    toggleStockEditMode(false);
-  }, 1000);
+  // КРИТИЧЕСКИЙ ФИКС: Больше не сбрасываем цвета черновика и не закрываем режим редактирования тут!
+  // Жёлтый цвет .cell-stock-dirty остаётся гореть, пока идёт реальный запрос по сети.
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
       const textPayload = "STOCK_UPDATE|" + updatePayloadParts.join("|");
+      
+      // Запускаем асинхронное ожидание ответа от сервера Google Таблиц
       await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
-      // АЛЕРТ УСПЕШНОГО СОХРАНЕНИЯ УДАЛЁН — ВСЁ ВИДНО ВИЗУАЛЬНО
+
+      // СЮДА МЫ ПОПАДАЕМ ТОЛЬКО ТОГДА, КОГДА СЕРВЕР ОБРАБОТАЛ И ПРИНЯЛ ДАННЫЕ
+      trackingCells.forEach(input => {
+        if (input) {
+          input.classList.remove('cell-stock-dirty');
+          input.classList.add('cell-stock-saved-flash');
+        }
+      });
+
+      // Переключаем режим и плавно возвращаем матовую зебру ровно через 1 секунду после вспышки
+      setTimeout(() => {
+        toggleStockEditMode(false);
+      }, 1000);
+
     } catch (e) {
-      console.error("Сетевая ошибка при обновлении остатков:", e);
+      console.error("Сетевая ошибка при обновлении остатков в облаке:", e);
+      alert("Ошибка сети. Данные сохранены на телефоне (жёлтые ячейки), но не дошли до Google Таблицы.");
     }
+  } else {
+    // Если интернета нет, фиксируем жёлтый черновик стационарно на экране и выходим
+    toggleStockEditMode(false);
   }
 }
