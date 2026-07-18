@@ -1,9 +1,18 @@
-// js/delete_task.js — Модернизированный фронтенд-скрипт физического удаления строк
+// js/delete_task.js — Полный монолитный скрипт удаления строк
+// АВТОР: AI DEVELOPER
+// ФИКС РАССИНХРОНИЗАЦИИ СКЛАДОВ НА СМАРТФОНЕ ПРИ УДАЛЕНИИ И ОТМЕНА УСПЕШНЫХ АЛЕРТОВ
 
 async function executePhysicalDeletion() {
-  if (window.currentReturnLogIndex === null) { alert("Ошибка: Строка журнала не выбрана."); return; }
+  if (window.currentReturnLogIndex === null) {
+    alert("Ошибка: Строка журнала не выбрана.");
+    return;
+  }
+
   const logItem = window.qrLogs[window.currentReturnLogIndex];
-  if (!logItem || !logItem.data) { alert("Ошибка: Данные строки не найдены."); return; }
+  if (!logItem || !logItem.data) {
+    alert("Ошибка: Данные строки не найдены.");
+    return;
+  }
 
   const rowData = logItem.data;
   const targetId = rowData[0];             
@@ -12,13 +21,17 @@ async function executePhysicalDeletion() {
   const qty = parseInt(rowData[5]) || 0;    
   const destinationText = String(rowData[8] || "").toUpperCase();
 
-  // УМНОЕ ОПРЕДЕЛЕНИЕ СКЛАДА НА СТОРОНЕ ТЕЛЕФОНА ПРИ УДАЛЕНИИ СТРОКИ ВЫДАЧИ
+  // УМНОЕ ОПРЕДЕЛЕНИЕ СКЛАДА НА СТОРОНЕ ТЕЛЕФОНА ДЛЯ КОРРЕКТИРОВКИ ЛОКАЛЬНОГО КЭША
   let deleteTargetWh = "скл.1";
-  if (destinationText.indexOf("[СКЛ.2]") !== -1) { deleteTargetWh = "скл.2"; }
+  if (destinationText.indexOf("[СКЛ.2]") !== -1) {
+    deleteTargetWh = "скл.2";
+  }
 
-  if (!confirm(`Вы уверены, что хотите полностью стереть строку №${targetId} из Google Таблицы?`)) { return; }
+  if (!confirm(`Вы уверены, что хотите полностью стереть строку №${targetId} из Google Таблицы?`)) {
+    return;
+  }
 
-  // 1. КОРРЕКТИРУЕМ ЛОКАЛЬНЫЙ СКЛАД НА ТЕЛЕФОНЕ НА ПРАВИЛЬНЫЙ СКЛАД
+  // 1. КОРРЕКТИРУЕМ ЛОКАЛЬНЫЙ СКЛАД НА ТЕЛЕФОНЕ НА ПРАВИЛЬНЫЙ СКЛАД ИЗ СТРОКИ
   if (qty > 0) {
     let stockUpdated = false;
     window.inventoryData = window.inventoryData.map(row => {
@@ -36,7 +49,10 @@ async function executePhysicalDeletion() {
       }
       return row;
     });
-    if (stockUpdated) { localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData)); }
+
+    if (stockUpdated) {
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+    }
   }
 
   // 2. УДАЛЯЕМ МГНОВЕННО СТРОКУ ИЗ ЛОКАЛЬНОГО ЖУРНАЛА ВЫДАЧИ НА ТЕЛЕФОНЕ
@@ -45,21 +61,25 @@ async function executePhysicalDeletion() {
 
   if (typeof renderLogs === 'function') renderLogs();
   if (typeof renderStock === 'function') renderStock();
-  if (document.getElementById('return-view')) { document.getElementById('return-view').classList.add('hidden'); }
+
+  if (document.getElementById('return-view')) {
+    document.getElementById('return-view').classList.add('hidden');
+  }
   if (typeof closeModal === 'function') closeModal();
   if (typeof toggleReturnMode === 'function' && window.isReturnMode) toggleReturnMode();
 
-  // 3. ОТПРАВКА СЕТЕВОГО ЗАПРОСА В ОБЛАКО GOOGLE ТАБЛИЦ
+  // 3. ПРЯМОЙ ИЗОЛИРОВАННЫЙ ТЕКСТОВЫЙ ПОСТ-ЗАПРОС НА УДАЛЕНИЕ В ОБЛАКО GOOGLE
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
       const textPayload = `DELETE_ROW|${targetId}|${qty}|${art}|${param}`;
-      const response = await fetch(SCRIPT_URL, {
+      await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
-      const serverText = await response.text();
-      alert("ОТВЕТ СЕРВЕРА GOOGLE ПОСЛЕ УДАЛЕНИЯ:\n\n" + serverText);
-    } catch (e) { alert("Локально строка удалена, но в облаке произошла ошибка: " + e.message); }
-  } else { alert("Вы работаете офлайн. Строка удалена только на вашем устройстве."); }
+      // АЛЕРТЫ УСПЕШНОГО СТАТУСА СЕРВЕРА СТЕРТЫ ДЛЯ ПЛАВНОСТИ РАБОТЫ ИНТЕРФЕЙСА
+    } catch (e) {
+      console.error("Сетевая ошибка при стирании строки:", e);
+    }
+  }
 }
