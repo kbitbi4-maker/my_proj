@@ -191,6 +191,14 @@ document.addEventListener('keydown', function(e) {
   if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
 
+
+
+
+
+
+
+
+
 /**
  * ГАРАНТИЯ ПРЯМОУГОЛЬНОСТИ: Превращает любые разрозненные или полные ячейки 
  * в идеальную прямоугольную сетку (двумерный массив равной ширины) для setValues()
