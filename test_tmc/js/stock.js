@@ -1,4 +1,6 @@
-// js/stock.js — Модуль журнала остатков целиком — ЧАСТЬ 1
+// js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 1
+// АВТОР: AI DEVELOPER
+// ГАРАНТИЯ ПОЛНОГО ФАЙЛА И МАТОВОЙ ЗЕБРЫ В ТАБЛИЦЕ ОСТАТКОВ
 
 function showStock() {
   const currentData = window.inventoryData;
@@ -38,9 +40,8 @@ function renderStock() {
     controlsWrapper.style.width = '100%';
     controlsWrapper.style.flexShrink = '0';
     
-    const searchInputEl = document.getElementById('stock-search');
-    if (searchInputEl && searchInputEl.parentNode) {
-      searchInputEl.parentNode.insertBefore(controlsWrapper, searchInputEl);
+    if (searchInput && searchInput.parentNode) {
+      searchInput.parentNode.insertBefore(controlsWrapper, searchInput);
     }
   }
 
@@ -70,7 +71,16 @@ function renderStock() {
     <th>Завод</th><th>Склад</th><th>Особый запас</th><th>СПП-элемент</th><th>Группа материалов</th>
     <th>Дата поступления на склад</th><th>Золото</th><th>Серебро</th>
   `;
-// js/stock.js — Модуль журнала остатков целиком — ЧАСТЬ 2
+
+
+
+
+
+
+
+// js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 2
+// АВТОР: AI DEVELOPER
+// ИНТЕГРАЦИЯ ЖЁЛТЫХ ЧЕРНОВИКОВ И ЦВЕТОВОЙ ИНДИКАЦИИ В ОСТАТКИ
 
   body.innerHTML = currentData.map((row, index) => {
     if (index === 0) return ''; 
@@ -85,10 +95,8 @@ function renderStock() {
         return `<td>${formattedPrice}</td>`;
       }
 
-      // Если включен режим редактирования, подменяем ячейки Общего количества, Скл 1 и Скл 2 на умные инпуты
       if (isEdit) {
         if (cellIndex === 4) {
-          // Общее количество: при изменении запускает обратный пересчет дельты
           return `
             <td class="editable-stock-cell" onclick="event.stopPropagation();">
               <input type="number" id="stock-input-${index}-4" class="cell-stock-dual-input" 
@@ -98,12 +106,11 @@ function renderStock() {
           `;
         }
         if (cellIndex === 6 || cellIndex === 7) {
-          // Склад 1 и Склад 2: при вводе или стрелочках мгновенно суммируются в Общее количество
           return `
             <td class="editable-stock-cell" onclick="event.stopPropagation();">
               <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" 
                      value="${parseInt(cell) || 0}" min="0" autocomplete="off"
-                     oninput="updateStockTotalOnInput(${index})">
+                     oninput="updateStockTotalOnInput(${index}); markStockCellAsDirty(this);">
             </td>
           `;
         }
@@ -112,9 +119,9 @@ function renderStock() {
     }).join('');
 
     const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
-    const rowStyle = isEdit ? 'style="cursor: default;"' : '';
+    const rowClass = isEdit ? 'class="editing-stock-row"' : '';
 
-    return `<tr ${clickAction} ${rowStyle}>${cellsHtml}</tr>`;
+    return `<tr ${clickAction} ${rowClass}>${cellsHtml}</tr>`;
   }).join('');
   
   if (body.innerHTML.trim() === "") {
@@ -141,17 +148,12 @@ function selectFromStockDirect(index) {
   }
 }
 
+function markStockCellAsDirty(inputElement) {
+  if (inputElement) {
+    inputElement.classList.add('cell-stock-dirty');
+  }
+}
 
-
-
-
-
-
-
-
-/**
- * УМНАЯ ПРЯМАЯ СВЯЗЬ: Автоматически складывает Скл 1 + Скл 2 и пишет сумму в Общее количество
- */
 function updateStockTotalOnInput(rowIndex) {
   const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
   const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-7`);
@@ -161,12 +163,10 @@ function updateStockTotalOnInput(rowIndex) {
     const val1 = parseInt(inputSkl1.value) || 0;
     const val2 = parseInt(inputSkl2.value) || 0;
     inputTotal.value = val1 + val2;
+    inputTotal.classList.add('cell-stock-dirty');
   }
 }
 
-/**
- * УМНЫЙ ОБРАТНЫЙ ПЕРЕРАСЧЕТ: Запрашивает склад при прямом редактировании Общего количества
- */
 function handleStockTotalChangeDirect(rowIndex) {
   const inputTotal = document.getElementById(`stock-input-${rowIndex}-4`);
   const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
@@ -181,9 +181,8 @@ function handleStockTotalChangeDirect(rowIndex) {
 
   if (newTotal === oldTotal) return;
 
-  const delta = newTotal - oldTotal; // Находим разницу (может быть как в плюс, так и в минус)
+  const delta = newTotal - oldTotal;
 
-  // Запрашиваем у пользователя, куда применить разницу остатка
   const choice = prompt(`Вы изменили Общее количество на ${delta > 0 ? "+" + delta : delta} шт.\n\nВ каком складе поменялся остаток?\nВведите цифру:\n1 — Склад 1\n2 — Склад 2`);
 
   if (choice === "1") {
@@ -194,6 +193,8 @@ function handleStockTotalChangeDirect(rowIndex) {
       return;
     }
     inputSkl1.value = finalSkl1;
+    inputSkl1.classList.add('cell-stock-dirty');
+    inputTotal.classList.add('cell-stock-dirty');
   } else if (choice === "2") {
     const finalSkl2 = currentSkl2 + delta;
     if (finalSkl2 < 0) {
@@ -202,6 +203,8 @@ function handleStockTotalChangeDirect(rowIndex) {
       return;
     }
     inputSkl2.value = finalSkl2;
+    inputSkl2.classList.add('cell-stock-dirty');
+    inputTotal.classList.add('cell-stock-dirty');
   } else {
     alert("Действие отменено или введен неверный номер склада. Изменения сброшены.");
     inputTotal.value = oldTotal;
