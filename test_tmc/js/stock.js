@@ -1,6 +1,6 @@
 // js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 1
 // АВТОР: AI DEVELOPER
-// ГАРАНТИЯ ПОЛНОГО ФАЙЛА И МАТОВОЙ ЗЕБРЫ В ТАБЛИЦЕ ОСТАТКОВ
+// ГАРАНТИЯ ПОЛНОГО ФАЙЛА И СОХРАНЕНИЯ МАТОВОЙ ЗЕБРЫ ПРИ РЕДАКТИРОВАНИИ
 
 function showStock() {
   const currentData = window.inventoryData;
@@ -78,9 +78,12 @@ function renderStock() {
 
 
 
+
+
+
 // js/stock.js — Модуль журнала остатков склада целиком — ЧАСТЬ 2
 // АВТОР: AI DEVELOPER
-// ИНТЕГРАЦИЯ ЖЁЛТЫХ ЧЕРНОВИКОВ И ЦВЕТОВОЙ ИНДИКАЦИИ В ОСТАТКИ
+// ИНТЕГРАЦИЯ УМНЫХ ИНПУТОВ, СОХРАНЯЮЩИХ ФОН ЗЕБРЫ СТРОКИ ДО МОМЕНТА ИЗМЕНЕНИЯ
 
   body.innerHTML = currentData.map((row, index) => {
     if (index === 0) return ''; 
@@ -119,9 +122,9 @@ function renderStock() {
     }).join('');
 
     const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
-    const rowClass = isEdit ? 'class="editing-stock-row"' : '';
-
-    return `<tr ${clickAction} ${rowClass}>${cellsHtml}</tr>`;
+    
+    // КРИТИЧЕСКИЙ ФИКС: Строка БОЛЬШЕ НЕ СБРАСЫВАЕТ свой класс зебры при переходе в режим изменения
+    return `<tr ${clickAction}>${cellsHtml}</tr>`;
   }).join('');
   
   if (body.innerHTML.trim() === "") {
@@ -134,11 +137,11 @@ function selectFromStockDirect(index) {
   if (!currentData || !currentData[index]) return;
 
   const row = currentData[index];
-  const q1 = parseInt(row[6]) || 0; 
-  const q2 = parseInt(row[7]) || 0; 
+  const q1 = parseInt(row) || 0; 
+  const q2 = parseInt(row) || 0; 
   const totalStock = q1 + q2;
 
-  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
+  window.currentSelectedRowData = [row, row, row, row, totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
   if (typeof openNumpadView === 'function') {
