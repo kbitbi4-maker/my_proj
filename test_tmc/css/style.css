@@ -1,9 +1,10 @@
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 1
    АВТОР: AI DEVELOPER
+   ГЛОБАЛЬНЫЙ СКВОЗНОЙ ФОН fon.jpg ДЛЯ ВСЕХ ЭКРАНОВ И МОДАЛЬНЫХ ОКОН
    ========================================================================= */
 
-/* Базовые стили экрана и фона */
+/* Базовые стили экрана и сквозного фона */
 html, body { 
   height: 100%; 
   margin: 0; 
@@ -17,9 +18,10 @@ html, body {
 body { 
   display: flex; 
   flex-direction: column; 
-  background: url('../fon_s.jpg') no-repeat center center fixed; 
+  /* Устанавливаем основной фоновый рисунок fon.jpg */
+  background: url('../fon.jpg') no-repeat center center fixed; 
   background-size: cover; 
-  background-color: #f0f2f5; 
+  background-color: #475569; 
 }
 
 /* Шапка приложения */
@@ -27,7 +29,9 @@ body {
   display: flex; 
   align-items: center; 
   padding: 0 10px; 
-  background: #475569; 
+  background: rgba(71, 85, 105, 0.85); /* Полупрозрачная матовая шапка */
+  backdrop-filter: blur(10px);        /* Размытие заднего плана */
+  -webkit-backdrop-filter: blur(10px);
   color: white; 
   position: sticky; 
   top: 0; 
@@ -144,7 +148,6 @@ video {
 
 
 
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 2
    АВТОР: AI DEVELOPER
@@ -219,15 +222,21 @@ td {
   left: 0; 
   width: 100vw; 
   height: 100vh; 
-  background: #f0f2f5; 
   z-index: 2000; 
   display: flex; 
   align-items: stretch; 
   justify-content: center; 
+  
+  /* ИСПРАВЛЕНИЕ: Модальное окно теперь наследует тот же fon.jpg, что и главный экран */
+  background: url('../fon.jpg') no-repeat center center fixed !important;
+  background-size: cover !important;
 }
 
 .modal-content { 
-  background: white; 
+  /* Делаем контент полностью матово-прозрачным поверх картинки */
+  background: rgba(255, 255, 255, 0.1) !important; 
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   width: 100%; 
   height: 100%; 
   padding: 15px; 
@@ -245,16 +254,18 @@ td {
   font-size: 35px; 
   border: none; 
   background: transparent; 
-  color: #333; 
+  color: white; /* Меняем на белый для контраста с fon.jpg */
   cursor: pointer; 
   z-index: 10; 
   font-weight: bold; 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .modal-content h3 { 
   margin: 0 0 10px 0; 
   font-size: 2.2vh; 
-  color: #333; 
+  color: white; /* Текст заголовков на подэкранах теперь белый */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
   text-align: center; 
 }
 
@@ -272,19 +283,21 @@ td {
   padding: 12px; 
   font-size: 1.8vh; 
   box-sizing: border-box; 
-  border: 2px solid #cbd5e1; 
+  border: 2px solid rgba(255,255,255,0.4); 
   border-radius: 8px; 
   margin-bottom: 10px; 
   flex-shrink: 0; 
+  background: rgba(255,255,255,0.9);
+  color: #000;
 }
 
 .modal-table { 
   flex-grow: 1; 
   width: 100%; 
   overflow: auto; 
-  border: 1px solid #cbd5e1; 
+  border: 1px solid rgba(255,255,255,0.2); 
   border-radius: 6px; 
-  background: #ffffff; 
+  background: transparent !important; 
   -webkit-overflow-scrolling: touch; 
 }
 
@@ -297,9 +310,6 @@ td {
   cursor: pointer; 
 }
 
-.modal-table tr:hover { 
-  background: #f1f5f9; 
-}
 
 
 
@@ -345,12 +355,10 @@ td {
   text-align: center;
   outline: none;
   transition: background-color 0.2s, border-color 0.2s;
-  
-  /* ИСПРАВЛЕНИЕ: Инпут прозрачен и наследует матовую зебру фона строки */
   background: transparent !important;
 }
 
-/* При фокусе (клике ввода) ячейка становится белой */
+/* При фокусе ячейка становится белой */
 .cell-stock-dual-input:focus {
   background: #ffffff !important;
 }
@@ -384,7 +392,8 @@ td {
 }
 
 .item-info-badge { 
-  background: #e2e8f0; 
+  background: rgba(226, 232, 240, 0.85); 
+  backdrop-filter: blur(5px);
   padding: 8px; 
   border-radius: 8px; 
   font-size: 1.5vh; 
@@ -433,7 +442,7 @@ td {
 
 .meta-trigger { 
   width: 100%; 
-  background: #edf2f7; 
+  background: rgba(237, 242, 247, 0.9); 
   border: 2px solid #cbd5e1; 
   border-radius: 8px; 
   font-size: 1.6vh; 
@@ -462,14 +471,13 @@ td {
 
 
 
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 4
    АВТОР: AI DEVELOPER
    ========================================================================= */
 
 .numpad-grid button { 
-  background: #f8fafc; 
+  background: rgba(248, 250, 252, 0.9); 
   border: 1px solid #cbd5e1; 
   border-radius: 10px; 
   font-size: 2vh; 
@@ -544,7 +552,7 @@ td {
   padding: 15px; 
   font-size: 1.8vh; 
   font-weight: 600; 
-  background: #f1f5f9; 
+  background: rgba(241, 245, 249, 0.9); 
   border: 1px solid #cbd5e1; 
   border-radius: 8px; 
   text-align: left; 
@@ -557,7 +565,7 @@ td {
 
 /* Экран 3.5: Куда выдано */
 #where-view { display: flex; flex-direction: column; height: 100%; }
-#where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
+#where-input { width: 100%; padding: 15px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.9); color: #000; }
 .btn-where-save { background: #22c55e; margin-bottom: 10px; height: 50px; }
 .btn-where-back { background: #64748b; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.8vh; font-weight: bold; }
 
@@ -579,7 +587,7 @@ td {
    ========================================================================= */
 
 /* Компоненты выбора возвратов */
-.return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
+.return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; color: white; }
 .return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
 
 .btn-return-action { 
@@ -609,12 +617,12 @@ td {
 .btn-compare-balance { background: #7c3aed; }
 .btn-diff-balance { background: #0284c7; }
 #balance-paste-container { display: flex; flex-direction: column; flex-grow: 1; gap: 10px; }
-.balance-helper-text { font-size: 1.4vh; color: #475569; margin: 0; text-align: center; }
+.balance-helper-text { font-size: 1.4vh; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.8); margin: 0; text-align: center; }
 
 /* Экран 6: Table diff */
 #diff-table-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
-#diff-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
-.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; }
+#diff-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid rgba(255,255,255,0.4); border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; background: rgba(255,255,255,0.9); color: #000; }
+.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; background: transparent !important; }
 .table-diff-content { width: max-content; min-width: 100%; }
 .btn-diff-back { margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0; }
 
@@ -627,16 +635,12 @@ td {
 .filter-popover .color-opt-none { border-left: 5px solid #f1f5f9; }
 
 /* Стили окон изменений склада */
-.stock-mode-badge { color: #ef4444; font-weight: bold; font-size: 1.6vh; margin-top: 4px; animation: pulseEditMode 1.5s infinite; text-align: center; margin-bottom: 8px; }
+.stock-mode-badge { color: #ef4444; font-weight: bold; font-size: 1.6vh; margin-top: 4px; animation: pulseEditMode 1.5s infinite; text-align: center; margin-bottom: 8px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 @keyframes pulseEditMode { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-.btn-edit-trigger { width: 100%; height: 9.6vh; min-height: 55px; padding: 10px; background: #475569; color: white; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 2.8vh; font-weight: bold; cursor: pointer; margin-bottom: 12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: background-color 0.2s, transform 0.1s; }
+.btn-edit-trigger { width: 100%; height: 9.6vh; min-height: 55px; padding: 10px; background: rgba(71, 85, 105, 0.9); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 2.8vh; font-weight: bold; cursor: pointer; margin-bottom: 12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); transition: background-color 0.2s, transform 0.1s; }
 .btn-edit-trigger:active { background: #334155; transform: scale(0.98); }
 .stock-edit-actions-row button { padding: 16px 10px; font-size: 2vh; border-radius: 10px; }
-
-
-
-
 
 
 
@@ -666,19 +670,18 @@ td {
 .return-mode-active { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 #sync-btn.sync-active-highlight { background-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.6) !important; border-radius: 8px; }
 
-/* Матовые фоны для строк журнала и зебра-эффект */
-#logs-body tr { background: #ffffff; border-bottom: 1px solid #cbd5e1; }
-#logs-body tr.log-row-wait { background: #ffffff !important; }
-#logs-body tr.log-row-synced:nth-of-type(odd) { background: #c3e6cb !important; }
-#logs-body tr.log-row-synced:nth-of-type(even) { background: #e2f3e7 !important; }
+/* Полупрозрачные матовые фоны строк для журналов выдачи (зебра поверх fon.jpg) */
+#logs-body tr.log-row-wait { background: rgba(255, 255, 255, 0.85) !important; }
+#logs-body tr.log-row-synced:nth-of-type(odd) { background: rgba(195, 230, 203, 0.85) !important; }
+#logs-body tr.log-row-synced:nth-of-type(even) { background: rgba(226, 243, 231, 0.85) !important; }
 
-/* ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА (ТЕПЕРЬ НАВСЕГДА АКТИВНА) */
-#stock-body tr { border-bottom: 1px solid #cbd5e1; transition: background-color 0.3s; }
-#stock-body tr:nth-of-type(odd) { background: #c3e6cb !important; }
-#stock-body tr:nth-of-type(even) { background: #e2f3e7 !important; }
+/* ПОЛУПРОЗРАЧНАЯ ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА ПОВЕРХ КАРТИНКИ */
+#stock-body tr { border-bottom: 1px solid rgba(255,255,255,0.15); transition: background-color 0.3s; }
+#stock-body tr:nth-of-type(odd) { background: rgba(195, 230, 203, 0.8) !important; }
+#stock-body tr:nth-of-type(even) { background: rgba(226, 243, 231, 0.8) !important; }
 
 @media (min-width: 600px) {
-  #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
+  #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); padding: 20px; border-radius: 15px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin: auto; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
 
@@ -692,56 +695,19 @@ td {
   overflow: auto !important; 
   -webkit-overflow-scrolling: touch !important; 
   touch-action: auto !important; 
-  border: 2px solid #cbd5e1;
+  border: 2px solid rgba(255,255,255,0.2);
   border-radius: 8px;
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.15);
   box-sizing: border-box;
 }
 
-.excel-grid-table {
-  border-collapse: separate !important;
-  border-spacing: 0 !important;
-  font-family: monospace;
-  font-size: 1.3vh;
-  width: max-content;
-  background: #ffffff;
-}
-
-.excel-grid-table th {
-  background: #e2e8f0 !important;
-  color: #334155 !important;
-  font-weight: bold;
-  text-align: center;
-  padding: 4px 8px;
-  border-right: 1px solid #cbd5e1 !important;
-  border-bottom: 1px solid #cbd5e1 !important;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  user-select: none;
-}
-
+.excel-grid-table { border-collapse: separate !important; border-spacing: 0 !important; font-family: monospace; font-size: 1.3vh; width: max-content; background: transparent; }
+.excel-grid-table th { background: #e2e8f0 !important; color: #334155 !important; font-weight: bold; text-align: center; padding: 4px 8px; border-right: 1px solid #cbd5e1 !important; border-bottom: 1px solid #cbd5e1 !important; position: sticky; top: 0; z-index: 10; user-select: none; }
 .excel-grid-table th.excel-row-header { position: sticky; left: 0; z-index: 11; background: #e2e8f0 !important; min-width: 40px; }
 .excel-grid-table th.excel-corner-header { position: sticky; top: 0; left: 0; z-index: 12; background: #cbd5e1 !important; }
-
-.excel-grid-table td {
-  padding: 4px 6px;
-  border-right: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-  min-width: 85px;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  background: #ffffff;
-  color: #000000;
-  text-align: left;
-  user-select: none;
-}
-
-.excel-grid-table tr:nth-child(even) td { background: #f8fafc; }
-.excel-grid-table td.excel-cell-selected { outline: 2px solid #22c55e !important; outline-offset: -2px; background: #e2f3e7 !important; }
+.excel-grid-table td { padding: 4px 6px; border-right: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); min-width: 85px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: rgba(255,255,255,0.85); color: #000000; text-align: left; user-select: none; }
+.excel-grid-table tr:nth-child(even) td { background: rgba(248, 250, 252, 0.85); }
+.excel-grid-table td.excel-cell-selected { outline: 2px solid #22c55e !important; outline-offset: -2px; background: rgba(226, 243, 231, 0.95) !important; }
 .excel-grid-wrapper::-webkit-scrollbar { width: 12px; height: 12px; }
-.excel-grid-wrapper::-webkit-scrollbar-track { background: #f1f5f9; }
-.excel-grid-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 3px solid #f1f5f9; }
-
+.excel-grid-wrapper::-webkit-scrollbar-track { background: rgba(241, 245, 249, 0.2); }
+.excel-grid-wrapper::-webkit-scrollbar-thumb { background: rgba(203, 213, 225, 0.5); border-radius: 6px; border: 3px solid transparent; }
