@@ -1,6 +1,6 @@
-// js/save.js — Модуль сохранения данных выдачи и возвратов — ЧАСТЬ 1
+// js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 1
 // АВТОР: AI DEVELOPER
-// ГАРАНТИЯ ТЕКСТОВЫХ МЕТОК СКЛАДОВ ПРИ ПАКЕТНОЙ И ОДИНОЧНОЙ ВЫДАЧЕ/ВОЗВРАТЕ
+// ГАРАНТИЯ ТЕКСТОВЫХ МЕТОК СКЛАДОВ ПРИ ПАКЕТНОЙ И ОДИНОЧНОЙ ВЫДАЧЕ/ВОЗВРАТЕ ДЛЯ ОБЛАКА
 
 async function saveEntry() {
   if (window.isSaving) return; 
@@ -51,11 +51,21 @@ async function saveEntry() {
           let rem = item.qty;
 
           if (item.wh === "скл.1") {
-            if (s1 >= rem) { window.inventoryData[originalRowIndex][6] = s1 - rem; } 
-            else { window.inventoryData[originalRowIndex][6] = 0; rem -= s1; window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); }
+            if (s1 >= rem) { 
+              window.inventoryData[originalRowIndex][6] = s1 - rem; 
+            } else { 
+              window.inventoryData[originalRowIndex][6] = 0; 
+              rem -= s1; 
+              window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); 
+            }
           } else {
-            if (s2 >= rem) { window.inventoryData[originalRowIndex][7] = s2 - rem; } 
-            else { window.inventoryData[originalRowIndex][7] = 0; rem -= s2; window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); }
+            if (s2 >= rem) { 
+              window.inventoryData[originalRowIndex][7] = s2 - rem; 
+            } else { 
+              window.inventoryData[originalRowIndex][7] = 0; 
+              rem -= s2; 
+              window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
+            }
           }
           window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
         }
@@ -73,8 +83,10 @@ async function saveEntry() {
 
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
+      
       if (typeof renderLogs === 'function') renderLogs(); 
       if (typeof renderStock === 'function') renderStock(); 
+      
       window.issuanceBasket = [];
       closeModal(); 
       window.isSaving = false; 
@@ -87,7 +99,16 @@ async function saveEntry() {
 
 
 
-      // Извлекаем ключи для одиночных операций (прямой ввод в нумпад)
+
+
+
+
+
+  // js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 2
+// АВТОР: AI DEVELOPER
+// ЧАСТИЧНЫЙ ВОЗВРАТ И ОДИНОЧНАЯ ВЫДАЧА С ФИКСАЦИЕЙ СКЛАДОВ БЕЗ БЛОКИРУЮЩИХ АЛЕРТОВ
+
+    // Извлекаем ключи для одиночных операций (прямой ввод в нумпад)
     const p1 = window.currentSelectedRowData[0] || "";
     const p2 = window.currentSelectedRowData[1] || "";
     const p3 = window.currentSelectedRowData[2] || "";
@@ -104,7 +125,11 @@ async function saveEntry() {
     }
 
     const enteredQty = parseInt(window.currentQty) || 0;
-    if (enteredQty <= 0) { alert("Ошибка: Количество должно быть больше 0!"); window.isSaving = false; return; }
+    if (enteredQty <= 0) { 
+      alert("Ошибка: Количество должно быть больше 0!"); 
+      window.isSaving = false; 
+      return; 
+    }
 
     // =========================================================================
     // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ С АВТОМАТИЧЕСКИМ СКЛЕИВАНИЕМ МЕТКИ СКЛАДА
@@ -135,7 +160,7 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // КРИТИЧЕСКИЙ ФИКС: Принудительно добавляем текстовую метку [СКЛ.1]/[СКЛ.2]
+      // КРИТИЧЕСКИЙ ФИКС: Принудительно добавляем текстовую метку [СКЛ.1]/[СКЛ.2] в лог возврата части
       const whMark = ` [${partTargetWh.toUpperCase()}]`;
       const returnPartRowData = [
         nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination + whMark, time, day, month, year
@@ -146,6 +171,7 @@ async function saveEntry() {
       
       if (typeof renderLogs === 'function') renderLogs(); 
       if (typeof renderStock === 'function') renderStock(); 
+      
       window.isPartialReturnInput = false;
       closeModal(); 
       window.isSaving = false; 
@@ -154,22 +180,31 @@ async function saveEntry() {
     }
 
     // =========================================================================
-    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (ПРИОРИТЕТ ВЫБРАННОГО НА ТУМБЛЕРЕ СКЛАДА)
+    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ВЫБРАННЫЙ ТУМБЛЕР СКЛАДА)
     // =========================================================================
     if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
       let s2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0;
       
-      // Списание с учетом тумблера склада, выбранного на нумпадах одиночной выдачи
       const currentSelectedWh = window.numpadSelectedWarehouse || "скл.1";
 
       if (currentSelectedWh === "скл.2") {
-        if (s2 >= rem) { window.inventoryData[originalRowIndex][7] = s2 - rem; } 
-        else { window.inventoryData[originalRowIndex][7] = 0; rem -= s2; window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); }
+        if (s2 >= rem) { 
+          window.inventoryData[originalRowIndex][7] = s2 - rem; 
+        } else { 
+          window.inventoryData[originalRowIndex][7] = 0; 
+          rem -= s2; 
+          window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
+        }
       } else {
-        if (s1 >= rem) { window.inventoryData[originalRowIndex][6] = s1 - rem; } 
-        else { window.inventoryData[originalRowIndex][6] = 0; rem -= s1; window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); }
+        if (s1 >= rem) { 
+          window.inventoryData[originalRowIndex][6] = s1 - rem; 
+        } else { 
+          window.inventoryData[originalRowIndex][6] = 0; 
+          rem -= s1; 
+          window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); 
+        }
       }
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
     }
@@ -190,6 +225,7 @@ async function saveEntry() {
     
     if (typeof renderLogs === 'function') renderLogs(); 
     if (typeof renderStock === 'function') renderStock(); 
+    
     closeModal(); 
     window.isSaving = false; 
     if (typeof sendUnsynced === 'function') sendUnsynced(); 
