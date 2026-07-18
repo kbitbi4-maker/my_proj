@@ -1,7 +1,7 @@
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 1
    АВТОР: AI DEVELOPER
-   УСТАНОВКА ЕДИНОГО МАТОВОГО СТИЛЯ ДЛЯ ВСЕХ СТРАНИЦ, ВКЛЮЧАЯ ИНДЕКС
+   УСТАНОВКА ЕДИНОГО МАТОВОГО СТИЛЯ ДЛЯ ВСЕХ СТРАНИЦ, ВКЛЮЧАЯ ИНДЕКС И ГЛАВНУЮ
    ========================================================================= */
 
 /* Базовые стили экрана и сквозного фона */
@@ -47,7 +47,7 @@ body {
   margin: 0; 
   font-size: 2.7vh; 
   flex-grow: 1; 
- text-align: center; 
+  text-align: center; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -118,7 +118,7 @@ body {
   gap: 1.5vh; 
   justify-content: flex-start; 
 
-  /* ИСПРАВЛЕНИЕ ДЛЯ СТРАНИЦЫ ИНДЕКСА И ЖУРНАЛА: Эффект полупрозрачного матового стекла на контентной зоне */
+  /* ИСПРАВЛЕНИЕ ДЛЯ ВСЕХ ЭКРАНОВ: Накладываем матовое стекло */
   background: rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
@@ -142,6 +142,9 @@ video {
   height: 100%; 
   object-fit: cover; 
 }
+
+
+
 
 
 
@@ -227,17 +230,12 @@ td {
   display: flex; 
   align-items: stretch; 
   justify-content: center; 
-  
-  /* Наследование того же фонового изображения */
-  background: url('../fon.jpg') no-repeat center center fixed !important;
-  background-size: cover !important;
+  background: transparent !important;
 }
 
 .modal-content { 
-  /* Полупрозрачное матовое стекло для внутренних страниц модальных окон */
-  background: rgba(255, 255, 255, 0.1) !important; 
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  /* Модальный контент также становится полностью сквозным без швов */
+  background: transparent !important; 
   width: 100%; 
   height: 100%; 
   padding: 15px; 
@@ -318,6 +316,7 @@ td {
 
 
 
+
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 3
    АВТОР: AI DEVELOPER
@@ -378,8 +377,7 @@ td {
 #numpad-view { 
   display: flex; 
   flex-direction: column; 
-  height: 90vh; 
-  padding-bottom: 5vh; 
+  height: 100%; 
   width: 100%; 
   box-sizing: border-box; 
   gap: 4px; 
@@ -454,7 +452,6 @@ td {
   flex-grow: 1; 
   min-height: 0; 
 }
-
 
 
 
@@ -568,7 +565,6 @@ td {
 
 
 
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 5
    АВТОР: AI DEVELOPER
@@ -637,6 +633,7 @@ td {
 
 
 
+
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 6
    АВТОР: AI DEVELOPER
@@ -662,13 +659,13 @@ td {
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: rgba(195, 230, 203, 0.85) !important; }
 #logs-body tr.log-row-synced:nth-of-type(even) { background: rgba(226, 243, 231, 0.85) !important; }
 
-/* ПОЛУПРОЗРАЧНАЯ ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА (ТЕПЕРЬ НАВСЕГДА АКТИВНА) */
+/* ПОЛУПРОЗРАЧНАЯ ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА */
 #stock-body tr { border-bottom: 1px solid rgba(255,255,255,0.15); transition: background-color 0.3s; }
 #stock-body tr:nth-of-type(odd) { background: rgba(195, 230, 203, 0.8) !important; }
 #stock-body tr:nth-of-type(even) { background: rgba(226, 243, 231, 0.8) !important; }
 
 @media (min-width: 600px) {
-  #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid rgba(255,255,255,0.2); padding: 20px; border-radius: 15px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin: auto; }
+  #numpad-view { max-width: 450px; height: 100%; border: 1px solid rgba(255,255,255,0.2); padding: 20px; border-radius: 15px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin: auto; }
 }
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
 
