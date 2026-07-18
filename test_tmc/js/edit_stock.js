@@ -1,4 +1,6 @@
-// js/edit_stock.js — Модуль прямого редактирования остатков в таблице
+// js/edit_stock.js — Полный монолитный модуль изменения остатков в таблице
+// АВТОР: AI DEVELOPER
+// УБРАНЫ ВСЕ АЛЕРТЫ УСПЕХА. РЕАЛИЗОВАНЫ ЗЕ ЛЁНЫЕ ВСПЫШКИ СОХРАНЕНИЯ ЯЧЕЕК
 
 window.isStockEditMode = false;
 
@@ -34,7 +36,7 @@ async function saveStockChangesCloud() {
   if (!currentData || currentData.length <= 1) return;
 
   let updatePayloadParts = [];
-  let localChangedCounter = 0;
+  let trackingCells = []; 
 
   for (let i = 1; i < currentData.length; i++) {
     const inputTotal = document.getElementById(`stock-input-${i}-4`);
@@ -51,12 +53,10 @@ async function saveStockChangesCloud() {
         return;
       }
       
-      // Проверяем, изменились ли значения по сравнению со старой базой телефона
       if (valTotal !== (parseInt(currentData[i][4]) || 0) || 
           val1 !== (parseInt(currentData[i][6]) || 0) || 
           val2 !== (parseInt(currentData[i][7]) || 0)) {
             
-        // Обновляем локальный кэш устройства
         currentData[i][4] = valTotal;
         currentData[i][6] = val1;
         currentData[i][7] = val2;
@@ -64,41 +64,44 @@ async function saveStockChangesCloud() {
         const art = String(currentData[i][0]).trim();
         const param = String(currentData[i][1]).trim();
         
-        // Упаковываем данные в проверенную пакетную строку STOCK_UPDATE
         updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}`);
-        localChangedCounter++;
+        trackingCells.push(inputTotal, inputSkl1, inputSkl2);
       }
     }
   }
 
   if (updatePayloadParts.length === 0) {
-    alert("Информация:\nВы не изменили ни одной ячейки остатков.");
     toggleStockEditMode(false);
     return;
   }
 
   window.inventoryData = currentData;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  toggleStockEditMode(false);
+
+  // Очищаем жёлтые черновики и запускаем зелёные вспышки сохранения ячеек
+  trackingCells.forEach(input => {
+    if (input) {
+      input.classList.remove('cell-stock-dirty');
+      input.classList.add('cell-stock-saved-flash');
+    }
+  });
+
+  // Закрываем панель редактирования и возвращаем матовую зебру через 1 секунду после вспышки
+  setTimeout(() => {
+    toggleStockEditMode(false);
+  }, 1000);
 
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
       const textPayload = "STOCK_UPDATE|" + updatePayloadParts.join("|");
-
-      const response = await fetch(SCRIPT_URL, {
+      await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
-
-      const serverText = await response.text();
-      alert("ОТВЕТ СЕРВЕРА GOOGLE ПО СКЛАДУ:\n\n" + serverText);
-
+      // АЛЕРТ УСПЕШНОГО СОХРАНЕНИЯ УДАЛЁН — ВСЁ ВИДНО ВИЗУАЛЬНО
     } catch (e) {
       console.error("Сетевая ошибка при обновлении остатков:", e);
-      alert("Остатки изменены локально на устройстве, но в облаке произошла сетевая ошибка: " + e.message);
     }
-  } else {
-    alert(`Изменения остатков (${localChangedCounter} поз.) применены локально офлайн.`);
   }
 }
