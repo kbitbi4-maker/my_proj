@@ -19,7 +19,7 @@ body {
   display: flex; 
   flex-direction: column; 
   /* Устанавливаем основной фоновый рисунок fon.jpg глобально для всего приложения */
-  background: url('../fon.jpg') no-repeat center center fixed; 
+  background: url('../fon_s.jpg') no-repeat center center fixed; 
   background-size: cover; 
   background-color: #475569; 
 }
