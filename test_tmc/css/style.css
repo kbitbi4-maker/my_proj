@@ -1,7 +1,7 @@
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 1
    АВТОР: AI DEVELOPER
-   ГЛОБАЛЬНЫЙ СКВОЗНОЙ ФОН fon.jpg ДЛЯ ВСЕХ ЭКРАНОВ И МОДАЛЬНЫХ ОКОН
+   УСТАНОВКА ЕДИНОГО МАТОВОГО СТИЛЯ ДЛЯ ВСЕХ СТРАНИЦ, ВКЛЮЧАЯ ИНДЕКС
    ========================================================================= */
 
 /* Базовые стили экрана и сквозного фона */
@@ -18,7 +18,7 @@ html, body {
 body { 
   display: flex; 
   flex-direction: column; 
-  /* Устанавливаем основной фоновый рисунок fon.jpg */
+  /* Устанавливаем основной фоновый рисунок fon.jpg глобально для всего приложения */
   background: url('../fon.jpg') no-repeat center center fixed; 
   background-size: cover; 
   background-color: #475569; 
@@ -47,7 +47,7 @@ body {
   margin: 0; 
   font-size: 2.7vh; 
   flex-grow: 1; 
-  text-align: center; 
+ text-align: center; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -107,7 +107,7 @@ body {
 
 /* Основной контент и камера */
 .content { 
-  padding: 1vh 0; 
+  padding: 1vh 15px; 
   display: flex; 
   flex-direction: column; 
   align-items: center; 
@@ -117,6 +117,11 @@ body {
   box-sizing: border-box; 
   gap: 1.5vh; 
   justify-content: flex-start; 
+
+  /* ИСПРАВЛЕНИЕ ДЛЯ СТРАНИЦЫ ИНДЕКСА И ЖУРНАЛА: Эффект полупрозрачного матового стекла на контентной зоне */
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
 }
 
 .camera-preview { 
@@ -143,11 +148,6 @@ video {
 
 
 
-
-
-
-
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 2
    АВТОР: AI DEVELOPER
@@ -155,19 +155,20 @@ video {
 
 /* Стилизация журналов выдачи */
 #result { 
-  width: 95%; 
+  width: 100%; 
   display: flex; 
   flex-direction: column; 
   gap: 5px; 
   padding-bottom: 10px; 
   flex-grow: 1; 
   overflow: hidden; 
+  background: transparent !important;
 }
 
 .log-title { 
   color: white; 
   font-weight: bold; 
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.8); 
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8); 
   font-size: 2vh; 
   padding-left: 5px; 
 }
@@ -176,7 +177,7 @@ video {
   width: 100%; 
   overflow: auto; 
   border-radius: 8px; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
   border: none !important; 
   background: transparent !important; 
   flex-grow: 1; 
@@ -196,7 +197,7 @@ th {
   background: #475569; 
   color: white; 
   padding: 8px 5px; 
-  border: 1px solid #333; 
+  border: 1px solid rgba(255,255,255,0.2); 
   position: sticky; 
   top: 0; 
   z-index: 2; 
@@ -204,7 +205,7 @@ th {
 
 td { 
   padding: 6px 5px; 
-  border: 1px solid #888; 
+  border: 1px solid rgba(255,255,255,0.15); 
   text-align: center; 
   color: #000; 
   font-weight: 500; 
@@ -227,13 +228,13 @@ td {
   align-items: stretch; 
   justify-content: center; 
   
-  /* ИСПРАВЛЕНИЕ: Модальное окно теперь наследует тот же fon.jpg, что и главный экран */
+  /* Наследование того же фонового изображения */
   background: url('../fon.jpg') no-repeat center center fixed !important;
   background-size: cover !important;
 }
 
 .modal-content { 
-  /* Делаем контент полностью матово-прозрачным поверх картинки */
+  /* Полупрозрачное матовое стекло для внутренних страниц модальных окон */
   background: rgba(255, 255, 255, 0.1) !important; 
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -254,7 +255,7 @@ td {
   font-size: 35px; 
   border: none; 
   background: transparent; 
-  color: white; /* Меняем на белый для контраста с fon.jpg */
+  color: white; 
   cursor: pointer; 
   z-index: 10; 
   font-weight: bold; 
@@ -264,7 +265,7 @@ td {
 .modal-content h3 { 
   margin: 0 0 10px 0; 
   font-size: 2.2vh; 
-  color: white; /* Текст заголовков на подэкранах теперь белый */
+  color: white; 
   text-shadow: 0 2px 4px rgba(0,0,0,0.6);
   text-align: center; 
 }
@@ -309,12 +310,6 @@ td {
 .modal-table tr { 
   cursor: pointer; 
 }
-
-
-
-
-
-
 
 
 
@@ -469,8 +464,6 @@ td {
 
 
 
-
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 4
    АВТОР: AI DEVELOPER
@@ -576,11 +569,6 @@ td {
 
 
 
-
-
-
-
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 5
    АВТОР: AI DEVELOPER
@@ -649,7 +637,6 @@ td {
 
 
 
-
 /* =========================================================================
    ОБЪЕДИНЁННЫЙ ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ style.css — ЧАСТЬ 6
    АВТОР: AI DEVELOPER
@@ -675,7 +662,7 @@ td {
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: rgba(195, 230, 203, 0.85) !important; }
 #logs-body tr.log-row-synced:nth-of-type(even) { background: rgba(226, 243, 231, 0.85) !important; }
 
-/* ПОЛУПРОЗРАЧНАЯ ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА ПОВЕРХ КАРТИНКИ */
+/* ПОЛУПРОЗРАЧНАЯ ЗЕБРА ТАБЛИЦЫ ОСТАТКОВ СКЛАДА ПЛАНШЕТА (ТЕПЕРЬ НАВСЕГДА АКТИВНА) */
 #stock-body tr { border-bottom: 1px solid rgba(255,255,255,0.15); transition: background-color 0.3s; }
 #stock-body tr:nth-of-type(odd) { background: rgba(195, 230, 203, 0.8) !important; }
 #stock-body tr:nth-of-type(even) { background: rgba(226, 243, 231, 0.8) !important; }
