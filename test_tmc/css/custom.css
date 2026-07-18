@@ -1,5 +1,6 @@
 /* =========================================================================
-   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 1
+   ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ (CUSTOM СТИЛИ) — ЧАСТЬ 1
+   АВТОР: AI DEVELOPER
    ========================================================================= */
 
 /* КРИТИЧЕСКИЙ ФИКС: Убираем белый фон пустующего пространства окна выдачи материалов */
@@ -56,15 +57,64 @@ table {
   color: #000000;
   text-align: center;
   outline: none;
+  transition: background-color 0.2s, border-color 0.2s;
 }
-/* =========================================================================
-   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 2
-   ========================================================================= */
+
+/* Класс для изменённой ячейки (жёлтый черновик редактирования остатков) */
+.cell-stock-dirty {
+  background: #fef08a !important; /* Светло-жёлтый */
+  border-color: #eab308 !important; /* Тёмно-жёлтый */
+}
+
+/* Эффект успешной мгновенной вспышки при сохранении остатков в облако */
+.cell-stock-saved-flash {
+  animation: flashSaved 1s ease-out;
+}
+
+@keyframes flashSaved {
+  0% { background: #4ade80 !important; } /* Ярко-зелёный */
+  100% { background: #ffffff !important; }
+}
 
 /* Компоненты выбора возвратов */
-.return-badge { border-left-color: #ef4444 !important; text-align: left !important; line-height: 1.5; margin-bottom: 20px; font-family: monospace; }
-.return-actions-grid { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
-.btn-return-action { width: 100%; padding: 15px; font-size: 1.8vh; font-weight: bold; text-transform: uppercase; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.return-badge { 
+  border-left-color: #ef4444 !important; 
+  text-align: left !important; 
+  line-height: 1.5; 
+  margin-bottom: 20px; 
+  font-family: monospace; 
+}
+
+.return-actions-grid { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 12px; 
+  flex-grow: 1; 
+}
+
+
+
+
+
+
+
+/* =========================================================================
+   ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ (CUSTOM СТИЛИ) — ЧАСТЬ 2
+   АВТОР: AI DEVELOPER
+   ========================================================================= */
+
+.btn-return-action { 
+  width: 100%; 
+  padding: 15px; 
+  font-size: 1.8vh; 
+  font-weight: bold; 
+  text-transform: uppercase; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+}
+
 .btn-return-action:active { transform: translateY(1px); }
 .return-full { background: #3b82f6; color: white; }
 .return-full:active { background: #2563eb; }
@@ -84,29 +134,124 @@ table {
 
 /* Экран 6: Table diff */
 #diff-table-view { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
-#diff-search { width: 100%; padding: 12px; font-size: 1.8vh; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 8px; margin-bottom: 10px; flex-shrink: 0; }
-.table-diff-wrapper { flex-grow: 1; width: 100%; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff; }
+#diff-search { 
+  width: 100%; 
+  padding: 12px; 
+  font-size: 1.8vh; 
+  box-sizing: border-box; 
+  border: 2px solid #cbd5e1; 
+  border-radius: 8px; 
+  margin-bottom: 10px; 
+  flex-shrink: 0; 
+}
+
+.table-diff-wrapper { 
+  flex-grow: 1; 
+  width: 100%; 
+  overflow: auto; 
+  border: 1px solid #cbd5e1; 
+  border-radius: 6px; 
+  background: #ffffff; 
+}
+
 .table-diff-content { width: max-content; min-width: 100%; }
 .btn-diff-back { margin-top: 10px; width: 100%; height: 45px; flex-shrink: 0; }
 
 /* Поповер фильтрации */
-.filter-popover { position: absolute; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 3000; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
-.filter-popover button { background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 1.4vh; font-weight: 600; border-radius: 6px; cursor: pointer; text-align: left; color: #334155; }
+.filter-popover { 
+  position: absolute; 
+  background: #ffffff; 
+  border: 1px solid #cbd5e1; 
+  border-radius: 8px; 
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15); 
+  z-index: 3000; 
+  padding: 10px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  min-width: 180px; 
+}
+
+.filter-popover button { 
+  background: #f8fafc; 
+  border: 1px solid #cbd5e1; 
+  padding: 8px 12px; 
+  font-size: 1.4vh; 
+  font-weight: 600; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  text-align: left; 
+  color: #334155; 
+}
+
 .filter-popover button:hover { background: #cbd5e1; }
 .filter-popover .color-opt-green { border-left: 5px solid #dcfce7; }
 .filter-popover .color-opt-red { border-left: 5px solid #fee2e2; }
 .filter-popover .color-opt-none { border-left: 5px solid #f1f5f9; }
 
 /* Стили окон изменений склада */
-.stock-mode-badge { color: #ef4444; font-weight: bold; font-size: 1.6vh; margin-top: 4px; animation: pulseEditMode 1.5s infinite; text-align: center; margin-bottom: 8px; }
+.stock-mode-badge { 
+  color: #ef4444; 
+  font-weight: bold; 
+  font-size: 1.6vh; 
+  margin-top: 4px; 
+  animation: pulseEditMode 1.5s infinite; 
+  text-align: center; 
+  margin-bottom: 8px; 
+}
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ (CUSTOM СТИЛИ) — ЧАСТЬ 3
+   АВТОР: AI DEVELOPER
+   ========================================================================= */
+
 @keyframes pulseEditMode { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-.btn-edit-trigger { width: 100%; height: 9.6vh; min-height: 55px; padding: 10px; background: #475569; color: white; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 2.8vh; font-weight: bold; cursor: pointer; margin-bottom: 12px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: background-color 0.2s, transform 0.1s; }
+.btn-edit-trigger { 
+  width: 100%; 
+  height: 9.6vh; 
+  min-height: 55px; 
+  padding: 10px; 
+  background: #475569; 
+  color: white; 
+  border: 1px solid #cbd5e1; 
+  border-radius: 12px; 
+  font-size: 2.8vh; 
+  font-weight: bold; 
+  cursor: pointer; 
+  margin-bottom: 12px; 
+  box-sizing: border-box; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+  transition: background-color 0.2s, transform 0.1s; 
+}
+
 .btn-edit-trigger:active { background: #334155; transform: scale(0.98); }
 .stock-edit-actions-row button { padding: 16px 10px; font-size: 2vh; border-radius: 10px; }
 
 /* Стили визуальных статусных плашек в шапке */
-.status-badge { font-size: 1.4vh; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); letter-spacing: 0.5px; animation: pulseBadge 1.5s infinite; }
+.status-badge { 
+  font-size: 1.4vh; 
+  font-weight: bold; 
+  padding: 3px 8px; 
+  border-radius: 4px; 
+  text-transform: uppercase; 
+  margin-left: 6px; 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+  letter-spacing: 0.5px; 
+  animation: pulseBadge 1.5s infinite; 
+}
+
 .badge-return-active { background: #ef4444; color: white; border: 1px solid #fee2e2; }
 .badge-sync-active { background: #0284c7; color: white; border: 1px solid #e0f2fe; }
 
@@ -126,12 +271,42 @@ table {
 #logs-body tr.log-row-synced:nth-of-type(odd) { background: #c3e6cb !important; }
 #logs-body tr.log-row-synced:nth-of-type(even) { background: #e2f3e7 !important; }
 
+/* ЗЕРКАЛЬНОЕ ОКРАШИВАНИЕ ТАБЛИЦЫ ОСТАТКОВ СКЛАДА В ТАКУЮ ЖЕ МАТОВУЮ ЗЕБРУ */
+#stock-body tr { border-bottom: 1px solid #cbd5e1; transition: background-color 0.3s; }
+#stock-body tr:nth-of-type(odd) { background: #c3e6cb !important; }
+#stock-body tr:nth-of-type(even) { background: #e2f3e7 !important; }
+
+/* При активации режима изменения остатков временно сбрасываем зебру для полей ввода */
+#stock-body tr.editing-stock-row { background: #ffffff !important; }
+
 @media (min-width: 600px) {
-  #numpad-view { max-width: 450px; height: 80vh; padding-bottom: 20px; border: 1px solid #cbd5e1; padding: 20px; border-radius: 15px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: auto; }
+  #numpad-view { 
+    max-width: 450px; 
+    height: 80vh; 
+    padding-bottom: 20px; 
+    border: 1px solid #cbd5e1; 
+    padding: 20px; 
+    border-radius: 15px; 
+    background: #ffffff; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+    margin: auto; 
+  }
 }
+
 @media (max-height: 500px) and (orientation: landscape) { .modal-content { padding-top: 35px; } }
+
+
+
+
+
+
+
+
+
+
 /* =========================================================================
-   ФАЙЛ ДЛЯ ДОРАБОТКИ НОВЫХ ФИЧ И ЭФФЕКТОВ (CUSTOM СТИЛИ) — ЧАСТЬ 3
+   ПОЛНЫЙ МОНОЛИТНЫЙ ФАЙЛ СТИЛЕЙ (CUSTOM СТИЛИ) — ЧАСТЬ 4
+   АВТОР: AI DEVELOPER
    ========================================================================= */
 
 /* КРИТИЧЕСКИЙ ФИКС ПРОКРУТКИ И СКРОЛЛИНГА EXCEL-ГРИДА */
