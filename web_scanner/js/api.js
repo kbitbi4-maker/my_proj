@@ -1,6 +1,6 @@
 // js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRK2p5leSQ7ldjMaJTPpgOBtE_qc0SlBppG6Rzw_8wMvXFf6SivtpRPIF3i-YbbQEniw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBuw9q09PeuBp1NMZ8farOHoncFDl_PHoWmekm8OrWuM9Sh68SpFQOrWEvz-uTYg-iwA/exec';
 
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
