@@ -1,0 +1,237 @@
+<!DOCTYPE html>   
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+  <title>TEST</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="header">
+    <a class="btn-icon" href="../index.html">←</a>
+    <h2>
+      <div id="indicator" class="net-indicator"></div> 
+      <span id="project-title-text">ver_01</span>
+      <div id="status-text-badge" class="status-badge hidden"></div>
+    </h2>
+    <button id="return-mode-btn" class="btn-icon" title="Режим возврата" onclick="toggleReturnMode()">🔄</button>
+    <button class="btn-icon" title="Импорт Сальдо" onclick="openBalanceMenu()">📊</button>
+    <button class="btn-icon" title="Остатки" onclick="showStock()">📋</button>
+    <button id="sync-btn" class="btn-icon" title="Синхронизация" onclick="syncFromGoogle()">☁</button>
+    <button id="start-camera" onclick="toggleCamera()">Найти QR</button>
+  </header>
+  <main class="content">
+    <!-- Камера по умолчанию скрыта с помощью класса hidden -->
+    <div id="camera-container" class="camera-preview hidden"><video id="video" autoplay playsinline></video></div>
+    
+    <!-- Журнал выданных товаров (теперь занимает весь экран) -->
+    <div id="result">
+      <div class="log-title">Журнал выдачи:</div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr id="logs-head">
+              <th>ID</th>
+              <th>Артикул</th>
+              <th>Парам 1</th>
+              <th>Парам 2</th>
+              <th>Наименование</th>
+              <th>Кол-во</th>
+              <th>Сотрудник</th>
+              <th>Автор</th>
+              <th>Куда выдано</th>
+              <th>Время</th>
+              <th>День</th>
+              <th>Мес</th>
+              <th>Год</th>
+            </tr>
+          </thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Динамический всплывающий контейнер для меню сортировки/фильтрации отличий -->
+  <div id="filter-popover-menu" class="filter-popover hidden"></div>
+  <!-- Единое модальное окно для всех подэкранов -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <button class="modal-close" onclick="handleBackButton()">←</button>
+      
+      <!-- ЭКРАН 1: Просмотр и поиск остатков -->
+      <div id="stock-view" class="hidden">
+        <h3>Остатки на складе</h3>
+        <input type="text" id="stock-search" oninput="renderStock()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off">
+        <div class="table-wrapper modal-table">
+          <table>
+            <thead><tr id="stock-head"></tr></thead>
+            <tbody id="stock-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+          <!-- ЭКРАН 2: Цифровая клавиатура (Нумпад с Корзиной и выбором склада) -->
+      <div id="numpad-view" class="hidden" style="display: flex; gap: 15px; width: 100%; height: 90vh; padding-bottom: 5vh; box-sizing: border-box;">
+        
+        <!-- Левая колонка: Управление вводом товара -->
+        <div style="flex: 1.2; display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+          <div id="qr-data-display" class="item-info-badge">Товар не выбран</div>  
+          <div class="numpad-input-block">
+            <div class="numpad-display-row">
+              <div id="numDisplay" class="numpad-screen">0</div>
+              <div class="numpad-meta-buttons">
+                <button id="date-select-btn" class="meta-trigger" onclick="toggleDateMode()">Дата: --.--.--</button>
+              </div>
+            </div>
+            <div class="numpad-grid">
+              <button onclick="pressNum(1)">1</button>
+              <button onclick="pressNum(2)">2</button>
+              <button onclick="pressNum(3)">3</button>
+              <button onclick="pressNum(4)">4</button>
+              <button onclick="pressNum(5)">5</button>
+              <button onclick="pressNum(6)">6</button>
+              <button onclick="pressNum(7)">7</button>
+              <button onclick="pressNum(8)">8</button>
+              <button onclick="pressNum(9)">9</button>
+              <button class="btn-clear" onclick="pressNum('C')">C</button>
+              <button onclick="pressNum(0)">0</button>
+              <!-- КНОПКА ВЫБОРА СКЛАДА (Размещена справа от нуля на свободном месте) -->
+              <button id="numpad-warehouse-btn" style="background: #edf2f7; border: 2px solid #3b82f6; color: #1e3a8a; font-size: 1.4vh;" onclick="toggleNumpadWarehouse()">СКЛ.1</button>
+            </div>
+          </div>
+          <div class="numpad-actions" style="gap: 4px;">
+            <div style="display: flex; gap: 4px;">
+              <button class="user-select-trigger" style="flex: 1;" onclick="openUserMenu()">СОТРУДНИК<span id="whoLabel">...</span></button>
+              <button class="user-select-trigger btn-where-trigger" style="flex: 1;" onclick="openWhereMenu()">КУДА<span id="whereLabel">...</span></button>
+            </div>
+            
+            <!-- Логика добавления нескольких материалов -->
+            <div style="display: flex; gap: 4px; width: 100%;">
+              <button id="add-more-items-btn" class="btn-submit" style="background: #7c3aed; flex: 1; font-size: 1.3vh;" onclick="addMoreMaterialsToOrder()">➕ ДОБАВИТЬ ЕЩЕ</button>
+              <button id="addBtn" class="btn-submit" style="background: #2563eb; flex: 1.3; font-size: 1.3vh;" onclick="pushCurrentToBasket()">ЗАФИКСИРОВАТЬ ТОВАР</button>
+            </div>
+            <button id="final-submit-basket-btn" class="btn-submit hidden" style="background: #22c55e; width: 100%; height: 45px; margin-top: 4px; font-size: 1.6vh;" onclick="saveEntry()">ПОДТВЕРДИТЬ ВЫДАЧУ ПАКЕТА (0)</button>
+          </div>
+        </div>
+
+
+
+
+
+
+
+        
+         <!-- ДОСТИГНУТ ЛИМИН ПО КОЛИЧЕСТВУ СИМВОЛОВ --!>
+        <!-- Правая колонка: Текстовое окно отображения набранного пакета выдачи -->
+        <div style="flex: 0.8; display: flex; flex-direction: column; border: 2px solid #cbd5e1; border-radius: 10px; background: #f8fafc; padding: 10px; box-sizing: border-box; min-width: 150px;">
+          <div style="font-weight: bold; font-size: 1.5vh; color: #334155; margin-bottom: 6px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Список к выдаче:</div>
+          <div id="numpad-basket-display" style="flex-grow: 1; overflow-y: auto; font-family: monospace; font-size: 1.2vh; color: #000; line-height: 1.4; white-space: pre-wrap;">Корзина пуста. Добавьте первый товар...</div>
+          <button class="btn-stock-cancel" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 6px; font-size: 1.2vh; width: 100%; margin-top: auto; border-radius: 6px; font-weight: bold;" onclick="clearIssuanceBasket()">ОЧИСТИТЬ ПАКЕТ</button>
+        </div>
+
+      </div>
+
+      <!-- ЭКРАН 3: Выберите сотрудника -->
+      <div id="user-view" class="hidden">
+        <h3>Выберите сотрудника</h3>
+        <div class="user-list-grid">
+          <button onclick="selectUser('Головин')">Головин</button>
+          <button onclick="selectUser('Иванов')">Иванов</button>
+          <button onclick="selectUser('Мытин')">Мытин</button>
+          <button onclick="selectUser('Погорелов')">Погорелов</button>
+          <button onclick="selectUser('Перепелица')">Перепелица</button>
+          <button onclick="selectUser('Гуляев')">Гуляев</button>
+          <button onclick="selectUser('Божков')">Божков</button>
+          <button onclick="selectUser('Бывальцев')">Бывальцев</button>
+          <button class="btn-back" onclick="handleBackButton()">← Назад</button>
+        </div>
+      </div>
+
+      <!-- ЭКРАН 3.5: Ввод объекта (Куда) -->
+      <div id="where-view" class="hidden">
+        <h3>Куда потрачено / Объект</h3>
+        <input type="text" id="where-input" placeholder="Введите название объекта или направление..." autocomplete="off">
+        <button class="btn-submit btn-where-save" onclick="saveWhereValue()">Сохранить</button>
+        <button class="btn-back btn-where-back" onclick="closeWhereMenu()">← Назад</button>
+      </div>
+
+      <!-- ЭКРАН 4: Подтверждение возврата / Действия со строкой журнала -->
+      <div id="return-view" class="hidden">
+        <h3>Управление выдачей</h3>
+        <div id="return-info-badge" class="item-info-badge return-badge">
+          Загрузка данных...
+        </div>
+        <div class="return-actions-grid">
+          <button class="btn-return-action return-full" onclick="processReturn('full')">ВОЗВРАТ</button>
+          <button class="btn-return-action return-part" onclick="processReturn('part')">ВЕРНУТЬ ЧАСТЬ</button>
+          <button class="btn-return-action return-delete" onclick="executePhysicalDeletion()">УДАЛИТЬ СТРОКУ</button>
+          <button class="btn-back" onclick="handleBackButton()">← Отмена</button>
+        </div>
+      </div>
+
+      <!-- ЭКРАН 5: Диалоговое окно Сальдо и Вставка Таблицы (Excel-style) -->
+      <div id="balance-view" class="hidden">
+        <h3>Управление Сальдо</h3>
+        
+        <!-- Стартовое меню из 3-х кнопок -->
+        <div id="balance-menu-buttons" class="return-actions-grid">
+          <button class="btn-return-action return-full btn-load-balance" onclick="showBalancePasteArea()">ЗАГРУЗИТЬ САЛЬДО</button>
+          <button class="btn-return-action return-part btn-compare-balance" onclick="executeDatabaseComparison()">СРАВНИТЬ</button>
+          <button class="btn-return-action return-full btn-diff-balance" onclick="showDiffTable()">ТАБЛИЦА ОТЛИЧИЙ</button>
+          <button class="btn-back" onclick="handleBackButton()">← Назад</button>
+        </div>
+
+        <!-- Контейнер импорта (Сетка и её кнопки управления) -->
+        <div id="balance-paste-container" class="hidden" style="display: flex; flex-direction: column; height: 100%; gap: 10px;">
+          <p class="balance-helper-text" style="margin: 0; padding: 2px 0;">Кликните на ячейку и нажмите Ctrl+V для вставки из Excel:</p>
+          
+          <!-- Контейнер интерактивного Excel-грида со скроллом -->
+          <div class="excel-grid-wrapper">
+            <table class="excel-grid-table">
+              <thead id="excel-grid-head"></thead>
+              <tbody id="excel-grid-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Нижняя панель действий (Очистить, Внести изменения, Назад) -->
+          <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: auto; padding-bottom: 5px;">
+            <div style="display: flex; gap: 8px; width: 100%;">
+              <button class="btn-return-action return-delete" style="flex: 1; padding: 12px; font-size: 1.5vh; margin: 0;" onclick="clearExcelGridData()">ОЧИСТИТЬ ТАБЛИЦУ</button>
+              <button id="btn-confirm-balance-import" class="btn-submit btn-confirm-import" style="flex: 1; height: auto; min-height: 42px; font-size: 1.5vh; margin: 0;" onclick="processTextTableImport()">ВНЕСТИ ИЗМЕНЕНИЯ</button>
+            </div>
+            <button class="btn-back btn-balance-back" style="margin: 0; width: 100%; height: 40px; padding: 5px;" onclick="hideBalancePasteArea()">← Назад</button>
+          </div>
+        </div>
+      </div>
+      <!-- ЭКРАН 6: Просмотр Таблицы Отличий (С ФИЛЬТРОМ И ПОИСКОМ) -->
+      <div id="diff-table-view" class="hidden">
+        <h3>Таблица отличий остатков</h3>
+        <input type="text" id="diff-search" oninput="renderDiffTableBody()" placeholder="Поиск отличий по наименованию или артикулу..." autocomplete="off">
+        <div class="table-wrapper modal-table table-diff-wrapper">
+          <table class="table-diff-content">
+            <thead><tr id="diff-head"></tr></thead>
+            <tbody id="diff-body"></tbody>
+          </table>
+        </div>
+        <button class="btn-back btn-diff-back" onclick="handleBackButton()">← Назад</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/jsQR.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/stock.js"></script>
+  <script src="js/numpad.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/returns.js"></script>
+  <script src="js/delete_task.js"></script>
+  <script src="js/edit_stock.js"></script>
+  <script src="js/edit_log.js"></script>
+  <script src="js/excel_grid.js"></script>
+  <script src="js/balance.js"></script>
+</body>
+</html>
