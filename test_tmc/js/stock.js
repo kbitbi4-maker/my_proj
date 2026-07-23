@@ -1,17 +1,16 @@
 // ================================================================
-// stock.js — МОДУЛЬ ТАБЛИЦЫ ОСТАТКОВ (С ВЫДЕЛЕНИЕМ КАК У САЛЬДО)
-// Версия 4.1 — выделение работает как в таблице сальдо
+// stock.js — МОДУЛЬ ТАБЛИЦЫ ОСТАТКОВ (ПРАВИЛЬНАЯ НУМЕРАЦИЯ)
+// Версия 4.2 — УБРАНА ДВОЙНАЯ ШАПКА
 // ================================================================
 
 // ================================================================
-// СОСТОЯНИЕ ВЫДЕЛЕНИЯ (КАК У САЛЬДО)
+// СОСТОЯНИЕ ВЫДЕЛЕНИЯ
 // ================================================================
 
 window.stockSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
 window.stockIsDragging = false;
 window.stockDragStartRow = null;
 window.stockDragStartCol = null;
-
 window.isStockEditMode = false;
 window.stockFilterColor = "all";
 window.stockSortColumn = null;
@@ -42,7 +41,7 @@ function showStock() {
 }
 
 // ================================================================
-// РЕНДЕРИНГ ТАБЛИЦЫ ОСТАТКОВ (С ВЫДЕЛЕНИЕМ КАК У САЛЬДО)
+// РЕНДЕРИНГ ТАБЛИЦЫ ОСТАТКОВ (ПРАВИЛЬНАЯ НУМЕРАЦИЯ)
 // ================================================================
 
 function renderStock() {
@@ -54,7 +53,7 @@ function renderStock() {
   const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // ШАПКА (первая строка данных)
+  // ШАПКА (первая строка данных — названия столбцов)
   const headerRow = currentData[0] || [];
   const colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
   const numCols = Math.max(headerRow.length, 21);
@@ -82,7 +81,7 @@ function renderStock() {
   }
   
   // ============================================================
-  // ШАПКА (БУКВЫ, БЕЗ НОМЕРА)
+  // ШАПКА: СТРОКА 1 — БУКВЫ (БЕЗ НОМЕРА)
   // ============================================================
   let headHtml = '';
   headHtml += '<tr>';
@@ -92,10 +91,21 @@ function renderStock() {
     headHtml += '<th id="stock-col-hdr-'+c+'" onclick="stockSelectWholeColumn('+c+')" title="Выделить столбец '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;white-space:normal;word-wrap:break-word;">'+letter+'</th>';
   }
   headHtml += '</tr>';
+  
+  // ============================================================
+  // ШАПКА: СТРОКА 2 — НАЗВАНИЯ (ЭТО СТРОКА 1 В ДАННЫХ)
+  // ============================================================
+  headHtml += '<tr style="font-weight:600;background:#f0f0f0;">';
+  headHtml += '<th class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:default;user-select:none;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">1</th>';
+  for (let c = 0; c < numCols; c++) {
+    const headerName = headerRow[c] !== undefined && headerRow[c] !== '' ? headerRow[c] : colLetters[c] || String.fromCharCode(65 + c);
+    headHtml += '<th style="background:#f0f0f0;color:#333;font-weight:600;font-size:11px;padding:4px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:default;user-select:none;min-width:60px;white-space:normal;word-wrap:break-word;word-break:break-word;">'+headerName+'</th>';
+  }
+  headHtml += '</tr>';
   head.innerHTML = headHtml;
 
   // ============================================================
-  // СБОР ДАННЫХ (индексы: 1 — названия, 2...N — данные)
+  // СБОР ДАННЫХ (индексы: 1 — названия (уже в шапке), 2...N — данные)
   // ============================================================
   let rowsData = [];
   for (let rIdx = 1; rIdx < currentData.length; rIdx++) {
@@ -107,24 +117,14 @@ function renderStock() {
   }
 
   // ============================================================
-  // ТЕЛО ТАБЛИЦЫ
+  // ТЕЛО ТАБЛИЦЫ (ДАННЫЕ НАЧИНАЮТСЯ СО СТРОКИ 2)
   // ============================================================
   let bodyHtml = "";
   
-  // СТРОКА 1: НАЗВАНИЯ (ИНДЕКС 1)
-  bodyHtml += '<tr style="font-weight:600;background:#f0f0f0;">';
-  bodyHtml += '<td class="row-header-num" id="stock-row-hdr-1" onclick="stockSelectWholeRow(1)" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">1</td>';
-  for (let c = 0; c < numCols; c++) {
-    const headerName = headerRow[c] !== undefined && headerRow[c] !== '' ? headerRow[c] : colLetters[c] || String.fromCharCode(65 + c);
-    bodyHtml += '<td id="stock-cell-1-'+c+'" onclick="stockHandleCellClick(event,1,'+c+')" onmousedown="stockHandleMouseDown(event,1,'+c+')" onmouseover="stockHandleMouseOver(event,1,'+c+')" style="border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;background:#f0f0f0;color:#333;font-weight:600;white-space:normal;word-wrap:break-word;word-break:break-word;cursor:pointer;user-select:none;">'+headerName+'</td>';
-  }
-  bodyHtml += '</tr>';
-
-  // СТРОКИ 2...N: ДАННЫЕ
   for (var ri = 0; ri < rowsData.length; ri++) {
     var rIdx = rowsData[ri].index;
     var row = rowsData[ri].data;
-    var rowNum = rIdx;
+    var rowNum = rIdx; // Индекс в массиве (2, 3, 4...)
 
     var rowClickAttr = '';
     if (!window.isStockEditMode) {
@@ -146,9 +146,7 @@ function renderStock() {
         displayValue = gVal + iVal;
       }
 
-      // ============================================================
-      // ВЫДЕЛЕНИЕ — КАК В ТАБЛИЦЕ САЛЬДО
-      // ============================================================
+      // Проверяем выделение
       let isSelected = false;
       if (window.stockSelectedRange.startRow !== null) {
         isSelected = (rIdx >= window.stockSelectedRange.startRow && rIdx <= window.stockSelectedRange.endRow &&
@@ -159,9 +157,9 @@ function renderStock() {
       const bgStyle = zebraBg;
       
       if (window.isStockEditMode) {
-        bodyHtml += '<td id="stock-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;white-space:normal;word-wrap:break-word;word-break:break-word;outline:none;user-select:none;" contenteditable="true" onclick="stockHandleCellClick(event,'+rIdx+','+cIdx+')" onblur="stockHandleCellBlur(this,'+rIdx+','+cIdx+')" onkeydown="stockHandleCellKeyDown(event,'+rIdx+','+cIdx+')" onmousedown="stockHandleMouseDown(event,'+rIdx+','+cIdx+')" onmouseover="stockHandleMouseOver(event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
+        bodyHtml += '<td id="stock-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:60px;white-space:normal;word-wrap:break-word;word-break:break-word;outline:none;user-select:none;" contenteditable="true" onclick="stockHandleCellClick(event,'+rIdx+','+cIdx+')" onblur="stockHandleCellBlur(this,'+rIdx+','+cIdx+')" onkeydown="stockHandleCellKeyDown(event,'+rIdx+','+cIdx+')" onmousedown="stockHandleMouseDown(event,'+rIdx+','+cIdx+')" onmouseover="stockHandleMouseOver(event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
       } else {
-        bodyHtml += '<td id="stock-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;white-space:normal;word-wrap:break-word;word-break:break-word;cursor:pointer;user-select:none;" onclick="stockHandleCellClick(event,'+rIdx+','+cIdx+')" onmousedown="stockHandleMouseDown(event,'+rIdx+','+cIdx+')" onmouseover="stockHandleMouseOver(event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
+        bodyHtml += '<td id="stock-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:60px;white-space:normal;word-wrap:break-word;word-break:break-word;cursor:pointer;user-select:none;" onclick="stockHandleCellClick(event,'+rIdx+','+cIdx+')" onmousedown="stockHandleMouseDown(event,'+rIdx+','+cIdx+')" onmouseover="stockHandleMouseOver(event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
       }
     }
     bodyHtml += '</tr>';
@@ -169,9 +167,7 @@ function renderStock() {
   
   body.innerHTML = bodyHtml || '<tr><td colspan="'+(numCols+1)+'" style="text-align:center;padding:20px;color:#999;">Ничего не найдено</td></tr>';
 
-  // ============================================================
-  // ОБНОВЛЯЕМ ВЫДЕЛЕНИЕ (КАК В ТАБЛИЦЕ САЛЬДО)
-  // ============================================================
+  // Обновляем выделение
   stockRefreshSelection();
   stockAttachDragListeners();
 }
@@ -184,7 +180,7 @@ function stockSelectAll() {
   const data = window.inventoryData;
   if (!data || data.length <= 1) return;
   
-  window.stockSelectedRange.startRow = 1;
+  window.stockSelectedRange.startRow = 1; // Начинаем со строки 1 (названия)
   window.stockSelectedRange.endRow = data.length - 1;
   window.stockSelectedRange.startCol = 0;
   window.stockSelectedRange.endCol = 20;
@@ -315,7 +311,7 @@ function stockGlobalMouseUp(e) {
 }
 
 // ================================================================
-// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ (КАК В ТАБЛИЦЕ САЛЬДО)
+// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ
 // ================================================================
 
 function stockRefreshSelection() {
@@ -330,7 +326,7 @@ function stockRefreshSelection() {
     });
   
   // Снимаем подсветку заголовков
-  const headRow = document.querySelector('#stock-head tr');
+  const headRow = document.querySelector('#stock-head tr:first-child');
   if (headRow) {
     const cells = headRow.querySelectorAll('th');
     cells.forEach(function(el) {
@@ -359,7 +355,7 @@ function stockRefreshSelection() {
     }
   }
   
-  // Подсвечиваем заголовок столбца
+  // Подсвечиваем заголовок столбца (первая строка шапки)
   if (headRow) {
     const cells = headRow.querySelectorAll('th');
     if (cells[window.stockSelectedRange.startCol + 1]) {
@@ -393,7 +389,6 @@ function resetStockFilters() {
 function stockHandleCellBlur(cellElement, rIdx, cIdx) {
   if (!window.isStockEditMode) return;
   
-  // Не редактируем столбец E (индекс 4) — формула
   if (cIdx === 4) {
     const row = window.inventoryData[rIdx];
     if (row) {
@@ -419,7 +414,6 @@ function stockHandleCellBlur(cellElement, rIdx, cIdx) {
     if (window.stockChangesQueue) delete window.stockChangesQueue[cellKey];
   }
   
-  // Пересчёт E = G + I
   if (cIdx === 6 || cIdx === 8) {
     const row = window.inventoryData[rIdx];
     if (row) {
@@ -436,7 +430,6 @@ function stockHandleCellBlur(cellElement, rIdx, cIdx) {
     }
   }
   
-  // Обновляем кнопки
   const changesCount = Object.keys(window.stockChangesQueue || {}).length;
   const saveBtn = document.querySelector('.btn-stock-save');
   if (saveBtn) saveBtn.innerText = '💾 Сохранить в Google ('+changesCount+')';
@@ -449,7 +442,7 @@ function stockHandleCellKeyDown(event, rIdx, cIdx) {
   if (event.key === 'Enter') {
     event.preventDefault();
     const nextCell = document.getElementById('stock-cell-'+(rIdx+1)+'-'+cIdx);
-    if (nextCell) {
+    if (nextCell && nextCell.id.startsWith('stock-cell-')) {
       nextCell.focus();
       stockHandleCellClick(event, rIdx + 1, cIdx);
     }
@@ -552,11 +545,10 @@ async function saveStockChangesCloud() {
 }
 
 // ================================================================
-// КОПИРОВАНИЕ (Ctrl+C) — КАК В ТАБЛИЦЕ САЛЬДО
+// КОПИРОВАНИЕ (Ctrl+C)
 // ================================================================
 
 document.addEventListener('copy', function(e) {
-  // Проверяем, что активный элемент внутри таблицы остатков
   const activeEl = document.activeElement;
   if (!activeEl || !activeEl.closest('#stock-view')) return;
   if (window.stockSelectedRange.startRow === null) return;
@@ -567,8 +559,9 @@ document.addEventListener('copy', function(e) {
   const { startRow, endRow, startCol, endCol } = window.stockSelectedRange;
   let copyData = [];
   for (let r = startRow; r <= endRow && r < data.length; r++) {
+    if (!data[r]) continue;
     let rowCopy = [];
-    for (let c = startCol; c <= endCol && c < (data[r] || []).length; c++) {
+    for (let c = startCol; c <= endCol && c < data[r].length; c++) {
       const cellKey = r+'_'+c;
       const isDirty = window.stockChangesQueue && window.stockChangesQueue[cellKey];
       const value = isDirty ? isDirty.value : (data[r][c] !== undefined ? data[r][c] : '');
@@ -594,7 +587,7 @@ document.addEventListener('copy', function(e) {
 });
 
 // ================================================================
-// ВСТАВКА (Ctrl+V) — КАК В ТАБЛИЦЕ САЛЬДО
+// ВСТАВКА (Ctrl+V)
 // ================================================================
 
 document.addEventListener('paste', function(e) {
@@ -616,10 +609,11 @@ document.addEventListener('paste', function(e) {
     const cells = rowText.split('\t');
     const targetR = startR + rIdx;
     if (targetR >= window.inventoryData.length) return;
+    if (!window.inventoryData[targetR]) return;
     cells.forEach(function(cellValue, cIdx) {
       const targetC = startC + cIdx;
-      if (targetC >= (window.inventoryData[targetR] || []).length) return;
-      if (targetC === 4) return; // Не вставляем в столбец E (формула)
+      if (targetC >= window.inventoryData[targetR].length) return;
+      if (targetC === 4) return;
       
       const trimmedVal = cellValue.trim();
       window.inventoryData[targetR][targetC] = trimmedVal;
@@ -644,4 +638,4 @@ document.addEventListener('paste', function(e) {
   }
 });
 
-console.log('✅ stock.js — загружен (версия 4.1, выделение как у сальдо)');
+console.log('✅ stock.js — загружен (версия 4.2, правильная нумерация)');
