@@ -702,3 +702,218 @@ td {
 .excel-table td.cell-active-focus { box-shadow: inset 0 0 0 2px #217346; background: #fff !important; }
 .excel-table td.cell-stock-dirty { background-color: #fef08a !important; font-style: italic; }
 .excel-table td.cell-stock-saved-flash { background-color: #bbf7d0 !important; transition: background 0.5s ease; }
+
+/* ============================================================
+   EXCEL-ПОДОБНЫЕ СТИЛИ ДЛЯ ТАБЛИЦЫ ОСТАТКОВ
+   ============================================================ */
+
+/* Основная таблица остатков — Excel-сетка */
+#stock-view .table-wrapper {
+    border: 1px solid #d0d7de;
+    border-radius: 0;
+    background: #ffffff !important;
+    box-shadow: none;
+}
+
+#stock-view table {
+    border-collapse: collapse;
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    background: #ffffff !important;
+    table-layout: fixed;
+    min-width: 100%;
+}
+
+/* ЗАГОЛОВКИ СТОЛБЦОВ (A, B, C, ...) */
+#stock-head th {
+    background: #f0f0f0 !important;
+    color: #333333 !important;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 4px;
+    border: 1px solid #d0d7de;
+    border-bottom: 2px solid #a0a0a0;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    min-width: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    transition: background 0.15s;
+}
+
+#stock-head th:hover {
+    background: #e5e5e5 !important;
+}
+
+#stock-head th:first-child {
+    min-width: 40px;
+    max-width: 40px;
+    background: #e8e8e8 !important;
+    border-right: 2px solid #a0a0a0;
+}
+
+/* НОМЕРА СТРОК (1, 2, 3, ...) */
+#stock-body td.row-header-num {
+    background: #f0f0f0 !important;
+    color: #555555;
+    font-weight: 600;
+    font-size: 12px;
+    text-align: center;
+    border: 1px solid #d0d7de;
+    cursor: pointer;
+    user-select: none;
+    min-width: 40px;
+    max-width: 40px;
+    padding: 4px 2px;
+    transition: background 0.15s;
+}
+
+#stock-body td.row-header-num:hover {
+    background: #e5e5e5 !important;
+}
+
+/* ОБЫЧНЫЕ ЯЧЕЙКИ — СЕТКА */
+#stock-body td:not(.row-header-num) {
+    border: 1px solid #d0d7de;
+    padding: 4px 6px;
+    text-align: left;
+    background: #ffffff !important;
+    color: #000000;
+    font-size: 13px;
+    min-width: 60px;
+    height: 24px;
+    outline: none;
+    transition: background 0.1s;
+    word-break: break-word;
+}
+
+/* ВЫДЕЛЕНИЕ ЯЧЕЙКИ (как в Excel) */
+#stock-body td.cell-selected {
+    background: #c7e0f4 !important;  /* Голубоватый фон как в Excel */
+    outline: 1px solid #2b5797;        /* Синяя рамка */
+    outline-offset: -1px;
+}
+
+/* АКТИВНАЯ ЯЧЕЙКА (фокус, рамка потолще) */
+#stock-body td.cell-active-focus {
+    outline: 2px solid #1e4f7a !important;
+    outline-offset: -2px;
+    background: #e3f0fa !important;
+}
+
+/* ВЫДЕЛЕННАЯ СТРОКА (номера строк) */
+#stock-body td.row-selected {
+    background: #c7e0f4 !important;
+}
+
+/* ЗЕБРА ДЛЯ ЧИТАЕМОСТИ (как в Excel — слабая) */
+#stock-body tr:nth-child(even) td:not(.row-header-num) {
+    background: #f9fafb !important;
+}
+
+/* ДИРТИ-ЯЧЕЙКИ (изменённые) */
+#stock-body td.cell-stock-dirty {
+    background: #fff8e1 !important;
+    border-left: 3px solid #f9a825 !important;
+}
+
+/* САВНУТЫЕ ЯЧЕЙКИ (зелёная вспышка) */
+#stock-body td.cell-stock-saved-flash {
+    animation: excelFlashGreen 0.8s ease;
+}
+
+@keyframes excelFlashGreen {
+    0% { background: #c8e6c9 !important; }
+    100% { background: #ffffff !important; }
+}
+
+/* СТИЛИ ДЛЯ РЕЖИМА РЕДАКТИРОВАНИЯ В EXCEL */
+#stock-view .stock-mode-badge {
+    background: #e8f0fe;
+    color: #1a3c5e;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    border: 1px solid #b3c9e6;
+    text-align: center;
+}
+
+#stock-view .stock-edit-actions-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+#stock-view .btn-stock-cancel {
+    background: #f8f9fa;
+    border: 1px solid #d0d7de;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.2s;
+}
+
+#stock-view .btn-stock-cancel:hover {
+    background: #f1f3f4;
+}
+
+#stock-view .btn-stock-save {
+    background: #1a73e8;
+    border: none;
+    padding: 6px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: white;
+    transition: background 0.2s;
+}
+
+#stock-view .btn-stock-save:hover {
+    background: #1557b0;
+}
+
+/* ПОИСК СТАЛ КАК В EXCEL */
+#stock-search {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    background: #ffffff;
+    color: #000000;
+    transition: border 0.2s;
+}
+
+#stock-search:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ — АДАПТИВ */
+@media (max-width: 768px) {
+    #stock-view .table-wrapper {
+        font-size: 11px;
+    }
+    #stock-body td:not(.row-header-num) {
+        font-size: 11px;
+        padding: 3px 4px;
+        min-width: 40px;
+    }
+    #stock-head th {
+        font-size: 10px;
+        padding: 4px 2px;
+        min-width: 40px;
+    }
+}
