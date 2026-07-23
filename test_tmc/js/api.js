@@ -1,6 +1,6 @@
 // ================================================================
 // api.js — Модуль сетевого взаимодействия и синхронизации
-// Версия 2.4 — журнал выдачи с собственным выделением (как у сальдо)
+// Версия 2.6 — УБРАНА ДВОЙНАЯ ШАПКА, НАЗВАНИЯ В ТЕЛЕ ТАБЛИЦЫ
 // ================================================================
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww4XB-yCHpL4mC8UWABoRp5-adrXIr7zqQ9RQI586bCgV5CiJOKqklapq018JWaU-JWQ/exec';
@@ -10,7 +10,7 @@ window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || []
 window.isSaving = false;
 
 // ================================================================
-// СОСТОЯНИЕ ВЫДЕЛЕНИЯ ДЛЯ ЖУРНАЛА (КАК У САЛЬДО)
+// СОСТОЯНИЕ ВЫДЕЛЕНИЯ ДЛЯ ЖУРНАЛА
 // ================================================================
 
 window.logsSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
@@ -19,7 +19,7 @@ window.logsDragStartRow = null;
 window.logsDragStartCol = null;
 
 // ================================================================
-// РЕНДЕРИНГ ЖУРНАЛА ВЫДАЧИ (С ВЫДЕЛЕНИЕМ)
+// РЕНДЕРИНГ ЖУРНАЛА ВЫДАЧИ (ПРАВИЛЬНАЯ СТРУКТУРА)
 // ================================================================
 
 function renderLogs() {
@@ -33,20 +33,25 @@ function renderLogs() {
     return;
   }
 
-  // Определяем шапку (первая строка с isHeader: true)
-  let headers = null;
+  // Определяем, есть ли строка с названиями (isHeader: true)
+  let headerRow = null;
   let dataStart = 0;
   if (window.qrLogs.length > 0 && window.qrLogs[0] && window.qrLogs[0].isHeader === true) {
-    headers = window.qrLogs[0].data;
+    headerRow = window.qrLogs[0].data;
     dataStart = 1;
   }
 
+  // Если нет шапки — создаём стандартную
+  if (!headerRow) {
+    headerRow = ['ID', 'Артикул', 'Парам 1', 'Парам 2', 'Наименование', 'Кол-во', 'Сотрудник', 'Автор', 'Куда выдано', 'Время', 'День', 'Мес', 'Год'];
+  }
+
   // Буквы столбцов
-  const colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+  const colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M'];
   const numCols = 13;
 
   // ============================================================
-  // ШАПКА (БУКВЫ, БЕЗ НОМЕРА)
+  // ШАПКА: ТОЛЬКО БУКВЫ (БЕЗ НОМЕРА)
   // ============================================================
   let headHtml = '';
   headHtml += '<tr>';
@@ -56,50 +61,52 @@ function renderLogs() {
     headHtml += '<th id="logs-col-hdr-'+c+'" onclick="logsSelectWholeColumn('+c+')" title="Выделить столбец '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;white-space:normal;word-wrap:break-word;">'+letter+'</th>';
   }
   headHtml += '</tr>';
-  
-  // Строка с названиями столбцов (если есть)
-  if (headers) {
-    headHtml += '<tr style="font-weight:600;background:#f0f0f0;">';
-    headHtml += '<td class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:default;user-select:none;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">1</td>';
-    for (let c = 0; c < numCols; c++) {
-      const headerName = headers[c] !== undefined && headers[c] !== '' ? headers[c] : colLetters[c] || String.fromCharCode(65 + c);
-      headHtml += '<td style="border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:60px;background:#f0f0f0;color:#333;font-weight:600;white-space:normal;word-wrap:break-word;word-break:break-word;">'+headerName+'</td>';
-    }
-    headHtml += '</tr>';
-  }
   head.innerHTML = headHtml;
 
   // ============================================================
-  // СБОР ДАННЫХ
+  // ТЕЛО: СТРОКА 1 — НАЗВАНИЯ (НОМЕР 1), ДАЛЕЕ ДАННЫЕ (НОМЕР 2...)
   // ============================================================
-  let rowsData = [];
+  
+  // Собираем все строки для тела: сначала названия, потом данные
+  let allRows = [];
+  // Добавляем строку с названиями (номер 1)
+  allRows.push({ index: 0, data: headerRow, isHeader: true, status: 'ok' });
+  
+  // Добавляем остальные строки
   for (let i = dataStart; i < window.qrLogs.length; i++) {
     const item = window.qrLogs[i];
     if (!item || !item.data || item.action === 'delete') continue;
-    rowsData.push({ index: i, data: item.data, status: item.status });
+    allRows.push({ index: i, data: item.data, status: item.status || 'ok' });
   }
 
-  // ============================================================
-  // ТЕЛО ТАБЛИЦЫ
-  // ============================================================
   let bodyHtml = "";
   
-  for (var ri = 0; ri < rowsData.length; ri++) {
-    var rIdx = rowsData[ri].index;
-    var row = rowsData[ri].data;
-    var status = rowsData[ri].status;
-    var rowNum = rIdx; // Индекс в массиве
+  for (var ri = 0; ri < allRows.length; ri++) {
+    var rowData = allRows[ri];
+    var rIdx = rowData.index;
+    var row = rowData.data;
+    var status = rowData.status;
+    // Номер строки: для первой строки (названия) номер = 1, для остальных = rIdx (так как rIdx начинается с 1, но для данных мы используем реальный индекс)
+    // Но чтобы нумерация была правильной: строка 1 — названия, строка 2 — первая запись, строка 3 — вторая...
+    // В массиве allRows порядок: 0 - названия, 1 - первая запись, 2 - вторая...
+    var rowNum = ri + 1;
 
-    // Статус строки (wait/ok)
     var isSynced = status === 'ok';
     var bgClass = isSynced ? '' : 'style="background:#fff3cd;"';
 
-    // Зебра
-    var zebraBg = (ri % 2 === 0) ? 'background:#e8f5e9;' : 'background:#ffffff;';
+    // Зебра: для строк данных (начиная с индекса 1) — чётные зелёные, нечётные белые
+    // Но для строки с названиями (ri=0) делаем серый фон
+    var zebraBg = '';
+    if (ri === 0) {
+      zebraBg = 'background:#f0f0f0;';
+    } else {
+      zebraBg = (ri % 2 === 1) ? 'background:#e8f5e9;' : 'background:#ffffff;';
+    }
 
-    // Проверяем, есть ли выделение
+    // Проверяем выделение строки
     let isRowSelected = false;
     if (window.logsSelectedRange.startRow !== null) {
+      // Используем rIdx для сравнения (индекс в массиве)
       isRowSelected = (rIdx >= window.logsSelectedRange.startRow && rIdx <= window.logsSelectedRange.endRow);
     }
 
@@ -136,17 +143,15 @@ function renderLogs() {
 }
 
 // ================================================================
-// ВЫДЕЛЕНИЕ ДЛЯ ЖУРНАЛА (КАК У САЛЬДО)
+// ВЫДЕЛЕНИЕ ДЛЯ ЖУРНАЛА
 // ================================================================
 
 function logsSelectAll() {
   const data = window.qrLogs;
   if (!data || data.length === 0) return;
   
-  const dataStart = (data.length > 0 && data[0] && data[0].isHeader === true) ? 1 : 0;
-  if (dataStart >= data.length) return;
-  
-  window.logsSelectedRange.startRow = dataStart;
+  // Выделяем все строки (начиная с 0, так как у нас есть строка с названиями)
+  window.logsSelectedRange.startRow = 0;
   window.logsSelectedRange.endRow = data.length - 1;
   window.logsSelectedRange.startCol = 0;
   window.logsSelectedRange.endCol = 12;
@@ -165,10 +170,7 @@ function logsSelectWholeColumn(cIdx) {
   const data = window.qrLogs;
   if (!data || data.length === 0) return;
   
-  const dataStart = (data.length > 0 && data[0] && data[0].isHeader === true) ? 1 : 0;
-  if (dataStart >= data.length) return;
-  
-  window.logsSelectedRange.startRow = dataStart;
+  window.logsSelectedRange.startRow = 0;
   window.logsSelectedRange.endRow = data.length - 1;
   window.logsSelectedRange.startCol = cIdx;
   window.logsSelectedRange.endCol = cIdx;
@@ -187,7 +189,6 @@ function logsHandleCellClick(event, rIdx, cIdx) {
   // Режим редактирования ячейки "Куда" (индекс 8)
   if (cIdx === 8 && !window.isReturnMode) {
     if (typeof enableLogCellEdit === 'function') {
-      // Создаём искусственное событие
       const cellEl = document.getElementById('logs-cell-'+rIdx+'-'+cIdx);
       if (cellEl) {
         enableLogCellEdit({ target: cellEl, stopPropagation: function(){} }, rIdx);
@@ -295,7 +296,7 @@ function logsGlobalMouseUp(e) {
 }
 
 // ================================================================
-// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ (КАК У САЛЬДО)
+// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ
 // ================================================================
 
 function logsRefreshSelection() {
@@ -309,8 +310,8 @@ function logsRefreshSelection() {
       el.style.borderBottom = '';
     });
   
-  // Снимаем подсветку заголовков
-  const headRow = document.querySelector('#logs-head tr');
+  // Снимаем подсветку заголовков (первая строка шапки — буквы)
+  const headRow = document.querySelector('#logs-head tr:first-child');
   if (headRow) {
     const cells = headRow.querySelectorAll('th');
     cells.forEach(function(el) {
@@ -339,7 +340,7 @@ function logsRefreshSelection() {
     }
   }
   
-  // Подсвечиваем заголовок столбца
+  // Подсвечиваем заголовок столбца (первая строка шапки — буквы)
   if (headRow) {
     const cells = headRow.querySelectorAll('th');
     if (cells[window.logsSelectedRange.startCol + 1]) {
@@ -361,7 +362,12 @@ document.addEventListener('copy', function(e) {
   const data = window.qrLogs;
   if (!data || data.length === 0) return;
   
-  const dataStart = (data.length > 0 && data[0] && data[0].isHeader === true) ? 1 : 0;
+  // Учитываем, что у нас может быть строка с названиями (isHeader)
+  // Она находится в data[0] с isHeader: true, но для копирования мы должны учитывать все строки
+  // Для простоты используем window.logsSelectedRange, но он работает с индексами из массива qrLogs
+  // Однако в renderLogs мы создаём отдельную нумерацию, но выделение работает с индексами из qrLogs (rIdx)
+  // Поэтому копирование будет корректно, если мы используем rIdx для доступа к данным.
+  
   const { startRow, endRow, startCol, endCol } = window.logsSelectedRange;
   
   let copyData = [];
@@ -390,6 +396,7 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
+  // Пропускаем строку с названиями (isHeader)
   const dataStart = (logs.length > 0 && logs[0] && logs[0].isHeader === true) ? 1 : 0;
   
   const totalsMap = {};
@@ -540,4 +547,4 @@ document.addEventListener("DOMContentLoaded", function() {
   sendUnsynced();
 });
 
-console.log('✅ api.js — загружен (версия 2.4, журнал с выделением)');
+console.log('✅ api.js — загружен (версия 2.6, правильная структура)');
