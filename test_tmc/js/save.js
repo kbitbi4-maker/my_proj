@@ -26,6 +26,9 @@ async function saveEntry() {
     const author = "Неугодникова"; 
     const targetDestination = window.currentWhere || "Не указан";
 
+    // =========================================================================
+    // БЛОК ОПЕРАЦИЙ: СБОРНАЯ МНОЖЕСТВЕННАЯ ВЫДАЧА ТОВАРОВ ИЗ КОРЗИНЫ
+    // =========================================================================
     if (!window.isPartialReturnInput && window.issuanceBasket && window.issuanceBasket.length > 0) {
       window.issuanceBasket.forEach(item => {
         let originalRowIndex = item.stockRowIndex;
@@ -42,7 +45,7 @@ async function saveEntry() {
 
         if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
           let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0; 
-          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Смена индекса 7 на 8 (скл.2)
+          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
           let rem = item.qty;
 
           if (item.wh === "скл.1") {
@@ -51,13 +54,13 @@ async function saveEntry() {
             } else { 
               window.inventoryData[originalRowIndex][6] = 0; 
               rem -= s1; 
-              window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // Индекс 8 (скл.2)
             }
           } else {
             if (s2 >= rem) { 
-              window.inventoryData[originalRowIndex][8] = s2 - rem; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = s2 - rem; // Индекс 8 (скл.2)
             } else { 
-              window.inventoryData[originalRowIndex][8] = 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = 0; // Индекс 8 (скл.2)
               rem -= s2; 
               window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
             }
@@ -76,6 +79,11 @@ async function saveEntry() {
         ];
         window.qrLogs.push({ data: logRowData, status: 'wait' });
       });
+
+      // Пересчитываем столбец "не проведено в SUP" на основе добавленных в корзину строк
+      if (typeof recalculateUnprocessedSup === 'function') {
+        recalculateUnprocessedSup();
+      }
 
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
@@ -128,6 +136,9 @@ async function saveEntry() {
       return; 
     }
 
+    // =========================================================================
+    // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ
+    // =========================================================================
     if (window.isPartialReturnInput) {
       const maxAvailableToReturn = parseInt(window.currentSelectedRowData[4]) || 0;
       const partTargetWh = window.currentSelectedRowData[5] || "скл.1";
@@ -139,16 +150,15 @@ async function saveEntry() {
 
       if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
         let currentSkl1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
+        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
         
         if (partTargetWh === "скл.2") {
-          window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; // КОРРЕКТИРОВКА: Индекс 8
+          window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; // Индекс 8
         } else {
           window.inventoryData[originalRowIndex][6] = currentSkl1 + enteredQty;
         }
         window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
       }
-      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
       const nextId = window.qrLogs.length > 0 
         ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
@@ -160,6 +170,13 @@ async function saveEntry() {
       ];
       
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
+
+      // Пересчитываем SUP на основе одиночного частичного возврата
+      if (typeof recalculateUnprocessedSup === 'function') {
+        recalculateUnprocessedSup();
+      }
+
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
       
       if (typeof renderLogs === 'function') renderLogs(); 
@@ -172,18 +189,21 @@ async function saveEntry() {
       return; 
     }
 
+    // =========================================================================
+    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ВЫБРАННЫЙ ТУМБЛЕР СКЛАДА)
+    // =========================================================================
     if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
+      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
       
       const currentSelectedWh = window.numpadSelectedWarehouse || "скл.1";
 
       if (currentSelectedWh === "скл.2") {
         if (s2 >= rem) { 
-          window.inventoryData[originalRowIndex][8] = s2 - rem; // КОРРЕКТИРОВКА: Индекс 8
+          window.inventoryData[originalRowIndex][8] = s2 - rem; // Индекс 8
         } else { 
-          window.inventoryData[originalRowIndex][8] = 0; // КОРРЕКТИРОВКА: Индекс 8
+          window.inventoryData[originalRowIndex][8] = 0; // Индекс 8
           rem -= s2; 
           window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
         }
@@ -193,13 +213,11 @@ async function saveEntry() {
         } else { 
           window.inventoryData[originalRowIndex][6] = 0; 
           rem -= s1; 
-          window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // КОРРЕКТИРОВКА: Индекс 8
+          window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // Индекс 8
         }
       }
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
     }
-
-    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
     const nextId = window.qrLogs.length > 0 
       ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
@@ -210,6 +228,13 @@ async function saveEntry() {
       nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination + whSingleMark, time, day, month, year
     ];
     window.qrLogs.push({ data: newRowData, status: 'wait' });
+
+    // Пересчитываем SUP на основе одиночной выдачи товара
+    if (typeof recalculateUnprocessedSup === 'function') {
+      recalculateUnprocessedSup();
+    }
+
+    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
     
     if (typeof renderLogs === 'function') renderLogs(); 
