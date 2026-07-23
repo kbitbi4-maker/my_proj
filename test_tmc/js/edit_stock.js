@@ -1,112 +1,73 @@
-// js/edit_stock.js — Модуль изменения остатков и полок на складе целиком
-
-window.isStockEditMode = false;
-
-function toggleStockEditMode(activate) {
-  window.isStockEditMode = activate;
-  
-  const badge = document.getElementById('stock-edit-badge');
-  const triggerBtn = document.getElementById('stock-edit-trigger-btn');
-  const actionsRow = document.getElementById('stock-edit-actions');
-  
-  if (window.isStockEditMode) {
-    if (badge) badge.classList.remove('hidden');
-    if (triggerBtn) triggerBtn.classList.add('hidden');
-    if (actionsRow) actionsRow.classList.remove('hidden');
-  } else {
-    if (badge) badge.classList.add('hidden');
-    if (triggerBtn) triggerBtn.classList.remove('hidden');
-    if (actionsRow) actionsRow.classList.add('hidden');
-  }
-  
-  if (typeof renderStock === 'function') {
-    renderStock();
-  }
-}
+// js/edit_stock.js — Модуль точечной сериализации и отправки Dirty-кэша изменений в облако
 
 function cancelStockChanges() {
-  if (!confirm("Отменить все внесенные изменения остатков?")) return;
-  toggleStockEditMode(false);
+  if (!confirm("Очистить локальный кэш измененных ячеек и сбросить выделение?")) return;
+  window.stockChangesQueue = {};
+  window.stockSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
+  window.stockActiveCell = { row: null, col: null };
+  renderStock();
 }
 
 async function saveStockChangesCloud() {
-  const currentData = window.inventoryData;
-  if (!currentData || currentData.length <= 1) return;
-
-  let updatePayloadParts = [];
-  let trackingCells = []; 
-
-  for (let i = 1; i < currentData.length; i++) {
-    const inputTotal = document.getElementById(`stock-input-${i}-4`);
-    const inputSkl1 = document.getElementById(`stock-input-${i}-6`);
-    const inputSkl2 = document.getElementById(`stock-input-${i}-8`); 
-    const inputShelf = document.getElementById(`stock-input-${i}-10`); 
-    
-    if (inputTotal && inputSkl1 && inputSkl2 && inputShelf) {
-      const valTotal = parseInt(String(inputTotal.value).replace(/\s+/g, ''));
-      const val1 = parseInt(String(inputSkl1.value).replace(/\s+/g, ''));
-      const val2 = parseInt(String(inputSkl2.value).replace(/\s+/g, ''));
-      const valShelf = inputShelf.value.trim();
-      
-      if (isNaN(valTotal) || valTotal < 0 || isNaN(val1) || val1 < 0 || isNaN(val2) || val2 < 0) {
-        alert(`Ошибка: В строке №${i} указаны некорректные числа остатков.`);
-        return;
-      }
-      
-      if (valTotal !== (parseInt(currentData[i][4]) || 0) || 
-          val1 !== (parseInt(currentData[i][6]) || 0) || 
-          val2 !== (parseInt(currentData[i][8]) || 0) ||
-          valShelf !== String(currentData[i][10] || "").trim()) {
-            
-        currentData[i][4] = valTotal;
-        currentData[i][6] = val1;
-        currentData[i][8] = val2;
-        currentData[i][10] = valShelf; 
-        
-        const art = String(currentData[i][1]).trim();
-        const param = String(currentData[i][2]).trim();
-        
-        // ФИКС СИНТАКСИСА: Восстановлена корректная JS-строка с открывающей скобкой ${val2}
-        updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}*${valShelf}`);
-        trackingCells.push(inputTotal, inputSkl1, inputSkl2, inputShelf);
-      }
-    }
-  }
-
-  if (updatePayloadParts.length === 0) {
-    toggleStockEditMode(false);
+  const changesCount = Object.keys(window.stockChangesQueue).length;
+  if (changesCount === 0) {
+    alert("Нет измененных ячеек для отправки.");
     return;
   }
 
-  window.inventoryData = currentData;
+  // Преобразуем объект очереди в плоский массив транзакций
+  const transactionsList = Object.values(window.stockChangesQueue);
+
+  // Синхронизируем локальные изменения с массивом в оперативной памяти смартфона
+  transactionsList.forEach(tx => {
+    window.inventoryData[tx.row][tx.col] = tx.value;
+  });
+
+  // Записываем обновленные остатки склада в локальное хранилище телефона
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
+  // Проверяем сеть и отправляем Delta-пакет в Google Apps Script
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     try {
-      const textPayload = "STOCK_UPDATE|" + updatePayloadParts.join("|");
+      // Формируем сжатый, точечный JSON для минимизации трафика
+      const payloadData = {
+        type: "DELTA_UPDATE",
+        cells: transactionsList
+      };
+
+      const textPayload = "STOCK_UPDATE|" + JSON.stringify(payloadData);
       
-      await fetch(SCRIPT_URL, {
+      const response = await fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: textPayload
       });
+      
+      const resultText = await response.text();
 
-      trackingCells.forEach(input => {
-        if (input) {
-          input.classList.remove('cell-stock-dirty');
-          input.classList.add('cell-stock-saved-flash');
+      // Подсвечиваем сохраненные ячейки зеленым флэш-эффектом
+      transactionsList.forEach(tx => {
+        const cellEl = document.getElementById(`ex-cell-${tx.row}-${tx.col}`);
+        if (cellEl) {
+          cellEl.classList.remove('cell-stock-dirty');
+          cellEl.classList.add('cell-stock-saved-flash');
         }
       });
 
+      // Очищаем кэш изменений после успешного ответа сервера
+      window.stockChangesQueue = {};
+      
       setTimeout(() => {
-        toggleStockEditMode(false);
-      }, 1000);
+        renderStock();
+        alert("Данные успешно сохранены в облаке!\n" + resultText);
+      }, 800);
 
     } catch (e) {
-      console.error("Сетевая ошибка при обновлении остатков в облаке:", e);
-      alert("Ошибка сети. Данные сохранены на телефоне, но не дошли до Google Таблицы.");
+      console.error("Сетевая ошибка при точечной отправке изменений:", e);
+      alert("Ошибка сети. Изменения зафиксированы локально на устройстве, но не дошли до Google Таблицы.");
     }
   } else {
-    toggleStockEditMode(false);
+    alert("Устройство оффлайн. Изменения сохранены в локальный кэш смартфона.");
+    renderStock();
   }
 }
