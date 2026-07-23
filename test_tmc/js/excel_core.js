@@ -1,10 +1,6 @@
 // ================================================================
 // excel_core.js — УНИВЕРСАЛЬНЫЙ ДВИЖОК EXCEL-ТАБЛИЦ
-// Версия 1.5 — ИСПРАВЛЕНО ВЫДЕЛЕНИЕ, ВОСКРЕШЕНА ТАБЛИЦА САЛЬДО
-// ================================================================
-
-// ================================================================
-// КОНФИГУРАЦИЯ ПО УМОЛЧАНИЮ
+// Версия 1.6 — ИСПРАВЛЕНО ВСЁ ВЫДЕЛЕНИЕ
 // ================================================================
 
 const EXCEL_CORE = {
@@ -43,7 +39,6 @@ function excelRegisterTable(tableId, config) {
     title: config.title || 'Таблица',
     searchTerm: '',
     allowSelection: true,
-    // Флаг, что это таблица сальдо (для специальной обработки)
     isBalanceTable: config.isBalanceTable || false
   };
   
@@ -71,7 +66,6 @@ function excelRenderTable(tableId) {
   }
   
   const headers = data[0] || [];
-  const startRow = 1;
   const colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
   const numCols = table.colCount || Math.max(headers.length, data[1] ? data[1].length : 1);
   
@@ -97,10 +91,10 @@ function excelRenderTable(tableId) {
   headContainer.innerHTML = headHtml;
 
   // ============================================================
-  // СБОР ДАННЫХ
+  // СБОР ДАННЫХ (ИНДЕКСЫ В МАССИВЕ: 1 — НАЗВАНИЯ, 2...N — ДАННЫЕ)
   // ============================================================
   let rowsData = [];
-  for (let rIdx = startRow; rIdx < data.length; rIdx++) {
+  for (let rIdx = 1; rIdx < data.length; rIdx++) {
     const row = data[rIdx];
     if (!row || row.length === 0) continue;
     const searchTerm = table.searchTerm || '';
@@ -132,7 +126,7 @@ function excelRenderTable(tableId) {
   // ============================================================
   let bodyHtml = "";
   
-  // СТРОКА 1: НАЗВАНИЯ СТОЛБЦОВ (НОМЕР 1) — ВЫДЕЛЯЕМАЯ
+  // СТРОКА 1: НАЗВАНИЯ СТОЛБЦОВ (ИНДЕКС 1, НОМЕР 1)
   bodyHtml += '<tr id="ex-row-1" style="font-weight:600;background:#f0f0f0;">';
   bodyHtml += '<td class="row-header-num" id="row-hdr-1" onclick="excelSelectWholeRow(\''+tableId+'\',event,1)" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">1</td>';
   for (let c = 0; c < numCols; c++) {
@@ -141,11 +135,11 @@ function excelRenderTable(tableId) {
   }
   bodyHtml += '</tr>';
 
-  // СТРОКИ 2...N: ДАННЫЕ (с зеброй)
+  // СТРОКИ 2...N: ДАННЫЕ (ИНДЕКСЫ 2, 3, 4...)
   for (var ri = 0; ri < rowsData.length; ri++) {
-    var rIdx = rowsData[ri].index;
+    var rIdx = rowsData[ri].index; // Индекс в массиве (2, 3, 4...)
     var row = rowsData[ri].data;
-    var rowNum = ri + 2;
+    var rowNum = rIdx; // Номер строки = индекс в массиве (2, 3, 4...)
 
     let rowColor = '';
     if (table.rowColors) {
@@ -187,6 +181,7 @@ function excelRenderTable(tableId) {
         }
       }
 
+      // Проверяем выделение ПО ИНДЕКСАМ В МАССИВЕ
       let isSelected = false;
       if (EXCEL_CORE.selectedRange.startRow !== null) {
         isSelected = (rIdx >= EXCEL_CORE.selectedRange.startRow && rIdx <= EXCEL_CORE.selectedRange.endRow &&
@@ -222,6 +217,7 @@ function excelSelectAll(tableId) {
   const data = table.data;
   if (!data || data.length <= 1) return;
   
+  // Индексы в массиве: от 1 до data.length - 1
   EXCEL_CORE.selectedRange.startRow = 1;
   EXCEL_CORE.selectedRange.endRow = data.length - 1;
   EXCEL_CORE.selectedRange.startCol = 0;
@@ -274,7 +270,7 @@ function excelSelectWholeColumn(tableId, cIdx) {
 }
 
 // ================================================================
-// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ (КАК В EXCEL)
+// ОБНОВЛЕНИЕ ВИЗУАЛЬНЫХ ВЫДЕЛЕНИЙ
 // ================================================================
 
 function excelRefreshSelectionVisuals(tableId) {
@@ -288,8 +284,10 @@ function excelRefreshSelectionVisuals(tableId) {
   container.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected, .col-selected')
     .forEach(function(el) {
       el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected', 'col-selected');
+      el.style.background = '';
       el.style.outline = '';
       el.style.outlineOffset = '';
+      el.style.borderBottom = '';
     });
   
   // Снимаем подсветку заголовков столбцов
@@ -305,8 +303,9 @@ function excelRefreshSelectionVisuals(tableId) {
   
   if (EXCEL_CORE.selectedRange.startRow === null) return;
   
-  // Подсвечиваем ячейки
+  // Подсвечиваем ячейки по ИНДЕКСАМ В МАССИВЕ
   for (let r = EXCEL_CORE.selectedRange.startRow; r <= EXCEL_CORE.selectedRange.endRow; r++) {
+    // Подсвечиваем номер строки
     const rowHdr = document.getElementById('row-hdr-'+r);
     if (rowHdr) {
       rowHdr.classList.add('row-selected');
@@ -316,7 +315,6 @@ function excelRefreshSelectionVisuals(tableId) {
       const cellEl = document.getElementById('ex-cell-'+r+'-'+c);
       if (cellEl) {
         cellEl.classList.add('cell-selected');
-        // Как в Excel: фон синеватый, контур тёмно-синий
         cellEl.style.background = '#c7e0f4';
         cellEl.style.outline = '2px solid #2b5797';
         cellEl.style.outlineOffset = '-2px';
@@ -345,7 +343,7 @@ function excelRefreshSelectionVisuals(tableId) {
 }
 
 // ================================================================
-// DRAG SELECTION (БЕЗ ВЫДЕЛЕНИЯ ТЕКСТА)
+// DRAG SELECTION
 // ================================================================
 
 function excelAttachDragListeners(tableId) {
@@ -374,7 +372,6 @@ function excelGlobalMouseDown(e, tableId) {
   const table = EXCEL_CORE.tables[tableId];
   if (!table) return;
   
-  // Отключаем выделение текста
   e.preventDefault();
   
   const parts = cellEl.id.replace('ex-cell-', '').split('-');
@@ -400,7 +397,6 @@ function excelGlobalMouseMove(e, tableId) {
   const cellEl = e.target.closest('td');
   if (!cellEl || !cellEl.id || !cellEl.id.startsWith('ex-cell-')) return;
   
-  // Отключаем выделение текста
   e.preventDefault();
   
   const parts = cellEl.id.replace('ex-cell-', '').split('-');
@@ -414,23 +410,7 @@ function excelGlobalMouseMove(e, tableId) {
 }
 
 function excelDocumentMouseMove(e, tableId) {
-  if (!EXCEL_CORE.isDragging) return;
-  // Если мышь вышла за пределы таблицы, но dragging продолжается
-  const table = EXCEL_CORE.tables[tableId];
-  if (!table) return;
-  
-  const container = document.getElementById(table.containerId);
-  if (!container) return;
-  
-  const rect = container.getBoundingClientRect();
-  const x = e.clientX;
-  const y = e.clientY;
-  
-  // Проверяем, находится ли мышь над таблицей
-  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-    // Мышь вне таблицы — не обновляем выделение
-    return;
-  }
+  // Заглушка для обработки движения мыши вне таблицы
 }
 
 function excelGlobalMouseUp(e, tableId) {
@@ -446,9 +426,7 @@ function excelGlobalMouseUp(e, tableId) {
 }
 
 function excelGlobalMouseLeave(e, tableId) {
-  // Не завершаем выделение при выходе мыши за пределы таблицы,
-  // чтобы можно было выделять диапазон за пределами видимой области
-  // (в Excel так работает)
+  // Не завершаем выделение при выходе мыши
 }
 
 // ================================================================
@@ -460,7 +438,6 @@ function excelHandleCellClick(tableId, event, rIdx, cIdx) {
   if (!table) return;
   if (EXCEL_CORE.isDragging) return;
   
-  // Отключаем выделение текста
   event.preventDefault();
   
   if (event.shiftKey && EXCEL_CORE.activeCell.row !== null && EXCEL_CORE.activeCell.col !== null) {
@@ -491,7 +468,6 @@ function excelHandleCellClick(tableId, event, rIdx, cIdx) {
 function excelHandleMouseDown(tableId, event, rIdx, cIdx) {
   const table = EXCEL_CORE.tables[tableId];
   if (!table) return;
-  // Отключаем выделение текста
   event.preventDefault();
   const cellEl = document.getElementById('ex-cell-'+rIdx+'-'+cIdx);
   if (cellEl && table.editMode) {
@@ -500,7 +476,6 @@ function excelHandleMouseDown(tableId, event, rIdx, cIdx) {
 }
 
 function excelHandleMouseOver(tableId, event, rIdx, cIdx) {
-  // Отключаем выделение текста
   event.preventDefault();
 }
 
@@ -549,7 +524,7 @@ function excelHandleCellKeyDown(tableId, event, rIdx, cIdx) {
   if (event.key === 'Enter') {
     event.preventDefault();
     const nextCell = document.getElementById('ex-cell-'+(rIdx+1)+'-'+cIdx);
-    if (nextCell) {
+    if (nextCell && nextCell.id.startsWith('ex-cell-')) {
       nextCell.focus();
       excelHandleCellClick(tableId, event, rIdx + 1, cIdx);
     }
@@ -611,7 +586,7 @@ function excelUpdateData(tableId, newData) {
 }
 
 // ================================================================
-// КОПИРОВАНИЕ (Ctrl+C) — ВЫДЕЛЕНИЕ РАБОТАЕТ И ДЛЯ СТРОКИ 1
+// КОПИРОВАНИЕ (Ctrl+C)
 // ================================================================
 
 document.addEventListener('copy', function(e) {
@@ -688,4 +663,4 @@ document.addEventListener('paste', function(e) {
   excelRenderTable(activeTableId);
 });
 
-console.log('✅ excel_core.js — загружен (версия 1.5)');
+console.log('✅ excel_core.js — загружен (версия 1.6)');
