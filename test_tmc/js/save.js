@@ -45,7 +45,7 @@ async function saveEntry() {
 
         if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
           let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0; 
-          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
+          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 переехал на индекс 8
           let rem = item.qty;
 
           if (item.wh === "скл.1") {
@@ -54,18 +54,18 @@ async function saveEntry() {
             } else { 
               window.inventoryData[originalRowIndex][6] = 0; 
               rem -= s1; 
-              window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); 
             }
           } else {
             if (s2 >= rem) { 
-              window.inventoryData[originalRowIndex][8] = s2 - rem; // Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = s2 - rem; 
             } else { 
-              window.inventoryData[originalRowIndex][8] = 0; // Индекс 8 (скл.2)
+              window.inventoryData[originalRowIndex][8] = 0; 
               rem -= s2; 
               window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
             }
           }
-          // Общий остаток пересчитывается по новым индексам 6 и 8
+          // Общий запас пересчитывается на основе Склада 1 и Склада 2
           window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
         }
 
@@ -80,7 +80,7 @@ async function saveEntry() {
         window.qrLogs.push({ data: logRowData, status: 'wait' });
       });
 
-      // Пересчитываем столбец "не проведено в SUP" на основе добавленных в корзину строк
+      // Автоматический пересчет столбца "не проведено в SUP" после обновления корзины
       if (typeof recalculateUnprocessedSup === 'function') {
         recalculateUnprocessedSup();
       }
@@ -97,7 +97,6 @@ async function saveEntry() {
       if (typeof sendUnsynced === 'function') sendUnsynced(); 
       return;
     }
-
 
 
 
@@ -137,7 +136,7 @@ async function saveEntry() {
     }
 
     // =========================================================================
-    // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ
+    // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ С СУММИРОВАНИЕМ В SUP
     // =========================================================================
     if (window.isPartialReturnInput) {
       const maxAvailableToReturn = parseInt(window.currentSelectedRowData[4]) || 0;
@@ -150,10 +149,10 @@ async function saveEntry() {
 
       if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
         let currentSkl1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
+        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 на индексе 8
         
         if (partTargetWh === "скл.2") {
-          window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; // Индекс 8
+          window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; 
         } else {
           window.inventoryData[originalRowIndex][6] = currentSkl1 + enteredQty;
         }
@@ -190,20 +189,20 @@ async function saveEntry() {
     }
 
     // =========================================================================
-    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ВЫБРАННЫЙ ТУМБЛЕР СКЛАДА)
+    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ТУМБЛЕР СКЛАДА)
     // =========================================================================
     if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Индекс 8 (скл.2)
+      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 на индексе 8
       
       const currentSelectedWh = window.numpadSelectedWarehouse || "скл.1";
 
       if (currentSelectedWh === "скл.2") {
         if (s2 >= rem) { 
-          window.inventoryData[originalRowIndex][8] = s2 - rem; // Индекс 8
+          window.inventoryData[originalRowIndex][8] = s2 - rem; 
         } else { 
-          window.inventoryData[originalRowIndex][8] = 0; // Индекс 8
+          window.inventoryData[originalRowIndex][8] = 0; 
           rem -= s2; 
           window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
         }
@@ -213,7 +212,7 @@ async function saveEntry() {
         } else { 
           window.inventoryData[originalRowIndex][6] = 0; 
           rem -= s1; 
-          window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // Индекс 8
+          window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); 
         }
       }
       window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
