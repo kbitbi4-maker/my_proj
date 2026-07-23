@@ -1,6 +1,4 @@
 // js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 1
-// АВТОР: AI DEVELOPER
-// ГАРАНТИЯ ТЕКСТОВЫХ МЕТОК СКЛАДОВ ПРИ ПАКЕТНОЙ И ОДИНОЧНОЙ ВЫДАЧЕ/ВОЗВРАТЕ ДЛЯ ОБЛАКА
 
 async function saveEntry() {
   if (window.isSaving) return; 
@@ -28,9 +26,6 @@ async function saveEntry() {
     const author = "Неугодникова"; 
     const targetDestination = window.currentWhere || "Не указан";
 
-    // =========================================================================
-    // БЛОК ОПЕРАЦИЙ: СБОРНАЯ МНОЖЕСТВЕННАЯ ВЫДАЧА ТОВАРОВ ИЗ КОРЗИНЫ
-    // =========================================================================
     if (!window.isPartialReturnInput && window.issuanceBasket && window.issuanceBasket.length > 0) {
       window.issuanceBasket.forEach(item => {
         let originalRowIndex = item.stockRowIndex;
@@ -47,7 +42,7 @@ async function saveEntry() {
 
         if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
           let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0; 
-          let s2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0; 
+          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Смена индекса 7 на 8 (скл.2)
           let rem = item.qty;
 
           if (item.wh === "скл.1") {
@@ -56,18 +51,19 @@ async function saveEntry() {
             } else { 
               window.inventoryData[originalRowIndex][6] = 0; 
               rem -= s1; 
-              window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); 
+              window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
             }
           } else {
             if (s2 >= rem) { 
-              window.inventoryData[originalRowIndex][7] = s2 - rem; 
+              window.inventoryData[originalRowIndex][8] = s2 - rem; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
             } else { 
-              window.inventoryData[originalRowIndex][7] = 0; 
+              window.inventoryData[originalRowIndex][8] = 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
               rem -= s2; 
               window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
             }
           }
-          window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
+          // Общий остаток пересчитывается по новым индексам 6 и 8
+          window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
         }
 
         const nextId = window.qrLogs.length > 0 
@@ -104,11 +100,12 @@ async function saveEntry() {
 
 
 
-  // js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 2
-// АВТОР: AI DEVELOPER
-// ЧАСТИЧНЫЙ ВОЗВРАТ И ОДИНОЧНАЯ ВЫДАЧА С ФИКСАЦИЕЙ СКЛАДОВ БЕЗ БЛОКИРУЮЩИХ АЛЕРТОВ
 
-    // Извлекаем ключи для одиночных операций (прямой ввод в нумпад)
+  /* =========================================================================
+   ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+   ========================================================================= */
+// js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 2
+
     const p1 = window.currentSelectedRowData[0] || "";
     const p2 = window.currentSelectedRowData[1] || "";
     const p3 = window.currentSelectedRowData[2] || "";
@@ -131,9 +128,6 @@ async function saveEntry() {
       return; 
     }
 
-    // =========================================================================
-    // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ С АВТОМАТИЧЕСКИМ СКЛЕИВАНИЕМ МЕТКИ СКЛАДА
-    // =========================================================================
     if (window.isPartialReturnInput) {
       const maxAvailableToReturn = parseInt(window.currentSelectedRowData[4]) || 0;
       const partTargetWh = window.currentSelectedRowData[5] || "скл.1";
@@ -145,14 +139,14 @@ async function saveEntry() {
 
       if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
         let currentSkl1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0;
+        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
         
         if (partTargetWh === "скл.2") {
-          window.inventoryData[originalRowIndex][7] = currentSkl2 + enteredQty;
+          window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; // КОРРЕКТИРОВКА: Индекс 8
         } else {
           window.inventoryData[originalRowIndex][6] = currentSkl1 + enteredQty;
         }
-        window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
+        window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
       }
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
@@ -160,7 +154,6 @@ async function saveEntry() {
         ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
         : 1;
 
-      // КРИТИЧЕСКИЙ ФИКС: Принудительно добавляем текстовую метку [СКЛ.1]/[СКЛ.2] в лог возврата части
       const whMark = ` [${partTargetWh.toUpperCase()}]`;
       const returnPartRowData = [
         nextId, p1, p2, p3, p4, -enteredQty, currentWorker, author, targetDestination + whMark, time, day, month, year
@@ -179,21 +172,18 @@ async function saveEntry() {
       return; 
     }
 
-    // =========================================================================
-    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ВЫБРАННЫЙ ТУМБЛЕР СКЛАДА)
-    // =========================================================================
     if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-      let s2 = parseInt(window.inventoryData[originalRowIndex][7]) || 0;
+      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // КОРРЕКТИРОВКА: Индекс 8 (скл.2)
       
       const currentSelectedWh = window.numpadSelectedWarehouse || "скл.1";
 
       if (currentSelectedWh === "скл.2") {
         if (s2 >= rem) { 
-          window.inventoryData[originalRowIndex][7] = s2 - rem; 
+          window.inventoryData[originalRowIndex][8] = s2 - rem; // КОРРЕКТИРОВКА: Индекс 8
         } else { 
-          window.inventoryData[originalRowIndex][7] = 0; 
+          window.inventoryData[originalRowIndex][8] = 0; // КОРРЕКТИРОВКА: Индекс 8
           rem -= s2; 
           window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
         }
@@ -203,10 +193,10 @@ async function saveEntry() {
         } else { 
           window.inventoryData[originalRowIndex][6] = 0; 
           rem -= s1; 
-          window.inventoryData[originalRowIndex][7] = Math.max(0, s2 - rem); 
+          window.inventoryData[originalRowIndex][8] = Math.max(0, s2 - rem); // КОРРЕКТИРОВКА: Индекс 8
         }
       }
-      window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][7];
+      window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
     }
 
     localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
@@ -215,7 +205,6 @@ async function saveEntry() {
       ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
       : 1;
 
-    // Принудительно маркируем склад для одиночной выдачи, чтобы сервер Apps Script списал его верно
     const whSingleMark = ` [${window.numpadSelectedWarehouse.toUpperCase()}]`;
     const newRowData = [
       nextId, p1, p2, p3, p4, enteredQty, currentWorker, author, targetDestination + whSingleMark, time, day, month, year
