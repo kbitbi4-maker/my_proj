@@ -1,43 +1,45 @@
 /* ============================================================
-   style2.css — EXCEL-СТИЛИ ДЛЯ ВСЕХ ТАБЛИЦ
-   Версия 2.1 — зебра только для остатков и журнала
+   style2.css — ЕДИНЫЕ EXCEL-СТИЛИ ДЛЯ ВСЕХ ТАБЛИЦ
+   Версия 3.0 — универсальные стили для всех таблиц
    ============================================================ */
 
-/* ----- ОБЩИЕ СТИЛИ ДЛЯ EXCEL-ТАБЛИЦ ----- */
+/* ----- ОБЩИЙ КОНТЕЙНЕР ТАБЛИЦЫ ----- */
 .excel-table-wrapper{overflow:auto;border:1px solid #d0d7de;border-radius:0;background:#ffffff!important;box-shadow:none;flex-grow:1;width:100%}
 .excel-table-wrapper table{border-collapse:collapse;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:13px;background:#ffffff!important;table-layout:fixed;min-width:100%}
+
+/* ----- ЗАГОЛОВКИ ----- */
 .excel-table-wrapper table th{background:#f0f0f0!important;color:#333!important;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;transition:background 0.15s}
 .excel-table-wrapper table th:hover{background:#e5e5e5!important}
 .excel-table-wrapper table th.excel-corner{min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;cursor:pointer}
 .excel-table-wrapper table th.excel-corner:hover{background:#d5d5d5!important}
+
+/* ----- НОМЕРА СТРОК ----- */
 .excel-table-wrapper table td.row-header-num{background:#f0f0f0!important;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;transition:background 0.15s}
 .excel-table-wrapper table td.row-header-num:hover{background:#e5e5e5!important}
+
+/* ----- ЯЧЕЙКИ ДАННЫХ ----- */
 .excel-table-wrapper table td:not(.row-header-num){border:1px solid #d0d7de;padding:4px 6px;text-align:left;background:#ffffff!important;color:#000;font-size:13px;min-width:60px;height:24px;outline:none;transition:background 0.1s;word-break:break-word}
 
-/* ----- ЗЕБРА (ТОЛЬКО ДЛЯ ОСТАТКОВ И ЖУРНАЛА) ----- */
-#stock-body tr:nth-child(even) td:not(.row-header-num){background:#e8f5e9!important}
-#stock-body tr:nth-child(odd) td:not(.row-header-num){background:#f1f8e9!important}
-#logs-body tr:nth-child(even) td{background:#e8f5e9!important}
-#logs-body tr:nth-child(odd) td{background:#f1f8e9!important}
+/* ----- ЗЕБРА (чередование) ----- */
+.excel-table-wrapper table tr:nth-child(even) td:not(.row-header-num){background:#e8f5e9!important}
+.excel-table-wrapper table tr:nth-child(odd) td:not(.row-header-num){background:#f1f8e9!important}
 
-/* ----- ТАБЛИЦА ОТЛИЧИЙ — БЕЛЫЙ ФОН (БЕЗ ЗЕБРЫ) ----- */
-#diff-body td{background:#ffffff!important}
-#diff-body tr:nth-child(even) td{background:#ffffff!important}
-#diff-body tr:nth-child(odd) td{background:#ffffff!important}
-#diff-body tr{background:#ffffff!important}
-
-/* ----- EXCEL-ГРИД ДЛЯ САЛЬДО — БЕЛЫЙ ФОН ----- */
-#balance-paste-container td{background:#ffffff!important}
-#balance-paste-container tr:nth-child(even) td{background:#ffffff!important}
-#balance-paste-container tr:nth-child(odd) td{background:#ffffff!important}
-
-/* ----- ВЫДЕЛЕНИЕ ЯЧЕЕК (СИНИЙ) ----- */
+/* ----- ВЫДЕЛЕНИЕ (СИНИЙ ЦВЕТ КАК В EXCEL) ----- */
 .excel-table-wrapper table td.cell-selected{background:#c7e0f4!important;outline:1px solid #2b5797;outline-offset:-1px}
 .excel-table-wrapper table td.cell-active-focus{outline:2px solid #1e4f7a!important;outline-offset:-2px;background:#e3f0fa!important}
 .excel-table-wrapper table td.row-selected{background:#c7e0f4!important}
 
-/* ----- ГРЯЗНЫЕ ЯЧЕЙКИ ----- */
+/* ----- ТАБЛИЦА ОТЛИЧИЙ (без зебры, с цветными строками) ----- */
+#diff-body tr td:not(.row-header-num){background:transparent!important}
+#diff-body tr:nth-child(even) td:not(.row-header-num){background:transparent!important}
+#diff-body tr:nth-child(odd) td:not(.row-header-num){background:transparent!important}
+#diff-body tr{background:#ffffff!important}
+#diff-body tr td:first-child{background:#f0f0f0!important}
+
+/* ----- ГРЯЗНЫЕ ЯЧЕЙКИ (изменённые) ----- */
 .excel-table-wrapper table td.cell-stock-dirty{background:#fff8e1!important;border-left:3px solid #f9a825!important}
+
+/* ----- ВСПЫШКА СОХРАНЕНИЯ ----- */
 .excel-table-wrapper table td.cell-stock-saved-flash{animation:excelFlashGreen 0.8s ease}
 @keyframes excelFlashGreen{0%{background:#c8e6c9!important}100%{background:#ffffff!important}}
 
@@ -55,5 +57,5 @@
 .excel-search{width:100%;padding:8px 12px;font-size:14px;border:1px solid #d0d7de;border-radius:4px;margin-bottom:10px;box-sizing:border-box;background:#ffffff;color:#000;transition:border 0.2s}
 .excel-search:focus{border-color:#1a73e8;outline:none;box-shadow:0 0 0 2px rgba(26,115,232,0.2)}
 
-/* ----- АДАПТИВ ----- */
+/* ----- АДАПТИВ ДЛЯ МОБИЛЬНЫХ ----- */
 @media(max-width:768px){.excel-table-wrapper{font-size:11px}.excel-table-wrapper table td:not(.row-header-num){font-size:11px;padding:3px 4px;min-width:40px}.excel-table-wrapper table th{font-size:10px;padding:4px 2px;min-width:40px}}
