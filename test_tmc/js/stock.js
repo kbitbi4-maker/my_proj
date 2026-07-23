@@ -1,6 +1,6 @@
 // ================================================================
 // stock.js — ТАБЛИЦА ОСТАТКОВ (обёртка над excel_engine.js)
-// Версия 5.0
+// Версия 5.0 — полный код
 // ================================================================
 
 // Инициализация таблицы остатков
@@ -21,7 +21,7 @@ function initStockTable() {
       else alert('Ошибка: модуль нумпада не подключен.');
     },
     formulas: {
-      4: function(row) {
+      4: function(row) { // E = G + I (индексы 6 и 8)
         const g = parseFloat(row[6]) || 0;
         const i = parseFloat(row[8]) || 0;
         return g + i;
@@ -37,7 +37,6 @@ function showStock() {
     alert('Сначала нажмите кнопку синхронизации ☁');
     return;
   }
-  // Если таблица ещё не зарегистрирована — регистрируем
   if (!EXCEL_ENGINE.tables['stock']) initStockTable();
   excelUpdateData('stock', data);
   document.getElementById('modal').classList.remove('hidden');
@@ -58,6 +57,7 @@ function resetStockFilters() {
   excelResetFilters('stock');
   const input = document.getElementById('stock-search');
   if (input) input.value = '';
+  renderStock();
 }
 
 function stockSearch() {
@@ -65,7 +65,52 @@ function stockSearch() {
   if (input) excelSearch('stock', input.value);
 }
 
-// Обработчик клика по строке (для режима просмотра) – уже задан в onRowClick
+// Функция сохранения изменений (вызывается из кнопки)
+function saveStockChangesCloud() {
+  excelSaveChanges('stock', function(tableId, transactionsList) {
+    // Дополнительная логика после применения изменений (например, отправка в облако)
+    // Здесь мы уже применили изменения к данным, теперь отправляем в Google
+    if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
+      try {
+        const payloadData = { type: "DELTA_UPDATE", cells: transactionsList };
+        const textPayload = "STOCK_UPDATE|" + JSON.stringify(payloadData);
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: textPayload
+        })
+        .then(res => res.text())
+        .then(result => {
+          alert('✅ Данные сохранены в облаке!\n' + result);
+          // Перерисовываем таблицу, чтобы снять dirty-флаги
+          renderStock();
+        })
+        .catch(err => {
+          alert('⚠️ Ошибка отправки: ' + err.message + '\nДанные сохранены локально.');
+        });
+      } catch (e) {
+        alert('⚠️ Ошибка: ' + e.message);
+      }
+    } else {
+      alert('📱 Устройство офлайн. Изменения сохранены локально.');
+    }
+  });
+}
+
+function cancelStockChanges() {
+  // Просто перерисовываем таблицу без сохранения, очищая очередь изменений
+  if (!EXCEL_ENGINE.tables['stock']) return;
+  const queue = EXCEL_ENGINE.changesQueues['stock'] || {};
+  if (Object.keys(queue).length === 0) {
+    alert('Нет изменений для отмены.');
+    return;
+  }
+  if (!confirm('Очистить все несохранённые изменения ячеек?')) return;
+  EXCEL_ENGINE.changesQueues['stock'] = {};
+  EXCEL_ENGINE.selections['stock'] = { startRow: null, startCol: null, endRow: null, endCol: null };
+  EXCEL_ENGINE.activeCells['stock'] = { row: null, col: null };
+  renderStock();
+}
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
@@ -74,4 +119,4 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-console.log('✅ stock.js загружен');
+console.log('✅ stock.js загружен (версия 5.0)');
