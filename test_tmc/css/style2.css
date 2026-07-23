@@ -1,1 +1,63 @@
+/* ============================================================
+   style2.css — EXCEL-СТИЛИ ДЛЯ ТАБЛИЦЫ ОСТАТКОВ
+   Выделения, зебра, сортировка, фильтры, режим редактирования
+   ============================================================ */
 
+/* Стили обертки таблицы остатков (Excel-вид) */
+#stock-view .table-wrapper{border:1px solid #d0d7de;border-radius:0;background:#ffffff!important;box-shadow:none}
+/* Стили таблицы остатков (Excel-вид) */
+#stock-view table{border-collapse:collapse;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:13px;background:#ffffff!important;table-layout:fixed;min-width:100%}
+/* Стили заголовков таблицы остатков (Excel-вид) */
+#stock-head th{background:#f0f0f0!important;color:#333!important;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;transition:background 0.15s}
+/* Стили заголовков при наведении (Excel-вид) */
+#stock-head th:hover{background:#e5e5e5!important}
+/* Стили первого заголовка (угол) (Excel-вид) */
+#stock-head th:first-child{min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0}
+/* Стили заголовков строк (номера) (Excel-вид) */
+#stock-body td.row-header-num{background:#f0f0f0!important;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;transition:background 0.15s}
+/* Стили заголовков строк при наведении (Excel-вид) */
+#stock-body td.row-header-num:hover{background:#e5e5e5!important}
+/* Стили обычных ячеек таблицы остатков (Excel-вид) */
+#stock-body td:not(.row-header-num){border:1px solid #d0d7de;padding:4px 6px;text-align:left;background:#ffffff!important;color:#000;font-size:13px;min-width:60px;height:24px;outline:none;transition:background 0.1s;word-break:break-word}
+/* Стили единой зебры для всех таблиц (светло-зелёный) */
+#stock-body tr:nth-child(even) td:not(.row-header-num){background:#e8f5e9!important}
+#stock-body tr:nth-child(odd) td:not(.row-header-num){background:#f1f8e9!important}
+#logs-body tr:nth-child(even) td{background:#e8f5e9!important}
+#logs-body tr:nth-child(odd) td{background:#f1f8e9!important}
+/* Стили выделенных ячеек (Excel-вид) */
+#stock-body td.cell-selected{background:#c7e0f4!important;outline:1px solid #2b5797;outline-offset:-1px}
+/* Стили активной ячейки (Excel-вид) */
+#stock-body td.cell-active-focus{outline:2px solid #1e4f7a!important;outline-offset:-2px;background:#e3f0fa!important}
+/* Стили выделенных строк (Excel-вид) */
+#stock-body td.row-selected{background:#c7e0f4!important}
+/* В режиме редактирования убираем зебру */
+#stock-view .cell-selected{background:#c7e0f4!important}
+/* Стили грязных ячеек (измененные) (Excel-вид) */
+#stock-body td.cell-stock-dirty{background:#fff8e1!important;border-left:3px solid #f9a825!important}
+/* Стили вспышки сохранения (Excel-вид) */
+#stock-body td.cell-stock-saved-flash{animation:excelFlashGreen 0.8s ease}
+/* Анимация зеленой вспышки (Excel-вид) */
+@keyframes excelFlashGreen{0%{background:#c8e6c9!important}100%{background:#ffffff!important}}
+/* Стили бейджа режима (Excel-вид) */
+#stock-view .stock-mode-badge{background:#e8f0fe;color:#1a3c5e;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:600;margin-bottom:8px;border:1px solid #b3c9e6;text-align:center}
+/* Стили строки кнопок действий (Excel-вид) */
+#stock-view .stock-edit-actions-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+/* Стили кнопки сброса (Excel-вид) */
+#stock-view .btn-stock-cancel{background:#f8f9fa;border:1px solid #d0d7de;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;color:#555;transition:background 0.2s}
+/* Стили кнопки сброса при наведении (Excel-вид) */
+#stock-view .btn-stock-cancel:hover{background:#f1f3f4}
+/* Стили кнопки сохранения (Excel-вид) */
+#stock-view .btn-stock-save{background:#1a73e8;border:none;padding:6px 18px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;color:white;transition:background 0.2s}
+/* Стили кнопки сохранения при наведении (Excel-вид) */
+#stock-view .btn-stock-save:hover{background:#1557b0}
+/* Стили поля поиска (Excel-вид) */
+#stock-search{width:100%;padding:8px 12px;font-size:14px;border:1px solid #d0d7de;border-radius:4px;margin-bottom:10px;box-sizing:border-box;background:#ffffff;color:#000;transition:border 0.2s}
+/* Стили поля поиска в фокусе (Excel-вид) */
+#stock-search:focus{border-color:#1a73e8;outline:none;box-shadow:0 0 0 2px rgba(26,115,232,0.2)}
+/* Стили для мобильных устройств (Excel-вид) */
+@media(max-width:768px){#stock-view .table-wrapper{font-size:11px}#stock-body td:not(.row-header-num){font-size:11px;padding:3px 4px;min-width:40px}#stock-head th{font-size:10px;padding:4px 2px;min-width:40px}}
+/* Стили режима редактирования — отключаем зебру */
+#stock-view .cell-selected{background:#c7e0f4!important}
+/* Стили кнопки сброса фильтров */
+.btn-reset-filters{background:#6b7280;border:none;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:white;transition:background 0.15s}
+.btn-reset-filters:hover{background:#4b5563}
