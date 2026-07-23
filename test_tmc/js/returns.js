@@ -1,4 +1,4 @@
-// js/returns.js — Модуль управления возвратами — ЧАСТЬ 1
+// js/returns.js — Модуль управления возвратами с учетом 21 столбца
 
 window.isReturnMode = false;
 window.currentReturnLogIndex = null;
@@ -55,7 +55,6 @@ function handleLogClick(originalIndex) {
   if (document.getElementById('where-view')) document.getElementById('where-view').classList.add('hidden');
   document.getElementById('return-view').classList.remove('hidden');
 }
-// js/returns.js — Модуль управления возвратами — ЧАСТЬ 2
 
 function processReturn(actionType) {
   if (window.currentReturnLogIndex === null) {
@@ -68,9 +67,8 @@ function processReturn(actionType) {
   const rowData = logItem.data;
   const qty = parseInt(rowData[5]) || 0; 
   const worker = rowData[6] || "Не указан";
-  const destinationText = String(rowData[8] || ""); // Текст из столбца "Куда выдано"
+  const destinationText = String(rowData[8] || ""); 
 
-  // АВТООПРЕДЕЛЕНИЕ СКЛАДА ИЗ ТЕКСТА СТРОКИ
   let targetWh = "скл.1"; 
   if (destinationText.toUpperCase().includes("[СКЛ.2]")) {
     targetWh = "скл.2";
@@ -95,12 +93,11 @@ function processReturn(actionType) {
     window.inventoryData = window.inventoryData.map(row => {
       if (row && String(row[0]).trim().toLowerCase() === logArt && String(row[1]).trim().toLowerCase() === logParam) {
         if (targetWh === "скл.2") {
-          row[7] = (parseInt(row[7]) || 0) + qty; // Прибавляем на Склад 2
+          row[8] = (parseInt(row[8]) || 0) + qty; // КОРРЕКТИРОВКА: Индекс 7 изменен на 8 (скл.2)
         } else {
-          row[6] = (parseInt(row[6]) || 0) + qty; // Прибавляем на Склад 1
+          row[6] = (parseInt(row[6]) || 0) + qty; 
         }
-        // Автопересчет Общего запаса
-        row[4] = (parseInt(row[6]) || 0) + (parseInt(row[7]) || 0);
+        row[4] = (parseInt(row[6]) || 0) + (parseInt(row[8]) || 0); // КОРРЕКТИРОВКА: Индекс 7 изменен на 8 (скл.2)
         stockUpdated = true;
       }
       return row;
@@ -113,7 +110,6 @@ function processReturn(actionType) {
       : 1;
 
     const itemKeys = rowData.slice(1, 5); 
-    // Наследуем исходную метку склада в новое имя объекта, чтобы история не ломалась
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, destinationText, time, day, month, year];
     
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
@@ -130,7 +126,6 @@ function processReturn(actionType) {
   } else if (actionType === 'part') {
     if (qty <= 0) { alert("Ошибка: Нельзя вернуть часть от строки возврата!"); return; }
 
-    // Передаем в нумпад метаданные и принудительно прокидываем распознанный склад 5-м параметром
     window.currentSelectedRowData = [rowData[1], rowData[2], rowData[3], rowData[4], qty, targetWh]; 
     window.isPartialReturnInput = true; 
 
@@ -138,7 +133,6 @@ function processReturn(actionType) {
     
     if (typeof openNumpadView === 'function') {
       openNumpadView();
-      // Фиксируем склад в тумблере нумпада для Ветки А
       window.numpadSelectedWarehouse = targetWh;
       const whBtn = document.getElementById('numpad-warehouse-btn');
       if (whBtn) whBtn.innerText = targetWh.toUpperCase();
