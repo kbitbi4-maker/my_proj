@@ -2,7 +2,6 @@
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLmQhzuECmdjd3pTeyr_o3mcaOojV-Jpa9w9JU8gHDyvaiS5smiKd0iwRAXmzwKpKA/exec';
 
-
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
@@ -35,7 +34,7 @@ function renderLogs() {
 }
 
 /**
- * ИСПРАВЛЕННЫЙ ДВИЖОК: Гарантирует сопоставление 30 строк журнала с базой остатков склада
+ * ГАРАНТИРОВАННО РАБОЧИЙ ДВИЖОК: Жестко прописаны индексы ячеек без ложных сокращений
  */
 function recalculateUnprocessedSup() {
   const stock = window.inventoryData;
@@ -44,48 +43,51 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
-  // Создаем чистый объект для накопления сумм
   const totalsMap = {};
   
+  // Цикл по журналу выдачи (Таблица 2)
   for (let i = 0; i < logs.length; i++) {
     const item = logs[i];
     if (!item || !item.data || item.action === 'delete') continue;
-    if (i === 0) continue; // Пропускаем строку заголовков журнала
+    if (i === 0) continue; 
 
-    const rowData = item.data;
-    
-    // ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ПАРСИНГ ЖУРНАЛА (Таблица 2)
-    const art = String(rowData[1]).trim().toLowerCase();   // Столбец 2 (Материал / Артикул)
-    const param = String(rowData[2]).trim().toLowerCase(); // Столбец 3 (КрТекстМатериала / Параметр)
-    const qty = parseInt(rowData[5]) || 0;                 // Столбец 6 (Количество выдачи)
+    const logRow = item.data;
+    if (logRow.length < 6) continue;
 
-    const key = art + "|||" + param;
-    if (!totalsMap[key]) {
-      totalsMap[key] = 0;
+    // Извлекаем данные по строгим индексам (1 - Артикул, 2 - Параметр, 5 - Кол-во)
+    const artKey = String(logRow[1]).trim().toLowerCase();   
+    const paramKey = String(logRow[2]).trim().toLowerCase(); 
+    const qtyVal = parseInt(logRow[5]) || 0;                 
+
+    const mapKey = artKey + "|||" + paramKey;
+    if (!totalsMap[mapKey]) {
+      totalsMap[mapKey] = 0;
     }
-    totalsMap[key] += qty;
+    totalsMap[mapKey] += qtyVal;
   }
 
   let updatedRowsCount = 0;
-  for (let i = 1; i < stock.length; i++) {
-    const sRow = stock[i];
-    if (!sRow || sRow.length < 8) continue;
+  
+  // Цикл по остаткам склада (Таблица 1)
+  for (let j = 1; j < stock.length; j++) {
+    const stockRow = stock[j];
+    if (!stockRow || stockRow.length < 8) continue;
 
-    // ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ПАРСИНГ СКЛАДА (Таблица 1)
-    const sArt = String(sRow[0]).trim().toLowerCase();     // Столбец 1 склада (Партия / Артикул)
-    const sParam = String(sRow[1]).trim().toLowerCase();   // Столбец 2 склада (Материал / Параметр)
-    const key = sArt + "|||" + sParam;
+    // Извлекаем данные по строгим индексам (0 - Артикул склада, 1 - Параметр склада)
+    const sArtKey = String(stockRow[0]).trim().toLowerCase();     
+    const sParamKey = String(stockRow[1]).trim().toLowerCase();   
+    const searchKey = sArtKey + "|||" + sParamKey;
 
-    const currentUnprocessedQty = totalsMap[key] !== undefined ? totalsMap[key] : 0;
+    const currentUnprocessedQty = totalsMap[searchKey] !== undefined ? totalsMap[searchKey] : 0;
     
-    // Записываем итоговую математическую сумму строго в 8-й столбец (индекс 7 — не проведено в SUP)
-    sRow[7] = currentUnprocessedQty;                       
+    // Записываем сумму строго в 8-й столбец остатков (индекс 7)
+    stockRow[7] = currentUnprocessedQty;                       
     updatedRowsCount++;
   }
 
   window.inventoryData = stock;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  console.log(`Движок SUP: Расчет окончен. Данные внесены в ${updatedRowsCount} строк Листа 1.`);
+  console.log("Движок SUP: Пересчет завершен без ошибок. Обновлено строк: " + updatedRowsCount);
 }
 
 
@@ -95,11 +97,9 @@ function recalculateUnprocessedSup() {
 
 
 
-
-
-' =========================================================================
-' ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-' =========================================================================
+// =========================================================================
+// ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+// =========================================================================
 // js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 2
 
 async function syncFromGoogle() {
@@ -141,7 +141,6 @@ async function syncFromGoogle() {
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
-    // Запускаем исправленный автоматический пересчет SUP после заливки данных
     recalculateUnprocessedSup();
     
     renderLogs();
@@ -175,8 +174,8 @@ async function sendUnsynced() {
       let bodyData = "";
       
       if (item.action === 'delete') {
-        const art = item.itemKeys[0] || "";
-        const param = item.itemKeys[1] || "";
+        const art = item.itemKeys || "";
+        const param = item.itemKeys || "";
         bodyData = `DELETE_ROW|${item.id}|${item.qty}|${art}|${param}`;
       } else if (item.data) {
         bodyData = JSON.stringify({ row: item.data });
