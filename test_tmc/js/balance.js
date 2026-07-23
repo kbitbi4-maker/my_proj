@@ -1,16 +1,12 @@
 // ================================================================
 // balance.js — Модуль импорта Сальдо и Сравнения остатков
-// Версия 2.2 — исправлена шапка таблицы отличий
+// Версия 2.3 — исправлена шапка таблицы отличий
 // ================================================================
 
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
 window.diffData = JSON.parse(localStorage.getItem('qr_diff_v1')) || [];
 window.diffFilterColor = "all";
 window.diffSortDirection = {};
-
-// ================================================================
-// ОТКРЫТИЕ МЕНЮ САЛЬДО
-// ================================================================
 
 function openBalanceMenu() {
   if (typeof stopCamera === 'function') stopCamera();
@@ -25,10 +21,6 @@ function openBalanceMenu() {
   if (document.getElementById('diff-table-view')) document.getElementById('diff-table-view').classList.add('hidden');
   document.getElementById('balance-view').classList.remove('hidden');
 }
-
-// ================================================================
-// ПОКАЗ ОБЛАСТИ ИМПОРТА EXCEL
-// ================================================================
 
 function showBalancePasteArea() {
   document.getElementById('balance-menu-buttons').classList.add('hidden');
@@ -53,10 +45,6 @@ function hideBalancePasteArea() {
   if (menuButtons) menuButtons.classList.remove('hidden');
 }
 
-// ================================================================
-// ПОКАЗ ТАБЛИЦЫ ОТЛИЧИЙ (ИСПРАВЛЕННАЯ ШАПКА)
-// ================================================================
-
 function showDiffTable() {
   const diffMatrix = window.diffData;
   if (!diffMatrix || diffMatrix.length <= 1) {
@@ -73,31 +61,21 @@ function showDiffTable() {
   window.diffFilterColor = "all";
 
   // ============================================================
-  // ФОРМИРУЕМ ШАПКУ — ВСЯ ВНУТРИ diff-head (без апендикса)
+  // ФОРМИРУЕМ ШАПКУ ЦЕЛИКОМ (БЕЗ АПЕНДИКСА)
   // ============================================================
-  
-  // Берём названия столбцов из первой строки матрицы
   const headers = diffMatrix[0] || ['Партия', 'Материал', 'КрТекстМатериала', 'Базисная ЕИ', 'Разница Остатка', 'Выдано товаров'];
-  
-  // Буквенная нумерация столбцов (A, B, C, D, E, F)
   const colLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
   
-  // ============================================================
-  // СТРОКА 1: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
-  // ============================================================
+  // СТРОКА 1: БУКВЫ
   let headHtml = '<tr>';
-  // Уголок
   headHtml += '<th class="excel-corner" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;"></th>';
-  // Буквы
   for (let c = 0; c < 6; c++) {
     const letter = colLetters[c] || String.fromCharCode(65 + c);
     headHtml += '<th onclick="diffSortByColumn('+c+')" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:80px;position:sticky;top:0;z-index:10;">'+letter+'</th>';
   }
   headHtml += '</tr>';
   
-  // ============================================================
   // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ
-  // ============================================================
   headHtml += '<tr>';
   headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
   for (let h = 0; h < 6; h++) {
@@ -106,7 +84,7 @@ function showDiffTable() {
   }
   headHtml += '</tr>';
   
-  // Устанавливаем шапку целиком
+  // Устанавливаем шапку
   head.innerHTML = headHtml;
 
   // Рендерим тело
@@ -115,10 +93,6 @@ function showDiffTable() {
   document.getElementById('balance-view').classList.add('hidden');
   document.getElementById('diff-table-view').classList.remove('hidden');
 }
-
-// ================================================================
-// СОРТИРОВКА В ТАБЛИЦЕ ОТЛИЧИЙ
-// ================================================================
 
 function diffSortByColumn(cIdx) {
   const diffMatrix = window.diffData;
@@ -154,10 +128,6 @@ function diffSortByColumn(cIdx) {
   renderDiffTableBody();
 }
 
-// ================================================================
-// РЕНДЕРИНГ ТЕЛА ТАБЛИЦЫ ОТЛИЧИЙ
-// ================================================================
-
 function renderDiffTableBody() {
   const body = document.getElementById('diff-body');
   if (!body) return;
@@ -173,14 +143,12 @@ function renderDiffTableBody() {
 
   let rowsData = diffMatrix.slice(1);
 
-  // Поиск
   if (term !== "") {
     rowsData = rowsData.filter(function(row) {
       return row.some(function(cell) { return String(cell).toLowerCase().includes(term); });
     });
   }
 
-  // Фильтр по цвету
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(function(row) {
       const lastCell = String(row[4] || '').trim();
@@ -200,16 +168,14 @@ function renderDiffTableBody() {
     var row = rowsData[ri];
     if (!row) continue;
     
-    // Определяем цвет строки по столбцу "Разница Остатка" (индекс 4)
     const diffValue = String(row[4] || '').trim();
     let rowColor = '';
     if (diffValue.indexOf('+') === 0) {
-      rowColor = '#dcfce7'; // Зелёный — профицит
+      rowColor = '#dcfce7';
     } else if (diffValue.indexOf('-') === 0) {
-      rowColor = '#fee2e2'; // Красный — дефицит
+      rowColor = '#fee2e2';
     }
     
-    // Дополняем до 6 столбцов
     while (row.length < 6) {
       row.push('');
     }
@@ -227,10 +193,6 @@ function renderDiffTableBody() {
   }
   body.innerHTML = bodyHtml;
 }
-
-// ================================================================
-// ФИЛЬТРЫ
-// ================================================================
 
 function filterDiffByColor(colorType) {
   window.diffFilterColor = colorType;
@@ -251,10 +213,6 @@ function openDiffFilterMenu(event, colIndex) {
   };
   setTimeout(function() { document.addEventListener('click', closeMenuHandler); }, 50);
 }
-
-// ================================================================
-// ВЫПОЛНЕНИЕ СВЕРКИ
-// ================================================================
 
 function executeDatabaseComparison() {
   const stock = window.inventoryData;
@@ -335,10 +293,6 @@ function executeDatabaseComparison() {
     alert(alertMessage);
   }
 }
-
-// ================================================================
-// ИМПОРТ ИЗ EXCEL
-// ================================================================
 
 async function processTextTableImport() {
   if (!window.excelMatrix || window.excelMatrix.length === 0) {
