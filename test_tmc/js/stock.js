@@ -1,6 +1,4 @@
-// js/stock.js — Модуль остатков склада целиком — ЧАСТЬ 1
-// АВТОР: AI DEVELOPER
-// ИСПРАВЛЕН МАППИНГ ИНДЕКСОВ row ДЛЯ ИСКЛЮЧЕНИЯ ДУБЛИРОВАНИЯ СТРОК В ТАБЛИЦЕ И badge
+// js/stock.js — Модуль остатков склада целиком с учетом 21 столбца — ЧАСТЬ 1
 
 function showStock() {
   const currentData = window.inventoryData;
@@ -64,29 +62,15 @@ function renderStock() {
     <th>Кол-во<br>запаса<br>в конце<br>периода</th>
     <th>из.SUP</th>
     <th>скл.1</th>
+    <th>не проведено<br>в SUP</th>
     <th>скл.2</th>
     <th>цена<br>за<br>единицу</th>
+    <th>полка №</th>
     <th>лок.ID</th>
     <th>Ст-ть<br>запаса<br>в конце<br>периода</th>
     <th>Завод</th><th>Склад</th><th>Особый запас</th><th>СПП-элемент</th><th>Группа материалов</th>
     <th>Дата поступления на склад</th><th>Золото</th><th>Серебро</th>
   `;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// js/stock.js — Модуль остатков склада целиком — ЧАСТЬ 2
-// АВТОР: AI DEVELOPER
-// ОЧИЩЕНА БИЛЕБЕРДА ИЗ КЛЮЧЕЙ window.currentSelectedRowData ПУТЕМ ВОЗВРАТА ЧЕТКОЙ ИНДЕКСАЦИИ row[...]
 
   body.innerHTML = currentData.map((row, index) => {
     if (index === 0) return ''; 
@@ -95,7 +79,7 @@ function renderStock() {
     if (!isMatch && term !== "") return '';
 
     const cellsHtml = row.map((cell, cellIndex) => {
-      if (cellIndex === 8) {
+      if (cellIndex === 9) {
         const parsedPrice = parseFloat(String(cell).replace(/,/g, '.').replace(/\s+/g, ''));
         const formattedPrice = !isNaN(parsedPrice) ? parsedPrice.toFixed(3) : cell;
         return `<td>${formattedPrice}</td>`;
@@ -111,12 +95,22 @@ function renderStock() {
             </td>
           `;
         }
-        if (cellIndex === 6 || cellIndex === 7) {
+        if (cellIndex === 6 || cellIndex === 8) {
           return `
             <td class="editable-stock-cell" onclick="event.stopPropagation();">
               <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" 
                      value="${parseInt(cell) || 0}" min="0" autocomplete="off"
                      oninput="updateStockTotalOnInput(${index}); markStockCellAsDirty(this);">
+            </td>
+          `;
+        }
+        if (cellIndex === 10) {
+          return `
+            <td class="editable-stock-cell" onclick="event.stopPropagation();">
+              <input type="text" id="stock-input-${index}-10" class="cell-stock-dual-input" 
+                     style="width: 70px; font-family: sans-serif; text-align: left;"
+                     value="${cell !== undefined ? String(cell).trim() : ''}" autocomplete="off"
+                     oninput="markStockCellAsDirty(this);">
             </td>
           `;
         }
@@ -129,9 +123,22 @@ function renderStock() {
   }).join('');
   
   if (body.innerHTML.trim() === "") {
-    body.innerHTML = '<tr><td colspan="19">Ничего не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="21">Ничего не найдено</td></tr>';
   }
 }
+
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+   ========================================================================= */
+// js/stock.js — Модуль остатков склада целиком с учетом 21 столбца — ЧАСТЬ 2
 
 function selectFromStockDirect(index) {
   const currentData = window.inventoryData;
@@ -139,10 +146,9 @@ function selectFromStockDirect(index) {
 
   const row = currentData[index];
   const q1 = parseInt(row[6]) || 0; 
-  const q2 = parseInt(row[7]) || 0; 
+  const q2 = parseInt(row[8]) || 0; 
   const totalStock = q1 + q2;
 
-  // КРИТИЧЕСКИЙ ФИКС: Извлекаем конкретные ячейки строки, а не дублируем всю строку целиком!
   window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
   
   document.getElementById('stock-view').classList.add('hidden');
@@ -161,7 +167,7 @@ function markStockCellAsDirty(inputElement) {
 
 function updateStockTotalOnInput(rowIndex) {
   const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
-  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-7`);
+  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-8`); 
   const inputTotal = document.getElementById(`stock-input-${rowIndex}-4`);
   
   if (inputSkl1 && inputSkl2 && inputTotal) {
@@ -175,7 +181,7 @@ function updateStockTotalOnInput(rowIndex) {
 function handleStockTotalChangeDirect(rowIndex) {
   const inputTotal = document.getElementById(`stock-input-${rowIndex}-4`);
   const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
-  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-7`);
+  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-8`); 
   
   if (!inputTotal || !inputSkl1 || !inputSkl2) return;
 
