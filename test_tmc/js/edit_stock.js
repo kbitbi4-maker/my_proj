@@ -63,10 +63,11 @@ async function saveStockChangesCloud() {
         currentData[i][8] = val2;
         currentData[i][10] = valShelf; 
         
-        const art = String(currentData[i][0]).trim();
-        const param = String(currentData[i][1]).trim();
+        const art = String(currentData[i][1]).trim();
+        const param = String(currentData[i][2]).trim();
         
-        updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*val2}*${valShelf}`);
+        // ФИКС СИНТАКСИСА: Восстановлена корректная JS-строка с открывающей скобкой ${val2}
+        updatePayloadParts.push(`${art}*${param}*${valTotal}*${val1}*${val2}*${valShelf}`);
         trackingCells.push(inputTotal, inputSkl1, inputSkl2, inputShelf);
       }
     }
