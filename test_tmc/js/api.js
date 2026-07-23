@@ -1,7 +1,6 @@
-
 // ================================================================
 // api.js — Модуль сетевого взаимодействия и синхронизации
-// Версия 2.1 — сохранение шапки из Google Таблицы
+// Версия 2.2 — использует excel_core.js для журнала выдачи
 // ================================================================
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww4XB-yCHpL4mC8UWABoRp5-adrXIr7zqQ9RQI586bCgV5CiJOKqklapq018JWaU-JWQ/exec';
@@ -10,48 +9,72 @@ window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
 
-function renderLogs() {
-  const body = document.getElementById('logs-body');
-  if (!body) return;
+// Регистрируем таблицу журнала выдачи
+function initLogsTable() {
+  const logsData = window.qrLogs || [];
   
-  if (!window.qrLogs || window.qrLogs.length === 0) {
-    body.innerHTML = '<tr><td colspan="13" style="background:#ffffff;color:#000;text-align:center;padding:20px;">Пусто</td></tr>';
-    return;
+  // Определяем шапку (первая строка с isHeader: true)
+  let headers = null;
+  let dataStart = 0;
+  if (logsData.length > 0 && logsData[0] && logsData[0].isHeader === true) {
+    headers = logsData[0].data;
+    dataStart = 1;
   }
-
-  // Определяем, есть ли шапка (isHeader === true)
-  const firstItem = window.qrLogs[0];
-  const hasHeader = firstItem && firstItem.isHeader === true;
-  let startIndex = hasHeader ? 1 : 0;
   
-  // Если есть шапка — пропускаем её при рендеринге тела
-  let bodyHtml = "";
-  
-  for (let i = startIndex; i < window.qrLogs.length; i++) {
-    const item = window.qrLogs[i];
-    if (!item || !item.data) continue;
-    if (item.action === 'delete') continue;
-    
-    const isSynced = item.status === 'ok';
-    const bgClass = isSynced ? 'class="log-row-synced"' : 'class="log-row-wait"';
-    
-    let cellsHtml = '';
-    for (let cellIndex = 0; cellIndex < item.data.length; cellIndex++) {
-      const cell = item.data[cellIndex] !== undefined ? item.data[cellIndex] : '';
-      if (cellIndex === 8) {
-        cellsHtml += '<td class="log-where-cell" data-index="'+i+'" onclick="if(!window.isReturnMode){ window.enableLogCellEdit ? enableLogCellEdit(event, '+i+') : null; } else { handleLogClick('+i+'); }">'+cell+'</td>';
-      } else {
-        cellsHtml += '<td onclick="handleLogClick('+i+')">'+cell+'</td>';
-      }
+  // Извлекаем данные для таблицы
+  let tableData = [];
+  if (headers) {
+    tableData.push(headers);
+  }
+  for (let i = dataStart; i < logsData.length; i++) {
+    if (logsData[i] && logsData[i].data) {
+      tableData.push(logsData[i].data);
     }
-    
-    bodyHtml += '<tr '+bgClass+'>'+cellsHtml+'</tr>';
   }
   
-  if (bodyHtml === '') {
-    body.innerHTML = '<tr><td colspan="13" style="background:#ffffff;color:#000;text-align:center;padding:20px;">Пусто</td></tr>';
+  excelRegisterTable('logs', {
+    data: tableData,
+    headers: null,
+    colCount: 13,
+    editMode: false,
+    containerId: 'logs',
+    title: 'Журнал выдачи',
+    onRowClick: null // особый обработчик через отдельную функцию
+  });
+  
+  // Рендерим таблицу (но она рендерится через renderLogs)
+}
+
+function renderLogs() {
+  const logsData = window.qrLogs || [];
+  
+  // Определяем шапку
+  let headers = null;
+  let dataStart = 0;
+  if (logsData.length > 0 && logsData[0] && logsData[0].isHeader === true) {
+    headers = logsData[0].data;
+    dataStart = 1;
+  }
+  
+  // Извлекаем данные для таблицы
+  let tableData = [];
+  if (headers) {
+    tableData.push(headers);
+  }
+  for (let i = dataStart; i < logsData.length; i++) {
+    if (logsData[i] && logsData[i].data && logsData[i].action !== 'delete') {
+      tableData.push(logsData[i].data);
+    }
+  }
+  
+  // Обновляем данные в универсальном движке
+  const table = EXCEL_CORE.tables['logs'];
+  if (table) {
+    table.data = tableData;
+    excelRenderTable('logs');
   } else {
-    body.innerHTML = bodyHtml;
+    // Если таблица ещё не зарегистрирована — регистрируем
+    initLogsTable();
   }
 }
 
@@ -119,22 +142,22 @@ async function syncFromGoogle() {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
     
-    // Журнал выдачи — сохраняем шапку (первая строка)
+    // Журнал выдачи
     if (data.logs && data.logs.length > 0) {
       window.qrLogs = [];
-      // Первая строка — шапка (isHeader: true)
       window.qrLogs.push({ data: data.logs[0], isHeader: true });
-      // Остальные строки — данные
       for (let i = 1; i < data.logs.length; i++) {
         window.qrLogs.push({ data: data.logs[i], status: 'ok' });
       }
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      renderLogs();
     }
     
-    // Остатки — первая строка это шапка (без маркера, она просто первая)
+    // Остатки
     if (data.stock) {
       window.inventoryData = data.stock;
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+      if (typeof renderStock === 'function') renderStock();
     }
     
     if (data.balance) {
@@ -147,8 +170,6 @@ async function syncFromGoogle() {
     }
 
     recalculateUnprocessedSup();
-    renderLogs();
-    if (typeof renderStock === 'function') renderStock();
     
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
@@ -211,7 +232,58 @@ async function sendUnsynced() {
   }
 }
 
+// Специальный обработчик для журнала выдачи (клик по строке)
+function handleLogRowClick(rIdx) {
+  // Этот функционал остаётся из returns.js
+  if (window.isReturnMode) {
+    // Ищем оригинальный индекс в window.qrLogs
+    let originalIndex = 0;
+    let counter = 0;
+    const startIdx = (window.qrLogs.length > 0 && window.qrLogs[0] && window.qrLogs[0].isHeader === true) ? 1 : 0;
+    for (let i = startIdx; i < window.qrLogs.length; i++) {
+      if (window.qrLogs[i] && window.qrLogs[i].data && window.qrLogs[i].action !== 'delete') {
+        if (counter === rIdx) {
+          originalIndex = i;
+          break;
+        }
+        counter++;
+      }
+    }
+    if (originalIndex !== 0) {
+      handleLogClick(originalIndex);
+    }
+  } else {
+    // Режим редактирования ячейки "Куда"
+    // Находим оригинальный индекс
+    let originalIndex = 0;
+    let counter = 0;
+    const startIdx = (window.qrLogs.length > 0 && window.qrLogs[0] && window.qrLogs[0].isHeader === true) ? 1 : 0;
+    for (let i = startIdx; i < window.qrLogs.length; i++) {
+      if (window.qrLogs[i] && window.qrLogs[i].data && window.qrLogs[i].action !== 'delete') {
+        if (counter === rIdx) {
+          originalIndex = i;
+          break;
+        }
+        counter++;
+      }
+    }
+    if (originalIndex !== 0 && typeof enableLogCellEdit === 'function') {
+      // Создаём искусственное событие для редактирования ячейки "Куда"
+      const targetCell = document.querySelector('#logs-body tr:nth-child(' + (rIdx + 1) + ') td:nth-child(9)');
+      if (targetCell) {
+        enableLogCellEdit({ target: targetCell, stopPropagation: function(){} }, originalIndex);
+      }
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-  renderLogs();
+  // Инициализируем таблицу журнала
+  if (window.qrLogs && window.qrLogs.length > 0) {
+    initLogsTable();
+    renderLogs();
+  } else {
+    initLogsTable();
+  }
   sendUnsynced();
 });
