@@ -2,6 +2,7 @@
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLmQhzuECmdjd3pTeyr_o3mcaOojV-Jpa9w9JU8gHDyvaiS5smiKd0iwRAXmzwKpKA/exec';
 
+
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
@@ -34,7 +35,7 @@ function renderLogs() {
 }
 
 /**
- * ИСПРАВЛЕНО: Жесткая и чистая индексация массивов без синтаксических сбоев
+ * ИСПРАВЛЕННЫЙ ДВИЖОК: Гарантирует сопоставление 30 строк журнала с базой остатков склада
  */
 function recalculateUnprocessedSup() {
   const stock = window.inventoryData;
@@ -43,17 +44,20 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
+  // Создаем чистый объект для накопления сумм
   const totalsMap = {};
   
   for (let i = 0; i < logs.length; i++) {
     const item = logs[i];
     if (!item || !item.data || item.action === 'delete') continue;
-    if (i === 0) continue; 
+    if (i === 0) continue; // Пропускаем строку заголовков журнала
 
     const rowData = item.data;
-    const art = String(rowData[1]).trim().toLowerCase();   
-    const param = String(rowData[2]).trim().toLowerCase(); 
-    const qty = parseInt(rowData[5]) || 0;                 
+    
+    // ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ПАРСИНГ ЖУРНАЛА (Таблица 2)
+    const art = String(rowData[1]).trim().toLowerCase();   // Столбец 2 (Материал / Артикул)
+    const param = String(rowData[2]).trim().toLowerCase(); // Столбец 3 (КрТекстМатериала / Параметр)
+    const qty = parseInt(rowData[5]) || 0;                 // Столбец 6 (Количество выдачи)
 
     const key = art + "|||" + param;
     if (!totalsMap[key]) {
@@ -67,19 +71,21 @@ function recalculateUnprocessedSup() {
     const sRow = stock[i];
     if (!sRow || sRow.length < 8) continue;
 
-    const sArt = String(sRow[1]).trim().toLowerCase();     
-    const sParam = String(sRow[2]).trim().toLowerCase();   
+    // ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ПАРСИНГ СКЛАДА (Таблица 1)
+    const sArt = String(sRow[0]).trim().toLowerCase();     // Столбец 1 склада (Партия / Артикул)
+    const sParam = String(sRow[1]).trim().toLowerCase();   // Столбец 2 склада (Материал / Параметр)
     const key = sArt + "|||" + sParam;
 
     const currentUnprocessedQty = totalsMap[key] !== undefined ? totalsMap[key] : 0;
     
+    // Записываем итоговую математическую сумму строго в 8-й столбец (индекс 7 — не проведено в SUP)
     sRow[7] = currentUnprocessedQty;                       
     updatedRowsCount++;
   }
 
   window.inventoryData = stock;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  console.log(`Движок SUP: Пересчет завершен. Обновлено строк склада: ${updatedRowsCount}`);
+  console.log(`Движок SUP: Расчет окончен. Данные внесены в ${updatedRowsCount} строк Листа 1.`);
 }
 
 
@@ -91,9 +97,9 @@ function recalculateUnprocessedSup() {
 
 
 
-// =========================================================================
-// ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-// =========================================================================
+' =========================================================================
+' ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+' =========================================================================
 // js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 2
 
 async function syncFromGoogle() {
@@ -135,6 +141,7 @@ async function syncFromGoogle() {
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
+    // Запускаем исправленный автоматический пересчет SUP после заливки данных
     recalculateUnprocessedSup();
     
     renderLogs();
@@ -145,7 +152,7 @@ async function syncFromGoogle() {
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
     
-    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (SUP), Сальдо и Отчет сверки.");
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (включая не проведено в SUP), Сальдо и Отчет сверки.");
   } catch (e) { 
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
@@ -168,8 +175,8 @@ async function sendUnsynced() {
       let bodyData = "";
       
       if (item.action === 'delete') {
-        const art = item.itemKeys || "";
-        const param = item.itemKeys || "";
+        const art = item.itemKeys[0] || "";
+        const param = item.itemKeys[1] || "";
         bodyData = `DELETE_ROW|${item.id}|${item.qty}|${art}|${param}`;
       } else if (item.data) {
         bodyData = JSON.stringify({ row: item.data });
