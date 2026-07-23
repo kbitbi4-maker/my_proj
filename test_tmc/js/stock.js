@@ -1,19 +1,19 @@
-// js/stock.js — Модуль остатков склада целиком с учетом 21 столбца — ЧАСТЬ 1
+// js/stock.js — Модуль Excel-грида остатков склада с поддержкой выделений и Shift-диапазонов — ЧАСТЬ 1
+
+window.isStockEditMode = false;
+window.stockSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
+window.stockActiveCell = { row: null, col: null };
+window.stockChangesQueue = {}; // Кэш измененных ячеек: {"R_C": {value, bg, fontColor, fontWeight}}
 
 function showStock() {
   const currentData = window.inventoryData;
-
   if (!currentData || currentData.length === 0) { 
     alert("Сначала нажмите кнопку синхронизации ☁"); 
     return; 
   }
-  
   const searchInput = document.getElementById('stock-search');
   if (searchInput) searchInput.value = "";
-
-  if (typeof window.isStockEditMode !== 'undefined') {
-    window.isStockEditMode = false;
-  }
+  window.isStockEditMode = true; // Сразу активируем интерактивный Excel-режим
 
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
@@ -36,95 +36,95 @@ function renderStock() {
     controlsWrapper = document.createElement('div');
     controlsWrapper.id = 'stock-edit-controls-wrapper';
     controlsWrapper.style.width = '100%';
-    controlsWrapper.style.flexShrink = '0';
-    
     if (searchInput && searchInput.parentNode) {
       searchInput.parentNode.insertBefore(controlsWrapper, searchInput);
     }
   }
 
-  const isEdit = !!window.isStockEditMode;
   controlsWrapper.innerHTML = `
-    <div id="stock-edit-badge" class="stock-mode-badge ${isEdit ? '' : 'hidden'}">
-      ⚠️ РЕЖИМ ИЗМЕНЕНИЯ ОСТАТКОВ АКТИВЕН
+    <div id="stock-edit-badge" class="stock-mode-badge">
+      🟢 РЕЖИМ EXCEL-ГРИДА АКТИВЕН (Выделение ячеек, строк, столбцов, клик с Shift)
     </div>
-    <button id="stock-edit-trigger-btn" class="btn-edit-trigger ${isEdit ? 'hidden' : ''}" onclick="toggleStockEditMode(true)">
-      📝 Внести изменения
-    </button>
-    <div id="stock-edit-actions" class="stock-edit-actions-row ${isEdit ? '' : 'hidden'}">
-      <button class="btn-stock-cancel" onclick="cancelStockChanges()">Отмена</button>
-      <button class="btn-stock-save" onclick="saveStockChangesCloud()">Сохранить изменения</button>
+    <div id="stock-edit-actions" class="stock-edit-actions-row">
+      <button class="btn-stock-cancel" onclick="cancelStockChanges()">Сбросить кэш</button>
+      <button class="btn-stock-save" onclick="saveStockChangesCloud()">Сохранить изменения в Google (${Object.keys(window.stockChangesQueue).length})</button>
     </div>
   `;
   
+  // Добавляем пустой заголовок в начало для столбца нумерации строк (Excel-style)
   head.innerHTML = `
-    <th>Партия</th><th>Материал</th><th>КрТекстМатериала</th><th>Базисная ЕИ</th>
-    <th>Кол-во<br>запаса<br>в конце<br>периода</th>
-    <th>из.SUP</th>
-    <th>скл.1</th>
-    <th>не проведено<br>в SUP</th>
-    <th>скл.2</th>
-    <th>цена<br>за<br>единицу</th>
-    <th>полка №</th>
-    <th>лок.ID</th>
-    <th>Ст-ть<br>запаса<br>в конце<br>периода</th>
-    <th>Завод</th><th>Склад</th><th>Особый запас</th><th>СПП-элемент</th><th>Группа материалов</th>
-    <th>Дата поступления на склад</th><th>Золото</th><th>Серебро</th>
+    <th></th>
+    <th onclick="excelSelectWholeColumn(0)">Партия</th>
+    <th onclick="excelSelectWholeColumn(1)">Материал</th>
+    <th onclick="excelSelectWholeColumn(2)">КрТекстМатериала</th>
+    <th onclick="excelSelectWholeColumn(3)">Базисная ЕИ</th>
+    <th onclick="excelSelectWholeColumn(4)">Кол-во<br>запаса</th>
+    <th onclick="excelSelectWholeColumn(5)">из.SUP</th>
+    <th onclick="excelSelectWholeColumn(6)">скл.1</th>
+    <th onclick="excelSelectWholeColumn(7)">не проведено<br>в SUP</th>
+    <th onclick="excelSelectWholeColumn(8)">скл.2</th>
+    <th onclick="excelSelectWholeColumn(9)">цена<br>за ед.</th>
+    <th onclick="excelSelectWholeColumn(10)">полка №</th>
+    <th onclick="excelSelectWholeColumn(11)">лок.ID</th>
+    <th onclick="excelSelectWholeColumn(12)">Ст-ть<br>запаса</th>
+    <th onclick="excelSelectWholeColumn(13)">Завод</th>
+    <th onclick="excelSelectWholeColumn(14)">Склад</th>
+    <th onclick="excelSelectWholeColumn(15)">Особый запас</th>
+    <th onclick="excelSelectWholeColumn(16)">СПП-элемент</th>
+    <th onclick="excelSelectWholeColumn(17)">Группа материалов</th>
+    <th onclick="excelSelectWholeColumn(18)">Дата поступления</th>
+    <th onclick="excelSelectWholeColumn(19)">Золото</th>
+    <th onclick="excelSelectWholeColumn(20)">Серебро</th>
   `;
 
-  body.innerHTML = currentData.map((row, index) => {
-    if (index === 0) return ''; 
+  body.innerHTML = currentData.map((row, rIdx) => {
+    if (rIdx === 0) return ''; // Пропускаем шапку, так как она уже в head
     
     const isMatch = row.some(cell => String(cell).toLowerCase().includes(term));
     if (!isMatch && term !== "") return '';
 
-    const cellsHtml = row.map((cell, cellIndex) => {
-      if (cellIndex === 9) {
+    // Генерируем ячейки строки. Первая ячейка — номер строки Excel (1-индексация для пользователя)
+    let cellsHtml = `<td class="row-header-num" id="row-hdr-${rIdx}" onclick="excelSelectWholeRow(event, ${rIdx})">${rIdx + 1}</td>`;
+
+    cellsHtml += row.map((cell, cIdx) => {
+      const cellKey = `${rIdx}_${cIdx}`;
+      const isDirty = window.stockChangesQueue[cellKey];
+      let displayValue = isDirty ? isDirty.value : cell;
+
+      if (cIdx === 9 && !isDirty) { // Форматирование цены (индекс 9)
         const parsedPrice = parseFloat(String(cell).replace(/,/g, '.').replace(/\s+/g, ''));
-        const formattedPrice = !isNaN(parsedPrice) ? parsedPrice.toFixed(3) : cell;
-        return `<td>${formattedPrice}</td>`;
+        if (!isNaN(parsedPrice)) displayValue = parsedPrice.toFixed(3);
       }
 
-      if (isEdit) {
-        if (cellIndex === 4) {
-          return `
-            <td class="editable-stock-cell" onclick="event.stopPropagation();">
-              <input type="number" id="stock-input-${index}-4" class="cell-stock-dual-input" 
-                     value="${parseInt(cell) || 0}" min="0" autocomplete="off"
-                     onchange="handleStockTotalChangeDirect(${index})">
-            </td>
-          `;
-        }
-        if (cellIndex === 6 || cellIndex === 8) {
-          return `
-            <td class="editable-stock-cell" onclick="event.stopPropagation();">
-              <input type="number" id="stock-input-${index}-${cellIndex}" class="cell-stock-dual-input" 
-                     value="${parseInt(cell) || 0}" min="0" autocomplete="off"
-                     oninput="updateStockTotalOnInput(${index}); markStockCellAsDirty(this);">
-            </td>
-          `;
-        }
-        if (cellIndex === 10) {
-          return `
-            <td class="editable-stock-cell" onclick="event.stopPropagation();">
-              <input type="text" id="stock-input-${index}-10" class="cell-stock-dual-input" 
-                     style="width: 70px; font-family: sans-serif; text-align: left;"
-                     value="${cell !== undefined ? String(cell).trim() : ''}" autocomplete="off"
-                     oninput="markStockCellAsDirty(this);">
-            </td>
-          `;
-        }
-      }
-      return `<td>${cell}</td>`;
+      const dirtyClass = isDirty ? 'cell-stock-dirty' : '';
+      
+      // Читаем дефолтные или измененные стили для точной отрисовки
+      const bgStyle = isDirty && isDirty.bg ? `background-color: ${isDirty.bg};` : '';
+      const colorStyle = isDirty && isDirty.fontColor ? `color: ${isDirty.fontColor};` : '';
+      const weightStyle = isDirty && isDirty.fontWeight ? `font-weight: ${isDirty.fontWeight};` : '';
+
+      return `
+        <td id="ex-cell-${rIdx}-${cIdx}" 
+            class="${dirtyClass}" 
+            style="${bgStyle} ${colorStyle} ${weightStyle}"
+            contenteditable="true" 
+            onclick="excelHandleCellClick(event, ${rIdx}, ${cIdx})"
+            onblur="excelHandleCellBlur(this, ${rIdx}, ${cIdx})"
+            onkeydown="excelHandleCellKeyDown(event, ${rIdx}, ${cIdx})">
+          ${displayValue}
+        </td>
+      `;
     }).join('');
 
-    const clickAction = isEdit ? '' : `onclick="selectFromStockDirect(${index})"`;
-    return `<tr ${clickAction}>${cellsHtml}</tr>`;
+    return `<tr id="ex-row-${rIdx}">${cellsHtml}</tr>`;
   }).join('');
   
   if (body.innerHTML.trim() === "") {
-    body.innerHTML = '<tr><td colspan="21">Ничего не найдено</td></tr>';
+    body.innerHTML = '<tr><td colspan="22">Ничего не найдено</td></tr>';
   }
+
+  // После перерисовки восстанавливаем подсветку выделений, если они были
+  excelRefreshSelectionVisuals();
 }
 
 
@@ -134,89 +134,144 @@ function renderStock() {
 
 
 
-/* =========================================================================
-   ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-   ========================================================================= */
-// js/stock.js — Модуль остатков склада целиком с учетом 21 столбца — ЧАСТЬ 2
 
-function selectFromStockDirect(index) {
+
+
+' =========================================================================
+' ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+' =========================================================================
+// js/stock.js — Модуль Excel-грида остатков склада — ОКОНЧАНИЕ ЧАСТИ 2
+
+function excelHandleCellClick(event, rIdx, cIdx) {
   const currentData = window.inventoryData;
-  if (!currentData || !currentData[index]) return;
+  if (!currentData || !currentData[rIdx]) return;
 
-  const row = currentData[index];
-  const q1 = parseInt(row[6]) || 0; 
-  const q2 = parseInt(row[8]) || 0; 
-  const totalStock = q1 + q2;
-
-  window.currentSelectedRowData = [row[0], row[1], row[2], row[3], totalStock, index]; 
-  
-  document.getElementById('stock-view').classList.add('hidden');
-  if (typeof openNumpadView === 'function') {
-    openNumpadView();
+  // Логика выделения с зажатой клавишей SHIFT (Прямоугольный диапазон)
+  if (event.shiftKey && window.stockActiveCell.row !== null && window.stockActiveCell.col !== null) {
+    window.stockSelectedRange.startRow = Math.min(window.stockActiveCell.row, rIdx);
+    window.stockSelectedRange.endRow = Math.max(window.stockActiveCell.row, rIdx);
+    window.stockSelectedRange.startCol = Math.min(window.stockActiveCell.col, cIdx);
+    window.stockSelectedRange.endCol = Math.max(window.stockActiveCell.col, cIdx);
   } else {
-    console.error("Функция openNumpadView не найдена.");
+    // Обычный одиночный клик — сбрасываем диапазон и ставим фокус на ячейку
+    window.stockActiveCell.row = rIdx;
+    window.stockActiveCell.col = cIdx;
+    window.stockSelectedRange.startRow = rIdx;
+    window.stockSelectedRange.endRow = rIdx;
+    window.stockSelectedRange.startCol = cIdx;
+    window.stockSelectedRange.endCol = cIdx;
   }
-}
 
-function markStockCellAsDirty(inputElement) {
-  if (inputElement) {
-    inputElement.classList.add('cell-stock-dirty');
-  }
-}
-
-function updateStockTotalOnInput(rowIndex) {
-  const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
-  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-8`); 
-  const inputTotal = document.getElementById(`stock-input-${rowIndex}-4`);
+  excelRefreshSelectionVisuals();
   
-  if (inputSkl1 && inputSkl2 && inputTotal) {
-    const val1 = parseInt(inputSkl1.value) || 0;
-    const val2 = parseInt(inputSkl2.value) || 0;
-    inputTotal.value = val1 + val2;
-    inputTotal.classList.add('cell-stock-dirty');
+  // Добавляем класс фокуса на редактируемую ячейку
+  const cellEl = document.getElementById(`ex-cell-${rIdx}-${cIdx}`);
+  if (cellEl) cellEl.classList.add('cell-active-focus');
+}
+
+function excelSelectWholeRow(event, rIdx) {
+  event.stopPropagation();
+  const currentData = window.inventoryData;
+  if (!currentData || !currentData[rIdx]) return;
+
+  window.stockActiveCell.row = rIdx;
+  window.stockActiveCell.col = 0;
+  
+  window.stockSelectedRange.startRow = rIdx;
+  window.stockSelectedRange.endRow = rIdx;
+  window.stockSelectedRange.startCol = 0;
+  window.stockSelectedRange.endCol = currentData[rIdx].length - 1;
+
+  excelRefreshSelectionVisuals();
+}
+
+// Выделение всего столбца (привязываем к th шапки при клике)
+function excelSelectWholeColumn(cIdx) {
+  const currentData = window.inventoryData;
+  if (!currentData || currentData.length <= 1) return;
+
+  window.stockActiveCell.row = 1;
+  window.stockActiveCell.col = cIdx;
+
+  window.stockSelectedRange.startRow = 1;
+  window.stockSelectedRange.endRow = currentData.length - 1;
+  window.stockSelectedRange.startCol = cIdx;
+  window.stockSelectedRange.endCol = cIdx;
+
+  excelRefreshSelectionVisuals();
+}
+
+function excelRefreshSelectionVisuals() {
+  // Зачищаем старые классы выделений со всех ячеек и номеров строк
+  document.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected')
+    .forEach(el => el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected'));
+
+  if (window.stockSelectedRange.startRow === null) return;
+
+  // Подсвечиваем ячейки внутри прямоугольного диапазона
+  for (let r = window.stockSelectedRange.startRow; r <= window.stockSelectedRange.endRow; r++) {
+    const rowHdr = document.getElementById(`row-hdr-${r}`);
+    if (rowHdr) rowHdr.classList.add('row-selected');
+
+    for (let c = window.stockSelectedRange.startCol; c <= window.stockSelectedRange.endCol; c++) {
+      const cellEl = document.getElementById(`ex-cell-${r}-${c}`);
+      if (cellEl) {
+        cellEl.classList.add('cell-selected');
+        // Если это активная ячейка фокуса — добавляем рамку
+        if (r === window.stockActiveCell.row && c === window.stockActiveCell.col) {
+          cellEl.classList.add('cell-active-focus');
+        }
+      }
+    }
   }
 }
 
-function handleStockTotalChangeDirect(rowIndex) {
-  const inputTotal = document.getElementById(`stock-input-${rowIndex}-4`);
-  const inputSkl1 = document.getElementById(`stock-input-${rowIndex}-6`);
-  const inputSkl2 = document.getElementById(`stock-input-${rowIndex}-8`); 
-  
-  if (!inputTotal || !inputSkl1 || !inputSkl2) return;
+function excelHandleCellBlur(cellElement, rIdx, cIdx) {
+  cellElement.classList.remove('cell-active-focus');
+  const newValue = cellElement.innerText.trim();
+  const originalValue = String(window.inventoryData[rIdx][cIdx]).trim();
 
-  const newTotal = parseInt(inputTotal.value) || 0;
-  const currentSkl1 = parseInt(inputSkl1.value) || 0;
-  const currentSkl2 = parseInt(inputSkl2.value) || 0;
-  const oldTotal = currentSkl1 + currentSkl2;
+  // Считываем текущее визуальное оформление ячейки, чтобы Excel считал цвета/шрифты
+  const currentBg = window.getComputedStyle(cellElement).backgroundColor;
+  const currentTextHex = window.getComputedStyle(cellElement).color;
+  const currentWeight = window.getComputedStyle(cellElement).fontWeight;
 
-  if (newTotal === oldTotal) return;
+  const cellKey = `${rIdx}_${cIdx}`;
 
-  const delta = newTotal - oldTotal;
-
-  const choice = prompt(`Вы изменили Общее количество на ${delta > 0 ? "+" + delta : delta} шт.\n\nВ каком складе поменялся остаток?\nВведите цифру:\n1 — Склад 1\n2 — Склад 2`);
-
-  if (choice === "1") {
-    const finalSkl1 = currentSkl1 + delta;
-    if (finalSkl1 < 0) {
-      alert("Ошибка: Остаток на Складе 1 не может стать меньше нуля! Изменения сброшены.");
-      inputTotal.value = oldTotal;
-      return;
-    }
-    inputSkl1.value = finalSkl1;
-    inputSkl1.classList.add('cell-stock-dirty');
-    inputTotal.classList.add('cell-stock-dirty');
-  } else if (choice === "2") {
-    const finalSkl2 = currentSkl2 + delta;
-    if (finalSkl2 < 0) {
-      alert("Ошибка: Остаток на Складе 2 не может стать меньше нуля! Изменения сброшены.");
-      inputTotal.value = oldTotal;
-      return;
-    }
-    inputSkl2.value = finalSkl2;
-    inputSkl2.classList.add('cell-stock-dirty');
-    inputTotal.classList.add('cell-stock-dirty');
+  // Проверяем, изменилось ли значение или оформление относительно исходной базы
+  if (newValue !== originalValue || currentBg !== 'transparent' || currentWeight !== 'normal') {
+    cellElement.classList.add('cell-stock-dirty');
+    
+    // Записываем точечные метаданные транзакции в Dirty-кэш изменений
+    window.stockChangesQueue[cellKey] = {
+      row: rIdx,
+      col: cIdx,
+      value: newValue,
+      bg: currentBg,
+      fontColor: currentTextHex,
+      fontWeight: currentWeight
+    };
   } else {
-    alert("Действие отменено или введен неверный номер склада. Изменения сброшены.");
-    inputTotal.value = oldTotal;
+    // Если вернули старое значение — стираем ячейку из очереди отправки
+    cellElement.classList.remove('cell-stock-dirty');
+    delete window.stockChangesQueue[cellKey];
+  }
+
+  // Обновляем счетчик на кнопке сохранения
+  const saveBtn = document.querySelector('.btn-stock-save');
+  if (saveBtn) {
+    saveBtn.innerText = `Сохранить изменения в Google (${Object.keys(window.stockChangesQueue).length})`;
+  }
+}
+
+function excelHandleCellKeyDown(event, rIdx, cIdx) {
+  // Нажатие на Enter переводит фокус на ячейку ниже (Excel-Style)
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const nextCell = document.getElementById(`ex-cell-${rIdx + 1}-${cIdx}`);
+    if (nextCell) {
+      nextCell.focus();
+      excelHandleCellClick(event, rIdx + 1, cIdx);
+    }
   }
 }
