@@ -1,4 +1,4 @@
-// js/returns.js — Модуль управления возвратами с учетом 21 столбца
+// js/returns.js — Модуль управления возвратами с учетом 21 столбца — ЧАСТЬ 1
 
 window.isReturnMode = false;
 window.currentReturnLogIndex = null;
@@ -56,6 +56,19 @@ function handleLogClick(originalIndex) {
   document.getElementById('return-view').classList.remove('hidden');
 }
 
+
+
+
+
+
+
+
+
+/* =========================================================================
+   ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+   ========================================================================= */
+// js/returns.js — Модуль управления возвратами с учетом 21 столбца — ЧАСТЬ 2
+
 function processReturn(actionType) {
   if (window.currentReturnLogIndex === null) {
     alert("Ошибка: Строка лога не выбрана.");
@@ -93,17 +106,15 @@ function processReturn(actionType) {
     window.inventoryData = window.inventoryData.map(row => {
       if (row && String(row[0]).trim().toLowerCase() === logArt && String(row[1]).trim().toLowerCase() === logParam) {
         if (targetWh === "скл.2") {
-          row[8] = (parseInt(row[8]) || 0) + qty; // КОРРЕКТИРОВКА: Индекс 7 изменен на 8 (скл.2)
+          row[8] = (parseInt(row[8]) || 0) + qty; // Возврат на Склад 2 (Индекс 8)
         } else {
-          row[6] = (parseInt(row[6]) || 0) + qty; 
+          row[6] = (parseInt(row[6]) || 0) + qty; // Возврат на Склад 1 (Индекс 6)
         }
-        row[4] = (parseInt(row[6]) || 0) + (parseInt(row[8]) || 0); // КОРРЕКТИРОВКА: Индекс 7 изменен на 8 (скл.2)
+        row[4] = (parseInt(row[6]) || 0) + (parseInt(row[8]) || 0); 
         stockUpdated = true;
       }
       return row;
     });
-
-    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
 
     const nextId = window.qrLogs.length > 0 
       ? Math.max(...window.qrLogs.filter(r => r && r.data && !isNaN(r.data[0])).map(r => parseInt(r.data[0]) || 0)) + 1 
@@ -113,6 +124,13 @@ function processReturn(actionType) {
     const returnRowData = [nextId, ...itemKeys, -qty, worker, author, destinationText, time, day, month, year];
     
     window.qrLogs.push({ data: returnRowData, status: 'wait' });
+
+    // ИНТЕГРАЦИЯ: Принудительный автоматический пересчет SUP черновиков сразу после полного возврата товара
+    if (typeof recalculateUnprocessedSup === 'function') {
+      recalculateUnprocessedSup();
+    }
+
+    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     
     if (typeof renderLogs === 'function') renderLogs();
@@ -121,6 +139,8 @@ function processReturn(actionType) {
     document.getElementById('return-view').classList.add('hidden');
     if (typeof closeModal === 'function') closeModal();
     toggleReturnMode();
+    
+    // Мгновенная автоматическая отправка сформированного пакета в облако Google Таблиц
     if (typeof sendUnsynced === 'function') sendUnsynced();
 
   } else if (actionType === 'part') {
