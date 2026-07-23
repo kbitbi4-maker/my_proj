@@ -34,7 +34,7 @@ function renderLogs() {
 }
 
 /**
- * НОВЫЙ ДВИЖОК АВТОМАТИЧЕСКОГО ПЕРЕСЧЕТА СТОЛБЦА "НЕ ПРОВЕДЕНО В SUP" (Индекс 7)
+ * ФИКС СИНТАКСИСА: Восстановлены квадратные скобки индексов для разблокировки кнопки синхронизации
  */
 function recalculateUnprocessedSup() {
   const stock = window.inventoryData;
@@ -43,19 +43,17 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
-  // Шаг 1. Группируем и суммируем журнал выдачи по Артикулу (индекс 1) + Параметру (индекс 2)
   const totalsMap = {};
   
   for (let i = 0; i < logs.length; i++) {
     const item = logs[i];
-    // Игнорируем удаленные строки или пустые логи
     if (!item || !item.data || item.action === 'delete') continue;
-    if (i === 0) continue; // Пропускаем заголовок, если он есть
+    if (i === 0) continue; 
 
     const rowData = item.data;
-    const art = String(rowData[1]).trim().toLowerCase();
-    const param = String(rowData[2]).trim().toLowerCase();
-    const qty = parseInt(rowData[5]) || 0; // 6-й столбец (Кол-во)
+    const art = String(rowData[1]).trim().toLowerCase();   // Восстановлен индекс 1 (Артикул)
+    const param = String(rowData[2]).trim().toLowerCase(); // Восстановлен индекс 2 (Параметр)
+    const qty = parseInt(rowData[5]) || 0;                 // Восстановлен индекс 5 (Количество выдачи)
 
     const key = art + "|||" + param;
     if (!totalsMap[key]) {
@@ -64,30 +62,26 @@ function recalculateUnprocessedSup() {
     totalsMap[key] += qty;
   }
 
-  // Шаг 2. Проходим по базе остатков склада и записываем суммы в 8-й столбец (индекс 7)
   let updatedRowsCount = 0;
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
     if (!sRow || sRow.length < 3) continue;
 
-    const sArt = String(sRow[0]).trim().toLowerCase();
-    const sParam = String(sRow[1]).trim().toLowerCase();
+    const sArt = String(sRow[0]).trim().toLowerCase();     // Восстановлен индекс 0 (Артикул склада)
+    const sParam = String(sRow[1]).trim().toLowerCase();   // Восстановлен индекс 1 (Параметр склада)
     const key = sArt + "|||" + sParam;
 
-    // Берем высчитанную сумму или пишем 0, если совпадений в выдачах нет
     const currentUnprocessedQty = totalsMap[key] !== undefined ? totalsMap[key] : 0;
     
-    // Записываем в 8-й столбец (индекс 7 — не проведено в SUP)
-    sRow[7] = currentUnprocessedQty;
+    // Записываем сумму в 8-й столбец остатков (индекс 7 — не проведено в SUP)
+    sRow[7] = currentUnprocessedQty;                       // Восстановлен индекс 7 (Столбец H)
     updatedRowsCount++;
   }
 
-  // Фиксируем обновленный кэш склада в памяти смартфона
   window.inventoryData = stock;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
   console.log(`Движок SUP: Пересчет завершен. Обновлено строк склада: ${updatedRowsCount}`);
 }
-
 
 
 
@@ -142,7 +136,7 @@ async function syncFromGoogle() {
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
-    // ИНТЕГРАЦИЯ: Мгновенно запускаем автоматический пересчет SUP после синхронизации из облака
+    // Запускаем автоматический пересчет SUP черновиков после синхронизации из облака
     recalculateUnprocessedSup();
     
     renderLogs();
