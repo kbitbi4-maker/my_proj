@@ -1,6 +1,6 @@
 // ================================================================
 // excel_core.js — УНИВЕРСАЛЬНЫЙ ДВИЖОК EXCEL-ТАБЛИЦ
-// Версия 1.3 — ИСПРАВЛЕНЫ ВСЕ ФУНКЦИИ ВЫДЕЛЕНИЯ
+// Версия 1.4 — выделение доступно всегда, зебра, перенос текста
 // ================================================================
 
 // ================================================================
@@ -41,7 +41,9 @@ function excelRegisterTable(tableId, config) {
     containerId: config.containerId || tableId,
     searchInputId: config.searchInputId || null,
     title: config.title || 'Таблица',
-    searchTerm: ''
+    searchTerm: '',
+    // ВСЕГДА РАЗРЕШАЕМ ВЫДЕЛЕНИЕ (даже в режиме просмотра)
+    allowSelection: true
   };
   
   return EXCEL_CORE.tables[tableId];
@@ -84,11 +86,11 @@ function excelRenderTable(tableId) {
   // ============================================================
   let headHtml = '';
   headHtml += '<tr>';
-  headHtml += '<th class="excel-corner" onclick="excelSelectAll(\''+tableId+'\')" title="Выделить всё" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;cursor:pointer;">⬚</th>';
+  headHtml += '<th class="excel-corner" onclick="excelSelectAll(\''+tableId+'\')" title="Выделить всё" style="min-width:40px;max-width:40px;width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;cursor:pointer;text-align:center;">⬚</th>';
   for (let c = 0; c < numCols; c++) {
     const letter = colLetters[c] || String.fromCharCode(65 + c);
     const sortIndicator = (EXCEL_CORE.sortColumn === c) ? (EXCEL_CORE.sortDirection === 'asc' ? ' ↑' : ' ↓') : '';
-    headHtml += '<th id="col-hdr-'+c+'" onclick="excelSelectWholeColumn(\''+tableId+'\','+c+')" title="Сортировка по столбцу '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;">'+letter+sortIndicator+'</th>';
+    headHtml += '<th id="col-hdr-'+c+'" onclick="excelSelectWholeColumn(\''+tableId+'\','+c+')" title="Сортировка по столбцу '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;white-space:normal;word-wrap:break-word;">'+letter+sortIndicator+'</th>';
   }
   headHtml += '</tr>';
   headContainer.innerHTML = headHtml;
@@ -131,19 +133,20 @@ function excelRenderTable(tableId) {
   
   // СТРОКА 1: НАЗВАНИЯ СТОЛБЦОВ (НОМЕР 1)
   bodyHtml += '<tr style="font-weight:600;background:#f0f0f0;">';
-  bodyHtml += '<td class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:default;min-width:40px;max-width:40px;padding:4px 2px;">1</td>';
+  bodyHtml += '<td class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:default;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">1</td>';
   for (let c = 0; c < numCols; c++) {
     const headerName = headers[c] !== undefined && headers[c] !== '' ? headers[c] : colLetters[c] || String.fromCharCode(65 + c);
-    bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;background:#f0f0f0;color:#333;font-weight:600;">'+headerName+'</td>';
+    bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;background:#f0f0f0;color:#333;font-weight:600;white-space:normal;word-wrap:break-word;word-break:break-word;">'+headerName+'</td>';
   }
   bodyHtml += '</tr>';
 
-  // СТРОКИ 2...N: ДАННЫЕ
+  // СТРОКИ 2...N: ДАННЫЕ (с зеброй)
   for (var ri = 0; ri < rowsData.length; ri++) {
     var rIdx = rowsData[ri].index;
     var row = rowsData[ri].data;
     var rowNum = ri + 2;
 
+    // Цвет строки для таблицы отличий
     let rowColor = '';
     if (table.rowColors) {
       for (var colorKey in table.rowColors) {
@@ -159,8 +162,16 @@ function excelRenderTable(tableId) {
       rowClickAttr = ' onclick="'+table.onRowClick+'('+rIdx+')" style="cursor:pointer;"';
     }
 
-    bodyHtml += '<tr id="ex-row-'+rIdx+'"'+rowClickAttr+'>';
-    bodyHtml += '<td class="row-header-num" id="row-hdr-'+rIdx+'" onclick="excelSelectWholeRow(\''+tableId+'\',event,'+rIdx+')" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;">'+rowNum+'</td>';
+    // Зебра: чётные строки — белые, нечётные — зелёные (но только если нет rowColor)
+    var zebraBg = '';
+    if (!rowColor) {
+      // ri — индекс в отфильтрованном массиве, начинается с 0
+      // Строка 2 (ri=0) — зелёная, строка 3 (ri=1) — белая, строка 4 (ri=2) — зелёная...
+      zebraBg = (ri % 2 === 0) ? 'background:#e8f5e9;' : 'background:#ffffff;';
+    }
+
+    bodyHtml += '<tr id="ex-row-'+rIdx+'"'+rowClickAttr+' style="'+(rowColor ? 'background:'+rowColor+';' : '')+'">';
+    bodyHtml += '<td class="row-header-num" id="row-hdr-'+rIdx+'" onclick="excelSelectWholeRow(\''+tableId+'\',event,'+rIdx+')" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;width:40px;padding:4px 2px;">'+rowNum+'</td>';
 
     for (let cIdx = 0; cIdx < numCols; cIdx++) {
       let displayValue = row[cIdx] !== undefined ? row[cIdx] : '';
@@ -169,16 +180,17 @@ function excelRenderTable(tableId) {
         displayValue = table.formulas[cIdx](row);
       }
       
-      let cellBg = '';
+      let cellBg = rowColor || zebraBg;
       if (table.cellColors) {
         for (var colorKey in table.cellColors) {
           if (table.cellColors[colorKey](row, cIdx, displayValue)) {
-            cellBg = colorKey;
+            cellBg = 'background-color:'+colorKey+';';
             break;
           }
         }
       }
 
+      // Проверяем выделение (ВСЕГДА, даже в режиме просмотра)
       let isSelected = false;
       if (EXCEL_CORE.selectedRange.startRow !== null) {
         isSelected = (rIdx >= EXCEL_CORE.selectedRange.startRow && rIdx <= EXCEL_CORE.selectedRange.endRow &&
@@ -186,12 +198,13 @@ function excelRenderTable(tableId) {
       }
 
       const selectClass = isSelected ? 'cell-selected' : '';
-      const bgStyle = cellBg ? 'background-color:'+cellBg+';' : '';
+      const bgStyle = cellBg ? cellBg : '';
       
+      // В режиме редактирования — contenteditable, в режиме просмотра — обычный текст
       if (table.editMode) {
-        bodyHtml += '<td id="ex-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;height:24px;outline:none;" contenteditable="true" onclick="excelHandleCellClick(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onblur="excelHandleCellBlur(\''+tableId+'\',this,'+rIdx+','+cIdx+')" onkeydown="excelHandleCellKeyDown(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmousedown="excelHandleMouseDown(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmouseover="excelHandleMouseOver(\''+tableId+'\',event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
+        bodyHtml += '<td id="ex-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;white-space:normal;word-wrap:break-word;word-break:break-word;outline:none;" contenteditable="true" onclick="excelHandleCellClick(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onblur="excelHandleCellBlur(\''+tableId+'\',this,'+rIdx+','+cIdx+')" onkeydown="excelHandleCellKeyDown(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmousedown="excelHandleMouseDown(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmouseover="excelHandleMouseOver(\''+tableId+'\',event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
       } else {
-        bodyHtml += '<td style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;background:#ffffff;color:#000;">'+displayValue+'</td>';
+        bodyHtml += '<td id="ex-cell-'+rIdx+'-'+cIdx+'" class="'+selectClass+'" style="'+bgStyle+' border:1px solid #d0d7de;padding:4px 8px;text-align:left;font-size:13px;min-width:40px;white-space:normal;word-wrap:break-word;word-break:break-word;cursor:pointer;" onclick="excelHandleCellClick(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmousedown="excelHandleMouseDown(\''+tableId+'\',event,'+rIdx+','+cIdx+')" onmouseover="excelHandleMouseOver(\''+tableId+'\',event,'+rIdx+','+cIdx+')">'+displayValue+'</td>';
       }
     }
     bodyHtml += '</tr>';
@@ -199,11 +212,11 @@ function excelRenderTable(tableId) {
   
   bodyContainer.innerHTML = bodyHtml || '<tr><td colspan="'+(numCols+1)+'" style="text-align:center;padding:20px;color:#999;">Ничего не найдено</td></tr>';
 
-  // Обновляем выделение
-  if (table.editMode) {
-    excelRefreshSelectionVisuals(tableId);
-    excelAttachDragListeners(tableId);
-  }
+  // Обновляем выделение (ВСЕГДА, даже в режиме просмотра)
+  excelRefreshSelectionVisuals(tableId);
+  
+  // Drag-слушатели (ВСЕГДА, даже в режиме просмотра)
+  excelAttachDragListeners(tableId);
 }
 
 // ================================================================
@@ -212,13 +225,11 @@ function excelRenderTable(tableId) {
 
 function excelSelectAll(tableId) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   
   const data = table.data;
   if (!data || data.length <= 1) return;
   
-  // Строка 1 — названия (индекс 1 в массиве)
-  // Последняя строка — data.length - 1
   EXCEL_CORE.selectedRange.startRow = 1;
   EXCEL_CORE.selectedRange.endRow = data.length - 1;
   EXCEL_CORE.selectedRange.startCol = 0;
@@ -236,7 +247,7 @@ function excelSelectAll(tableId) {
 
 function excelSelectWholeRow(tableId, event, rIdx) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   event.stopPropagation();
   
   const numCols = table.colCount || table.data[0].length;
@@ -250,12 +261,12 @@ function excelSelectWholeRow(tableId, event, rIdx) {
 }
 
 // ================================================================
-// ВЫДЕЛЕНИЕ СТОЛБЦА (С ПОДСВЕТКОЙ ЗАГОЛОВКА)
+// ВЫДЕЛЕНИЕ СТОЛБЦА
 // ================================================================
 
 function excelSelectWholeColumn(tableId, cIdx) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   
   const data = table.data;
   if (!data || data.length <= 1) return;
@@ -268,23 +279,6 @@ function excelSelectWholeColumn(tableId, cIdx) {
   EXCEL_CORE.selectedRange.endCol = cIdx;
   
   excelRefreshSelectionVisuals(tableId);
-  
-  // Подсвечиваем заголовок столбца
-  const container = document.getElementById(table.containerId);
-  if (container) {
-    const firstRow = container.querySelector('tr');
-    if (firstRow) {
-      const cells = firstRow.querySelectorAll('th');
-      // Сначала снимаем подсветку со всех заголовков
-      cells.forEach(function(el) {
-        el.style.background = '';
-      });
-      // Подсвечиваем нужный (сдвиг на 1 из-за угловой ячейки)
-      if (cells[cIdx + 1]) {
-        cells[cIdx + 1].style.background = '#c7e0f4';
-      }
-    }
-  }
 }
 
 // ================================================================
@@ -293,25 +287,31 @@ function excelSelectWholeColumn(tableId, cIdx) {
 
 function excelRefreshSelectionVisuals(tableId) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   
   const container = document.getElementById(table.containerId);
   if (!container) return;
   
-  container.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected')
-    .forEach(function(el) { el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected'); });
+  // Снимаем старые выделения
+  container.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected, .col-selected')
+    .forEach(function(el) {
+      el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected', 'col-selected');
+    });
   
   // Снимаем подсветку заголовков столбцов
   const firstRow = container.querySelector('tr');
   if (firstRow) {
     const cells = firstRow.querySelectorAll('th');
     cells.forEach(function(el) {
+      el.classList.remove('col-selected');
       el.style.background = '';
+      el.style.borderBottom = '';
     });
   }
   
   if (EXCEL_CORE.selectedRange.startRow === null) return;
   
+  // Подсвечиваем ячейки
   for (let r = EXCEL_CORE.selectedRange.startRow; r <= EXCEL_CORE.selectedRange.endRow; r++) {
     const rowHdr = document.getElementById('row-hdr-'+r);
     if (rowHdr) rowHdr.classList.add('row-selected');
@@ -332,14 +332,16 @@ function excelRefreshSelectionVisuals(tableId) {
     if (firstRow) {
       const cells = firstRow.querySelectorAll('th');
       if (cells[colIdx + 1]) {
+        cells[colIdx + 1].classList.add('col-selected');
         cells[colIdx + 1].style.background = '#c7e0f4';
+        cells[colIdx + 1].style.borderBottom = '3px solid #2b5797';
       }
     }
   }
 }
 
 // ================================================================
-// DRAG SELECTION (С ПОДДЕРЖКОЙ MOUSELEAVE)
+// DRAG SELECTION
 // ================================================================
 
 function excelAttachDragListeners(tableId) {
@@ -364,7 +366,7 @@ function excelGlobalMouseDown(e, tableId) {
   const cellEl = e.target.closest('td');
   if (!cellEl || !cellEl.id || !cellEl.id.startsWith('ex-cell-')) return;
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   
   const parts = cellEl.id.replace('ex-cell-', '').split('-');
   const rIdx = parseInt(parts[0]);
@@ -384,7 +386,7 @@ function excelGlobalMouseDown(e, tableId) {
 function excelGlobalMouseMove(e, tableId) {
   if (!EXCEL_CORE.isDragging) return;
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   
   const cellEl = e.target.closest('td');
   if (!cellEl || !cellEl.id || !cellEl.id.startsWith('ex-cell-')) return;
@@ -412,7 +414,6 @@ function excelGlobalMouseUp(e, tableId) {
 }
 
 function excelGlobalMouseLeave(e, tableId) {
-  // При выходе мыши за пределы таблицы — завершаем выделение
   if (EXCEL_CORE.isDragging) {
     EXCEL_CORE.isDragging = false;
     excelRefreshSelectionVisuals(tableId);
@@ -420,12 +421,12 @@ function excelGlobalMouseLeave(e, tableId) {
 }
 
 // ================================================================
-// ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+// КЛИК ПО ЯЧЕЙКЕ (ВЫДЕЛЕНИЕ)
 // ================================================================
 
 function excelHandleCellClick(tableId, event, rIdx, cIdx) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   if (EXCEL_CORE.isDragging) return;
   
   if (event.shiftKey && EXCEL_CORE.activeCell.row !== null && EXCEL_CORE.activeCell.col !== null) {
@@ -445,15 +446,23 @@ function excelHandleCellClick(tableId, event, rIdx, cIdx) {
   const cellEl = document.getElementById('ex-cell-'+rIdx+'-'+cIdx);
   if (cellEl) {
     cellEl.classList.add('cell-active-focus');
-    cellEl.focus();
+    if (table.editMode) {
+      cellEl.focus();
+    }
   }
 }
 
+// ================================================================
+// ОСТАЛЬНЫЕ ФУНКЦИИ
+// ================================================================
+
 function excelHandleMouseDown(tableId, event, rIdx, cIdx) {
   const table = EXCEL_CORE.tables[tableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   const cellEl = document.getElementById('ex-cell-'+rIdx+'-'+cIdx);
-  if (cellEl) cellEl.focus();
+  if (cellEl && table.editMode) {
+    cellEl.focus();
+  }
 }
 
 function excelHandleMouseOver(tableId, event, rIdx, cIdx) {}
@@ -580,7 +589,7 @@ document.addEventListener('copy', function(e) {
   if (!activeTableId) return;
   
   const table = EXCEL_CORE.tables[activeTableId];
-  if (!table || !table.editMode) return;
+  if (!table) return;
   if (EXCEL_CORE.selectedRange.startRow === null) return;
   
   const { startRow, endRow, startCol, endCol } = EXCEL_CORE.selectedRange;
@@ -642,4 +651,4 @@ document.addEventListener('paste', function(e) {
   excelRenderTable(activeTableId);
 });
 
-console.log('✅ excel_core.js — загружен (версия 1.3)');
+console.log('✅ excel_core.js — загружен (версия 1.4)');
