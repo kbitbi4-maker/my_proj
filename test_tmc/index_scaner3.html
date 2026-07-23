@@ -6,7 +6,7 @@
   <title>TEST</title>
   <!-- Базовые стили всего приложения -->
   <link rel="stylesheet" href="css/style.css">
-  <!-- Excel-стили для таблицы остатков -->
+  <!-- Excel-стили для всех таблиц -->
   <link rel="stylesheet" href="css/style2.css">
 </head>
 <body>
@@ -35,25 +35,9 @@
     <!-- Журнал выданных товаров -->
     <div id="result">
       <div class="log-title">Журнал выдачи:</div>
-      <div class="table-wrapper">
+      <div class="table-wrapper excel-table-wrapper">
         <table>
-          <thead>
-            <tr id="logs-head">
-              <th>ID</th>
-              <th>Артикул</th>
-              <th>Парам 1</th>
-              <th>Парам 2</th>
-              <th>Наименование</th>
-              <th>Кол-во</th>
-              <th>Сотрудник</th>
-              <th>Автор</th>
-              <th>Куда выдано</th>
-              <th>Время</th>
-              <th>День</th>
-              <th>Мес</th>
-              <th>Год</th>
-            </tr>
-          </thead>
+          <thead id="logs-head"></thead>
           <tbody id="logs-body"></tbody>
         </table>
       </div>
@@ -68,8 +52,8 @@
       <!-- ЭКРАН 1: Остатки на складе -->
       <div id="stock-view" class="hidden">
         <h3>Остатки на складе</h3>
-        <input type="text" id="stock-search" oninput="renderStock()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off">
-        <div class="table-wrapper modal-table">
+        <input type="text" id="stock-search" oninput="stockSearch()" placeholder="Поиск по наименованию или артикулу..." autocomplete="off" class="excel-search">
+        <div class="table-wrapper excel-table-wrapper">
           <table>
             <thead id="stock-head"></thead>
             <tbody id="stock-body"></tbody>
@@ -200,10 +184,10 @@
       <!-- ЭКРАН 7: Таблица отличий -->
       <div id="diff-table-view" class="hidden">
         <h3>Таблица отличий остатков</h3>
-        <input type="text" id="diff-search" oninput="renderDiffTableBody()" placeholder="Поиск отличий по наименованию или артикулу..." autocomplete="off">
-        <div class="table-wrapper modal-table table-diff-wrapper">
+        <input type="text" id="diff-search" oninput="renderDiffTableBody()" placeholder="Поиск отличий по наименованию или артикулу..." autocomplete="off" class="excel-search">
+        <div class="table-wrapper excel-table-wrapper">
           <table class="table-diff-content">
-            <thead><tr id="diff-head"></tr></thead>
+            <thead id="diff-head"></thead>
             <tbody id="diff-body"></tbody>
           </table>
         </div>
@@ -212,47 +196,40 @@
     </div>
   </div>
 
-  <!-- ===== ПОДКЛЮЧЕНИЕ СКРИПТОВ ===== -->
-  <!-- Библиотека для распознавания QR-кодов -->
+  <!-- ============================================================
+       ПОДКЛЮЧЕНИЕ СКРИПТОВ (ТОЛЬКО НУЖНЫЕ ФАЙЛЫ)
+       ============================================================ -->
+  
+  <!-- 1. БИБЛИОТЕКИ И ЯДРО -->
   <script src="js/jsQR.js"></script>
+  <script src="js/excel_core.js"></script>
   
-  <!-- Сетевые утилиты (индикатор онлайна) -->
+  <!-- 2. СЕТЕВЫЕ И СИНХРОНИЗАЦИЯ -->
   <script src="js/network.js"></script>
-  
-  <!-- Основной API-модуль (синхронизация с Google) -->
   <script src="js/api.js"></script>
   
-  <!-- Модуль камеры и QR-сканирования -->
+  <!-- 3. МОДУЛИ ТАБЛИЦ -->
+  <script src="js/stock.js"></script>
+  <script src="js/balance.js"></script>
+  
+  <!-- 4. КАМЕРА -->
   <script src="js/camera.js"></script>
   
-  <!-- Модуль управления остатками (рендеринг, сортировка, фильтры) -->
-  <script src="js/stock.js"></script>
-  
-  <!-- Модуль редактирования остатков (выделение, drag, copy/paste, сохранение) -->
-  <script src="js/stock_edit.js"></script>
-  
-  <!-- Модуль цифровой клавиатуры (нумпад) -->
+  <!-- 5. НУМПАД И ОПЕРАЦИИ -->
   <script src="js/numpad.js"></script>
-  
-  <!-- Модуль сохранения данных (выдача, возвраты) -->
   <script src="js/save.js"></script>
-  
-  <!-- Модуль возвратов товара -->
   <script src="js/returns.js"></script>
-  
-  <!-- Модуль удаления строк -->
   <script src="js/delete_task.js"></script>
   
-  <!-- Модуль редактирования ячейки "Куда" в журнале -->
+  <!-- 6. РЕДАКТИРОВАНИЕ ЖУРНАЛА -->
   <script src="js/edit_log.js"></script>
   
-  <!-- Модуль Excel-грида для сальдо -->
-  <script src="js/excel_grid.js"></script>
-  
-  <!-- Модуль выделения ячеек в Excel-гриде -->
-  <script src="js/excel_selection.js"></script>
-  
-  <!-- Модуль управления сальдо (импорт, сравнение, отличия) -->
-  <script src="js/balance.js"></script>
+  <!-- ============================================================
+       УДАЛЕННЫЕ ФАЙЛЫ (их функционал теперь в excel_core.js):
+       - js/edit_stock.js
+       - js/stock_edit.js
+       - js/excel_grid.js
+       - js/excel_selection.js
+       ============================================================ -->
 </body>
-</html>
+</html>Ы
