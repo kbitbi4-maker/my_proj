@@ -1,201 +1,60 @@
 // ================================================================
-// stock.js — РЕНДЕРИНГ ТАБЛИЦЫ ОСТАТКОВ
-// Версия 3.7 — исправлено выделение, шапка в первой строке
+// stock.js — РЕНДЕРИНГ ТАБЛИЦЫ ОСТАТКОВ (через excel_core.js)
+// Версия 4.0 — использует универсальный движок
 // ================================================================
 
-window.isStockEditMode = false;
-window.stockFilterColor = "all";
-window.stockSortColumn = null;
-window.stockSortDirection = null;
+// Регистрируем таблицу остатков
+function initStockTable() {
+  const stockData = window.inventoryData || [];
+  
+  // Регистрируем таблицу в универсальном движке
+  excelRegisterTable('stock', {
+    data: stockData,
+    headers: null, // берём из первой строки данных
+    colCount: 21,
+    editMode: false,
+    containerId: 'stock',
+    searchInputId: 'stock-search',
+    title: 'Остатки на складе',
+    onRowClick: 'handleStockRowClick',
+    formulas: {
+      4: function(row) { // E = G + I
+        const gVal = parseFloat(row[6]) || 0;
+        const iVal = parseFloat(row[8]) || 0;
+        return gVal + iVal;
+      }
+    },
+    rowColors: null // зебра определяется в CSS
+  });
+  
+  // Рендерим таблицу
+  excelRenderTable('stock');
+}
 
+// Инициализируем после загрузки данных
 function showStock() {
   const currentData = window.inventoryData;
-  if (!currentData || currentData.length === 0) { alert("Сначала нажмите кнопку синхронизации ☁"); return; }
-  window.isStockEditMode = false;
-  const searchInput = document.getElementById('stock-search');
-  if (searchInput) searchInput.value = "";
-  window.stockFilterColor = "all";
-  window.stockSortColumn = null;
-  window.stockSortDirection = null;
+  if (!currentData || currentData.length === 0) {
+    alert("Сначала нажмите кнопку синхронизации ☁");
+    return;
+  }
+  
+  // Обновляем данные в движке
+  excelUpdateData('stock', currentData);
+  
+  // Открываем модалку
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('stock-view').classList.remove('hidden');
-  renderStock();
 }
 
-function toggleStockEditMode() {
-  window.isStockEditMode = !window.isStockEditMode;
-  window.stockSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
-  window.stockActiveCell = { row: null, col: null };
-  renderStock();
-}
-
-function resetStockFilters() {
-  window.stockFilterColor = "all";
-  window.stockSortColumn = null;
-  window.stockSortDirection = null;
-  const searchInput = document.getElementById('stock-search');
-  if (searchInput) searchInput.value = "";
-  renderStock();
-}
-
-function stockSortByColumn(cIdx) {
-  if (window.stockSortColumn === cIdx) {
-    if (window.stockSortDirection === 'asc') {
-      window.stockSortDirection = 'desc';
-    } else if (window.stockSortDirection === 'desc') {
-      window.stockSortColumn = null;
-      window.stockSortDirection = null;
-    }
-  } else {
-    window.stockSortColumn = cIdx;
-    window.stockSortDirection = 'asc';
-  }
-  renderStock();
-}
-
-function renderStock() {
-  const head = document.getElementById('stock-head');
-  const body = document.getElementById('stock-body');
-  const searchInput = document.getElementById('stock-search');
-  const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
-  const currentData = window.inventoryData;
-  if (!currentData || !currentData.length) return;
-  
-  // СТРОКА 0 — названия столбцов (НЕ НУМЕРУЕТСЯ)
-  const headerRow = currentData[0] || [];
-  
-  let controlsWrapper = document.getElementById('stock-edit-controls-wrapper');
-  if (!controlsWrapper) {
-    controlsWrapper = document.createElement('div');
-    controlsWrapper.id = 'stock-edit-controls-wrapper';
-    controlsWrapper.style.width = '100%';
-    const searchInputEl = document.getElementById('stock-search');
-    if (searchInputEl && searchInputEl.parentNode) {
-      searchInputEl.parentNode.insertBefore(controlsWrapper, searchInputEl);
-    }
-  }
-
-  const changesCount = Object.keys(window.stockChangesQueue || {}).length;
-  
-  if (window.isStockEditMode) {
-    controlsWrapper.innerHTML = '<div id="stock-edit-badge" class="stock-mode-badge">📊 РЕЖИМ EXCEL-ГРИДА (вкл)<button onclick="toggleStockEditMode()" style="padding:5px 16px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;margin-left:12px;">✖ ВЫКЛЮЧИТЬ</button></div><div class="stock-edit-actions-row"><button onclick="window.cancelStockChanges ? cancelStockChanges() : alert(\'Функция не загружена\')" class="btn-stock-cancel">✖ Сбросить кэш ('+changesCount+')</button><button onclick="window.saveStockChangesCloud ? saveStockChangesCloud() : alert(\'Функция не загружена\')" class="btn-stock-save">💾 Сохранить в Google ('+changesCount+')</button><button onclick="resetStockFilters()" class="btn-reset-filters">🔄 Сбросить фильтры</button></div>';
-  } else {
-    controlsWrapper.innerHTML = '<div id="stock-edit-badge" class="stock-mode-badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">📋 РЕЖИМ ПРОСМОТРА (выкл)<button onclick="toggleStockEditMode()" style="padding:5px 16px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;margin-left:12px;">✏️ ВКЛЮЧИТЬ РЕДАКТИРОВАНИЕ</button><button onclick="resetStockFilters()" class="btn-reset-filters" style="margin-left:12px;">🔄 Сбросить фильтры</button></div>';
-  }
-  
-  const colLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  const numCols = Math.max(headerRow.length, 21);
-  
-  let headHtml = '';
-  
-  // ============================================================
-  // СТРОКА 1: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
-  // ============================================================
-  headHtml += '<tr>';
-  headHtml += '<th class="excel-corner" onclick="window.excelSelectAll ? excelSelectAll() : null" title="Выделить всё" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;cursor:pointer;">⬚</th>';
-  for (let c = 0; c < numCols; c++) {
-    const letter = colLetters[c] || String.fromCharCode(65 + c);
-    headHtml += '<th onclick="window.excelSelectWholeColumn ? excelSelectWholeColumn('+c+') : null" title="Выделить столбец '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;">'+letter+(window.stockSortColumn===c?(window.stockSortDirection==='asc'?' ↑':' ↓'):'')+'</th>';
-  }
-  headHtml += '</tr>';
-  
-  // ============================================================
-  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ (НЕ НУМЕРУЕТСЯ)
-  // ============================================================
-  headHtml += '<tr>';
-  headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
-  for (let c = 0; c < numCols; c++) {
-    const headerName = headerRow[c] !== undefined && headerRow[c] !== '' ? headerRow[c] : colLetters[c] || String.fromCharCode(65 + c);
-    headHtml += '<th style="background:#f0f0f0;color:#333;font-weight:600;font-size:11px;padding:4px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:default;user-select:none;min-width:60px;position:sticky;top:24px;z-index:10;white-space:normal;word-wrap:break-word;">'+headerName+'</th>';
-  }
-  headHtml += '</tr>';
-  head.innerHTML = headHtml;
-
-  // ============================================================
-  // ТЕЛО ТАБЛИЦЫ
-  // ============================================================
-  let rowsData = [];
-  for (let rIdx = 1; rIdx < currentData.length; rIdx++) {
-    const row = currentData[rIdx];
-    if (!row || row.length === 0) continue;
-    const isMatch = row.some(function(cell) { return String(cell).toLowerCase().includes(term); });
-    if (!isMatch && term !== "") continue;
-    rowsData.push({ index: rIdx, data: row });
-  }
-
-  if (window.stockSortColumn !== null) {
-    rowsData.sort(function(a, b) {
-      var valA = String(a.data[window.stockSortColumn] || '').toLowerCase();
-      var valB = String(b.data[window.stockSortColumn] || '').toLowerCase();
-      var numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
-      var numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
-      if (!isNaN(numA) && !isNaN(numB)) {
-        return window.stockSortDirection === 'asc' ? numA - numB : numB - numA;
-      }
-      if (valA < valB) return window.stockSortDirection === 'asc' ? -1 : 1;
-      if (valA > valB) return window.stockSortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-
-  // ПРИМЕЧАНИЕ: ВАЖНО! Вызов excelRefreshSelectionVisuals() должен быть после отрисовки тела
-  // Это делается в самом конце функции
-  
-  var bodyHtml = "";
-  for (var ri = 0; ri < rowsData.length; ri++) {
-    var rIdx = rowsData[ri].index;
-    var row = rowsData[ri].data;
-    var rowNum = rIdx;
-
-    bodyHtml += '<tr id="ex-row-'+rIdx+'"' + (!window.isStockEditMode ? ' onclick="handleStockRowClick('+rIdx+')" style="cursor:pointer;"' : '') + '>';
-    
-    bodyHtml += '<td class="row-header-num" id="row-hdr-'+rIdx+'" onclick="window.excelSelectWholeRow ? excelSelectWholeRow(event,'+rIdx+') : null" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;">'+rowNum+'</td>';
-
-    for (let cIdx = 0; cIdx < numCols; cIdx++) {
-      const cellKey = rIdx+'_'+cIdx;
-      const isDirty = window.stockChangesQueue && window.stockChangesQueue[cellKey];
-      let displayValue = isDirty ? isDirty.value : (row[cIdx] !== undefined ? row[cIdx] : '');
-      
-      if (cIdx === 4 && !isDirty && window.isStockEditMode) {
-        const gVal = parseFloat(row[6]) || 0;
-        const iVal = parseFloat(row[8]) || 0;
-        displayValue = gVal + iVal;
-      }
-
-      if (window.isStockEditMode) {
-        const dirtyClass = isDirty ? 'cell-stock-dirty' : '';
-        const bgStyle = isDirty && isDirty.bg ? 'background-color:'+isDirty.bg+';' : '';
-        const colorStyle = isDirty && isDirty.fontColor ? 'color:'+isDirty.fontColor+';' : '';
-        const weightStyle = isDirty && isDirty.fontWeight ? 'font-weight:'+isDirty.fontWeight+';' : '';
-        bodyHtml += '<td id="ex-cell-'+rIdx+'-'+cIdx+'" class="'+dirtyClass+'" style="'+bgStyle+' '+colorStyle+' '+weightStyle+' border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;height:24px;outline:none;" contenteditable="true" onclick="window.excelHandleCellClick ? excelHandleCellClick(event,'+rIdx+','+cIdx+') : null" onblur="window.excelHandleCellBlur ? excelHandleCellBlur(this,'+rIdx+','+cIdx+') : null" onkeydown="window.excelHandleCellKeyDown ? excelHandleCellKeyDown(event,'+rIdx+','+cIdx+') : null" onmousedown="window.excelHandleMouseDown ? excelHandleMouseDown(event,'+rIdx+','+cIdx+') : null" onmouseover="window.excelHandleMouseOver ? excelHandleMouseOver(event,'+rIdx+','+cIdx+') : null">'+displayValue+'</td>';
-      } else {
-        var rowBg = ri % 2 === 0 ? '#e8f5e9' : '#f1f8e9';
-        bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;background:'+rowBg+';color:#000;">'+displayValue+'</td>';
-      }
-    }
-    bodyHtml += '</tr>';
-  }
-  
-  body.innerHTML = bodyHtml || '<tr><td colspan="'+(numCols+1)+'" style="text-align:center;padding:20px;color:#999;">Ничего не найдено</td></tr>';
-
-  // ============================================================
-  // ВАЖНО! ОБНОВЛЯЕМ ВЫДЕЛЕНИЕ ПОСЛЕ ОТРИСОВКИ ТЕЛА
-  // ============================================================
-  if (window.isStockEditMode) {
-    // Принудительно вызываем обновление выделения
-    setTimeout(function() {
-      if (typeof window.excelRefreshSelectionVisuals === 'function') {
-        window.excelRefreshSelectionVisuals();
-      }
-    }, 50);
-  }
-}
-
+// Обработчик клика по строке (режим просмотра)
 function handleStockRowClick(rIdx) {
-  if (window.isStockEditMode) return;
   const currentData = window.inventoryData;
-  if (!currentData || !currentData[rIdx]) { alert("Ошибка: Данные строки не найдены"); return; }
+  if (!currentData || !currentData[rIdx]) {
+    alert("Ошибка: Данные строки не найдены");
+    return;
+  }
   window.currentSelectedRowData = [...currentData[rIdx]];
   if (typeof openNumpadView === 'function') {
     openNumpadView();
@@ -203,3 +62,43 @@ function handleStockRowClick(rIdx) {
     alert("Ошибка: Модуль нумпада (js/numpad.js) не подключен.");
   }
 }
+
+// Переключение режима редактирования
+function toggleStockEditMode() {
+  excelToggleEditMode('stock');
+}
+
+// Сброс фильтров
+function resetStockFilters() {
+  excelResetFilters('stock');
+  const searchInput = document.getElementById('stock-search');
+  if (searchInput) searchInput.value = '';
+}
+
+// Сортировка (прокси)
+function stockSortByColumn(cIdx) {
+  excelSortByColumn('stock', cIdx);
+}
+
+// Обработчик поиска
+function stockSearch() {
+  const searchInput = document.getElementById('stock-search');
+  if (searchInput) {
+    excelSearch('stock', searchInput.value);
+  }
+}
+
+// Переопределяем renderStock для совместимости
+function renderStock() {
+  const currentData = window.inventoryData || [];
+  excelUpdateData('stock', currentData);
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.inventoryData && window.inventoryData.length > 0) {
+    initStockTable();
+  }
+});
+
+console.log('✅ stock.js — загружен (версия 4.0, использует excel_core.js)');
