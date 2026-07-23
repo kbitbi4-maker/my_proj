@@ -1,6 +1,6 @@
 // ================================================================
 // balance.js — Модуль импорта Сальдо и Сравнения остатков
-// Версия 2.1 — исправлена таблица отличий, цвета строк, столбец F
+// Версия 2.2 — исправлена шапка таблицы отличий
 // ================================================================
 
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
@@ -54,7 +54,7 @@ function hideBalancePasteArea() {
 }
 
 // ================================================================
-// ПОКАЗ ТАБЛИЦЫ ОТЛИЧИЙ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// ПОКАЗ ТАБЛИЦЫ ОТЛИЧИЙ (ИСПРАВЛЕННАЯ ШАПКА)
 // ================================================================
 
 function showDiffTable() {
@@ -73,7 +73,7 @@ function showDiffTable() {
   window.diffFilterColor = "all";
 
   // ============================================================
-  // ФОРМИРУЕМ ШАПКУ ТАБЛИЦЫ (ВСЁ ВНУТРИ ТАБЛИЦЫ)
+  // ФОРМИРУЕМ ШАПКУ — ВСЯ ВНУТРИ diff-head (без апендикса)
   // ============================================================
   
   // Берём названия столбцов из первой строки матрицы
@@ -86,9 +86,9 @@ function showDiffTable() {
   // СТРОКА 1: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
   // ============================================================
   let headHtml = '<tr>';
-  // Уголок (пустая ячейка)
+  // Уголок
   headHtml += '<th class="excel-corner" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;"></th>';
-  // Буквы столбцов
+  // Буквы
   for (let c = 0; c < 6; c++) {
     const letter = colLetters[c] || String.fromCharCode(65 + c);
     headHtml += '<th onclick="diffSortByColumn('+c+')" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:80px;position:sticky;top:0;z-index:10;">'+letter+'</th>';
@@ -96,7 +96,7 @@ function showDiffTable() {
   headHtml += '</tr>';
   
   // ============================================================
-  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ (ИЗ ПЕРВОЙ СТРОКИ diffMatrix)
+  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ
   // ============================================================
   headHtml += '<tr>';
   headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
@@ -105,11 +105,11 @@ function showDiffTable() {
     headHtml += '<th style="background:#f0f0f0;color:#333;font-weight:600;font-size:11px;padding:4px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:default;user-select:none;min-width:80px;position:sticky;top:24px;z-index:10;white-space:normal;word-wrap:break-word;">'+headerName+'</th>';
   }
   headHtml += '</tr>';
+  
+  // Устанавливаем шапку целиком
   head.innerHTML = headHtml;
 
-  // ============================================================
-  // РЕНДЕРИНГ ТЕЛА ТАБЛИЦЫ (С ЦВЕТНЫМИ СТРОКАМИ)
-  // ============================================================
+  // Рендерим тело
   renderDiffTableBody();
 
   document.getElementById('balance-view').classList.add('hidden');
@@ -155,7 +155,7 @@ function diffSortByColumn(cIdx) {
 }
 
 // ================================================================
-// РЕНДЕРИНГ ТЕЛА ТАБЛИЦЫ ОТЛИЧИЙ (С ЦВЕТНЫМИ СТРОКАМИ)
+// РЕНДЕРИНГ ТЕЛА ТАБЛИЦЫ ОТЛИЧИЙ
 // ================================================================
 
 function renderDiffTableBody() {
@@ -180,10 +180,10 @@ function renderDiffTableBody() {
     });
   }
 
-  // Фильтр по цвету (профицит/дефицит)
+  // Фильтр по цвету
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(function(row) {
-      const lastCell = String(row[row.length - 1] || '').trim();
+      const lastCell = String(row[4] || '').trim();
       if (window.diffFilterColor === "green") return lastCell.indexOf('+') === 0;
       if (window.diffFilterColor === "red") return lastCell.indexOf('-') === 0;
       return true;
@@ -200,29 +200,25 @@ function renderDiffTableBody() {
     var row = rowsData[ri];
     if (!row) continue;
     
-    // Определяем цвет строки по последнему столбцу (индекс 4 — Разница Остатка)
+    // Определяем цвет строки по столбцу "Разница Остатка" (индекс 4)
     const diffValue = String(row[4] || '').trim();
     let rowColor = '';
     if (diffValue.indexOf('+') === 0) {
-      rowColor = '#dcfce7'; // Зелёный — профицит (больше, чем нужно)
+      rowColor = '#dcfce7'; // Зелёный — профицит
     } else if (diffValue.indexOf('-') === 0) {
-      rowColor = '#fee2e2'; // Красный — дефицит (меньше, чем нужно)
+      rowColor = '#fee2e2'; // Красный — дефицит
     }
-    // Если разница = 0 — строка не попадает в таблицу (мы её не выводим)
     
-    // Дополняем строку до 6 столбцов (если не хватает)
+    // Дополняем до 6 столбцов
     while (row.length < 6) {
       row.push('');
     }
     
-    // Номер строки (начинаем с 1)
     const rowNum = ri + 1;
     
     bodyHtml += '<tr style="background:'+rowColor+';">';
-    // Номер строки
     bodyHtml += '<td class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;min-width:40px;max-width:40px;padding:4px 2px;">'+rowNum+'</td>';
     
-    // Данные ячеек (6 столбцов)
     for (let c = 0; c < 6; c++) {
       const cellValue = row[c] !== undefined ? row[c] : '';
       bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:80px;background:transparent;color:#000;">'+cellValue+'</td>';
@@ -233,7 +229,7 @@ function renderDiffTableBody() {
 }
 
 // ================================================================
-// ФИЛЬТРЫ И МЕНЮ ФИЛЬТРОВ
+// ФИЛЬТРЫ
 // ================================================================
 
 function filterDiffByColor(colorType) {
@@ -257,7 +253,7 @@ function openDiffFilterMenu(event, colIndex) {
 }
 
 // ================================================================
-// ВЫПОЛНЕНИЕ СВЕРКИ (СОЗДАНИЕ ТАБЛИЦЫ ОТЛИЧИЙ)
+// ВЫПОЛНЕНИЕ СВЕРКИ
 // ================================================================
 
 function executeDatabaseComparison() {
@@ -273,9 +269,6 @@ function executeDatabaseComparison() {
     return;
   }
 
-  // ============================================================
-  // ФОРМИРУЕМ МАТРИЦУ ОТЛИЧИЙ (6 СТОЛБЦОВ)
-  // ============================================================
   let diffMatrix = [];
   diffMatrix.push(["Партия", "Материал", "КрТекстМатериала", "Базисная ЕИ", "Разница Остатка", "Выдано товаров"]);
 
@@ -286,15 +279,11 @@ function executeDatabaseComparison() {
     const sArt = String(sRow[0]).trim().toLowerCase();
     const sParam = String(sRow[1]).trim().toLowerCase();
     
-    // Количество на складе: скл.1 (индекс 6) + скл.2 (индекс 8)
     const q1 = parseInt(String(sRow[6]).replace(/\s+/g, '')) || 0;
     const q2 = parseInt(String(sRow[8]).replace(/\s+/g, '')) || 0;
     const sQty = q1 + q2;
-    
-    // Выдано товаров (не проведено в SUP) — индекс 7
     const issuedQty = parseInt(String(sRow[7]).replace(/\s+/g, '')) || 0;
 
-    // Ищем соответствующую строку в сальдо (балансе)
     let bQty = 0;
     for (let j = 1; j < balance.length; j++) {
       const bRow = balance[j];
@@ -305,36 +294,29 @@ function executeDatabaseComparison() {
       }
     }
 
-    // Вычисляем разницу
     const difference = sQty - bQty;
-    
-    // Если разница = 0 — пропускаем (нет отличий)
     if (difference === 0) continue;
 
-    // Формируем строку отличий
     let newDiffRow = [];
-    newDiffRow.push(sRow[0] || '');          // Партия
-    newDiffRow.push(sRow[1] || '');          // Материал
-    newDiffRow.push(sRow[2] || '');          // КрТекстМатериала
-    newDiffRow.push(sRow[3] || '');          // Базисная ЕИ
-    newDiffRow.push(difference > 0 ? "+" + difference : String(difference)); // Разница Остатка
-    newDiffRow.push(issuedQty);              // Выдано товаров (из индекса 7)
+    newDiffRow.push(sRow[0] || '');
+    newDiffRow.push(sRow[1] || '');
+    newDiffRow.push(sRow[2] || '');
+    newDiffRow.push(sRow[3] || '');
+    newDiffRow.push(difference > 0 ? "+" + difference : String(difference));
+    newDiffRow.push(issuedQty);
     
     diffMatrix.push(newDiffRow);
   }
 
-  // Сохраняем результат локально
   window.diffData = diffMatrix;
   localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
 
   var totalDiffsCount = diffMatrix.length - 1;
   var alertMessage = "РЕЗУЛЬТАТЫ СВЕРКИ ОСТАТКОВ:\n\nВыявлено расхождений: " + totalDiffsCount + " поз.\nЛокальное хранилище: УСПЕШНО ЗАПИСАНО.\n";
 
-  // Отправляем в облако
   if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
     alertMessage += "Статус сети: Онлайн. Отправка в облако...";
     alert(alertMessage);
-    
     const textPayload = "COMPARE_EXPORT|" + JSON.stringify(diffMatrix);
     fetch(SCRIPT_URL, {
       method: 'POST',
@@ -343,7 +325,7 @@ function executeDatabaseComparison() {
     })
     .then(function(res) { return res.text(); })
     .then(function(serverText) {
-      alert("ОТВЕТ СЕРВЕРА:\n\n" + serverText + "\n\nТаблица отличий сохранена в облаке.");
+      alert("ОТВЕТ СЕРВЕРА:\n\n" + serverText);
     })
     .catch(function(err) {
       alert("Данные сохранены на телефоне, но ошибка выгрузки: " + err.message);
@@ -355,7 +337,7 @@ function executeDatabaseComparison() {
 }
 
 // ================================================================
-// ИМПОРТ ТАБЛИЦЫ ИЗ EXCEL (САЛЬДО)
+// ИМПОРТ ИЗ EXCEL
 // ================================================================
 
 async function processTextTableImport() {
@@ -379,11 +361,9 @@ async function processTextTableImport() {
   }
 
   try {
-    // Сохраняем сальдо локально
     window.balanceData = window.excelMatrix;
     localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
 
-    // Обновляем остатки (столбец "из.SUP" — индекс 5)
     const stock = window.inventoryData;
     if (stock && stock.length > 1) {
       for (let i = 1; i < stock.length; i++) {
@@ -405,7 +385,6 @@ async function processTextTableImport() {
       if (typeof renderStock === 'function') renderStock();
     }
 
-    // Отправляем в облако
     if (navigator.onLine && typeof SCRIPT_URL !== 'undefined') {
       const textPayload = "TABLE_RANGE_EXPORT|" + JSON.stringify(rangePayload);
       const response = await fetch(SCRIPT_URL, {
