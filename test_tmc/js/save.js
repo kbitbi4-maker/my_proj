@@ -1,4 +1,7 @@
-// js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 1
+// ================================================================
+// js/save.js — ПОЛНЫЙ МОДУЛЬ СОХРАНЕНИЯ ДАННЫХ (списание, возвраты)
+// Версия 3.0 — с синхронизацией локального хранилища и облака
+// ================================================================
 
 async function saveEntry() {
   if (window.isSaving) return; 
@@ -26,9 +29,9 @@ async function saveEntry() {
     const author = "Неугодникова"; 
     const targetDestination = window.currentWhere || "Не указан";
 
-    // =========================================================================
-    // БЛОК ОПЕРАЦИЙ: СБОРНАЯ МНОЖЕСТВЕННАЯ ВЫДАЧА ТОВАРОВ ИЗ КОРЗИНЫ
-    // =========================================================================
+    // ============================================================
+    // БЛОК 1: МНОЖЕСТВЕННАЯ ВЫДАЧА ИЗ КОРЗИНЫ
+    // ============================================================
     if (!window.isPartialReturnInput && window.issuanceBasket && window.issuanceBasket.length > 0) {
       window.issuanceBasket.forEach(item => {
         let originalRowIndex = item.stockRowIndex;
@@ -45,7 +48,7 @@ async function saveEntry() {
 
         if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
           let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0; 
-          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 переехал на индекс 8
+          let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0;
           let rem = item.qty;
 
           if (item.wh === "скл.1") {
@@ -65,7 +68,6 @@ async function saveEntry() {
               window.inventoryData[originalRowIndex][6] = Math.max(0, s1 - rem); 
             }
           }
-          // Общий запас пересчитывается на основе Склада 1 и Склада 2
           window.inventoryData[originalRowIndex][4] = window.inventoryData[originalRowIndex][6] + window.inventoryData[originalRowIndex][8];
         }
 
@@ -80,13 +82,13 @@ async function saveEntry() {
         window.qrLogs.push({ data: logRowData, status: 'wait' });
       });
 
-      // Автоматический пересчет столбца "не проведено в SUP" после обновления корзины
+      // КРИТИЧЕСКИЙ ФИКС: Сохраняем локально перед отправкой в облако
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      
       if (typeof recalculateUnprocessedSup === 'function') {
         recalculateUnprocessedSup();
       }
-
-      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
       
       if (typeof renderLogs === 'function') renderLogs(); 
       if (typeof renderStock === 'function') renderStock(); 
@@ -98,21 +100,9 @@ async function saveEntry() {
       return;
     }
 
-
-
-
-
-
-
-
-
-
-
-  /* =========================================================================
-   ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-   ========================================================================= */
-// js/save.js — Полный монолитный модуль сохранения данных выдачи и возвратов — ЧАСТЬ 2
-
+    // ============================================================
+    // БЛОК 2: ЧАСТИЧНЫЙ ВОЗВРАТ
+    // ============================================================
     const p1 = window.currentSelectedRowData[0] || "";
     const p2 = window.currentSelectedRowData[1] || "";
     const p3 = window.currentSelectedRowData[2] || "";
@@ -135,9 +125,6 @@ async function saveEntry() {
       return; 
     }
 
-    // =========================================================================
-    // УМНАЯ ВЕТКА А: ЧАСТИЧНЫЙ ВОЗВРАТ С СУММИРОВАНИЕМ В SUP
-    // =========================================================================
     if (window.isPartialReturnInput) {
       const maxAvailableToReturn = parseInt(window.currentSelectedRowData[4]) || 0;
       const partTargetWh = window.currentSelectedRowData[5] || "скл.1";
@@ -149,7 +136,7 @@ async function saveEntry() {
 
       if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
         let currentSkl1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 на индексе 8
+        let currentSkl2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0;
         
         if (partTargetWh === "скл.2") {
           window.inventoryData[originalRowIndex][8] = currentSkl2 + enteredQty; 
@@ -170,13 +157,13 @@ async function saveEntry() {
       
       window.qrLogs.push({ data: returnPartRowData, status: 'wait' });
 
-      // Пересчитываем SUP на основе одиночного частичного возврата
+      // КРИТИЧЕСКИЙ ФИКС: Сохраняем локально
+      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+      
       if (typeof recalculateUnprocessedSup === 'function') {
         recalculateUnprocessedSup();
       }
-
-      localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-      localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
       
       if (typeof renderLogs === 'function') renderLogs(); 
       if (typeof renderStock === 'function') renderStock(); 
@@ -188,13 +175,13 @@ async function saveEntry() {
       return; 
     }
 
-    // =========================================================================
-    // ВЕТКА Б: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА (УЧИТЫВАЕТ ТУМБЛЕР СКЛАДА)
-    // =========================================================================
+    // ============================================================
+    // БЛОК 3: СТАНДАРТНАЯ ОДИНОЧНАЯ ВЫДАЧА
+    // ============================================================
     if (originalRowIndex !== -1 && window.inventoryData[originalRowIndex]) {
       let rem = enteredQty;
       let s1 = parseInt(window.inventoryData[originalRowIndex][6]) || 0;
-      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0; // Склад 2 на индексе 8
+      let s2 = parseInt(window.inventoryData[originalRowIndex][8]) || 0;
       
       const currentSelectedWh = window.numpadSelectedWarehouse || "скл.1";
 
@@ -228,13 +215,13 @@ async function saveEntry() {
     ];
     window.qrLogs.push({ data: newRowData, status: 'wait' });
 
-    // Пересчитываем SUP на основе одиночной выдачи товара
+    // КРИТИЧЕСКИЙ ФИКС: Сохраняем локально ПЕРЕД отправкой в облако
+    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+    localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
+    
     if (typeof recalculateUnprocessedSup === 'function') {
       recalculateUnprocessedSup();
     }
-
-    localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-    localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));   
     
     if (typeof renderLogs === 'function') renderLogs(); 
     if (typeof renderStock === 'function') renderStock(); 
