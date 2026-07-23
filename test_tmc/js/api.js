@@ -34,7 +34,7 @@ function renderLogs() {
 }
 
 /**
- * ФИКС СИНТАКСИСА: Восстановлены квадратные скобки индексов для разблокировки кнопки синхронизации
+ * ИСПРАВЛЕНО: Жесткая и чистая индексация массивов без синтаксических сбоев
  */
 function recalculateUnprocessedSup() {
   const stock = window.inventoryData;
@@ -51,9 +51,9 @@ function recalculateUnprocessedSup() {
     if (i === 0) continue; 
 
     const rowData = item.data;
-    const art = String(rowData[1]).trim().toLowerCase();   // Восстановлен индекс 1 (Артикул)
-    const param = String(rowData[2]).trim().toLowerCase(); // Восстановлен индекс 2 (Параметр)
-    const qty = parseInt(rowData[5]) || 0;                 // Восстановлен индекс 5 (Количество выдачи)
+    const art = String(rowData[1]).trim().toLowerCase();   
+    const param = String(rowData[2]).trim().toLowerCase(); 
+    const qty = parseInt(rowData[5]) || 0;                 
 
     const key = art + "|||" + param;
     if (!totalsMap[key]) {
@@ -65,16 +65,15 @@ function recalculateUnprocessedSup() {
   let updatedRowsCount = 0;
   for (let i = 1; i < stock.length; i++) {
     const sRow = stock[i];
-    if (!sRow || sRow.length < 3) continue;
+    if (!sRow || sRow.length < 8) continue;
 
-    const sArt = String(sRow[0]).trim().toLowerCase();     // Восстановлен индекс 0 (Артикул склада)
-    const sParam = String(sRow[1]).trim().toLowerCase();   // Восстановлен индекс 1 (Параметр склада)
+    const sArt = String(sRow[1]).trim().toLowerCase();     
+    const sParam = String(sRow[2]).trim().toLowerCase();   
     const key = sArt + "|||" + sParam;
 
     const currentUnprocessedQty = totalsMap[key] !== undefined ? totalsMap[key] : 0;
     
-    // Записываем сумму в 8-й столбец остатков (индекс 7 — не проведено в SUP)
-    sRow[7] = currentUnprocessedQty;                       // Восстановлен индекс 7 (Столбец H)
+    sRow[7] = currentUnprocessedQty;                       
     updatedRowsCount++;
   }
 
@@ -92,9 +91,9 @@ function recalculateUnprocessedSup() {
 
 
 
-' =========================================================================
-' ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-' =========================================================================
+// =========================================================================
+// ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+// =========================================================================
 // js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 2
 
 async function syncFromGoogle() {
@@ -136,7 +135,6 @@ async function syncFromGoogle() {
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
-    // Запускаем автоматический пересчет SUP черновиков после синхронизации из облака
     recalculateUnprocessedSup();
     
     renderLogs();
@@ -147,7 +145,7 @@ async function syncFromGoogle() {
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
     
-    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (включая не проведено в SUP), Сальдо и Отчет сверки.");
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (SUP), Сальдо и Отчет сверки.");
   } catch (e) { 
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
