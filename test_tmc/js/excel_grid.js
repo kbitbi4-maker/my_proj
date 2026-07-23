@@ -1,6 +1,6 @@
 // ================================================================
 // excel_grid.js — Универсальный движок Excel-таблиц (сальдо)
-// Версия 2.0 — полный Excel-функционал (выделение, drag, copy/paste)
+// Версия 2.1 — содержит buildRectangularPayload()
 // ================================================================
 
 window.excelMatrix = [];
@@ -15,12 +15,21 @@ window.excelSelectedRange = { startRow: null, startCol: null, endRow: null, endC
 const EXCEL_COLS = 20;
 const EXCEL_ROWS = 800;
 
+/**
+ * Возвращает буквенное обозначение столбца (A, B, C, ... Z, AA, AB...)
+ * @param {number} colIndex - Индекс столбца (0-based)
+ * @returns {string} - Буквенное обозначение столбца
+ */
 function getExcelColumnName(colIndex) {
   let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   if (colIndex < 26) return alphabet[colIndex];
   return alphabet[Math.floor(colIndex / 26) - 1] + alphabet[colIndex % 26];
 }
 
+/**
+ * Инициализирует матрицу данных для Excel-грида
+ * Загружает данные из window.balanceData или создаёт пустую матрицу
+ */
 function initExcelMatrixData() {
   window.excelMatrix = [];
   window.excelChangedCells = {};
@@ -43,6 +52,9 @@ function initExcelMatrixData() {
   window.selectedCell = { row: null, col: null };
 }
 
+/**
+ * Рендерит Excel-грид в DOM
+ */
 function renderExcelGrid() {
   const head = document.getElementById('excel-grid-head');
   const body = document.getElementById('excel-grid-body');
@@ -281,4 +293,50 @@ document.addEventListener('keydown', function(e) {
   if (cellEl) cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 });
 
-console.log('✅ excel_grid.js — загружен (версия 2.0)');
+// ================================================================
+// ГАРАНТИЯ ПРЯМОУГОЛЬНОСТИ
+// ================================================================
+
+/**
+ * Превращает любые разрозненные или полные ячейки 
+ * в идеальную прямоугольную сетку (двумерный массив равной ширины) для setValues()
+ * @param {Array} cellsArray - Массив выделенных ячеек [{r, c}, ...]
+ * @param {Array} dataSourceMatrix - Исходная матрица данных
+ * @returns {Object|null} - { startRow, startCol, numRows, numCols, values2D }
+ */
+function buildRectangularPayload(cellsArray, dataSourceMatrix) {
+  if (!cellsArray || cellsArray.length === 0) return null;
+
+  let minR = Infinity, maxR = -Infinity;
+  let minC = Infinity, maxC = -Infinity;
+
+  cellsArray.forEach(function(cell) {
+    if (cell.r < minR) minR = cell.r;
+    if (cell.r > maxR) maxR = cell.r;
+    if (cell.c < minC) minC = cell.c;
+    if (cell.c > maxC) maxC = cell.c;
+  });
+
+  let exportMatrix = [];
+  for (let r = minR; r <= maxR; r++) {
+    let rowData = [];
+    for (let c = minC; c <= maxC; c++) {
+      let currentVal = dataSourceMatrix[r] && dataSourceMatrix[r][c] !== undefined ? dataSourceMatrix[r][c] : "";
+      rowData.push(String(currentVal));
+    }
+    exportMatrix.push(rowData);
+  }
+
+  return {
+    startRow: minR + 1, 
+    startCol: minC + 1,
+    numRows: (maxR - minR) + 1,
+    numCols: (maxC - minC) + 1,
+    values2D: exportMatrix
+  };
+}
+
+// Делаем функцию доступной глобально
+window.buildRectangularPayload = buildRectangularPayload;
+
+console.log('✅ excel_grid.js — загружен (версия 2.1)');
