@@ -4,7 +4,7 @@
 // Версия 2.1 — сохранение шапки из Google Таблицы
 // ================================================================
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylDTaAMQ42HIIvskfsnPLEDQl92EplPwqUMKsHJR6_kePiNQXfB4Qia_fXp2ZHAl3m6Q/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww4XB-yCHpL4mC8UWABoRp5-adrXIr7zqQ9RQI586bCgV5CiJOKqklapq018JWaU-JWQ/exec';
 
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
