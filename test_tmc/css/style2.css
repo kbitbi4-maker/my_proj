@@ -1,6 +1,6 @@
 /* ============================================================
    style2.css — EXCEL-СТИЛИ ДЛЯ ТАБЛИЦ
-   Остатки, отличия, журнал выдачи
+   Версия 2.0 — единая зебра для всех таблиц, кроме отличий
    ============================================================ */
 
 /* ----- ОБЩИЕ СТИЛИ ДЛЯ ВСЕХ EXCEL-ТАБЛИЦ ----- */
@@ -13,6 +13,14 @@
 .excel-table-wrapper table td.row-header-num{background:#f0f0f0!important;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;transition:background 0.15s}
 .excel-table-wrapper table td.row-header-num:hover{background:#e5e5e5!important}
 .excel-table-wrapper table td:not(.row-header-num){border:1px solid #d0d7de;padding:4px 6px;text-align:left;background:#ffffff!important;color:#000;font-size:13px;min-width:60px;height:24px;outline:none;transition:background 0.1s;word-break:break-word}
+
+/* ----- ЗЕБРА (ТОЛЬКО ДЛЯ ТАБЛИЦЫ ОСТАТКОВ И ЖУРНАЛА ВЫДАЧИ) ----- */
+#stock-body tr:nth-child(even) td:not(.row-header-num){background:#e8f5e9!important}
+#stock-body tr:nth-child(odd) td:not(.row-header-num){background:#f1f8e9!important}
+#logs-body tr:nth-child(even) td{background:#e8f5e9!important}
+#logs-body tr:nth-child(odd) td{background:#f1f8e9!important}
+#diff-body tr:nth-child(even) td{background:#ffffff!important}
+#diff-body tr:nth-child(odd) td{background:#ffffff!important}
 
 /* ----- ВЫДЕЛЕНИЕ ЯЧЕЕК (СИНИЙ ЦВЕТ КАК В EXCEL) ----- */
 .excel-table-wrapper table td.cell-selected{background:#c7e0f4!important;outline:1px solid #2b5797;outline-offset:-1px}
@@ -39,6 +47,12 @@
 /* ----- ПОЛЕ ПОИСКА ----- */
 .excel-search{width:100%;padding:8px 12px;font-size:14px;border:1px solid #d0d7de;border-radius:4px;margin-bottom:10px;box-sizing:border-box;background:#ffffff;color:#000;transition:border 0.2s}
 .excel-search:focus{border-color:#1a73e8;outline:none;box-shadow:0 0 0 2px rgba(26,115,232,0.2)}
+
+/* ----- СТИЛИ ДЛЯ ТАБЛИЦЫ ОТЛИЧИЙ (БЕЗ ЗЕБРЫ) ----- */
+#diff-body td{background:#ffffff!important}
+#diff-body tr:nth-child(even) td{background:#ffffff!important}
+#diff-body tr:nth-child(odd) td{background:#ffffff!important}
+#diff-body tr{background:#ffffff!important}
 
 /* ----- АДАПТИВ ДЛЯ МОБИЛЬНЫХ ----- */
 @media(max-width:768px){.excel-table-wrapper{font-size:11px}.excel-table-wrapper table td:not(.row-header-num){font-size:11px;padding:3px 4px;min-width:40px}.excel-table-wrapper table th{font-size:10px;padding:4px 2px;min-width:40px}}
