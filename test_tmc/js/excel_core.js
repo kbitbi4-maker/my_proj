@@ -1,6 +1,6 @@
 // ================================================================
 // excel_core.js — УНИВЕРСАЛЬНЫЙ ДВИЖОК EXCEL-ТАБЛИЦ
-// Версия 1.0 — единый движок для всех таблиц
+// Версия 1.2 — правильная нумерация строк (названия = строка 1)
 // ================================================================
 
 // ================================================================
@@ -72,7 +72,10 @@ function excelRegisterTable(tableId, config) {
     searchInputId: config.searchInputId || null,
     
     // Название таблицы (для отображения)
-    title: config.title || 'Таблица'
+    title: config.title || 'Таблица',
+    
+    // Поисковый термин
+    searchTerm: ''
   };
   
   return EXCEL_CORE.tables[tableId];
@@ -91,16 +94,20 @@ function excelRenderTable(tableId) {
   
   const data = table.data;
   if (!data || data.length === 0) {
-    document.getElementById(table.containerId + '-body').innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#999;">Нет данных</td></tr>';
+    const bodyContainer = document.getElementById(table.containerId + '-body');
+    if (bodyContainer) {
+      bodyContainer.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:20px;color:#999;">Нет данных</td></tr>';
+    }
     return;
   }
   
-  // Определяем заголовки
-  let headers = table.headers || data[0] || [];
-  let startRow = table.headers ? 0 : 1; // Если заголовки указаны отдельно — данные начинаются с 0, иначе с 1
+  // Определяем заголовки — ПЕРВАЯ СТРОКА ДАННЫХ
+  const headers = data[0] || [];
+  // Данные начинаются со ВТОРОЙ СТРОКИ (индекс 1)
+  const startRow = 1;
   
   const colLetters = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-  const numCols = table.colCount || Math.max(headers.length, data[0] ? data[0].length : 1);
+  const numCols = table.colCount || Math.max(headers.length, data[1] ? data[1].length : 1);
   
   // Получаем контейнеры
   const headContainer = document.getElementById(table.containerId + '-head');
@@ -111,11 +118,11 @@ function excelRenderTable(tableId) {
   }
   
   // ============================================================
-  // ФОРМИРУЕМ ШАПКУ
+  // ФОРМИРУЕМ ШАПКУ (СТРОКА 1 — БУКВЫ, БЕЗ НОМЕРА)
   // ============================================================
   let headHtml = '';
   
-  // Строка 1: Буквенная нумерация столбцов
+  // Строка 1: Буквенная нумерация столбцов (БЕЗ НОМЕРА СТРОКИ)
   headHtml += '<tr>';
   headHtml += '<th class="excel-corner" onclick="excelSelectAll(\''+tableId+'\')" title="Выделить всё" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;cursor:pointer;">⬚</th>';
   for (let c = 0; c < numCols; c++) {
@@ -124,20 +131,13 @@ function excelRenderTable(tableId) {
     headHtml += '<th onclick="excelSortByColumn(\''+tableId+'\','+c+')" title="Сортировка по столбцу '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;">'+letter+sortIndicator+'</th>';
   }
   headHtml += '</tr>';
-  
-  // Строка 2: Названия столбцов
-  headHtml += '<tr>';
-  headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
-  for (let c = 0; c < numCols; c++) {
-    const headerName = (headers[c] !== undefined && headers[c] !== '') ? headers[c] : colLetters[c] || String.fromCharCode(65 + c);
-    headHtml += '<th style="background:#f0f0f0;color:#333;font-weight:600;font-size:11px;padding:4px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:default;user-select:none;min-width:60px;position:sticky;top:24px;z-index:10;white-space:normal;word-wrap:break-word;">'+headerName+'</th>';
-  }
-  headHtml += '</tr>';
   headContainer.innerHTML = headHtml;
 
   // ============================================================
-  // СБОР И ФИЛЬТРАЦИЯ ДАННЫХ
+  // ТЕЛО ТАБЛИЦЫ
   // ============================================================
+  
+  // Собираем данные (начиная с индекса 1 — вторая строка)
   let rowsData = [];
   for (let rIdx = startRow; rIdx < data.length; rIdx++) {
     const row = data[rIdx];
@@ -153,7 +153,7 @@ function excelRenderTable(tableId) {
     rowsData.push({ index: rIdx, data: row });
   }
 
-  // Сортировка
+  // Сортировка (только для данных, не для заголовков)
   if (EXCEL_CORE.sortColumn !== null) {
     rowsData.sort(function(a, b) {
       var valA = String(a.data[EXCEL_CORE.sortColumn] || '').toLowerCase();
@@ -173,10 +173,26 @@ function excelRenderTable(tableId) {
   // РЕНДЕРИНГ ТЕЛА ТАБЛИЦЫ
   // ============================================================
   let bodyHtml = "";
+  
+  // ============================================================
+  // СТРОКА 1 ТЕЛА: НАЗВАНИЯ СТОЛБЦОВ (НОМЕР 1)
+  // ============================================================
+  bodyHtml += '<tr style="font-weight:600;background:#f0f0f0;">';
+  bodyHtml += '<td class="row-header-num" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:default;min-width:40px;max-width:40px;padding:4px 2px;">1</td>';
+  for (let c = 0; c < numCols; c++) {
+    const headerName = headers[c] !== undefined && headers[c] !== '' ? headers[c] : colLetters[c] || String.fromCharCode(65 + c);
+    bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;background:#f0f0f0;color:#333;font-weight:600;">'+headerName+'</td>';
+  }
+  bodyHtml += '</tr>';
+
+  // ============================================================
+  // СТРОКИ 2...N: ДАННЫЕ (НОМЕР НАЧИНАЕТСЯ С 2)
+  // ============================================================
   for (var ri = 0; ri < rowsData.length; ri++) {
     var rIdx = rowsData[ri].index;
     var row = rowsData[ri].data;
-    var rowNum = rIdx;
+    // Номер строки = ri + 2 (потому что строка 1 — это названия)
+    var rowNum = ri + 2;
 
     // Определяем цвет строки
     let rowColor = '';
@@ -189,7 +205,12 @@ function excelRenderTable(tableId) {
       }
     }
 
-    bodyHtml += '<tr id="ex-row-'+rIdx+'"' + (!table.editMode && table.onRowClick ? ' onclick="'+table.onRowClick+'('+rIdx+')" style="cursor:pointer;"' : '') + '>';
+    var rowClickAttr = '';
+    if (!table.editMode && table.onRowClick) {
+      rowClickAttr = ' onclick="'+table.onRowClick+'('+rIdx+')" style="cursor:pointer;"';
+    }
+
+    bodyHtml += '<tr id="ex-row-'+rIdx+'"'+rowClickAttr+'>';
     
     // Номер строки
     bodyHtml += '<td class="row-header-num" id="row-hdr-'+rIdx+'" onclick="excelSelectWholeRow(\''+tableId+'\',event,'+rIdx+')" style="background:#f0f0f0;color:#555;font-weight:600;font-size:12px;text-align:center;border:1px solid #d0d7de;cursor:pointer;user-select:none;min-width:40px;max-width:40px;padding:4px 2px;">'+rowNum+'</td>';
@@ -252,13 +273,12 @@ function excelSelectAll(tableId) {
   if (!table || !table.editMode) return;
   
   const data = table.data;
-  const startRow = table.headers ? 0 : 1;
-  if (!data || data.length <= startRow) return;
+  if (!data || data.length <= 1) return;
   
-  EXCEL_CORE.selectedRange.startRow = startRow;
+  EXCEL_CORE.selectedRange.startRow = 1; // первая строка данных (названия)
   EXCEL_CORE.selectedRange.endRow = data.length - 1;
   EXCEL_CORE.selectedRange.startCol = 0;
-  EXCEL_CORE.selectedRange.endCol = (table.colCount || data[0].length) - 1;
+  EXCEL_CORE.selectedRange.endCol = (table.colCount || data[1].length) - 1;
   
   excelRefreshSelectionVisuals(tableId);
 }
@@ -294,12 +314,13 @@ function excelSelectWholeRow(tableId, event, rIdx) {
   if (!table || !table.editMode) return;
   event.stopPropagation();
   
+  const numCols = table.colCount || table.data[0].length;
   EXCEL_CORE.activeCell.row = rIdx;
   EXCEL_CORE.activeCell.col = 0;
   EXCEL_CORE.selectedRange.startRow = rIdx;
   EXCEL_CORE.selectedRange.endRow = rIdx;
   EXCEL_CORE.selectedRange.startCol = 0;
-  EXCEL_CORE.selectedRange.endCol = (table.colCount || table.data[0].length) - 1;
+  EXCEL_CORE.selectedRange.endCol = numCols - 1;
   excelRefreshSelectionVisuals(tableId);
 }
 
@@ -308,12 +329,11 @@ function excelSelectWholeColumn(tableId, cIdx) {
   if (!table || !table.editMode) return;
   
   const data = table.data;
-  const startRow = table.headers ? 0 : 1;
-  if (!data || data.length <= startRow) return;
+  if (!data || data.length <= 1) return;
   
-  EXCEL_CORE.activeCell.row = startRow;
+  EXCEL_CORE.activeCell.row = 1;
   EXCEL_CORE.activeCell.col = cIdx;
-  EXCEL_CORE.selectedRange.startRow = startRow;
+  EXCEL_CORE.selectedRange.startRow = 1;
   EXCEL_CORE.selectedRange.endRow = data.length - 1;
   EXCEL_CORE.selectedRange.startCol = cIdx;
   EXCEL_CORE.selectedRange.endCol = cIdx;
@@ -324,7 +344,10 @@ function excelRefreshSelectionVisuals(tableId) {
   const table = EXCEL_CORE.tables[tableId];
   if (!table || !table.editMode) return;
   
-  document.querySelectorAll('#' + table.containerId + ' .cell-selected, #' + table.containerId + ' .cell-active-focus, #' + table.containerId + ' .row-selected')
+  const container = document.getElementById(table.containerId);
+  if (!container) return;
+  
+  container.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected')
     .forEach(function(el) { el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected'); });
   
   if (EXCEL_CORE.selectedRange.startRow === null) return;
@@ -520,6 +543,41 @@ function excelResetFilters(tableId) {
 }
 
 // ================================================================
+// ПОИСК (фильтрация)
+// ================================================================
+
+function excelSearch(tableId, term) {
+  const table = EXCEL_CORE.tables[tableId];
+  if (!table) return;
+  table.searchTerm = term || '';
+  excelRenderTable(tableId);
+}
+
+// ================================================================
+// ПЕРЕКЛЮЧЕНИЕ РЕЖИМА РЕДАКТИРОВАНИЯ
+// ================================================================
+
+function excelToggleEditMode(tableId) {
+  const table = EXCEL_CORE.tables[tableId];
+  if (!table) return;
+  table.editMode = !table.editMode;
+  EXCEL_CORE.selectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
+  EXCEL_CORE.activeCell = { row: null, col: null };
+  excelRenderTable(tableId);
+}
+
+// ================================================================
+// ОБНОВЛЕНИЕ ДАННЫХ ТАБЛИЦЫ
+// ================================================================
+
+function excelUpdateData(tableId, newData) {
+  const table = EXCEL_CORE.tables[tableId];
+  if (!table) return;
+  table.data = newData;
+  excelRenderTable(tableId);
+}
+
+// ================================================================
 // КОПИРОВАНИЕ (Ctrl+C)
 // ================================================================
 
@@ -599,39 +657,4 @@ document.addEventListener('paste', function(e) {
   excelRenderTable(activeTableId);
 });
 
-// ================================================================
-// ПОИСК (фильтрация)
-// ================================================================
-
-function excelSearch(tableId, term) {
-  const table = EXCEL_CORE.tables[tableId];
-  if (!table) return;
-  table.searchTerm = term || '';
-  excelRenderTable(tableId);
-}
-
-// ================================================================
-// ПЕРЕКЛЮЧЕНИЕ РЕЖИМА РЕДАКТИРОВАНИЯ
-// ================================================================
-
-function excelToggleEditMode(tableId) {
-  const table = EXCEL_CORE.tables[tableId];
-  if (!table) return;
-  table.editMode = !table.editMode;
-  EXCEL_CORE.selectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
-  EXCEL_CORE.activeCell = { row: null, col: null };
-  excelRenderTable(tableId);
-}
-
-// ================================================================
-// ОБНОВЛЕНИЕ ДАННЫХ ТАБЛИЦЫ
-// ================================================================
-
-function excelUpdateData(tableId, newData) {
-  const table = EXCEL_CORE.tables[tableId];
-  if (!table) return;
-  table.data = newData;
-  excelRenderTable(tableId);
-}
-
-console.log('✅ excel_core.js — загружен (универсальный движок)');
+console.log('✅ excel_core.js — загружен (версия 1.2)');
