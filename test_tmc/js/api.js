@@ -1,5 +1,3 @@
-// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 1
-
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylDTaAMQ42HIIvskfsnPLEDQl92EplPwqUMKsHJR6_kePiNQXfB4Qia_fXp2ZHAl3m6Q/exec';
 
 window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
@@ -10,32 +8,50 @@ function renderLogs() {
   const body = document.getElementById('logs-body');
   if (!body) return;
   
-  const visibleLogs = window.qrLogs.filter(item => item && item.data);
-
-  if (!visibleLogs.length) { 
-    body.innerHTML = '<tr><td colspan="13" style="background: #ffffff; color: #000;">Пусто</td></tr>'; 
-    return; 
+  // Проверяем, есть ли данные
+  if (!window.qrLogs || window.qrLogs.length === 0) {
+    body.innerHTML = '<tr><td colspan="13" style="background:#ffffff;color:#000;text-align:center;padding:20px;">Пусто</td></tr>';
+    return;
   }
 
-  body.innerHTML = window.qrLogs.map((item, i) => {
-    if (i === 0 || !item || !item.data) return '';
+  // Определяем, есть ли шапка в данных (первая строка - названия)
+  // Если первый элемент имеет свойство 'isHeader' или это массив строк, считаем его шапкой
+  const firstItem = window.qrLogs[0];
+  const hasHeader = firstItem && firstItem.isHeader === true;
+  
+  let startIndex = hasHeader ? 1 : 0;
+  
+  let bodyHtml = "";
+  
+  // Рендерим строки данных (без шапки)
+  for (let i = startIndex; i < window.qrLogs.length; i++) {
+    const item = window.qrLogs[i];
+    if (!item || !item.data) continue;
+    if (item.action === 'delete') continue;
+    
     const isSynced = item.status === 'ok';
     const bgClass = isSynced ? 'class="log-row-synced"' : 'class="log-row-wait"';
     
-    const cellsHtml = item.data.map((cell, cellIndex) => {
+    let cellsHtml = '';
+    for (let cellIndex = 0; cellIndex < item.data.length; cellIndex++) {
+      const cell = item.data[cellIndex] !== undefined ? item.data[cellIndex] : '';
       if (cellIndex === 8) {
-        return `<td class="log-where-cell" data-index="${i}" onclick="if(!window.isReturnMode){ enableLogCellEdit(event, ${i}); } else { handleLogClick(${i}); }">${cell}</td>`;
+        cellsHtml += '<td class="log-where-cell" data-index="'+i+'" onclick="if(!window.isReturnMode){ window.enableLogCellEdit ? enableLogCellEdit(event, '+i+') : null; } else { handleLogClick('+i+'); }">'+cell+'</td>';
+      } else {
+        cellsHtml += '<td onclick="handleLogClick('+i+')">'+cell+'</td>';
       }
-      return `<td onclick="handleLogClick(${i})">${cell}</td>`;
-    }).join('');
-
-    return `<tr ${bgClass}>${cellsHtml}</tr>`;
-  }).filter(Boolean).reverse().join('');
+    }
+    
+    bodyHtml += '<tr '+bgClass+'>'+cellsHtml+'</tr>';
+  }
+  
+  if (bodyHtml === '') {
+    body.innerHTML = '<tr><td colspan="13" style="background:#ffffff;color:#000;text-align:center;padding:20px;">Пусто</td></tr>';
+  } else {
+    body.innerHTML = bodyHtml;
+  }
 }
 
-/**
- * ГАРАНТИРОВАННО РАБОЧИЙ ДВИЖОК: Жестко прописаны индексы ячеек без ложных сокращений
- */
 function recalculateUnprocessedSup() {
   const stock = window.inventoryData;
   const logs = window.qrLogs;
@@ -43,64 +59,41 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
+  // Пропускаем шапку, если она есть
+  const startIdx = (logs.length > 0 && logs[0] && logs[0].isHeader === true) ? 1 : 0;
+  
   const totalsMap = {};
   
-  // Цикл по журналу выдачи (Таблица 2)
-  for (let i = 0; i < logs.length; i++) {
+  for (let i = startIdx; i < logs.length; i++) {
     const item = logs[i];
     if (!item || !item.data || item.action === 'delete') continue;
-    if (i === 0) continue; 
-
     const logRow = item.data;
     if (logRow.length < 6) continue;
-
-    // Извлекаем данные по строгим индексам (1 - Артикул, 2 - Параметр, 5 - Кол-во)
-    const artKey = String(logRow[1]).trim().toLowerCase();   
-    const paramKey = String(logRow[2]).trim().toLowerCase(); 
-    const qtyVal = parseInt(logRow[5]) || 0;                 
-
+    const artKey = String(logRow[1]).trim().toLowerCase();
+    const paramKey = String(logRow[2]).trim().toLowerCase();
+    const qtyVal = parseInt(logRow[5]) || 0;
     const mapKey = artKey + "|||" + paramKey;
-    if (!totalsMap[mapKey]) {
-      totalsMap[mapKey] = 0;
-    }
+    if (!totalsMap[mapKey]) totalsMap[mapKey] = 0;
     totalsMap[mapKey] += qtyVal;
   }
 
   let updatedRowsCount = 0;
   
-  // Цикл по остаткам склада (Таблица 1)
   for (let j = 1; j < stock.length; j++) {
     const stockRow = stock[j];
     if (!stockRow || stockRow.length < 8) continue;
-
-    // Извлекаем данные по строгим индексам (0 - Артикул склада, 1 - Параметр склада)
-    const sArtKey = String(stockRow[0]).trim().toLowerCase();     
-    const sParamKey = String(stockRow[1]).trim().toLowerCase();   
+    const sArtKey = String(stockRow[0]).trim().toLowerCase();
+    const sParamKey = String(stockRow[1]).trim().toLowerCase();
     const searchKey = sArtKey + "|||" + sParamKey;
-
     const currentUnprocessedQty = totalsMap[searchKey] !== undefined ? totalsMap[searchKey] : 0;
-    
-    // Записываем сумму строго в 8-й столбец остатков (индекс 7)
-    stockRow[7] = currentUnprocessedQty;                       
+    stockRow[7] = currentUnprocessedQty;
     updatedRowsCount++;
   }
 
   window.inventoryData = stock;
   localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
-  console.log("Движок SUP: Пересчет завершен без ошибок. Обновлено строк: " + updatedRowsCount);
+  console.log("Движок SUP: Пересчет завершен. Обновлено строк: " + updatedRowsCount);
 }
-
-
-
-
-
-
-
-
-// =========================================================================
-// ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
-// =========================================================================
-// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 2
 
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
@@ -125,7 +118,15 @@ async function syncFromGoogle() {
     const data = await res.json();
     
     if (data.logs) {
-      window.qrLogs = data.logs.map(row => ({ data: row, status: 'ok' }));
+      // Помечаем первую строку как шапку, если она есть
+      if (data.logs.length > 0 && data.logs[0] && Array.isArray(data.logs[0])) {
+        window.qrLogs = [{ data: data.logs[0], isHeader: true }];
+        for (let i = 1; i < data.logs.length; i++) {
+          window.qrLogs.push({ data: data.logs[i], status: 'ok' });
+        }
+      } else {
+        window.qrLogs = data.logs.map(function(row) { return { data: row, status: 'ok' }; });
+      }
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     }
     if (data.stock) {
@@ -142,7 +143,6 @@ async function syncFromGoogle() {
     }
 
     recalculateUnprocessedSup();
-    
     renderLogs();
     if (typeof renderStock === 'function') renderStock();
     
@@ -151,47 +151,47 @@ async function syncFromGoogle() {
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
     
-    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (включая не проведено в SUP), Сальдо и Отчет сверки.");
-  } catch (e) { 
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
+  } catch (e) {
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
-    alert("Ошибка при синхронизации данных из облака"); 
+    alert("Ошибка при синхронизации данных из облака: " + e.message);
   }
 }
 
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
   
-  for (let i = 0; i < window.qrLogs.length; i++) {
+  // Пропускаем шапку
+  const startIdx = (window.qrLogs.length > 0 && window.qrLogs[0] && window.qrLogs[0].isHeader === true) ? 1 : 0;
+  
+  for (let i = startIdx; i < window.qrLogs.length; i++) {
     const item = window.qrLogs[i];
     if (!item || item.status !== 'wait') continue;
 
-    item.status = 'syncing'; 
+    item.status = 'syncing';
     
     try {
       let bodyData = "";
-      
       if (item.action === 'delete') {
         const art = item.itemKeys || "";
         const param = item.itemKeys || "";
-        bodyData = `DELETE_ROW|${item.id}|${item.qty}|${art}|${param}`;
+        bodyData = "DELETE_ROW|" + item.id + "|" + item.qty + "|" + art + "|" + param;
       } else if (item.data) {
         bodyData = JSON.stringify({ row: item.data });
       }
 
       await fetch(SCRIPT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: bodyData
       });
 
       if (item.action === 'delete') {
         window.qrLogs.splice(i, 1);
-        i--; 
+        i--;
       } else {
         item.status = 'ok';
       }
@@ -201,14 +201,14 @@ async function sendUnsynced() {
       
     } catch (e) {
       console.error("Ошибка при фоновой отправке:", e);
-      item.status = 'wait'; 
+      item.status = 'wait';
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
-      break; 
+      break;
     }
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function() {
   renderLogs();
   sendUnsynced();
 });
