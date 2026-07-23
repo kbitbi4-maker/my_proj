@@ -285,4 +285,71 @@ document.addEventListener('copy', function(e) {
   const currentData = window.inventoryData;
   if (!currentData || currentData.length <= 1) return;
   const { startRow, endRow, startCol, endCol } = window.stockSelectedRange;
-  let copyData
+  let copyData = [];
+  for (let r = startRow; r <= endRow && r < currentData.length; r++) {
+    let rowCopy = [];
+    for (let c = startCol; c <= endCol && c < (currentData[r] || []).length; c++) {
+      const cellKey = r+'_'+c;
+      const isDirty = window.stockChangesQueue[cellKey];
+      const value = isDirty ? isDirty.value : (currentData[r][c] !== undefined ? currentData[r][c] : '');
+      rowCopy.push(value);
+    }
+    copyData.push(rowCopy);
+  }
+  const tsvText = copyData.map(function(row) { return row.join('\t'); }).join('\n');
+  e.clipboardData.setData('text/plain', tsvText);
+  e.preventDefault();
+  const badge = document.getElementById('stock-edit-badge');
+  if (badge) {
+    const origText = badge.innerText;
+    badge.innerText = '✅ Скопировано! ' + copyData.length + ' строк';
+    badge.style.background = '#d4edda';
+    setTimeout(function() { badge.innerText = origText; badge.style.background = '#e8f0fe'; }, 1500);
+  }
+});
+
+// Вставка (Ctrl+V)
+document.addEventListener('paste', function(e) {
+  if (!window.isStockEditMode) return;
+  if (window.stockActiveCell.row === null || window.stockActiveCell.col === null) return;
+  const activeEl = document.activeElement;
+  if (!activeEl || !activeEl.closest('#stock-view')) return;
+  const pasteData = e.clipboardData.getData('text/plain');
+  if (!pasteData) return;
+  e.preventDefault();
+  const rows = pasteData.split('\n').filter(function(line) { return line.trim() !== ''; });
+  const startR = window.stockActiveCell.row;
+  const startC = window.stockActiveCell.col;
+  let pasteCount = 0;
+  rows.forEach(function(rowText, rIdx) {
+    const cells = rowText.split('\t');
+    const targetR = startR + rIdx;
+    if (targetR >= window.inventoryData.length) return;
+    cells.forEach(function(cellValue, cIdx) {
+      const targetC = startC + cIdx;
+      if (targetC >= (window.inventoryData[targetR] || []).length) return;
+      if (targetC === 4) return;
+      const cellKey = targetR+'_'+targetC;
+      const trimmedVal = cellValue.trim();
+      window.inventoryData[targetR][targetC] = trimmedVal;
+      window.stockChangesQueue[cellKey] = { row: targetR, col: targetC, value: trimmedVal };
+      pasteCount++;
+    });
+  });
+  if (typeof renderStock === 'function') renderStock();
+  const badge = document.getElementById('stock-edit-badge');
+  if (badge) {
+    const origText = badge.innerText;
+    badge.innerText = '📋 Вставлено! ' + pasteCount + ' ячеек';
+    badge.style.background = '#d4edda';
+    setTimeout(function() { badge.innerText = origText; badge.style.background = '#e8f0fe'; }, 1500);
+  }
+});
+
+window.addEventListener('resize', function() {
+  if (!document.getElementById('stock-view').classList.contains('hidden') && window.isStockEditMode) {
+    excelRefreshSelectionVisuals();
+  }
+});
+
+console.log('✅ stock_edit.js — загружен (версия 1.1)');
