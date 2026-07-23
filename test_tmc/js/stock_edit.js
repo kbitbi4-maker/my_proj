@@ -1,6 +1,6 @@
 // ================================================================
 // stock_edit.js — РЕДАКТИРОВАНИЕ ТАБЛИЦЫ ОСТАТКОВ
-// Версия 1.1 — выделение, drag, copy/paste, выделение всей таблицы
+// Версия 1.2 — исправлено выделение синим
 // ================================================================
 
 window.stockSelectedRange = { startRow: null, startCol: null, endRow: null, endCol: null };
@@ -28,6 +28,7 @@ function excelHandleCellClick(event, rIdx, cIdx) {
   if (window.stockIsDragging) return;
   const currentData = window.inventoryData;
   if (!currentData || !currentData[rIdx]) return;
+  
   if (event.shiftKey && window.stockActiveCell.row !== null && window.stockActiveCell.col !== null) {
     window.stockSelectedRange.startRow = Math.min(window.stockActiveCell.row, rIdx);
     window.stockSelectedRange.endRow = Math.max(window.stockActiveCell.row, rIdx);
@@ -78,8 +79,14 @@ function excelSelectWholeColumn(cIdx) {
 
 function excelRefreshSelectionVisuals() {
   if (!window.isStockEditMode) return;
-  document.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected').forEach(function(el) { el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected'); });
+  
+  // Сначала снимаем все старые выделения
+  document.querySelectorAll('.cell-selected, .cell-active-focus, .row-selected').forEach(function(el) {
+    el.classList.remove('cell-selected', 'cell-active-focus', 'row-selected');
+  });
+  
   if (window.stockSelectedRange.startRow === null) return;
+  
   for (let r = window.stockSelectedRange.startRow; r <= window.stockSelectedRange.endRow; r++) {
     const rowHdr = document.getElementById('row-hdr-'+r);
     if (rowHdr) rowHdr.classList.add('row-selected');
@@ -276,7 +283,6 @@ async function saveStockChangesCloud() {
   }
 }
 
-// Копирование (Ctrl+C)
 document.addEventListener('copy', function(e) {
   if (!window.isStockEditMode) return;
   if (window.stockSelectedRange.startRow === null) return;
@@ -308,7 +314,6 @@ document.addEventListener('copy', function(e) {
   }
 });
 
-// Вставка (Ctrl+V)
 document.addEventListener('paste', function(e) {
   if (!window.isStockEditMode) return;
   if (window.stockActiveCell.row === null || window.stockActiveCell.col === null) return;
@@ -352,4 +357,4 @@ window.addEventListener('resize', function() {
   }
 });
 
-console.log('✅ stock_edit.js — загружен (версия 1.1)');
+console.log('✅ stock_edit.js — загружен (версия 1.2)');
