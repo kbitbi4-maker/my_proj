@@ -1,6 +1,12 @@
+
+// ================================================================
+// api.js — Модуль сетевого взаимодействия и синхронизации
+// Версия 2.1 — сохранение шапки из Google Таблицы
+// ================================================================
+
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylDTaAMQ42HIIvskfsnPLEDQl92EplPwqUMKsHJR6_kePiNQXfB4Qia_fXp2ZHAl3m6Q/exec';
 
-window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || []; 
+window.qrLogs = JSON.parse(localStorage.getItem('qr_db_v9')) || [];
 window.inventoryData = JSON.parse(localStorage.getItem('qr_inventory_v2')) || [];
 window.isSaving = false;
 
@@ -8,22 +14,19 @@ function renderLogs() {
   const body = document.getElementById('logs-body');
   if (!body) return;
   
-  // Проверяем, есть ли данные
   if (!window.qrLogs || window.qrLogs.length === 0) {
     body.innerHTML = '<tr><td colspan="13" style="background:#ffffff;color:#000;text-align:center;padding:20px;">Пусто</td></tr>';
     return;
   }
 
-  // Определяем, есть ли шапка в данных (первая строка - названия)
-  // Если первый элемент имеет свойство 'isHeader' или это массив строк, считаем его шапкой
+  // Определяем, есть ли шапка (isHeader === true)
   const firstItem = window.qrLogs[0];
   const hasHeader = firstItem && firstItem.isHeader === true;
-  
   let startIndex = hasHeader ? 1 : 0;
   
+  // Если есть шапка — пропускаем её при рендеринге тела
   let bodyHtml = "";
   
-  // Рендерим строки данных (без шапки)
   for (let i = startIndex; i < window.qrLogs.length; i++) {
     const item = window.qrLogs[i];
     if (!item || !item.data) continue;
@@ -59,7 +62,6 @@ function recalculateUnprocessedSup() {
 
   console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
 
-  // Пропускаем шапку, если она есть
   const startIdx = (logs.length > 0 && logs[0] && logs[0].isHeader === true) ? 1 : 0;
   
   const totalsMap = {};
@@ -117,22 +119,24 @@ async function syncFromGoogle() {
     const res = await fetch(SCRIPT_URL);
     const data = await res.json();
     
-    if (data.logs) {
-      // Помечаем первую строку как шапку, если она есть
-      if (data.logs.length > 0 && data.logs[0] && Array.isArray(data.logs[0])) {
-        window.qrLogs = [{ data: data.logs[0], isHeader: true }];
-        for (let i = 1; i < data.logs.length; i++) {
-          window.qrLogs.push({ data: data.logs[i], status: 'ok' });
-        }
-      } else {
-        window.qrLogs = data.logs.map(function(row) { return { data: row, status: 'ok' }; });
+    // Журнал выдачи — сохраняем шапку (первая строка)
+    if (data.logs && data.logs.length > 0) {
+      window.qrLogs = [];
+      // Первая строка — шапка (isHeader: true)
+      window.qrLogs.push({ data: data.logs[0], isHeader: true });
+      // Остальные строки — данные
+      for (let i = 1; i < data.logs.length; i++) {
+        window.qrLogs.push({ data: data.logs[i], status: 'ok' });
       }
       localStorage.setItem('qr_db_v9', JSON.stringify(window.qrLogs));
     }
+    
+    // Остатки — первая строка это шапка (без маркера, она просто первая)
     if (data.stock) {
       window.inventoryData = data.stock;
       localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
     }
+    
     if (data.balance) {
       window.balanceData = data.balance;
       localStorage.setItem('sheetsSync_сальдо', JSON.stringify(window.balanceData));
@@ -164,7 +168,6 @@ async function syncFromGoogle() {
 async function sendUnsynced() {
   if (!navigator.onLine || !window.qrLogs || !window.qrLogs.length) return;
   
-  // Пропускаем шапку
   const startIdx = (window.qrLogs.length > 0 && window.qrLogs[0] && window.qrLogs[0].isHeader === true) ? 1 : 0;
   
   for (let i = startIdx; i < window.qrLogs.length; i++) {
