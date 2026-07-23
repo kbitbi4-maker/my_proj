@@ -1,6 +1,6 @@
 // ================================================================
 // balance.js — Модуль импорта Сальдо и Сравнения остатков
-// Версия 2.3 — исправлена шапка таблицы отличий
+// Версия 2.4 — ИСПРАВЛЕНА НУМЕРАЦИЯ СТРОК В ТАБЛИЦЕ ОТЛИЧИЙ
 // ================================================================
 
 window.balanceData = JSON.parse(localStorage.getItem('qr_balance_v1')) || [];
@@ -61,12 +61,12 @@ function showDiffTable() {
   window.diffFilterColor = "all";
 
   // ============================================================
-  // ФОРМИРУЕМ ШАПКУ ЦЕЛИКОМ (БЕЗ АПЕНДИКСА)
+  // ШАПКА ТАБЛИЦЫ — ДВЕ СТРОКИ, СТРОКА 1 НЕ НУМЕРУЕТСЯ
   // ============================================================
   const headers = diffMatrix[0] || ['Партия', 'Материал', 'КрТекстМатериала', 'Базисная ЕИ', 'Разница Остатка', 'Выдано товаров'];
   const colLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
   
-  // СТРОКА 1: БУКВЫ
+  // СТРОКА 1: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
   let headHtml = '<tr>';
   headHtml += '<th class="excel-corner" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;"></th>';
   for (let c = 0; c < 6; c++) {
@@ -75,7 +75,7 @@ function showDiffTable() {
   }
   headHtml += '</tr>';
   
-  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ
+  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ (НЕ НУМЕРУЕТСЯ)
   headHtml += '<tr>';
   headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
   for (let h = 0; h < 6; h++) {
@@ -84,10 +84,11 @@ function showDiffTable() {
   }
   headHtml += '</tr>';
   
-  // Устанавливаем шапку
   head.innerHTML = headHtml;
 
-  // Рендерим тело
+  // ============================================================
+  // ТЕЛО ТАБЛИЦЫ — НУМЕРАЦИЯ СТРОК НАЧИНАЕТСЯ С 1
+  // ============================================================
   renderDiffTableBody();
 
   document.getElementById('balance-view').classList.add('hidden');
@@ -141,14 +142,17 @@ function renderDiffTableBody() {
   const searchInput = document.getElementById('diff-search');
   const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
 
+  // Берём данные (строки 1...N, т.е. после шапки)
   let rowsData = diffMatrix.slice(1);
 
+  // Поиск
   if (term !== "") {
     rowsData = rowsData.filter(function(row) {
       return row.some(function(cell) { return String(cell).toLowerCase().includes(term); });
     });
   }
 
+  // Фильтр по цвету
   if (window.diffFilterColor !== "all") {
     rowsData = rowsData.filter(function(row) {
       const lastCell = String(row[4] || '').trim();
@@ -168,18 +172,21 @@ function renderDiffTableBody() {
     var row = rowsData[ri];
     if (!row) continue;
     
+    // Цвет строки по столбцу "Разница Остатка" (индекс 4)
     const diffValue = String(row[4] || '').trim();
     let rowColor = '';
     if (diffValue.indexOf('+') === 0) {
-      rowColor = '#dcfce7';
+      rowColor = '#dcfce7'; // Зелёный — профицит
     } else if (diffValue.indexOf('-') === 0) {
-      rowColor = '#fee2e2';
+      rowColor = '#fee2e2'; // Красный — дефицит
     }
     
+    // Дополняем до 6 столбцов
     while (row.length < 6) {
       row.push('');
     }
     
+    // !!! НУМЕРАЦИЯ СТРОК НАЧИНАЕТСЯ С 1 ДЛЯ ПЕРВОЙ СТРОКИ ДАННЫХ !!!
     const rowNum = ri + 1;
     
     bodyHtml += '<tr style="background:'+rowColor+';">';
