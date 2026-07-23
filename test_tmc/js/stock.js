@@ -1,4 +1,9 @@
-// Регистрируем таблицу остатков
+// ================================================================
+// stock.js — ТАБЛИЦА ОСТАТКОВ (обёртка над excel_engine.js)
+// Версия 5.0
+// ================================================================
+
+// Инициализация таблицы остатков
 function initStockTable() {
   excelRegisterTable('stock', {
     data: window.inventoryData || [],
@@ -6,33 +11,42 @@ function initStockTable() {
     containerId: 'stock',
     searchInputId: 'stock-search',
     title: 'Остатки на складе',
-    onRowClick: 'handleStockRowClick', // будем передавать имя функции
+    onRowClick: function(tableId, rIdx) {
+      // Клик по строке в режиме просмотра — открываем нумпад
+      if (EXCEL_ENGINE.editModes['stock']) return;
+      const data = window.inventoryData;
+      if (!data || !data[rIdx]) { alert('Ошибка: данные строки не найдены'); return; }
+      window.currentSelectedRowData = [...data[rIdx]];
+      if (typeof openNumpadView === 'function') openNumpadView();
+      else alert('Ошибка: модуль нумпада не подключен.');
+    },
     formulas: {
       4: function(row) {
-        const gVal = parseFloat(row[6]) || 0;
-        const iVal = parseFloat(row[8]) || 0;
-        return gVal + iVal;
+        const g = parseFloat(row[6]) || 0;
+        const i = parseFloat(row[8]) || 0;
+        return g + i;
       }
     },
-    rowColors: null, // зебра задаётся в CSS
+    rowColors: null,
   });
 }
 
 function showStock() {
-  const currentData = window.inventoryData;
-  if (!currentData || currentData.length === 0) {
-    alert("Сначала нажмите кнопку синхронизации ☁");
+  const data = window.inventoryData;
+  if (!data || data.length === 0) {
+    alert('Сначала нажмите кнопку синхронизации ☁');
     return;
   }
-  // Обновляем данные в движке
-  excelUpdateData('stock', currentData);
-  // Открываем модалку
+  // Если таблица ещё не зарегистрирована — регистрируем
+  if (!EXCEL_ENGINE.tables['stock']) initStockTable();
+  excelUpdateData('stock', data);
   document.getElementById('modal').classList.remove('hidden');
   document.getElementById('numpad-view').classList.add('hidden');
   document.getElementById('stock-view').classList.remove('hidden');
 }
 
 function renderStock() {
+  if (!EXCEL_ENGINE.tables['stock']) initStockTable();
   excelUpdateData('stock', window.inventoryData || []);
 }
 
@@ -42,31 +56,22 @@ function toggleStockEditMode() {
 
 function resetStockFilters() {
   excelResetFilters('stock');
-  const searchInput = document.getElementById('stock-search');
-  if (searchInput) searchInput.value = '';
+  const input = document.getElementById('stock-search');
+  if (input) input.value = '';
 }
 
-// Обработчик клика по строке
-function handleStockRowClick(rIdx) {
-  // Проверяем, что не в режиме редактирования
-  if (EXCEL_ENGINE.editModes['stock']) return;
-  const currentData = window.inventoryData;
-  if (!currentData || !currentData[rIdx]) {
-    alert("Ошибка: Данные строки не найдены");
-    return;
-  }
-  window.currentSelectedRowData = [...currentData[rIdx]];
-  if (typeof openNumpadView === 'function') {
-    openNumpadView();
-  } else {
-    alert("Ошибка: Модуль нумпада (js/numpad.js) не подключен.");
-  }
+function stockSearch() {
+  const input = document.getElementById('stock-search');
+  if (input) excelSearch('stock', input.value);
 }
+
+// Обработчик клика по строке (для режима просмотра) – уже задан в onRowClick
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
   if (window.inventoryData && window.inventoryData.length > 0) {
     initStockTable();
-    // не рендерим сразу, покажем при открытии
   }
 });
+
+console.log('✅ stock.js загружен');
