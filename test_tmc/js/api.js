@@ -1,4 +1,4 @@
-// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации
+// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 1
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLmQhzuECmdjd3pTeyr_o3mcaOojV-Jpa9w9JU8gHDyvaiS5smiKd0iwRAXmzwKpKA/exec';
 
@@ -20,7 +20,6 @@ function renderLogs() {
   body.innerHTML = window.qrLogs.map((item, i) => {
     if (i === 0 || !item || !item.data) return '';
     const isSynced = item.status === 'ok';
-    // Назначаем класс: новые строки белые, прогруженные — зеленые с зебра-эффектом
     const bgClass = isSynced ? 'class="log-row-synced"' : 'class="log-row-wait"';
     
     const cellsHtml = item.data.map((cell, cellIndex) => {
@@ -30,14 +29,80 @@ function renderLogs() {
       return `<td onclick="handleLogClick(${i})">${cell}</td>`;
     }).join('');
 
-    // Рендерим строки сплошным массивом без зазоров
     return `<tr ${bgClass}>${cellsHtml}</tr>`;
   }).filter(Boolean).reverse().join('');
 }
 
 /**
- * МОДЕРНИЗИРОВАННАЯ ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ (ОБНОВЛЯЕТ ВСЕ 4 БАЗЫ ДАННЫХ ИЗ ОБЛАКА)
+ * НОВЫЙ ДВИЖОК АВТОМАТИЧЕСКОГО ПЕРЕСЧЕТА СТОЛБЦА "НЕ ПРОВЕДЕНО В SUP" (Индекс 7)
  */
+function recalculateUnprocessedSup() {
+  const stock = window.inventoryData;
+  const logs = window.qrLogs;
+  if (!stock || stock.length <= 1) return;
+
+  console.log("Движок SUP: Запущен расчет не проведенных в SUP черновиков...");
+
+  // Шаг 1. Группируем и суммируем журнал выдачи по Артикулу (индекс 1) + Параметру (индекс 2)
+  const totalsMap = {};
+  
+  for (let i = 0; i < logs.length; i++) {
+    const item = logs[i];
+    // Игнорируем удаленные строки или пустые логи
+    if (!item || !item.data || item.action === 'delete') continue;
+    if (i === 0) continue; // Пропускаем заголовок, если он есть
+
+    const rowData = item.data;
+    const art = String(rowData[1]).trim().toLowerCase();
+    const param = String(rowData[2]).trim().toLowerCase();
+    const qty = parseInt(rowData[5]) || 0; // 6-й столбец (Кол-во)
+
+    const key = art + "|||" + param;
+    if (!totalsMap[key]) {
+      totalsMap[key] = 0;
+    }
+    totalsMap[key] += qty;
+  }
+
+  // Шаг 2. Проходим по базе остатков склада и записываем суммы в 8-й столбец (индекс 7)
+  let updatedRowsCount = 0;
+  for (let i = 1; i < stock.length; i++) {
+    const sRow = stock[i];
+    if (!sRow || sRow.length < 3) continue;
+
+    const sArt = String(sRow[0]).trim().toLowerCase();
+    const sParam = String(sRow[1]).trim().toLowerCase();
+    const key = sArt + "|||" + sParam;
+
+    // Берем высчитанную сумму или пишем 0, если совпадений в выдачах нет
+    const currentUnprocessedQty = totalsMap[key] !== undefined ? totalsMap[key] : 0;
+    
+    // Записываем в 8-й столбец (индекс 7 — не проведено в SUP)
+    sRow[7] = currentUnprocessedQty;
+    updatedRowsCount++;
+  }
+
+  // Фиксируем обновленный кэш склада в памяти смартфона
+  window.inventoryData = stock;
+  localStorage.setItem('qr_inventory_v2', JSON.stringify(window.inventoryData));
+  console.log(`Движок SUP: Пересчет завершен. Обновлено строк склада: ${updatedRowsCount}`);
+}
+
+
+
+
+
+
+
+
+
+
+
+' =========================================================================
+' ДОСТИГНУТ ЛИМИТ В 6400 СИМВОЛОВ — НАЧАЛО ЧАСТИ 2
+' =========================================================================
+// js/api.js — Модуль сетевого взаимодействия и глобальной фоновой синхронизации — ЧАСТЬ 2
+
 async function syncFromGoogle() {
   if (!navigator.onLine) return;
   
@@ -46,7 +111,6 @@ async function syncFromGoogle() {
   const titleText = document.getElementById('project-title-text');
   const syncBtn = document.getElementById('sync-btn');
   
-  // ВКЛЮЧАЕМ ЭФФЕКТЫ: Кнопка горит красным, название скрывается, плашка активна
   if (syncBtn) syncBtn.classList.add('sync-active-highlight');
   if (titleText) titleText.classList.add('hidden');
   if (badge) {
@@ -71,24 +135,26 @@ async function syncFromGoogle() {
     }
     if (data.balance) {
       window.balanceData = data.balance;
-      localStorage.setItem('qr_balance_v1', JSON.stringify(window.balanceData));
+      localStorage.setItem('sheetsSync_сальдо', JSON.stringify(window.balanceData));
     }
     if (data.diff) {
       window.diffData = data.diff;
       localStorage.setItem('qr_diff_v1', JSON.stringify(window.diffData));
     }
 
-    renderLogs();
+    // ИНТЕГРАЦИЯ: Мгновенно запускаем автоматический пересчет SUP после синхронизации из облака
+    recalculateUnprocessedSup();
     
-    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПОСЛЕ УСПЕШНОГО ОКОНЧАНИЯ
+    renderLogs();
+    if (typeof renderStock === 'function') renderStock();
+    
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
     if (titleText) titleText.classList.remove('hidden');
     
-    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада, Сальдо и Отчет сверки.");
+    alert("Глобальная синхронизация успешно завершена!\nОбновлены: Журнал выдачи, Остатки склада (включая не проведено в SUP), Сальдо и Отчет сверки.");
   } catch (e) { 
-    // ОТКЛЮЧАЕМ ЭФФЕКТЫ ПРИ ОШИБКЕ БЕЗ ИСКЛЮЧЕНИЙ СРЕДЫ
     if (syncBtn) syncBtn.classList.remove('sync-active-highlight');
     if (badge) badge.className = "status-badge hidden";
     if (indicatorEl) indicatorEl.classList.remove('sync-pulse');
