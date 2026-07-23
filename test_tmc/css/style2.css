@@ -1,9 +1,9 @@
 /* ============================================================
-   style2.css — EXCEL-СТИЛИ ДЛЯ ТАБЛИЦ
-   Версия 2.0 — единая зебра для всех таблиц, кроме отличий
+   style2.css — EXCEL-СТИЛИ ДЛЯ ВСЕХ ТАБЛИЦ
+   Версия 2.1 — зебра только для остатков и журнала
    ============================================================ */
 
-/* ----- ОБЩИЕ СТИЛИ ДЛЯ ВСЕХ EXCEL-ТАБЛИЦ ----- */
+/* ----- ОБЩИЕ СТИЛИ ДЛЯ EXCEL-ТАБЛИЦ ----- */
 .excel-table-wrapper{overflow:auto;border:1px solid #d0d7de;border-radius:0;background:#ffffff!important;box-shadow:none;flex-grow:1;width:100%}
 .excel-table-wrapper table{border-collapse:collapse;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:13px;background:#ffffff!important;table-layout:fixed;min-width:100%}
 .excel-table-wrapper table th{background:#f0f0f0!important;color:#333!important;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;transition:background 0.15s}
@@ -14,27 +14,34 @@
 .excel-table-wrapper table td.row-header-num:hover{background:#e5e5e5!important}
 .excel-table-wrapper table td:not(.row-header-num){border:1px solid #d0d7de;padding:4px 6px;text-align:left;background:#ffffff!important;color:#000;font-size:13px;min-width:60px;height:24px;outline:none;transition:background 0.1s;word-break:break-word}
 
-/* ----- ЗЕБРА (ТОЛЬКО ДЛЯ ТАБЛИЦЫ ОСТАТКОВ И ЖУРНАЛА ВЫДАЧИ) ----- */
+/* ----- ЗЕБРА (ТОЛЬКО ДЛЯ ОСТАТКОВ И ЖУРНАЛА) ----- */
 #stock-body tr:nth-child(even) td:not(.row-header-num){background:#e8f5e9!important}
 #stock-body tr:nth-child(odd) td:not(.row-header-num){background:#f1f8e9!important}
 #logs-body tr:nth-child(even) td{background:#e8f5e9!important}
 #logs-body tr:nth-child(odd) td{background:#f1f8e9!important}
+
+/* ----- ТАБЛИЦА ОТЛИЧИЙ — БЕЛЫЙ ФОН (БЕЗ ЗЕБРЫ) ----- */
+#diff-body td{background:#ffffff!important}
 #diff-body tr:nth-child(even) td{background:#ffffff!important}
 #diff-body tr:nth-child(odd) td{background:#ffffff!important}
+#diff-body tr{background:#ffffff!important}
 
-/* ----- ВЫДЕЛЕНИЕ ЯЧЕЕК (СИНИЙ ЦВЕТ КАК В EXCEL) ----- */
+/* ----- EXCEL-ГРИД ДЛЯ САЛЬДО — БЕЛЫЙ ФОН ----- */
+#balance-paste-container td{background:#ffffff!important}
+#balance-paste-container tr:nth-child(even) td{background:#ffffff!important}
+#balance-paste-container tr:nth-child(odd) td{background:#ffffff!important}
+
+/* ----- ВЫДЕЛЕНИЕ ЯЧЕЕК (СИНИЙ) ----- */
 .excel-table-wrapper table td.cell-selected{background:#c7e0f4!important;outline:1px solid #2b5797;outline-offset:-1px}
 .excel-table-wrapper table td.cell-active-focus{outline:2px solid #1e4f7a!important;outline-offset:-2px;background:#e3f0fa!important}
 .excel-table-wrapper table td.row-selected{background:#c7e0f4!important}
 
-/* ----- ГРЯЗНЫЕ ЯЧЕЙКИ (ИЗМЕНЁННЫЕ) ----- */
+/* ----- ГРЯЗНЫЕ ЯЧЕЙКИ ----- */
 .excel-table-wrapper table td.cell-stock-dirty{background:#fff8e1!important;border-left:3px solid #f9a825!important}
-
-/* ----- ВСПЫШКА СОХРАНЕНИЯ ----- */
 .excel-table-wrapper table td.cell-stock-saved-flash{animation:excelFlashGreen 0.8s ease}
 @keyframes excelFlashGreen{0%{background:#c8e6c9!important}100%{background:#ffffff!important}}
 
-/* ----- ПАНЕЛЬ УПРАВЛЕНИЯ РЕЖИМОМ ----- */
+/* ----- ПАНЕЛЬ УПРАВЛЕНИЯ ----- */
 .stock-mode-badge{background:#e8f0fe;color:#1a3c5e;padding:8px 12px;border-radius:6px;font-size:13px;font-weight:600;margin-bottom:8px;border:1px solid #b3c9e6;text-align:center}
 .stock-edit-actions-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .btn-stock-cancel{background:#f8f9fa;border:1px solid #d0d7de;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:500;cursor:pointer;color:#555;transition:background 0.2s}
@@ -48,11 +55,5 @@
 .excel-search{width:100%;padding:8px 12px;font-size:14px;border:1px solid #d0d7de;border-radius:4px;margin-bottom:10px;box-sizing:border-box;background:#ffffff;color:#000;transition:border 0.2s}
 .excel-search:focus{border-color:#1a73e8;outline:none;box-shadow:0 0 0 2px rgba(26,115,232,0.2)}
 
-/* ----- СТИЛИ ДЛЯ ТАБЛИЦЫ ОТЛИЧИЙ (БЕЗ ЗЕБРЫ) ----- */
-#diff-body td{background:#ffffff!important}
-#diff-body tr:nth-child(even) td{background:#ffffff!important}
-#diff-body tr:nth-child(odd) td{background:#ffffff!important}
-#diff-body tr{background:#ffffff!important}
-
-/* ----- АДАПТИВ ДЛЯ МОБИЛЬНЫХ ----- */
+/* ----- АДАПТИВ ----- */
 @media(max-width:768px){.excel-table-wrapper{font-size:11px}.excel-table-wrapper table td:not(.row-header-num){font-size:11px;padding:3px 4px;min-width:40px}.excel-table-wrapper table th{font-size:10px;padding:4px 2px;min-width:40px}}
