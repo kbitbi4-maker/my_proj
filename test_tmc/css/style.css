@@ -689,3 +689,16 @@ td {
 .excel-grid-wrapper::-webkit-scrollbar { width: 12px; height: 12px; }
 .excel-grid-wrapper::-webkit-scrollbar-track { background: rgba(241, 245, 249, 0.2); }
 .excel-grid-wrapper::-webkit-scrollbar-thumb { background: rgba(203, 213, 225, 0.5); border-radius: 6px; border: 3px solid transparent; }
+
+/* Стили для интерактивного Excel-грида склада */
+.excel-table { border-collapse: collapse; white-space: nowrap; font-family: Segoe UI, sans-serif; font-size: 13px; }
+.excel-table th { background: #f3f3f3; color: #333; font-weight: normal; border: 1px solid #ccc; text-align: center; cursor: pointer; user-select: none; }
+.excel-table th.col-selected { background: #bbb; border-bottom: 2px solid #217346; }
+.excel-table td { border: 1px solid #ddd; padding: 4px 8px; min-width: 60px; outline: none; }
+.excel-table td.row-header-num { background: #f3f3f3; text-align: center; font-weight: normal; color: #666; cursor: pointer; user-select: none; }
+.excel-table td.row-header-num.row-selected { background: #bbb; border-right: 2px solid #217346; }
+/* Состояния выделения ячеек */
+.excel-table td.cell-selected { background-color: rgba(33, 115, 70, 0.12) !important; border: 1px solid #217346; }
+.excel-table td.cell-active-focus { box-shadow: inset 0 0 0 2px #217346; background: #fff !important; }
+.excel-table td.cell-stock-dirty { background-color: #fef08a !important; font-style: italic; }
+.excel-table td.cell-stock-saved-flash { background-color: #bbf7d0 !important; transition: background 0.5s ease; }
