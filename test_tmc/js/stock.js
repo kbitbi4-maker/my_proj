@@ -1,6 +1,6 @@
 // ================================================================
 // stock.js — РЕНДЕРИНГ ТАБЛИЦЫ ОСТАТКОВ
-// Версия 3.6 — нумерация как в Google (A1 = "Партия"), строка 1 — названия без номера
+// Версия 3.7 — исправлено выделение, шапка в первой строке
 // ================================================================
 
 window.isStockEditMode = false;
@@ -62,7 +62,7 @@ function renderStock() {
   const currentData = window.inventoryData;
   if (!currentData || !currentData.length) return;
   
-  // СТРОКА 1 (индекс 0) — названия столбцов (НЕ НУМЕРУЕТСЯ)
+  // СТРОКА 0 — названия столбцов (НЕ НУМЕРУЕТСЯ)
   const headerRow = currentData[0] || [];
   
   let controlsWrapper = document.getElementById('stock-edit-controls-wrapper');
@@ -84,17 +84,16 @@ function renderStock() {
     controlsWrapper.innerHTML = '<div id="stock-edit-badge" class="stock-mode-badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">📋 РЕЖИМ ПРОСМОТРА (выкл)<button onclick="toggleStockEditMode()" style="padding:5px 16px;background:#22c55e;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;margin-left:12px;">✏️ ВКЛЮЧИТЬ РЕДАКТИРОВАНИЕ</button><button onclick="resetStockFilters()" class="btn-reset-filters" style="margin-left:12px;">🔄 Сбросить фильтры</button></div>';
   }
   
-  // Буквы столбцов (A, B, C...)
   const colLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
   const numCols = Math.max(headerRow.length, 21);
   
   let headHtml = '';
   
   // ============================================================
-  // СТРОКА 1 ШАПКИ: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
+  // СТРОКА 1: БУКВЕННАЯ НУМЕРАЦИЯ СТОЛБЦОВ
   // ============================================================
   headHtml += '<tr>';
-  headHtml += '<th class="excel-corner" onclick="window.excelSelectAll && excelSelectAll()" title="Выделить всё" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;"></th>';
+  headHtml += '<th class="excel-corner" onclick="window.excelSelectAll ? excelSelectAll() : null" title="Выделить всё" style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:1px solid #d0d7de;cursor:pointer;">⬚</th>';
   for (let c = 0; c < numCols; c++) {
     const letter = colLetters[c] || String.fromCharCode(65 + c);
     headHtml += '<th onclick="window.excelSelectWholeColumn ? excelSelectWholeColumn('+c+') : null" title="Выделить столбец '+letter+'" style="background:#f0f0f0;color:#333;font-weight:600;font-size:12px;padding:6px 4px;border:1px solid #d0d7de;border-bottom:2px solid #a0a0a0;text-align:center;cursor:pointer;user-select:none;min-width:60px;position:sticky;top:0;z-index:10;">'+letter+(window.stockSortColumn===c?(window.stockSortDirection==='asc'?' ↑':' ↓'):'')+'</th>';
@@ -102,7 +101,7 @@ function renderStock() {
   headHtml += '</tr>';
   
   // ============================================================
-  // СТРОКА 2 ШАПКИ: НАЗВАНИЯ СТОЛБЦОВ (НЕ НУМЕРУЕТСЯ)
+  // СТРОКА 2: НАЗВАНИЯ СТОЛБЦОВ (НЕ НУМЕРУЕТСЯ)
   // ============================================================
   headHtml += '<tr>';
   headHtml += '<th style="min-width:40px;max-width:40px;background:#e8e8e8!important;border-right:2px solid #a0a0a0;border-bottom:2px solid #a0a0a0;"></th>';
@@ -114,7 +113,7 @@ function renderStock() {
   head.innerHTML = headHtml;
 
   // ============================================================
-  // ТЕЛО ТАБЛИЦЫ (ДАННЫЕ НАЧИНАЮТСЯ С ИНДЕКСА 1)
+  // ТЕЛО ТАБЛИЦЫ
   // ============================================================
   let rowsData = [];
   for (let rIdx = 1; rIdx < currentData.length; rIdx++) {
@@ -125,7 +124,6 @@ function renderStock() {
     rowsData.push({ index: rIdx, data: row });
   }
 
-  // Сортировка
   if (window.stockSortColumn !== null) {
     rowsData.sort(function(a, b) {
       var valA = String(a.data[window.stockSortColumn] || '').toLowerCase();
@@ -141,12 +139,13 @@ function renderStock() {
     });
   }
 
-  let bodyHtml = "";
+  // ПРИМЕЧАНИЕ: ВАЖНО! Вызов excelRefreshSelectionVisuals() должен быть после отрисовки тела
+  // Это делается в самом конце функции
+  
+  var bodyHtml = "";
   for (var ri = 0; ri < rowsData.length; ri++) {
     var rIdx = rowsData[ri].index;
     var row = rowsData[ri].data;
-    
-    // Номер строки = rIdx (в Google Таблице это номер строки)
     var rowNum = rIdx;
 
     bodyHtml += '<tr id="ex-row-'+rIdx+'"' + (!window.isStockEditMode ? ' onclick="handleStockRowClick('+rIdx+')" style="cursor:pointer;"' : '') + '>';
@@ -158,7 +157,6 @@ function renderStock() {
       const isDirty = window.stockChangesQueue && window.stockChangesQueue[cellKey];
       let displayValue = isDirty ? isDirty.value : (row[cIdx] !== undefined ? row[cIdx] : '');
       
-      // Формула для столбца E (индекс 4): =G+I
       if (cIdx === 4 && !isDirty && window.isStockEditMode) {
         const gVal = parseFloat(row[6]) || 0;
         const iVal = parseFloat(row[8]) || 0;
@@ -172,7 +170,6 @@ function renderStock() {
         const weightStyle = isDirty && isDirty.fontWeight ? 'font-weight:'+isDirty.fontWeight+';' : '';
         bodyHtml += '<td id="ex-cell-'+rIdx+'-'+cIdx+'" class="'+dirtyClass+'" style="'+bgStyle+' '+colorStyle+' '+weightStyle+' border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;height:24px;outline:none;" contenteditable="true" onclick="window.excelHandleCellClick ? excelHandleCellClick(event,'+rIdx+','+cIdx+') : null" onblur="window.excelHandleCellBlur ? excelHandleCellBlur(this,'+rIdx+','+cIdx+') : null" onkeydown="window.excelHandleCellKeyDown ? excelHandleCellKeyDown(event,'+rIdx+','+cIdx+') : null" onmousedown="window.excelHandleMouseDown ? excelHandleMouseDown(event,'+rIdx+','+cIdx+') : null" onmouseover="window.excelHandleMouseOver ? excelHandleMouseOver(event,'+rIdx+','+cIdx+') : null">'+displayValue+'</td>';
       } else {
-        // Зебра (только в режиме просмотра)
         var rowBg = ri % 2 === 0 ? '#e8f5e9' : '#f1f8e9';
         bodyHtml += '<td style="border:1px solid #d0d7de;padding:4px 6px;text-align:left;font-size:13px;min-width:60px;background:'+rowBg+';color:#000;">'+displayValue+'</td>';
       }
@@ -182,8 +179,16 @@ function renderStock() {
   
   body.innerHTML = bodyHtml || '<tr><td colspan="'+(numCols+1)+'" style="text-align:center;padding:20px;color:#999;">Ничего не найдено</td></tr>';
 
-  if (window.isStockEditMode && typeof window.excelRefreshSelectionVisuals === 'function') {
-    window.excelRefreshSelectionVisuals();
+  // ============================================================
+  // ВАЖНО! ОБНОВЛЯЕМ ВЫДЕЛЕНИЕ ПОСЛЕ ОТРИСОВКИ ТЕЛА
+  // ============================================================
+  if (window.isStockEditMode) {
+    // Принудительно вызываем обновление выделения
+    setTimeout(function() {
+      if (typeof window.excelRefreshSelectionVisuals === 'function') {
+        window.excelRefreshSelectionVisuals();
+      }
+    }, 50);
   }
 }
 
