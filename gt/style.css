@@ -154,3 +154,48 @@ tr.row-selected .row-header{background-color:#d2e3fc!important}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
 .data-cell::selection{background:#c6d9f0}
+/* ============================================================
+   ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ (КАК В GOOGLE SHEETS)
+   ============================================================ */
+
+/* Зеленый фон для выделенных заголовков строк */
+.row-header.selected {
+    background-color: #d2e3fc !important;
+    color: #0b57d0 !important;
+    font-weight: 600 !important;
+}
+
+/* Зеленый фон для выделенных заголовков колонок */
+.col-header.selected {
+    background-color: #d2e3fc !important;
+    color: #0b57d0 !important;
+    font-weight: 600 !important;
+}
+
+/* Зеленый фон для уголка при выделении всего листа */
+.corner-header.selected {
+    background-color: #d2e3fc !important;
+}
+
+/* Цвет выделения ячеек (как в Google Sheets) */
+.data-cell.range-selected {
+    background-color: #e8f0fe !important;
+}
+
+.data-cell.cell-selected {
+    outline: 2px solid #1a73e8 !important;
+    outline-offset: -1px !important;
+    background-color: #e8f0fe !important;
+    z-index: 3;
+    position: relative;
+}
+
+/* Убираем старые классы row-selected и col-selected, если они есть */
+/* Эти правила переопределяют старые, чтобы не было ложного затемнения */
+tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected) {
+    background-color: transparent !important;
+}
+
+td.col-selected:not(.cell-selected):not(.range-selected) {
+    background-color: transparent !important;
+}
