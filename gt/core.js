@@ -12,6 +12,12 @@ class TableCore {
             sheet3: { rows: [] },
             sheet4: { rows: [] }
         };
+        this.formulas = {
+            sheet1: { rows: [] },
+            sheet2: { rows: [] },
+            sheet3: { rows: [] },
+            sheet4: { rows: [] }
+        };
         this.currentSheet = 'sheet1';
         
         this.columnWidths = JSON.parse(localStorage.getItem('gt_column_widths') || '{}');
@@ -30,7 +36,7 @@ class TableCore {
     }
 
     // ============================================================
-    // ЗАГРУЗКА ДАННЫХ
+    // ЗАГРУЗКА ДАННЫХ (С СОХРАНЕНИЕМ ФОРМУЛ)
     // ============================================================
     async loadData() {
         if (!this.apiUrl) {
@@ -55,36 +61,51 @@ class TableCore {
 
             console.log('📊 Структура ответа:', Object.keys(result));
 
-            // ---- ПАРСИНГ С КЛЮЧАМИ "1", "2", "3", "4" ----
             const sheetKeys = ["1", "2", "3", "4"];
             let loaded = false;
 
             for (const key of sheetKeys) {
                 if (result[key] && Array.isArray(result[key])) {
                     const sheetName = 'sheet' + key;
-                    this.data[sheetName] = { rows: result[key] };
+                    const data = result[key];
+                    
+                    // Сохраняем значения
+                    this.data[sheetName] = { rows: data };
+                    
+                    // Сохраняем формулы (если есть)
+                    this.formulas[sheetName] = { rows: [] };
+                    for (let r = 0; r < data.length; r++) {
+                        this.formulas[sheetName].rows[r] = [];
+                        for (let c = 0; c < data[r].length; c++) {
+                            const cellValue = data[r][c];
+                            if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
+                                this.formulas[sheetName].rows[r][c] = cellValue;
+                            } else {
+                                this.formulas[sheetName].rows[r][c] = '';
+                            }
+                        }
+                    }
+                    
                     loaded = true;
-                    console.log(`✅ Лист ${key} загружен: ${result[key].length} строк`);
+                    console.log(`✅ Лист ${key} загружен: ${data.length} строк`);
                 }
             }
 
-            // ---- ЕСЛИ НЕ НАШЛИ "1","2","3","4" — ПРОВЕРЯЕМ "sheet1","sheet2"... ----
             if (!loaded) {
                 for (const key of ['sheet1', 'sheet2', 'sheet3', 'sheet4']) {
                     if (result[key] && Array.isArray(result[key])) {
                         this.data[key] = { rows: result[key] };
+                        this.formulas[key] = { rows: [] };
                         loaded = true;
                         console.log(`✅ ${key} загружен: ${result[key].length} строк`);
                     }
                 }
             }
 
-            // ---- ЕСЛИ ВСЁ ПУСТО ----
             if (!loaded) {
                 throw new Error('Не удалось распарсить данные. Получены ключи: ' + Object.keys(result).join(', '));
             }
 
-            // ---- ОБНОВЛЯЕМ ДВИЖОК ФОРМУЛ ----
             if (this.engine) {
                 this.engine.setData(this.data);
             }
@@ -211,7 +232,6 @@ class TableCore {
                     let value = row && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex] : '';
                     const width = colWidths[colIndex] || 120;
                     
-                    // ---- ЕСЛИ ЗНАЧЕНИЕ — ФОРМУЛА, ВЫЧИСЛЯЕМ ----
                     let displayValue = value;
                     if (this.formulaParser && this.formulaParser.isFormula(value)) {
                         try {
@@ -390,7 +410,7 @@ class TableCore {
     }
 
     // ============================================================
-    // СОХРАНЕНИЕ ЯЧЕЙКИ (С ПОДДЕРЖКОЙ ФОРМУЛ)
+    // СОХРАНЕНИЕ ЯЧЕЙКИ (С СОХРАНЕНИЕМ ФОРМУЛ)
     // ============================================================
     async saveCellValue(row, col, value) {
         if (!this.apiUrl) {
@@ -406,43 +426,41 @@ class TableCore {
                 ? this.formulaParser.isFormula(value) 
                 : (typeof value === 'string' && value.startsWith('='));
 
+            // Обновляем локальные данные
+            const currentData = this.data[sheetName];
+            const rowIndex = row - 1;
+            if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                if (currentData.rows[rowIndex].length < col) {
+                    currentData.rows[rowIndex].length = col;
+                }
+                currentData.rows[rowIndex][col - 1] = value;
+            }
+
+            // Сохраняем формулу отдельно
+            if (this.formulas && this.formulas[sheetName]) {
+                const formulaRows = this.formulas[sheetName].rows;
+                if (rowIndex >= 0 && rowIndex < formulaRows.length) {
+                    if (formulaRows[rowIndex].length < col) {
+                        formulaRows[rowIndex].length = col;
+                    }
+                    formulaRows[rowIndex][col - 1] = isFormula ? value : '';
+                }
+            }
+
+            // Отправляем в Google
             if (isFormula) {
-                let localResult = value;
-                if (this.engine && typeof this.engine.evaluate === 'function') {
-                    localResult = this.engine.evaluate(value, sheetName);
-                }
-                
-                const currentData = this.data[sheetName];
-                const rowIndex = row - 1;
-                if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
-                    if (currentData.rows[rowIndex].length < col) {
-                        currentData.rows[rowIndex].length = col;
-                    }
-                    currentData.rows[rowIndex][col - 1] = value;
-                }
-
-                if (this.sync && typeof this.sync.syncFormula === 'function') {
-                    const syncResult = await this.sync.syncFormula(sheetNumber, row, col, value, localResult);
-                    if (syncResult.status === 'error') {
-                        console.warn('⚠️ Синхронизация формулы не удалась:', syncResult.message);
-                    }
-                } else {
-                    const jsonData = {
-                        action: 'setFormula',
-                        sheet: sheetNumber,
-                        row: row,
-                        col: col,
-                        formula: value
-                    };
-                    await fetch(this.apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(jsonData)
-                    });
-                }
-
-                this.renderTable();
-                return true;
+                const jsonData = {
+                    action: 'setFormula',
+                    sheet: sheetNumber,
+                    row: row,
+                    col: col,
+                    formula: value
+                };
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
             } else {
                 const jsonData = {
                     action: 'updateCell',
@@ -451,33 +469,21 @@ class TableCore {
                     col: col,
                     value: value
                 };
-
                 const response = await fetch(this.apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(jsonData)
                 });
-
                 const text = await response.text();
-                let result;
-                try { result = JSON.parse(text); } 
-                catch (e) { throw new Error('Сервер вернул невалидный ответ'); }
-
-                if (result.success) {
-                    const currentData = this.data[sheetName];
-                    const rowIndex = row - 1;
-                    if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
-                        if (currentData.rows[rowIndex].length < col) {
-                            currentData.rows[rowIndex].length = col;
-                        }
-                        currentData.rows[rowIndex][col - 1] = value;
-                    }
-                    this.renderTable();
-                    return true;
-                } else {
+                const result = JSON.parse(text);
+                if (!result.success) {
                     throw new Error(result.error || 'Неизвестная ошибка');
                 }
             }
+
+            this.renderTable();
+            this.showToast('✅ Ячейка обновлена!');
+            return true;
 
         } catch (error) {
             console.error('❌ Ошибка сохранения:', error);
