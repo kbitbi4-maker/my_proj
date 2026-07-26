@@ -1,6 +1,6 @@
 // ============================================================
-// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
-// Поддержка Ctrl+C / Ctrl+V на любой раскладке
+// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ (ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ)
+// Все события привязаны через addEventListener — НЕТ onclick в HTML
 // ============================================================
 
 class TableUI {
@@ -13,11 +13,9 @@ class TableUI {
 
     bindEvents() {
         // ============================================================
-        // ПРИНУДИТЕЛЬНЫЙ ПЕРЕХВАТ ГОРЯЧИХ КЛАВИШ (РАБОТАЕТ НА ЛЮБОЙ РАСКЛАДКЕ)
+        // ГОРЯЧИЕ КЛАВИШИ (Ctrl+C, Ctrl+V, Delete, Escape, Стрелки)
         // ============================================================
         window.addEventListener('keydown', (e) => {
-            // ОПРЕДЕЛЯЕМ Ctrl+C / Ctrl+V БЕЗ ПРИВЯЗКИ К РАСКЛАДКЕ
-            // Используем event.code вместо event.key
             const isCtrlC = e.ctrlKey && (e.code === 'KeyC');
             const isCtrlV = e.ctrlKey && (e.code === 'KeyV');
             
@@ -28,14 +26,12 @@ class TableUI {
                 activeElement.tagName === 'SELECT'
             );
             
-            if (isInputFocused) {
-                return;
-            }
+            if (isInputFocused) return;
             
             if (isCtrlC) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔄 [WINDOW] Ctrl+C перехвачен для копирования ячеек');
+                console.log('🔄 Ctrl+C перехвачен для копирования ячеек');
                 this.clipboard.copySelection();
                 return;
             }
@@ -43,7 +39,7 @@ class TableUI {
             if (isCtrlV) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔄 [WINDOW] Ctrl+V перехвачен для вставки ячеек');
+                console.log('🔄 Ctrl+V перехвачен для вставки ячеек');
                 this.clipboard.pasteSelection();
                 return;
             }
@@ -54,7 +50,7 @@ class TableUI {
                     e.stopPropagation();
                     if (this.selection.selectionRange) {
                         this.clipboard.clearSelectedCells();
-                        console.log('🔄 [WINDOW] Delete перехвачен для очистки ячеек');
+                        console.log('🔄 Delete перехвачен для очистки ячеек');
                     }
                 }
                 return;
@@ -215,14 +211,43 @@ class TableUI {
         });
 
         // ============================================================
-        // ОБРАБОТЧИКИ МЫШИ ДЛЯ ВЫДЕЛЕНИЯ
+        // КЛИКИ ПО ЗАГОЛОВКАМ (ЧЕРЕЗ addEventListener)
+        // ============================================================
+        // Делегирование событий на таблице
+        document.getElementById('dataTable').addEventListener('click', (e) => {
+            const target = e.target.closest('th, td');
+            if (!target) return;
+
+            // Обработка уголка (выделение всего)
+            if (target.classList.contains('corner-header')) {
+                this.selection.selectAll();
+                return;
+            }
+
+            // Обработка заголовков колонок
+            if (target.classList.contains('col-header')) {
+                const colIndex = parseInt(target.dataset.colIndex);
+                if (!isNaN(colIndex)) {
+                    this.selection.selectColumn(colIndex);
+                }
+                return;
+            }
+
+            // Обработка заголовков строк
+            if (target.classList.contains('row-header') && !target.classList.contains('corner-header')) {
+                const rowIndex = parseInt(target.dataset.rowIndex);
+                if (!isNaN(rowIndex)) {
+                    this.selection.selectRow(rowIndex);
+                }
+                return;
+            }
+        });
+
+        // ============================================================
+        // ОБРАБОТЧИКИ МЫШИ ДЛЯ DRAG-ВЫДЕЛЕНИЯ
         // ============================================================
         const table = document.getElementById('dataTable');
         table.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.row-header') || e.target.closest('.col-header') || e.target.closest('.corner-header')) {
-                return;
-            }
-            
             const cell = e.target.closest('.data-cell');
             if (!cell) return;
             if (e.button !== 0) return;
@@ -261,34 +286,6 @@ class TableUI {
                     this.selection.endDrag();
                 }
             }
-        });
-
-        // ============================================================
-        // КЛИКИ ПО ЗАГОЛОВКАМ
-        // ============================================================
-        document.querySelector('.corner-header')?.addEventListener('click', () => {
-            this.selection.selectAll();
-        });
-
-        document.querySelectorAll('.row-header:not(.corner-header)').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const row = parseInt(el.textContent);
-                if (!isNaN(row)) {
-                    this.selection.selectRow(row);
-                }
-            });
-        });
-
-        document.querySelectorAll('.col-header').forEach(el => {
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const letter = el.textContent;
-                const col = this.core.getColumnIndex(letter) + 1;
-                if (col > 0) {
-                    this.selection.selectColumn(col);
-                }
-            });
         });
 
         // ============================================================
@@ -335,7 +332,6 @@ class TableUI {
         document.getElementById('cellInput').value = value || '';
         document.getElementById('editModal').classList.add('active');
         setTimeout(() => document.getElementById('cellInput').focus(), 100);
-        
         this._editingCell = { row, col };
     }
 
