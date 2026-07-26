@@ -1,769 +1,156 @@
-/* ==========================================================================
-   GOOGLE TABLES STYLE - ПОЛНАЯ ВЕРСИЯ
-   Поддержка выделения как в Google Sheets, переноса слов,
-   ручного изменения размеров, адаптивности
-   ========================================================================== */
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-}
+/* ШАПКА */
+.app-header{background:#1a73e8;color:white;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,0.2);flex-shrink:0;min-height:56px}
+.header-left{display:flex;align-items:center;gap:14px}
+.menu-btn{background:transparent;border:none;color:white;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:4px}
+.menu-btn:hover{background:rgba(255,255,255,0.15)}
+.app-title{font-size:18px;font-weight:500}
+.sheet-name{font-size:14px;opacity:0.8;margin-left:4px;font-weight:400}
+.header-right{display:flex;gap:10px;align-items:center}
+.sync-btn,.refresh-btn{background:rgba(255,255,255,0.15);border:none;color:white;padding:6px 14px;border-radius:18px;cursor:pointer;font-size:13px;transition:all 0.2s;display:flex;align-items:center;gap:6px}
+.sync-btn:hover,.refresh-btn:hover{background:rgba(255,255,255,0.3)}
+.sync-status{font-size:11px;opacity:0.8}
 
-body {
-    background: #ffffff;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
+/* СТРОКА ФОРМУЛ */
+.formula-bar{background:#f8f9fa;border-bottom:1px solid #dadce0;padding:4px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:40px}
+.cell-reference{background:white;border:1px solid #dadce0;border-radius:4px;padding:2px 10px;font-size:13px;font-weight:500;color:#202124;min-width:50px;text-align:center;user-select:none}
+.formula-input{flex:1;display:flex;align-items:center;background:white;border:1px solid #dadce0;border-radius:4px;padding:0 8px}
+.formula-input:focus-within{border-color:#1a73e8;box-shadow:0 0 0 2px rgba(26,115,232,0.2)}
+.fx-label{color:#5f6368;font-weight:500;font-size:13px;margin-right:8px}
+#formulaInput{border:none;outline:none;padding:4px 0;font-size:13px;flex:1;background:transparent;color:#202124;font-family:'Courier New',monospace}
+.formula-actions{display:flex;gap:4px}
+.formula-actions button{background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px 8px;border-radius:4px;color:#5f6368;transition:all 0.2s}
+.formula-actions button:hover{background:#e8f0fe;color:#1a73e8}
+#formulaConfirm{color:#1a73e8}
+#formulaCancel{color:#d93025}
 
-/* ===========================
-   ШАПКА
-   =========================== */
-.app-header {
-    background: #1a73e8;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    flex-shrink: 0;
-    min-height: 56px;
-}
+/* ПАНЕЛЬ ИНСТРУМЕНТОВ */
+.selection-toolbar{display:none;background:#f8f9fa;border-bottom:1px solid #dadce0;padding:6px 16px;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0}
+.selection-toolbar.visible{display:flex}
+.toolbar-btn{padding:4px 12px;background:white;border:1px solid #dadce0;border-radius:4px;cursor:pointer;font-size:12px;color:#202124;display:flex;align-items:center;gap:4px;transition:all 0.2s}
+.toolbar-btn:hover{background:#e8f0fe;border-color:#1a73e8}
+.toolbar-btn i{font-size:13px}
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
+/* НАВИГАЦИЯ */
+.main-nav{background:#ffffff;border-bottom:1px solid #dadce0;padding:0 20px;flex-shrink:0}
+.main-nav ul{list-style:none;display:flex;gap:0;margin:0;padding:0}
+.main-nav li{padding:10px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#5f6368;border-bottom:3px solid transparent;transition:all 0.2s;font-size:13px;font-weight:500}
+.main-nav li:hover{background:#f1f3f4}
+.main-nav li.active{color:#1a73e8;border-bottom-color:#1a73e8}
+.main-nav li i{font-size:16px}
 
-.menu-btn {
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-}
-.menu-btn:hover {
-    background: rgba(255,255,255,0.15);
-}
+/* ПЕРЕКЛЮЧАТЕЛЬ ЛИСТОВ */
+.sheet-selector{display:flex;gap:6px;padding:8px 12px 0 12px;background:#ffffff;border-bottom:1px solid #dadce0;flex-wrap:wrap;flex-shrink:0}
+.sheet-tab{padding:6px 16px;border:none;background:transparent;cursor:pointer;font-size:13px;color:#5f6368;border-radius:4px 4px 0 0;font-weight:500;transition:all 0.2s;border-bottom:3px solid transparent}
+.sheet-tab:hover{background:#f1f3f4}
+.sheet-tab.active{color:#1a73e8;border-bottom-color:#1a73e8;background:#e8f0fe}
 
-.app-title {
-    font-size: 18px;
-    font-weight: 500;
-}
+/* ТАБЛИЦА */
+.app-content{flex:1;overflow:hidden;display:flex;flex-direction:column;background:#ffffff}
+.page{display:none;flex:1;flex-direction:column;overflow:hidden}
+.page.active{display:flex}
+.table-container{flex:1;overflow:hidden;position:relative}
+.table-scroll{width:100%;height:100%;overflow:auto}
+#dataTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
 
-.sheet-name {
-    font-size: 14px;
-    opacity: 0.8;
-    margin-left: 4px;
-    font-weight: 400;
-}
+/* ЗАГОЛОВКИ */
+.corner-header{min-width:36px!important;max-width:36px!important;width:36px!important;cursor:pointer!important;background:#f8f9fa!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;padding:0!important;height:28px;position:sticky;top:0;left:0;z-index:3}
+.corner-header:hover{background:#e8eaed!important}
+.corner-header.selected{background:#d2e3fc!important}
+.col-header{background:#f8f9fa!important;color:#5f6368!important;font-size:11px!important;font-weight:500!important;text-align:center!important;padding:4px 2px!important;border-bottom:1px solid #dadce0!important;border-right:1px solid #dadce0!important;position:sticky!important;top:0!important;z-index:2!important;user-select:none!important;height:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer!important}
+.col-header:hover{background:#e8eaed!important}
+.col-header.selected{background:#d2e3fc!important}
+.row-header{background:#f8f9fa!important;color:#5f6368!important;font-size:11px!important;text-align:center!important;min-width:36px!important;max-width:36px!important;width:36px!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;user-select:none!important;font-weight:400!important;padding:2px 0!important;position:sticky;left:0;z-index:1;cursor:pointer!important}
+.row-header:hover{background:#e8eaed!important}
+.row-header.selected{background:#d2e3fc!important}
 
-.header-right {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
+/* ЯЧЕЙКИ */
+.data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;transition:background 0.1s;min-height:28px;vertical-align:top;background:#ffffff}
+.data-cell:hover{background:#f1f3f4!important}
 
-.sync-btn, .refresh-btn {
-    background: rgba(255,255,255,0.15);
-    border: none;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 18px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.sync-btn:hover, .refresh-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-.sync-status {
-    font-size: 11px;
-    opacity: 0.8;
-}
+/* ВЫДЕЛЕНИЕ */
+.data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
+.data-cell.range-selected{background-color:#e8f0fe!important}
+tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected){background-color:#f1f3f4!important}
+td.col-selected:not(.cell-selected):not(.range-selected){background-color:#f1f3f4!important}
+tr.row-selected .row-header{background-color:#d2e3fc!important}
+.col-header.col-selected{background-color:#d2e3fc!important}
 
-/* ===========================
-   СТРОКА ФОРМУЛ (FORMULA BAR)
-   =========================== */
-.formula-bar {
-    background: #f8f9fa;
-    border-bottom: 1px solid #dadce0;
-    padding: 4px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    min-height: 40px;
-}
+/* СТАТУС БАР */
+.stats-bar{background:#f8f9fa;border-top:1px solid #dadce0;padding:6px 16px;display:flex;gap:24px;font-size:12px;color:#5f6368;flex-shrink:0;flex-wrap:wrap}
+.stats-bar span{display:flex;align-items:center;gap:4px}
 
-.cell-reference {
-    background: white;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    padding: 2px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #202124;
-    min-width: 50px;
-    text-align: center;
-    user-select: none;
-}
+/* ЗАГРУЗКА */
+.loading{display:flex;align-items:center;gap:12px;padding:30px;justify-content:center;color:#5f6368;font-size:14px}
+.loading i{font-size:24px;color:#1a73e8}
 
-.formula-input {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: white;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    padding: 0 8px;
-}
-.formula-input:focus-within {
-    border-color: #1a73e8;
-    box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
-}
+/* МОДАЛКА */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
+.modal.active{display:flex}
+.modal-content{background:white;padding:28px;border-radius:12px;min-width:340px;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.3);position:relative}
+.close-modal{position:absolute;top:10px;right:16px;font-size:24px;cursor:pointer;color:#999}
+.modal-content h3{margin-bottom:16px;color:#202124}
+#cellInput{width:100%;padding:8px 12px;border:2px solid #dadce0;border-radius:6px;font-size:14px;margin-bottom:16px}
+.modal-buttons{display:flex;gap:10px;justify-content:flex-end}
+.modal-buttons button{padding:6px 18px;border:none;border-radius:6px;cursor:pointer;font-size:13px;transition:all 0.2s}
+#saveCellBtn{background:#1a73e8;color:white}
+#saveCellBtn:hover{background:#1557b0}
+#cancelCellBtn{background:#f1f3f4;color:#333}
+#cancelCellBtn:hover{background:#e0e0e0}
 
-.fx-label {
-    color: #5f6368;
-    font-weight: 500;
-    font-size: 13px;
-    margin-right: 8px;
-}
+/* СТРАНИЦА ОБЗОРА */
+#page-overview{padding:24px;overflow-y:auto}
+#page-overview h2{color:#202124;margin-bottom:20px;font-weight:400}
+.overview-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.card{background:white;border:1px solid #dadce0;border-radius:8px;padding:20px;text-align:center}
+.card h3{font-size:13px;color:#5f6368;font-weight:400;margin-bottom:8px}
+.card span{font-size:28px;font-weight:500;color:#202124}
 
-#formulaInput {
-    border: none;
-    outline: none;
-    padding: 4px 0;
-    font-size: 13px;
-    flex: 1;
-    background: transparent;
-    color: #202124;
-    font-family: 'Courier New', monospace;
-}
+/* СТРАНИЦА НАСТРОЕК */
+#page-settings{padding:24px;overflow-y:auto}
+#page-settings h2{color:#202124;margin-bottom:20px;font-weight:400}
+.settings-form{max-width:600px}
+.form-group{margin-bottom:18px;display:flex;flex-direction:column;gap:6px}
+.form-group label{font-weight:500;color:#202124;font-size:13px}
+.form-group input,.form-group select{padding:8px 12px;border:2px solid #dadce0;border-radius:6px;font-size:14px}
+.form-group button{padding:8px 20px;background:#1a73e8;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;align-self:flex-start}
+.form-group button:hover{background:#1557b0}
 
-.formula-actions {
-    display: flex;
-    gap: 4px;
-}
-.formula-actions button {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    color: #5f6368;
-    transition: all 0.2s;
-}
-.formula-actions button:hover {
-    background: #e8f0fe;
-    color: #1a73e8;
-}
-#formulaConfirm { color: #1a73e8; }
-#formulaCancel { color: #d93025; }
+/* УПРАВЛЕНИЕ РАЗМЕРАМИ */
+.sizes-control{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn-reset{padding:6px 16px;background:#d93025;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px}
+.btn-reset:hover{background:#b3261e}
+.btn-apply{padding:4px 12px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px}
+.btn-apply:hover{background:#1557b0}
+.size-input{width:80px;padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:13px}
+.size-label{font-size:12px;color:#5f6368}
+.size-group{display:flex;align-items:center;gap:6px}
+.sizes-hint{color:#5f6368;font-size:11px;margin-top:4px}
 
-/* ===========================
-   НАВИГАЦИЯ (ТАБЫ)
-   =========================== */
-.main-nav {
-    background: #ffffff;
-    border-bottom: 1px solid #dadce0;
-    padding: 0 20px;
-    flex-shrink: 0;
-}
-.main-nav ul {
-    list-style: none;
-    display: flex;
-    gap: 0;
-    margin: 0;
-    padding: 0;
-}
-.main-nav li {
-    padding: 10px 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #5f6368;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s;
-    font-size: 13px;
-    font-weight: 500;
-}
-.main-nav li:hover {
-    background: #f1f3f4;
-}
-.main-nav li.active {
-    color: #1a73e8;
-    border-bottom-color: #1a73e8;
-}
-.main-nav li i {
-    font-size: 16px;
+/* АДАПТИВНОСТЬ */
+@media (max-width:768px){
+.app-header{padding:6px 12px;min-height:46px}
+.app-title{font-size:15px}
+.menu-btn{font-size:18px}
+.formula-bar{padding:2px 8px;min-height:34px}
+.cell-reference{font-size:11px;min-width:40px;padding:0 6px}
+#formulaInput{font-size:12px}
+.main-nav li{padding:8px 12px;font-size:12px}
+.main-nav li span{display:none}
+.data-cell{padding:4px 6px;font-size:12px}
+.row-header{min-width:28px!important;max-width:28px!important;width:28px!important;font-size:10px!important}
+.corner-header{min-width:28px!important;max-width:28px!important;width:28px!important;height:24px!important}
+.col-header{font-size:10px!important;padding:2px 2px!important;height:24px!important}
+.stats-bar{font-size:11px;gap:12px;padding:4px 12px}
+.modal-content{min-width:unset;width:92%;padding:20px}
+.sheet-tab{font-size:12px;padding:4px 12px}
+.sizes-control{flex-direction:column;align-items:stretch;gap:8px}
+.sizes-control .size-group{flex-wrap:wrap}
 }
 
-/* ===========================
-   ПЕРЕКЛЮЧАТЕЛЬ ЛИСТОВ
-   =========================== */
-.sheet-selector {
-    display: flex;
-    gap: 6px;
-    padding: 8px 12px 0 12px;
-    background: #ffffff;
-    border-bottom: 1px solid #dadce0;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
-.sheet-tab {
-    padding: 6px 16px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 13px;
-    color: #5f6368;
-    border-radius: 4px 4px 0 0;
-    font-weight: 500;
-    transition: all 0.2s;
-    border-bottom: 3px solid transparent;
-}
-.sheet-tab:hover {
-    background: #f1f3f4;
-}
-.sheet-tab.active {
-    color: #1a73e8;
-    border-bottom-color: #1a73e8;
-    background: #e8f0fe;
-}
-
-/* ===========================
-   ТАБЛИЦА
-   =========================== */
-.app-content {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: #ffffff;
-}
-
-.page {
-    display: none;
-    flex: 1;
-    flex-direction: column;
-    overflow: hidden;
-}
-.page.active {
-    display: flex;
-}
-
-.table-container {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-}
-
-.table-scroll {
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-}
-
-#dataTable {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    table-layout: fixed;
-}
-
-/* ===========================
-   ЗАГОЛОВКИ ТАБЛИЦЫ
-   =========================== */
-
-/* Уголок (выделение всего) */
-.corner-header {
-    min-width: 36px !important;
-    max-width: 36px !important;
-    width: 36px !important;
-    cursor: pointer !important;
-    background: #f8f9fa !important;
-    border-right: 1px solid #dadce0 !important;
-    border-bottom: 1px solid #dadce0 !important;
-    padding: 0 !important;
-    height: 28px;
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 3;
-}
-.corner-header:hover {
-    background: #e8eaed !important;
-}
-.corner-header.selected {
-    background: #d2e3fc !important;
-}
-
-/* Заголовки колонок (буквы) */
-.col-header {
-    background: #f8f9fa !important;
-    color: #5f6368 !important;
-    font-size: 11px !important;
-    font-weight: 500 !important;
-    text-align: center !important;
-    padding: 4px 2px !important;
-    border-bottom: 1px solid #dadce0 !important;
-    border-right: 1px solid #dadce0 !important;
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 2 !important;
-    user-select: none !important;
-    height: 28px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer !important;
-}
-.col-header:hover {
-    background: #e8eaed !important;
-}
-.col-header.selected {
-    background: #d2e3fc !important;
-}
-
-/* Заголовки строк (цифры) */
-.row-header {
-    background: #f8f9fa !important;
-    color: #5f6368 !important;
-    font-size: 11px !important;
-    text-align: center !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
-    width: 36px !important;
-    border-right: 1px solid #dadce0 !important;
-    border-bottom: 1px solid #dadce0 !important;
-    user-select: none !important;
-    font-weight: 400 !important;
-    padding: 2px 0 !important;
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    cursor: pointer !important;
-}
-.row-header:hover {
-    background: #e8eaed !important;
-}
-.row-header.selected {
-    background: #d2e3fc !important;
-}
-
-/* ===========================
-   ЯЧЕЙКИ ТАБЛИЦЫ
-   =========================== */
-.data-cell {
-    padding: 6px 8px;
-    border-right: 1px solid #e8eaed;
-    border-bottom: 1px solid #e8eaed;
-    word-wrap: break-word;
-    white-space: normal;
-    overflow-wrap: break-word;
-    cursor: cell;
-    transition: background 0.1s;
-    min-height: 28px;
-    vertical-align: top;
-    background: #ffffff;
-}
-.data-cell:hover {
-    background: #f1f3f4 !important;
-}
-
-/* ===========================
-   ВЫДЕЛЕНИЕ ЯЧЕЕЙ
-   =========================== */
-
-/* Выделенная ячейка (активная) */
-.data-cell.cell-selected {
-    outline: 2px solid #1a73e8 !important;
-    outline-offset: -1px !important;
-    background-color: #e8f0fe !important;
-    z-index: 3;
-    position: relative;
-}
-
-/* Выделение диапазона (неактивные ячейки) */
-.data-cell.range-selected {
-    background-color: #e8f0fe !important;
-}
-
-/* Подсветка строки */
-tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected) {
-    background-color: #f1f3f4 !important;
-}
-
-/* Подсветка колонки */
-td.col-selected:not(.cell-selected):not(.range-selected) {
-    background-color: #f1f3f4 !important;
-}
-
-/* Заголовки при выделении */
-tr.row-selected .row-header {
-    background-color: #d2e3fc !important;
-}
-.col-header.col-selected {
-    background-color: #d2e3fc !important;
-}
-
-/* ===========================
-   СТАТУС БАР
-   =========================== */
-.stats-bar {
-    background: #f8f9fa;
-    border-top: 1px solid #dadce0;
-    padding: 6px 16px;
-    display: flex;
-    gap: 24px;
-    font-size: 12px;
-    color: #5f6368;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-}
-.stats-bar span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* ===========================
-   ЗАГРУЗКА
-   =========================== */
-.loading {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 30px;
-    justify-content: center;
-    color: #5f6368;
-    font-size: 14px;
-}
-.loading i {
-    font-size: 24px;
-    color: #1a73e8;
-}
-
-/* ===========================
-   МОДАЛКА РЕДАКТИРОВАНИЯ
-   =========================== */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.modal.active {
-    display: flex;
-}
-.modal-content {
-    background: white;
-    padding: 28px;
-    border-radius: 12px;
-    min-width: 340px;
-    max-width: 500px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-    position: relative;
-}
-.close-modal {
-    position: absolute;
-    top: 10px;
-    right: 16px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-}
-.modal-content h3 {
-    margin-bottom: 16px;
-    color: #202124;
-}
-#cellInput {
-    width: 100%;
-    padding: 8px 12px;
-    border: 2px solid #dadce0;
-    border-radius: 6px;
-    font-size: 14px;
-    margin-bottom: 16px;
-}
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-}
-.modal-buttons button {
-    padding: 6px 18px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: all 0.2s;
-}
-#saveCellBtn {
-    background: #1a73e8;
-    color: white;
-}
-#saveCellBtn:hover {
-    background: #1557b0;
-}
-#cancelCellBtn {
-    background: #f1f3f4;
-    color: #333;
-}
-#cancelCellBtn:hover {
-    background: #e0e0e0;
-}
-
-/* ===========================
-   СТРАНИЦА ОБЗОРА
-   =========================== */
-#page-overview {
-    padding: 24px;
-    overflow-y: auto;
-}
-#page-overview h2 {
-    color: #202124;
-    margin-bottom: 20px;
-    font-weight: 400;
-}
-.overview-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-}
-.card {
-    background: white;
-    border: 1px solid #dadce0;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-}
-.card h3 {
-    font-size: 13px;
-    color: #5f6368;
-    font-weight: 400;
-    margin-bottom: 8px;
-}
-.card span {
-    font-size: 28px;
-    font-weight: 500;
-    color: #202124;
-}
-
-/* ===========================
-   СТРАНИЦА НАСТРОЕК
-   =========================== */
-#page-settings {
-    padding: 24px;
-    overflow-y: auto;
-}
-#page-settings h2 {
-    color: #202124;
-    margin-bottom: 20px;
-    font-weight: 400;
-}
-.settings-form {
-    max-width: 600px;
-}
-.form-group {
-    margin-bottom: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.form-group label {
-    font-weight: 500;
-    color: #202124;
-    font-size: 13px;
-}
-.form-group input, .form-group select {
-    padding: 8px 12px;
-    border: 2px solid #dadce0;
-    border-radius: 6px;
-    font-size: 14px;
-}
-.form-group button {
-    padding: 8px 20px;
-    background: #1a73e8;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    align-self: flex-start;
-}
-.form-group button:hover {
-    background: #1557b0;
-}
-
-/* Контейнер для кнопок управления размерами */
-.sizes-control {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-.sizes-control .btn-reset {
-    padding: 6px 16px;
-    background: #d93025;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-}
-.sizes-control .btn-reset:hover {
-    background: #b3261e;
-}
-.sizes-control .btn-apply {
-    padding: 4px 12px;
-    background: #1a73e8;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-}
-.sizes-control .btn-apply:hover {
-    background: #1557b0;
-}
-.sizes-control .size-input {
-    width: 80px;
-    padding: 4px 8px;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    font-size: 13px;
-}
-.sizes-control .size-label {
-    font-size: 12px;
-    color: #5f6368;
-}
-.sizes-control .size-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.sizes-hint {
-    color: #5f6368;
-    font-size: 11px;
-    margin-top: 4px;
-}
-
-/* ===========================
-   АДАПТИВНОСТЬ (МОБИЛЬНЫЕ)
-   =========================== */
-@media (max-width: 768px) {
-    .app-header {
-        padding: 6px 12px;
-        min-height: 46px;
-    }
-    .app-title {
-        font-size: 15px;
-    }
-    .menu-btn {
-        font-size: 18px;
-    }
-    .formula-bar {
-        padding: 2px 8px;
-        min-height: 34px;
-    }
-    .cell-reference {
-        font-size: 11px;
-        min-width: 40px;
-        padding: 0 6px;
-    }
-    #formulaInput {
-        font-size: 12px;
-    }
-    .main-nav li {
-        padding: 8px 12px;
-        font-size: 12px;
-    }
-    .main-nav li span {
-        display: none;
-    }
-    .data-cell {
-        padding: 4px 6px;
-        font-size: 12px;
-    }
-    .row-header {
-        min-width: 28px !important;
-        max-width: 28px !important;
-        width: 28px !important;
-        font-size: 10px !important;
-    }
-    .corner-header {
-        min-width: 28px !important;
-        max-width: 28px !important;
-        width: 28px !important;
-        height: 24px !important;
-    }
-    .col-header {
-        font-size: 10px !important;
-        padding: 2px 2px !important;
-        height: 24px !important;
-    }
-    .stats-bar {
-        font-size: 11px;
-        gap: 12px;
-        padding: 4px 12px;
-    }
-    .modal-content {
-        min-width: unset;
-        width: 92%;
-        padding: 20px;
-    }
-    .sheet-tab {
-        font-size: 12px;
-        padding: 4px 12px;
-    }
-    .sizes-control {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    .sizes-control .size-group {
-        flex-wrap: wrap;
-    }
-}
-
-/* ===========================
-   ДОПОЛНИТЕЛЬНО: ПОДСКАЗКИ ПРИ НАВЕДЕНИИ
-   =========================== */
-[title] {
-    position: relative;
-}
-
-/* Анимация для тостов */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(10px); }
-}
-
-/* Стиль для выделенного текста в ячейках */
-.data-cell::selection {
-    background: #c6d9f0;
-}
+/* АНИМАЦИИ */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
+.data-cell::selection{background:#c6d9f0}
