@@ -1,4 +1,6 @@
-/* style.css - Минималистичный стиль как в WhatsApp/Google Tables */
+/* ==========================================================================
+   GOOGLE TABLES STYLE - ПОЛНОСТЬЮ ОБНОВЛЕН
+   ========================================================================== */
 
 * {
     margin: 0;
@@ -8,48 +10,62 @@
 }
 
 body {
-    background: #ece5dd;
+    background: #ffffff;
     height: 100vh;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-/* ===== ШАПКА ===== */
+/* ===========================
+   ШАПКА
+   =========================== */
 .app-header {
-    background: #075e54;
+    background: #1a73e8;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    flex-shrink: 0;
+    min-height: 56px;
 }
 
 .header-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
 }
 
 .menu-btn {
     background: transparent;
     border: none;
     color: white;
-    font-size: 22px;
+    font-size: 20px;
     cursor: pointer;
-    padding: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.menu-btn:hover {
+    background: rgba(255,255,255,0.15);
 }
 
 .app-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 500;
+}
+
+.sheet-name {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-left: 4px;
+    font-weight: 400;
 }
 
 .header-right {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
 }
 
@@ -57,33 +73,112 @@ body {
     background: rgba(255,255,255,0.15);
     border: none;
     color: white;
-    padding: 8px 14px;
-    border-radius: 20px;
+    padding: 6px 14px;
+    border-radius: 18px;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s;
+    font-size: 13px;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     gap: 6px;
 }
-
 .sync-btn:hover, .refresh-btn:hover {
     background: rgba(255,255,255,0.3);
 }
-
 .sync-status {
-    font-size: 12px;
+    font-size: 11px;
     opacity: 0.8;
 }
 
-/* ===== НАВИГАЦИЯ (как WhatsApp) ===== */
-.main-nav {
-    background: #ffffff;
-    border-bottom: 1px solid #ddd;
-    padding: 0 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+/* ===========================
+   СТРОКА ФОРМУЛ (FORMULA BAR)
+   =========================== */
+.formula-bar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dadce0;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    min-height: 40px;
 }
 
+.cell-reference {
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #202124;
+    min-width: 50px;
+    text-align: center;
+    user-select: none;
+}
+
+.formula-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 0 8px;
+}
+.formula-input:focus-within {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+}
+
+.fx-label {
+    color: #5f6368;
+    font-weight: 500;
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+#formulaInput {
+    border: none;
+    outline: none;
+    padding: 4px 0;
+    font-size: 13px;
+    flex: 1;
+    background: transparent;
+    color: #202124;
+    font-family: 'Courier New', monospace;
+}
+
+.formula-actions {
+    display: flex;
+    gap: 4px;
+}
+.formula-actions button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #5f6368;
+    transition: all 0.2s;
+}
+.formula-actions button:hover {
+    background: #e8f0fe;
+    color: #1a73e8;
+}
+#formulaConfirm { color: #1a73e8; }
+#formulaCancel { color: #d93025; }
+
+/* ===========================
+   НАВИГАЦИЯ (ТАБЫ)
+   =========================== */
+.main-nav {
+    background: #ffffff;
+    border-bottom: 1px solid #dadce0;
+    padding: 0 20px;
+    flex-shrink: 0;
+}
 .main-nav ul {
     list-style: none;
     display: flex;
@@ -91,147 +186,224 @@ body {
     margin: 0;
     padding: 0;
 }
-
 .main-nav li {
-    padding: 14px 20px;
+    padding: 10px 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #555;
+    gap: 8px;
+    color: #5f6368;
     border-bottom: 3px solid transparent;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    font-size: 13px;
     font-weight: 500;
-    font-size: 14px;
 }
-
 .main-nav li:hover {
-    background: #f0f0f0;
+    background: #f1f3f4;
 }
-
 .main-nav li.active {
-    color: #075e54;
-    border-bottom-color: #075e54;
-    background: #f0f7f6;
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
 }
-
 .main-nav li i {
-    font-size: 18px;
+    font-size: 16px;
 }
 
-/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+/* ===========================
+   ПЕРЕКЛЮЧАТЕЛЬ ЛИСТОВ
+   =========================== */
+.sheet-selector {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px 0 12px;
+    background: #ffffff;
+    border-bottom: 1px solid #dadce0;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.sheet-tab {
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    color: #5f6368;
+    border-radius: 4px 4px 0 0;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+}
+.sheet-tab:hover {
+    background: #f1f3f4;
+}
+.sheet-tab.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    background: #e8f0fe;
+}
+
+/* ===========================
+   ТАБЛИЦА (GOOGLE TABLES STYLE)
+   =========================== */
 .app-content {
-    height: calc(100vh - 140px);
-    overflow: auto;
-    padding: 20px;
-    background: #fff;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
 }
 
 .page {
     display: none;
-    animation: fadeIn 0.3s ease;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
 }
-
 .page.active {
-    display: block;
+    display: flex;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ===== ТАБЛИЦА (стиль Google Tables) ===== */
 .table-container {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.table-scroll {
+    width: 100%;
+    height: 100%;
     overflow: auto;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background: white;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 
 #dataTable {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
+    table-layout: fixed;
 }
 
-#dataTable thead {
+/* Заголовки колонок (буквы) */
+#dataTable thead th {
     background: #f8f9fa;
-    border-bottom: 2px solid #ddd;
+    color: #5f6368;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    padding: 4px 2px;
+    border-bottom: 1px solid #dadce0;
+    border-right: 1px solid #dadce0;
+    min-width: 80px;
+    max-width: 200px;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 2;
+    user-select: none;
+    height: 28px;
 }
 
-#dataTable th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    color: #202124;
-    border-right: 1px solid #e8e8e8;
-    white-space: nowrap;
+/* Заголовки строк (цифры) */
+.row-header {
+    background: #f8f9fa !important;
+    color: #5f6368 !important;
+    font-size: 11px !important;
+    text-align: center !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    width: 36px !important;
+    border-right: 1px solid #dadce0 !important;
+    border-bottom: 1px solid #dadce0 !important;
+    user-select: none !important;
+    font-weight: 400 !important;
+    padding: 2px 0 !important;
     position: sticky;
-    top: 0;
-    background: #f8f9fa;
+    left: 0;
+    z-index: 1;
 }
 
+/* Базовые ячейки */
 #dataTable td {
-    padding: 10px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    border-right: 1px solid #f0f0f0;
-    max-width: 300px;
+    padding: 4px 8px;
+    border-right: 1px solid #e8eaed;
+    border-bottom: 1px solid #e8eaed;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
     cursor: cell;
-    transition: background 0.15s;
+    transition: background 0.1s;
+    height: 28px;
+    min-width: 80px;
+    max-width: 200px;
 }
 
-#dataTable tbody tr:hover {
-    background: #f5f7fa;
+/* ===========================
+   ВЫДЕЛЕНИЕ ЯЧЕЕК (GOOGLE STYLE)
+   =========================== */
+
+/* Выбранная ячейка */
+td.cell-selected {
+    outline: 2px solid #1a73e8;
+    outline-offset: -1px;
+    background-color: #e8f0fe !important;
+    z-index: 3;
+    position: relative;
 }
 
-#dataTable tbody tr:active {
-    background: #e8f0fe;
+/* Подсветка строки */
+tr.row-selected td:not(.cell-selected) {
+    background-color: #f1f3f4;
 }
 
-/* ===== СТАТУС БАР ===== */
+/* Подсветка колонки */
+td.col-selected:not(.cell-selected) {
+    background-color: #f1f3f4;
+}
+
+/* Ячейка при наведении */
+#dataTable td:hover:not(.cell-selected) {
+    background-color: #f8f9fa;
+}
+
+/* ===========================
+   СТАТУС БАР
+   =========================== */
 .stats-bar {
-    margin-top: 15px;
-    padding: 10px 16px;
     background: #f8f9fa;
-    border-radius: 8px;
+    border-top: 1px solid #dadce0;
+    padding: 6px 16px;
     display: flex;
-    gap: 25px;
-    font-size: 13px;
+    gap: 24px;
+    font-size: 12px;
     color: #5f6368;
+    flex-shrink: 0;
     flex-wrap: wrap;
 }
-
 .stats-bar span {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 
-/* ===== ЗАГРУЗКА ===== */
+/* ===========================
+   ЗАГРУЗКА
+   =========================== */
 .loading {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 40px;
+    padding: 30px;
     justify-content: center;
     color: #5f6368;
-    font-size: 16px;
+    font-size: 14px;
 }
-
 .loading i {
-    font-size: 28px;
-    color: #075e54;
+    font-size: 24px;
+    color: #1a73e8;
 }
 
-/* ===== МОДАЛКА ===== */
+/* ===========================
+   МОДАЛКА
+   =========================== */
 .modal {
     display: none;
     position: fixed;
@@ -244,139 +416,210 @@ body {
     align-items: center;
     z-index: 1000;
 }
-
 .modal.active {
     display: flex;
 }
-
 .modal-content {
     background: white;
-    padding: 30px;
+    padding: 28px;
     border-radius: 12px;
-    min-width: 350px;
+    min-width: 340px;
     max-width: 500px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     position: relative;
 }
-
 .close-modal {
     position: absolute;
-    top: 12px;
-    right: 18px;
-    font-size: 28px;
+    top: 10px;
+    right: 16px;
+    font-size: 24px;
     cursor: pointer;
     color: #999;
 }
-
 .modal-content h3 {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: #202124;
 }
-
 #cellInput {
     width: 100%;
-    padding: 10px 14px;
-    border: 2px solid #ddd;
+    padding: 8px 12px;
+    border: 2px solid #dadce0;
     border-radius: 6px;
-    font-size: 15px;
+    font-size: 14px;
     margin-bottom: 16px;
 }
-
 .modal-buttons {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
 }
-
 .modal-buttons button {
-    padding: 8px 20px;
+    padding: 6px 18px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s;
 }
-
 #saveCellBtn {
-    background: #075e54;
+    background: #1a73e8;
     color: white;
 }
-
 #saveCellBtn:hover {
-    background: #054d44;
+    background: #1557b0;
 }
-
 #cancelCellBtn {
     background: #f1f3f4;
     color: #333;
 }
-
 #cancelCellBtn:hover {
     background: #e0e0e0;
 }
 
-/* ===== СТРАНИЦА НАСТРОЕК ===== */
-.settings-form {
-    max-width: 600px;
-    margin-top: 20px;
+/* ===========================
+   СТРАНИЦА ОБЗОРА
+   =========================== */
+#page-overview {
+    padding: 24px;
+    overflow-y: auto;
 }
-
-.form-group {
+#page-overview h2 {
+    color: #202124;
     margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    font-weight: 400;
 }
-
-.form-group label {
+.overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+.card {
+    background: white;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+}
+.card h3 {
+    font-size: 13px;
+    color: #5f6368;
+    font-weight: 400;
+    margin-bottom: 8px;
+}
+.card span {
+    font-size: 28px;
     font-weight: 500;
     color: #202124;
 }
 
+/* ===========================
+   СТРАНИЦА НАСТРОЕК
+   =========================== */
+#page-settings {
+    padding: 24px;
+    overflow-y: auto;
+}
+#page-settings h2 {
+    color: #202124;
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+.settings-form {
+    max-width: 600px;
+}
+.form-group {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.form-group label {
+    font-weight: 500;
+    color: #202124;
+    font-size: 13px;
+}
 .form-group input, .form-group select {
-    padding: 10px 14px;
-    border: 2px solid #ddd;
+    padding: 8px 12px;
+    border: 2px solid #dadce0;
     border-radius: 6px;
     font-size: 14px;
 }
-
 .form-group button {
-    padding: 10px 20px;
-    background: #075e54;
+    padding: 8px 20px;
+    background: #1a73e8;
     color: white;
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     align-self: flex-start;
 }
-
 .form-group button:hover {
-    background: #054d44;
+    background: #1557b0;
 }
 
-/* ===== АДАПТИВ ===== */
+/* ===========================
+   АДАПТИВНОСТЬ
+   =========================== */
 @media (max-width: 768px) {
     .app-header {
-        padding: 10px 16px;
+        padding: 6px 12px;
+        min-height: 46px;
     }
     .app-title {
-        font-size: 16px;
+        font-size: 15px;
+    }
+    .menu-btn {
+        font-size: 18px;
+    }
+    .formula-bar {
+        padding: 2px 8px;
+        min-height: 34px;
+    }
+    .cell-reference {
+        font-size: 11px;
+        min-width: 40px;
+        padding: 0 6px;
+    }
+    #formulaInput {
+        font-size: 12px;
     }
     .main-nav li {
-        padding: 10px 14px;
+        padding: 8px 12px;
         font-size: 12px;
     }
     .main-nav li span {
         display: none;
     }
-    #dataTable th, #dataTable td {
-        padding: 8px 10px;
+    #dataTable td {
+        padding: 2px 4px;
         font-size: 12px;
+        min-width: 60px;
+    }
+    .row-header {
+        min-width: 28px !important;
+        max-width: 28px !important;
+        width: 28px !important;
+        font-size: 10px !important;
+    }
+    #dataTable thead th {
+        min-width: 60px;
+        font-size: 10px;
+        padding: 2px 2px;
+        height: 24px;
+    }
+    .stats-bar {
+        font-size: 11px;
+        gap: 12px;
+        padding: 4px 12px;
     }
     .modal-content {
         min-width: unset;
-        width: 90%;
+        width: 92%;
         padding: 20px;
+    }
+    .sheet-tab {
+        font-size: 12px;
+        padding: 4px 12px;
     }
 }
