@@ -623,3 +623,41 @@ td.col-selected:not(.cell-selected) {
         padding: 4px 12px;
     }
 }
+/* ===========================
+   АВТО-ВЫРАВНИВАНИЕ КОЛОНОК
+   =========================== */
+
+/* Базовые стили для таблицы с авто-шириной */
+#dataTable {
+    table-layout: fixed; /* Фиксированная ширина колонок */
+    width: 100%;
+}
+
+#dataTable colgroup col {
+    /* Ширина будет установлена через JS */
+    min-width: 60px;
+    max-width: 300px;
+}
+
+/* Ячейки с длинным текстом - обрезаем с многоточием */
+#dataTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* При наведении показываем полный текст в подсказке */
+#dataTable td:hover {
+    overflow: visible;
+    white-space: normal;
+    word-break: break-all;
+    position: relative;
+    z-index: 10;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Для длинных значений в ячейках */
+#dataTable td[title] {
+    cursor: help;
+}
