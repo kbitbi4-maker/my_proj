@@ -56,7 +56,6 @@ class TableCore {
                 this.updateOverview();
                 if (loading) loading.style.display = 'none';
 
-                // БЕЗОПАСНЫЙ ВЫЗОВ selectCell
                 if (this.data[this.currentSheet].rows.length > 0) {
                     if (window.tableSelection && typeof window.tableSelection.selectCell === 'function') {
                         window.tableSelection.selectCell(1, 1);
@@ -122,7 +121,7 @@ class TableCore {
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ
+    // ОТРИСОВКА ТАБЛИЦЫ (С data-letter ДЛЯ КОЛОНОК)
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
@@ -139,7 +138,7 @@ class TableCore {
         const colWidths = this.calculateColumnWidths(rows, maxCols);
         this.saveColumnWidths(colWidths);
 
-        // Заголовки
+        // ---- ЗАГОЛОВКИ ----
         let headerHtml = '<tr>';
         headerHtml += `<th class="row-header corner-header" onclick="window.tableSelection?.selectAll()" title="Выделить всё">`;
         headerHtml += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">`;
@@ -149,14 +148,15 @@ class TableCore {
         for (let i = 0; i < maxCols; i++) {
             const letter = this.getColumnLetter(i);
             const width = colWidths[i] || 100;
-            headerHtml += `<th class="col-header" onclick="window.tableSelection?.selectColumn(${i + 1})" 
+            // data-letter для чистого получения буквы без пробелов
+            headerHtml += `<th class="col-header" data-letter="${letter}" onclick="window.tableSelection?.selectColumn(${i + 1})" 
                            style="min-width:${width}px; max-width:${width}px; cursor:pointer;">
                            ${letter}</th>`;
         }
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // Тело таблицы
+        // ---- ТЕЛО ТАБЛИЦЫ ----
         if (rows.length > 0) {
             let bodyHtml = '';
             const sheetKey = `${this.currentSheet}`;
@@ -256,9 +256,11 @@ class TableCore {
     }
 
     getColumnIndex(letter) {
+        if (!letter) return -1;
+        const cleanLetter = letter.trim().toUpperCase();
         let index = 0;
-        for (let i = 0; i < letter.length; i++) {
-            index = index * 26 + (letter.charCodeAt(i) - 64);
+        for (let i = 0; i < cleanLetter.length; i++) {
+            index = index * 26 + (cleanLetter.charCodeAt(i) - 64);
         }
         return index - 1;
     }
