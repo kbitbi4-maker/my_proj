@@ -1,5 +1,5 @@
 // ============================================================
-// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ИСПРАВЛЕННАЯ)
+// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ)
 // Правильное позеленение: светло-зеленый для частичного выделения,
 // ярко-зеленый для полного выделения строки/колонки
 // ============================================================
@@ -77,14 +77,17 @@ class TableSelection {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (ПРАВИЛЬНОЕ ПОЗЕЛЕНЕНИЕ)
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (С ОТЛАДКОЙ)
     // ============================================================
     updateSelectionVisual() {
         // Снимаем все старые классы
         document.querySelectorAll('.cell-selected, .range-selected, .row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
             .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'partial', 'full', 'selected'));
 
-        if (!this.selectionRange) return;
+        if (!this.selectionRange) {
+            console.log('⚠️ updateSelectionVisual: selectionRange = null');
+            return;
+        }
 
         const { startRow, startCol, endRow, endCol } = this.selectionRange;
         const minRow = Math.min(startRow, endRow);
@@ -95,6 +98,9 @@ class TableSelection {
         const currentData = this.core.data[this.core.currentSheet];
         const maxCols = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
         const maxRows = currentData.rows.length;
+
+        console.log('📊 updateSelectionVisual: minRow=' + minRow + ', maxRow=' + maxRow + ', minCol=' + minCol + ', maxCol=' + maxCol);
+        console.log('📊 maxRows=' + maxRows + ', maxCols=' + maxCols);
 
         // ---- 1. ПОДСВЕТКА ЯЧЕЕК ----
         for (let r = minRow; r <= maxRow; r++) {
@@ -110,9 +116,8 @@ class TableSelection {
             }
         }
 
-        // ---- 2. ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ СТРОК (ВСЕ, КРОМЕ УГОЛКА) ----
+        // ---- 2. ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ СТРОК ----
         document.querySelectorAll('.row-header').forEach(el => {
-            // Пропускаем уголок
             if (el.classList.contains('corner-header')) return;
             
             const rowNum = parseInt(el.textContent);
@@ -131,11 +136,18 @@ class TableSelection {
         });
 
         // ---- 3. ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ КОЛОНОК ----
+        console.log('🔍 Обработка колонок: minCol=' + minCol + ', maxCol=' + maxCol);
+        
         document.querySelectorAll('.col-header').forEach(el => {
             const letter = el.textContent;
             const colIndex = this.core.getColumnIndex(letter) + 1;
+            
+            console.log(`🔍 Колонка ${letter}: colIndex=${colIndex}, в диапазоне? ${colIndex >= minCol && colIndex <= maxCol}`);
+            
             if (colIndex >= minCol && colIndex <= maxCol) {
                 const isFullCol = (minRow === 1 && maxRow === maxRows);
+                console.log(`🔍 Колонка ${letter}: isFullCol=${isFullCol} (minRow=${minRow}, maxRow=${maxRow}, maxRows=${maxRows})`);
+                
                 if (isFullCol) {
                     el.classList.add('full');
                     console.log(`✅ Колонка ${letter}: добавлен класс full`);
@@ -146,7 +158,7 @@ class TableSelection {
             }
         });
 
-        // ---- 4. ПОЗЕЛЕНЕНИЕ УГОЛКА (при выделении всего листа) ----
+        // ---- 4. ПОЗЕЛЕНЕНИЕ УГОЛКА ----
         const isFullSheet = (minRow === 1 && maxRow === maxRows && minCol === 1 && maxCol === maxCols);
         if (isFullSheet) {
             document.querySelector('.corner-header')?.classList.add('selected');
@@ -164,7 +176,7 @@ class TableSelection {
     }
 
     // ============================================================
-    // ВЫДЕЛЕНИЕ ВСЕГО ЛИСТА
+    // ВЫДЕЛЕНИЕ ВСЕГО ЛИСТА (ИСПРАВЛЕННАЯ ВЕРСИЯ)
     // ============================================================
     selectAll() {
         const currentData = this.core.data[this.core.currentSheet];
@@ -173,6 +185,8 @@ class TableSelection {
 
         if (maxRow === 0 || maxCol === 0) return;
 
+        console.log('🔄 selectAll вызван: maxRow=' + maxRow + ', maxCol=' + maxCol);
+
         this.selectionRange = {
             startRow: 1,
             startCol: 1,
@@ -180,7 +194,11 @@ class TableSelection {
             endCol: maxCol
         };
         this.selectedCell = { row: 1, col: 1 };
+        
+        // ЯВНО ВЫЗЫВАЕМ ОБНОВЛЕНИЕ ВИЗУАЛА
         this.updateSelectionVisual();
+        
+        console.log('✅ selectAll завершен, selectionRange:', this.selectionRange);
     }
 
     // ============================================================
