@@ -1,7 +1,6 @@
 // ==========================================================================
-// script.js - ПОЛНАЯ ВЕРСИЯ С ВЫДЕЛЕНИЕМ КАК В GOOGLE SHEETS
-// Поддержка: клик по ячейке, по заголовку строки/колонки, Shift-диапазон,
-//            drag-and-drop выделение, выделение всего листа
+// script.js - ПОЛНАЯ ВЕРСИЯ
+// Поддержка: копирование, очистка, замена значений, массовое редактирование
 // ==========================================================================
 
 class TableManager {
@@ -16,11 +15,14 @@ class TableManager {
         this.currentSheet = 'sheet1';
         
         // Состояние выделения
-        this.selectedCell = null;           // { row, col } - текущая активная ячейка
-        this.selectionRange = null;         // { startRow, startCol, endRow, endCol }
+        this.selectedCell = null;
+        this.selectionRange = null;
         this.isDragging = false;
         this.dragStartCell = null;
         this.isShiftPressed = false;
+        
+        // Буфер обмена (для копирования)
+        this.clipboardData = null;
         
         // Настройки размеров
         this.columnWidths = JSON.parse(localStorage.getItem('gt_column_widths') || '{}');
@@ -125,15 +127,42 @@ class TableManager {
             document.getElementById('apiUrl').value = this.apiUrl;
         }
 
-        // Глобальные клавиши
+        // ============================================================
+        // ГОРЯЧИЕ КЛАВИШИ
+        // ============================================================
         document.addEventListener('keydown', (e) => {
+            // Escape — закрыть модалку и снять выделение
             if (e.key === 'Escape') {
                 document.getElementById('editModal').classList.remove('active');
                 this.clearSelection();
             }
+            
+            // Shift
             if (e.key === 'Shift') {
                 this.isShiftPressed = true;
             }
+
+            // Ctrl+C — копировать
+            if (e.ctrlKey && e.key === 'c') {
+                e.preventDefault();
+                this.copySelection();
+            }
+
+            // Ctrl+V — вставить
+            if (e.ctrlKey && e.key === 'v') {
+                e.preventDefault();
+                this.pasteSelection();
+            }
+
+            // Delete / Backspace — очистить ячейки
+            if ((e.key === 'Delete' || e.key === 'Backspace') && !document.querySelector('.modal.active')) {
+                e.preventDefault();
+                if (this.selectionRange) {
+                    this.clearSelectedCells();
+                }
+            }
+
+            // Стрелки
             if (this.selectedCell && !document.querySelector('.modal.active')) {
                 this.handleArrowKeys(e);
             }
@@ -145,7 +174,9 @@ class TableManager {
             }
         });
 
-        // Кнопки управления размерами
+        // ============================================================
+        // КНОПКИ УПРАВЛЕНИЯ РАЗМЕРАМИ
+        // ============================================================
         document.getElementById('resetSizesBtn').addEventListener('click', () => {
             this.resetSizes();
         });
@@ -167,10 +198,372 @@ class TableManager {
                 alert('Сначала выделите ячейку в нужной строке');
             }
         });
+
+        // ============================================================
+        // ОБРАБОТЧИКИ МЫШИ ДЛЯ DRAG-ВЫДЕЛЕНИЯ
+        // ============================================================
+        // Используем делегирование событий на таблице
+        document.getElementById('dataTable').addEventListener('mousedown', (e) => {
+            const cell = e.target.closest('.data-cell');
+            if (!cell) return;
+            if (e.button !== 0) return;
+            
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            
+            if (e.shiftKey && this.selectedCell) {
+                this.expandSelection(row, col);
+            } else {
+                this.startDrag(row, col);
+            }
+        });
+
+        document.getElementById('dataTable').addEventListener('mouseover', (e) => {
+            const cell = e.target.closest('.data-cell');
+            if (!cell) return;
+            if (this.isDragging) {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                this.continueDrag(row, col);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (this.isDragging) {
+                this.endDrag();
+            }
+        });
     }
 
     // ============================================================
-    // НАВИГАЦИЯ СТРЕЛКАМИ (с учётом выделения)
+    // КОПИРОВАНИЕ ВЫДЕЛЕННЫХ ЯЧЕЕК (Ctrl+C)
+    // ============================================================
+    copySelection() {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек для копирования');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const currentData = this.data[this.currentSheet];
+        const copiedData = [];
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowData = [];
+            for (let c = minCol; c <= maxCol; c++) {
+                const rowIndex = r - 1;
+                if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                    rowData.push(currentData.rows[rowIndex]?.[c - 1] || '');
+                } else {
+                    rowData.push('');
+                }
+            }
+            copiedData.push(rowData);
+        }
+
+        this.clipboardData = {
+            data: copiedData,
+            rows: copiedData.length,
+            cols: copiedData[0]?.length || 0
+        };
+
+        // Также копируем в системный буфер обмена (текстовое представление)
+        const textRepresentation = copiedData.map(row => row.join('\t')).join('\n');
+        navigator.clipboard.writeText(textRepresentation).catch(() => {
+            // Если не удалось, игнорируем
+        });
+
+        this.showToast(`✅ Скопировано: ${copiedData.length} × ${copiedData[0]?.length || 0} ячеек`);
+        console.log('📋 Скопировано:', this.clipboardData);
+    }
+
+    // ============================================================
+    // ВСТАВКА (Ctrl+V)
+    // ============================================================
+    async pasteSelection() {
+        if (!this.clipboardData) {
+            this.showToast('⚠️ Буфер обмена пуст. Сначала скопируйте ячейки (Ctrl+C)');
+            return;
+        }
+
+        if (!this.selectedCell) {
+            this.showToast('⚠️ Выберите целевую ячейку для вставки');
+            return;
+        }
+
+        const targetRow = this.selectedCell.row;
+        const targetCol = this.selectedCell.col;
+        const { data, rows, cols } = this.clipboardData;
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = 0; r < rows; r++) {
+            const rowIndex = targetRow + r - 1;
+            if (rowIndex >= currentData.rows.length) {
+                // Добавляем пустые строки если нужно
+                currentData.rows.push([]);
+            }
+            for (let c = 0; c < cols; c++) {
+                const colIndex = targetCol + c - 1;
+                const value = data[r]?.[c] || '';
+                
+                // Расширяем массив если нужно
+                if (currentData.rows[rowIndex].length < colIndex + 1) {
+                    currentData.rows[rowIndex].length = colIndex + 1;
+                }
+                
+                currentData.rows[rowIndex][colIndex] = value;
+                updates.push({
+                    row: targetRow + r,
+                    col: targetCol + c,
+                    value: value
+                });
+            }
+        }
+
+        // Сохраняем в Google Таблицу
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+
+            this.renderTable();
+            this.showToast(`✅ Вставлено: ${rows} × ${cols} ячеек`);
+        } catch (error) {
+            console.error('❌ Ошибка вставки:', error);
+            this.showToast('❌ Ошибка при вставке данных');
+        }
+    }
+
+    // ============================================================
+    // ОЧИСТКА ВЫДЕЛЕННЫХ ЯЧЕЕК (Delete / Backspace)
+    // ============================================================
+    async clearSelectedCells() {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек для очистки');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) continue;
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (colIndex >= currentData.rows[rowIndex].length) continue;
+                
+                currentData.rows[rowIndex][colIndex] = '';
+                updates.push({
+                    row: r,
+                    col: c,
+                    value: ''
+                });
+            }
+        }
+
+        // Сохраняем в Google Таблицу
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: ''
+                };
+
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+
+            this.renderTable();
+            this.showToast(`✅ Очищено: ${updates.length} ячеек`);
+        } catch (error) {
+            console.error('❌ Ошибка очистки:', error);
+            this.showToast('❌ Ошибка при очистке ячеек');
+        }
+    }
+
+    // ============================================================
+    // МАССОВОЕ РЕДАКТИРОВАНИЕ (замена значений во всех выделенных ячейках)
+    // ============================================================
+    async replaceInSelection(findText, replaceText) {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек');
+            return;
+        }
+
+        if (!findText || findText === '') {
+            this.showToast('⚠️ Введите текст для поиска');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+        let replacedCount = 0;
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) continue;
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (colIndex >= currentData.rows[rowIndex].length) continue;
+                
+                const currentValue = String(currentData.rows[rowIndex][colIndex] || '');
+                if (currentValue.includes(findText)) {
+                    const newValue = currentValue.replaceAll(findText, replaceText);
+                    currentData.rows[rowIndex][colIndex] = newValue;
+                    updates.push({
+                        row: r,
+                        col: c,
+                        value: newValue
+                    });
+                    replacedCount++;
+                }
+            }
+        }
+
+        if (replacedCount === 0) {
+            this.showToast('⚠️ Текст "' + findText + '" не найден в выделенных ячейках');
+            return;
+        }
+
+        // Сохраняем в Google Таблицу
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+
+            this.renderTable();
+            this.showToast(`✅ Заменено в ${replacedCount} ячейках`);
+        } catch (error) {
+            console.error('❌ Ошибка замены:', error);
+            this.showToast('❌ Ошибка при замене значений');
+        }
+    }
+
+    // ============================================================
+    // МАССОВОЕ ЗАПОЛНЕНИЕ (ввести значение во все выделенные ячейки)
+    // ============================================================
+    async fillSelection(value) {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек');
+            return;
+        }
+
+        if (value === undefined || value === null) {
+            this.showToast('⚠️ Введите значение для заполнения');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) {
+                // Добавляем пустые строки если нужно
+                currentData.rows.push([]);
+            }
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (currentData.rows[rowIndex].length < colIndex + 1) {
+                    currentData.rows[rowIndex].length = colIndex + 1;
+                }
+                currentData.rows[rowIndex][colIndex] = value;
+                updates.push({
+                    row: r,
+                    col: c,
+                    value: value
+                });
+            }
+        }
+
+        // Сохраняем в Google Таблицу
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+
+            this.renderTable();
+            this.showToast(`✅ Заполнено ${updates.length} ячеек значением "${value}"`);
+        } catch (error) {
+            console.error('❌ Ошибка заполнения:', error);
+            this.showToast('❌ Ошибка при заполнении ячеек');
+        }
+    }
+
+    // ============================================================
+    // НАВИГАЦИЯ СТРЕЛКАМИ
     // ============================================================
     handleArrowKeys(e) {
         if (!this.selectedCell) return;
@@ -194,10 +587,8 @@ class TableManager {
         e.preventDefault();
 
         if (this.isShiftPressed) {
-            // Расширяем выделение
             this.expandSelection(newRow, newCol);
         } else {
-            // Перемещаем выделение на новую ячейку
             this.selectCell(newRow, newCol);
         }
     }
@@ -228,22 +619,19 @@ class TableManager {
     }
 
     // ============================================================
-    // ВЫДЕЛЕНИЕ ЯЧЕЙКИ (одиночный клик)
+    // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
     // ============================================================
     selectCell(row, col) {
-        // Снимаем предыдущее выделение
         document.querySelectorAll('.cell-selected, .row-selected, .col-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected', 'range-selected'));
 
         this.selectedCell = { row, col };
         this.selectionRange = { startRow: row, startCol: col, endRow: row, endCol: col };
 
-        // Подсвечиваем ячейку
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
             cell.classList.add('cell-selected');
             
-            // Подсвечиваем строку
             const rowElement = cell.closest('tr');
             if (rowElement) {
                 rowElement.querySelectorAll('td').forEach(td => {
@@ -253,18 +641,15 @@ class TableManager {
                 });
             }
             
-            // Подсвечиваем колонку
             document.querySelectorAll(`td[data-col="${col}"]`).forEach(td => {
                 if (!td.classList.contains('cell-selected')) {
                     td.classList.add('col-selected');
                 }
             });
             
-            // Обновляем строку формул
             const columnLetter = this.getColumnLetter(col - 1);
             document.getElementById('cellReference').textContent = `${columnLetter}${row}`;
             
-            // Показываем значение в строке формул
             const currentData = this.data[this.currentSheet];
             const rowIndex = row - 1;
             let value = '';
@@ -278,7 +663,7 @@ class TableManager {
     }
 
     // ============================================================
-    // РАСШИРЕНИЕ ВЫДЕЛЕНИЯ (Shift + клик / стрелки)
+    // РАСШИРЕНИЕ ВЫДЕЛЕНИЯ
     // ============================================================
     expandSelection(row, col) {
         if (!this.selectionRange) {
@@ -293,10 +678,9 @@ class TableManager {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (для диапазона)
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ
     // ============================================================
     updateSelectionVisual() {
-        // Снимаем старые классы
         document.querySelectorAll('.cell-selected, .row-selected, .col-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected', 'range-selected'));
 
@@ -308,7 +692,6 @@ class TableManager {
         const minCol = Math.min(startCol, endCol);
         const maxCol = Math.max(startCol, endCol);
 
-        // Подсвечиваем все ячейки в диапазоне
         for (let r = minRow; r <= maxRow; r++) {
             for (let c = minCol; c <= maxCol; c++) {
                 const cell = document.querySelector(`td[data-row="${r}"][data-col="${c}"]`);
@@ -322,7 +705,6 @@ class TableManager {
             }
         }
 
-        // Подсвечиваем строки и колонки
         for (let r = minRow; r <= maxRow; r++) {
             document.querySelectorAll(`td[data-row="${r}"]`).forEach(td => {
                 if (!td.classList.contains('cell-selected') && !td.classList.contains('range-selected')) {
@@ -339,15 +721,15 @@ class TableManager {
             });
         }
 
-        // Обновляем информацию
         const colLetter = this.getColumnLetter(this.selectedCell.col - 1);
         document.getElementById('cellReference').textContent = `${colLetter}${this.selectedCell.row}`;
+        const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
         document.getElementById('cellInfo').textContent = 
-            `Выбрано: ${this.getColumnLetter(minCol - 1)}${minRow}:${this.getColumnLetter(maxCol - 1)}${maxRow} (${(maxRow - minRow + 1) * (maxCol - minCol + 1)} ячеек)`;
+            `Выбрано: ${this.getColumnLetter(minCol - 1)}${minRow}:${this.getColumnLetter(maxCol - 1)}${maxRow} (${count} ячеек)`;
     }
 
     // ============================================================
-    // ВЫДЕЛЕНИЕ ВСЕГО ЛИСТА (клик на уголок между заголовками)
+    // ВЫДЕЛЕНИЕ ВСЕГО ЛИСТА
     // ============================================================
     selectAll() {
         const currentData = this.data[this.currentSheet];
@@ -367,12 +749,11 @@ class TableManager {
     }
 
     // ============================================================
-    // ВЫДЕЛЕНИЕ СТРОКИ (клик на номер строки)
+    // ВЫДЕЛЕНИЕ СТРОКИ
     // ============================================================
     selectRow(row) {
         const currentData = this.data[this.currentSheet];
         const maxCol = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
-
         if (maxCol === 0) return;
 
         this.selectionRange = {
@@ -386,12 +767,11 @@ class TableManager {
     }
 
     // ============================================================
-    // ВЫДЕЛЕНИЕ КОЛОНКИ (клик на букву колонки)
+    // ВЫДЕЛЕНИЕ КОЛОНКИ
     // ============================================================
     selectColumn(col) {
         const currentData = this.data[this.currentSheet];
         const maxRow = currentData.rows.length;
-
         if (maxRow === 0) return;
 
         this.selectionRange = {
@@ -405,7 +785,7 @@ class TableManager {
     }
 
     // ============================================================
-    // НАЧАЛО DRAG-ВЫДЕЛЕНИЯ
+    // DRAG-ВЫДЕЛЕНИЕ
     // ============================================================
     startDrag(row, col) {
         this.isDragging = true;
@@ -413,17 +793,11 @@ class TableManager {
         this.selectCell(row, col);
     }
 
-    // ============================================================
-    // ПРОДОЛЖЕНИЕ DRAG-ВЫДЕЛЕНИЯ
-    // ============================================================
     continueDrag(row, col) {
         if (!this.isDragging || !this.dragStartCell) return;
         this.expandSelection(row, col);
     }
 
-    // ============================================================
-    // ЗАВЕРШЕНИЕ DRAG-ВЫДЕЛЕНИЯ
-    // ============================================================
     endDrag() {
         this.isDragging = false;
         this.dragStartCell = null;
@@ -549,7 +923,7 @@ class TableManager {
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ (с кликабельными заголовками)
+    // ОТРИСОВКА ТАБЛИЦЫ
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
@@ -563,7 +937,7 @@ class TableManager {
             if (row && row.length > maxCols) maxCols = row.length;
         });
 
-        // ---- ВЫЧИСЛЯЕМ ШИРИНУ КОЛОНОК ----
+        // Ширина колонок
         const colWidths = [];
         const dataRows = rows.slice(1);
 
@@ -594,9 +968,8 @@ class TableManager {
             });
         }
 
-        // ---- ЗАГОЛОВКИ КОЛОНОК (буквы, кликабельные) ----
+        // Заголовки
         let headerHtml = '<tr>';
-        // Уголок (клик для выделения всего)
         headerHtml += `<th class="row-header corner-header" onclick="tableManager.selectAll()" title="Выделить всё">`;
         headerHtml += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">`;
         headerHtml += `<i class="fas fa-caret-down" style="font-size:10px;color:#5f6368;"></i>`;
@@ -612,7 +985,7 @@ class TableManager {
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // ---- ТЕЛО ТАБЛИЦЫ ----
+        // Тело таблицы
         if (rows.length > 0) {
             let bodyHtml = '';
             rows.forEach((row, rowIndex) => {
@@ -624,7 +997,6 @@ class TableManager {
                 }
                 
                 bodyHtml += `<tr style="${rowHeight}">`;
-                // Номер строки (кликабельный)
                 bodyHtml += `<td class="row-header" onclick="tableManager.selectRow(${actualRow})" 
                               style="cursor:pointer;">${actualRow}</td>`;
                 
@@ -637,12 +1009,7 @@ class TableManager {
                                    class="data-cell"
                                    style="min-width:${width}px; max-width:${width}px; 
                                           word-wrap: break-word; white-space: normal; padding: 6px 8px;
-                                          cursor: cell;"
-                                   onmousedown="tableManager.handleCellMouseDown(event, ${actualRow}, ${actualCol})"
-                                   onmouseover="tableManager.handleCellMouseOver(event, ${actualRow}, ${actualCol})"
-                                   onmouseup="tableManager.handleCellMouseUp(event)"
-                                   ondblclick="tableManager.editCell(${actualRow}, ${actualCol})">
-                                   ${value}</td>`;
+                                          cursor: cell;">${value}</td>`;
                 }
                 bodyHtml += '</tr>';
             });
@@ -657,42 +1024,13 @@ class TableManager {
             tbody.innerHTML = bodyHtml;
         }
 
-        // Восстанавливаем выделение, если оно было
+        // Восстанавливаем выделение
         if (this.selectionRange) {
             this.updateSelectionVisual();
         }
 
         const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
         document.getElementById('sheetNameDisplay').textContent = sheetLabels[this.currentSheet] || this.currentSheet;
-    }
-
-    // ============================================================
-    // ОБРАБОТЧИКИ МЫШИ ДЛЯ DRAG-ВЫДЕЛЕНИЯ
-    // ============================================================
-    handleCellMouseDown(event, row, col) {
-        if (event.button !== 0) return; // только левая кнопка
-        
-        const isShift = event.shiftKey;
-        
-        if (isShift && this.selectedCell) {
-            // Shift + клик — расширение диапазона
-            this.expandSelection(row, col);
-        } else {
-            // Начинаем перетаскивание
-            this.startDrag(row, col);
-        }
-    }
-
-    handleCellMouseOver(event, row, col) {
-        if (this.isDragging) {
-            this.continueDrag(row, col);
-        }
-    }
-
-    handleCellMouseUp(event) {
-        if (this.isDragging) {
-            this.endDrag();
-        }
     }
 
     // ============================================================
