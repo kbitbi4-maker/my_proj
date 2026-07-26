@@ -1,7 +1,6 @@
 // ============================================================
-// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ)
-// Синее выделение — только для тела таблицы (ячейки)
-// Зеленое выделение — только для заголовков (строки и колонки)
+// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ОПТИМИЗИРОВАННАЯ)
+// Выделение НЕ меняет фон ячеек, только добавляет рамку и подсветку
 // ============================================================
 
 class TableSelection {
@@ -19,10 +18,22 @@ class TableSelection {
     // ОЧИСТКА ВЫДЕЛЕНИЯ
     // ============================================================
     clearSelection() {
+        // Снимаем выделение с ячеек
         document.querySelectorAll('.cell-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
+        
+        // Снимаем подсветку строк и колонок
+        document.querySelectorAll('.row-selected, .col-selected')
+            .forEach(el => el.classList.remove('row-selected', 'col-selected'));
+        
+        // Снимаем выделение с заголовков
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
             .forEach(el => el.classList.remove('partial', 'full', 'selected'));
+        
+        // Убираем режим выделения с таблицы
+        const table = document.getElementById('dataTable');
+        if (table) table.classList.remove('range-mode');
+        
         this.selectionRange = null;
         this.selectedCell = null;
         document.getElementById('cellInfo').textContent = 'Выбрано: —';
@@ -35,11 +46,8 @@ class TableSelection {
     // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
     // ============================================================
     selectCell(row, col) {
-        document.querySelectorAll('.cell-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
-        document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
-            .forEach(el => el.classList.remove('partial', 'full', 'selected'));
-
+        this.clearSelection();
+        
         this.selectedCell = { row, col };
         this.selectionRange = { startRow: row, startCol: col, endRow: row, endCol: col };
 
@@ -61,6 +69,7 @@ class TableSelection {
             document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
         
+        // Подсветка заголовков
         this.updateHeaderSelection();
         this.updateToolbarVisibility();
     }
@@ -81,13 +90,12 @@ class TableSelection {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (ОПТИМИЗИРОВАННОЕ)
     // ============================================================
     updateSelectionVisual() {
-        document.querySelectorAll('.cell-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
-        document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
-            .forEach(el => el.classList.remove('partial', 'full', 'selected'));
+        // Снимаем старые классы
+        document.querySelectorAll('.cell-selected, .range-selected, .row-selected, .col-selected')
+            .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'row-selected', 'col-selected'));
 
         if (!this.selectionRange) return;
 
@@ -97,24 +105,37 @@ class TableSelection {
         const minCol = Math.min(startCol, endCol);
         const maxCol = Math.max(startCol, endCol);
 
-        // ---- 1. СИНЕЕ ВЫДЕЛЕНИЕ ТОЛЬКО ДЛЯ ЯЧЕЕК ----
+        const table = document.getElementById('dataTable');
+        if (!table) return;
+
+        // ---- 1. ВКЛЮЧАЕМ РЕЖИМ ВЫДЕЛЕНИЯ (CSS сделает всё остальное) ----
+        table.classList.add('range-mode');
+
+        // ---- 2. ПОДСВЕТКА СТРОК И КОЛОНОК ----
+        // Подсветка строк
         for (let r = minRow; r <= maxRow; r++) {
-            for (let c = minCol; c <= maxCol; c++) {
-                const cell = document.querySelector(`td[data-row="${r}"][data-col="${c}"]`);
-                if (cell) {
-                    if (r === this.selectedCell.row && c === this.selectedCell.col) {
-                        cell.classList.add('cell-selected');
-                    } else {
-                        cell.classList.add('range-selected');
-                    }
-                }
-            }
+            const rowCells = document.querySelectorAll(`td[data-row="${r}"]`);
+            rowCells.forEach(cell => cell.classList.add('row-selected'));
         }
 
-        // ---- 2. ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ДЛЯ ЗАГОЛОВКОВ ----
+        // Подсветка колонок
+        for (let c = minCol; c <= maxCol; c++) {
+            const colCells = document.querySelectorAll(`td[data-col="${c}"]`);
+            colCells.forEach(cell => cell.classList.add('col-selected'));
+        }
+
+        // ---- 3. АКТИВНАЯ ЯЧЕЙКА ----
+        const activeCell = document.querySelector(
+            `td[data-row="${this.selectedCell.row}"][data-col="${this.selectedCell.col}"]`
+        );
+        if (activeCell) {
+            activeCell.classList.add('cell-selected');
+        }
+
+        // ---- 4. ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ ----
         this.updateHeaderSelection();
 
-        // ---- 3. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
+        // ---- 5. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
         const colLetter = this.core.getColumnLetter(this.selectedCell.col - 1);
         document.getElementById('cellReference').textContent = `${colLetter}${this.selectedCell.row}`;
         const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
@@ -125,7 +146,7 @@ class TableSelection {
     }
 
     // ============================================================
-    // ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+    // ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ
     // ============================================================
     updateHeaderSelection() {
         if (!this.selectionRange) return;
@@ -140,41 +161,33 @@ class TableSelection {
         const maxCols = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
         const maxRows = currentData.rows.length;
 
-        // ---- ЗЕЛЕНЕЕМ СТРОКИ ----
+        // Снимаем старые классы с заголовков
+        document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
+            .forEach(el => el.classList.remove('partial', 'full', 'selected'));
+
+        // ---- СТРОКИ ----
         document.querySelectorAll('.row-header').forEach(el => {
             if (el.classList.contains('corner-header')) return;
-            
             const rowNum = parseInt(el.textContent);
             if (isNaN(rowNum)) return;
-            
             if (rowNum >= minRow && rowNum <= maxRow) {
                 const isFullRow = (minCol === 1 && maxCol === maxCols);
-                if (isFullRow) {
-                    el.classList.add('full');
-                } else {
-                    el.classList.add('partial');
-                }
+                el.classList.add(isFullRow ? 'full' : 'partial');
             }
         });
 
-        // ---- ЗЕЛЕНЕЕМ КОЛОНКИ (через data-letter) ----
+        // ---- КОЛОНКИ ----
         document.querySelectorAll('.col-header').forEach(el => {
             const letter = el.dataset.letter;
             if (!letter) return;
-            
             const colIndex = this.core.getColumnIndex(letter) + 1;
-            
             if (colIndex >= minCol && colIndex <= maxCol) {
                 const isFullCol = (minRow === 1 && maxRow === maxRows);
-                if (isFullCol) {
-                    el.classList.add('full');
-                } else {
-                    el.classList.add('partial');
-                }
+                el.classList.add(isFullCol ? 'full' : 'partial');
             }
         });
 
-        // ---- ЗЕЛЕНЕЕМ УГОЛОК ----
+        // ---- УГОЛОК ----
         const isFullSheet = (minRow === 1 && maxRow === maxRows && minCol === 1 && maxCol === maxCols);
         if (isFullSheet) {
             document.querySelector('.corner-header')?.classList.add('selected');
