@@ -1,6 +1,6 @@
 // ============================================================
-// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ (ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ)
-// Все события привязаны через addEventListener — НЕТ onclick в HTML
+// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ
+// Поддержка мобильных устройств
 // ============================================================
 
 class TableUI {
@@ -13,7 +13,7 @@ class TableUI {
 
     bindEvents() {
         // ============================================================
-        // ГОРЯЧИЕ КЛАВИШИ (Ctrl+C, Ctrl+V, Delete, Escape, Стрелки)
+        // ГОРЯЧИЕ КЛАВИШИ
         // ============================================================
         window.addEventListener('keydown', (e) => {
             const isCtrlC = e.ctrlKey && (e.code === 'KeyC');
@@ -31,7 +31,6 @@ class TableUI {
             if (isCtrlC) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔄 Ctrl+C перехвачен для копирования ячеек');
                 this.clipboard.copySelection();
                 return;
             }
@@ -39,7 +38,6 @@ class TableUI {
             if (isCtrlV) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('🔄 Ctrl+V перехвачен для вставки ячеек');
                 this.clipboard.pasteSelection();
                 return;
             }
@@ -50,7 +48,6 @@ class TableUI {
                     e.stopPropagation();
                     if (this.selection.selectionRange) {
                         this.clipboard.clearSelectedCells();
-                        console.log('🔄 Delete перехвачен для очистки ячеек');
                     }
                 }
                 return;
@@ -84,16 +81,115 @@ class TableUI {
         document.getElementById('refreshBtn').addEventListener('click', () => this.core.loadData());
 
         // ============================================================
-        // НАВИГАЦИЯ ПО ТАБАМ
+        // НАВИГАЦИЯ (ДЕСКТОП)
         // ============================================================
         document.querySelectorAll('.main-nav li').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById(`page-${page}`).classList.add('active');
+                this.switchPage(page);
             });
+        });
+
+        // ============================================================
+        // НАВИГАЦИЯ (МОБИЛЬНАЯ - НИЖНЯЯ ПАНЕЛЬ)
+        // ============================================================
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                const page = btn.dataset.page;
+                if (page) {
+                    this.switchPage(page);
+                }
+            });
+        });
+
+        // ============================================================
+        // КНОПКА ИНСТРУМЕНТОВ (МОБИЛЬНАЯ)
+        // ============================================================
+        const toolsBtn = document.getElementById('toolsBtn');
+        const toolsMenu = document.getElementById('toolsMenu');
+        
+        if (toolsBtn && toolsMenu) {
+            toolsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = toolsMenu.classList.contains('open');
+                toolsMenu.classList.toggle('open', !isOpen);
+            });
+
+            // Закрываем меню при клике вне его
+            document.addEventListener('click', (e) => {
+                if (!toolsMenu.contains(e.target) && e.target !== toolsBtn) {
+                    toolsMenu.classList.remove('open');
+                }
+            });
+        }
+
+        // ============================================================
+        // МОБИЛЬНЫЕ КНОПКИ ИНСТРУМЕНТОВ
+        // ============================================================
+        document.getElementById('mobileCopyBtn')?.addEventListener('click', () => {
+            this.clipboard.copySelection();
+            document.getElementById('toolsMenu')?.classList.remove('open');
+        });
+        document.getElementById('mobilePasteBtn')?.addEventListener('click', () => {
+            this.clipboard.pasteSelection();
+            document.getElementById('toolsMenu')?.classList.remove('open');
+        });
+        document.getElementById('mobileClearBtn')?.addEventListener('click', () => {
+            if (this.selection.selectionRange) {
+                this.clipboard.clearSelectedCells();
+            }
+            document.getElementById('toolsMenu')?.classList.remove('open');
+        });
+        document.getElementById('mobileReplaceBtn')?.addEventListener('click', () => {
+            const find = document.getElementById('toolbarReplaceFind').value;
+            const replace = document.getElementById('toolbarReplaceWith').value;
+            if (find) {
+                this.clipboard.replaceInSelection(find, replace);
+            } else {
+                this.core.showToast('⚠️ Введите текст для поиска');
+            }
+            document.getElementById('toolsMenu')?.classList.remove('open');
+        });
+        document.getElementById('mobileFillBtn')?.addEventListener('click', () => {
+            const value = document.getElementById('toolbarFillValue').value;
+            if (value !== undefined && value !== null) {
+                this.clipboard.fillSelection(value);
+            } else {
+                this.core.showToast('⚠️ Введите значение для заполнения');
+            }
+            document.getElementById('toolsMenu')?.classList.remove('open');
+        });
+
+        // ============================================================
+        // ДЕСКТОПНАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ
+        // ============================================================
+        document.getElementById('toolbarCopyBtn').addEventListener('click', () => this.clipboard.copySelection());
+        document.getElementById('toolbarPasteBtn').addEventListener('click', () => this.clipboard.pasteSelection());
+        document.getElementById('toolbarClearBtn').addEventListener('click', () => {
+            if (this.selection.selectionRange) {
+                this.clipboard.clearSelectedCells();
+            }
+        });
+        document.getElementById('toolbarReplaceBtn').addEventListener('click', () => {
+            const find = document.getElementById('toolbarReplaceFind').value;
+            const replace = document.getElementById('toolbarReplaceWith').value;
+            if (find) {
+                this.clipboard.replaceInSelection(find, replace);
+            } else {
+                this.core.showToast('⚠️ Введите текст для поиска');
+            }
+        });
+        document.getElementById('toolbarFillBtn').addEventListener('click', () => {
+            const value = document.getElementById('toolbarFillValue').value;
+            if (value !== undefined && value !== null) {
+                this.clipboard.fillSelection(value);
+            } else {
+                this.core.showToast('⚠️ Введите значение для заполнения');
+            }
         });
 
         // ============================================================
@@ -183,48 +279,17 @@ class TableUI {
         });
 
         // ============================================================
-        // ПАНЕЛЬ ИНСТРУМЕНТОВ
-        // ============================================================
-        document.getElementById('toolbarCopyBtn').addEventListener('click', () => this.clipboard.copySelection());
-        document.getElementById('toolbarPasteBtn').addEventListener('click', () => this.clipboard.pasteSelection());
-        document.getElementById('toolbarClearBtn').addEventListener('click', () => {
-            if (this.selection.selectionRange) {
-                this.clipboard.clearSelectedCells();
-            }
-        });
-        document.getElementById('toolbarReplaceBtn').addEventListener('click', () => {
-            const find = document.getElementById('toolbarReplaceFind').value;
-            const replace = document.getElementById('toolbarReplaceWith').value;
-            if (find) {
-                this.clipboard.replaceInSelection(find, replace);
-            } else {
-                this.core.showToast('⚠️ Введите текст для поиска');
-            }
-        });
-        document.getElementById('toolbarFillBtn').addEventListener('click', () => {
-            const value = document.getElementById('toolbarFillValue').value;
-            if (value !== undefined && value !== null) {
-                this.clipboard.fillSelection(value);
-            } else {
-                this.core.showToast('⚠️ Введите значение для заполнения');
-            }
-        });
-
-        // ============================================================
         // КЛИКИ ПО ЗАГОЛОВКАМ (ЧЕРЕЗ addEventListener)
         // ============================================================
-        // Делегирование событий на таблице
         document.getElementById('dataTable').addEventListener('click', (e) => {
             const target = e.target.closest('th, td');
             if (!target) return;
 
-            // Обработка уголка (выделение всего)
             if (target.classList.contains('corner-header')) {
                 this.selection.selectAll();
                 return;
             }
 
-            // Обработка заголовков колонок
             if (target.classList.contains('col-header')) {
                 const colIndex = parseInt(target.dataset.colIndex);
                 if (!isNaN(colIndex)) {
@@ -233,7 +298,6 @@ class TableUI {
                 return;
             }
 
-            // Обработка заголовков строк
             if (target.classList.contains('row-header') && !target.classList.contains('corner-header')) {
                 const rowIndex = parseInt(target.dataset.rowIndex);
                 if (!isNaN(rowIndex)) {
@@ -298,6 +362,23 @@ class TableUI {
         });
 
         this.selection.updateToolbarVisibility();
+    }
+
+    // ============================================================
+    // ПЕРЕКЛЮЧЕНИЕ СТРАНИЦ
+    // ============================================================
+    switchPage(page) {
+        document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${page}`).classList.add('active');
+        
+        // Синхронизируем активные кнопки
+        const desktopBtn = document.querySelector(`.main-nav li[data-page="${page}"]`);
+        const mobileBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+        if (desktopBtn) desktopBtn.classList.add('active');
+        if (mobileBtn) mobileBtn.classList.add('active');
     }
 
     // ============================================================
