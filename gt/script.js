@@ -1,19 +1,20 @@
 // ==========================================================================
-// script.js - ПОЛНОСТЬЮ ОБНОВЛЕН ДЛЯ ЭТАПА 1
-// ПОДДЕРЖКА: нумерация строк, буквы колонок, выделение ячеек, формула-бар
+// script.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// Строка 1 теперь отображается как обычные данные, а не как заголовки
+// Авто-выравнивание ширины колонок
 // ==========================================================================
 
 class TableManager {
     constructor() {
         this.apiUrl = localStorage.getItem('gt_api_url') || '';
         this.data = { 
-            sheet1: { headers: [], rows: [] },
-            sheet2: { headers: [], rows: [] },
-            sheet3: { headers: [], rows: [] },
-            sheet4: { headers: [], rows: [] }
+            sheet1: { rows: [] },  // Теперь rows содержит ВСЕ строки, включая строку 1
+            sheet2: { rows: [] },
+            sheet3: { rows: [] },
+            sheet4: { rows: [] }
         };
         this.currentSheet = 'sheet1';
-        this.selectedCell = null; // { row, col }
+        this.selectedCell = null;
         this.editingCell = null;
         this.init();
     }
@@ -45,11 +46,9 @@ class TableManager {
     // ПРИВЯЗКА СОБЫТИЙ
     // ============================================================
     bindEvents() {
-        // Синхронизация
         document.getElementById('syncBtn').addEventListener('click', () => this.syncData());
         document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
 
-        // Навигация по табам
         document.querySelectorAll('.main-nav li').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
@@ -60,7 +59,6 @@ class TableManager {
             });
         });
 
-        // Формула-бар: подтверждение (Enter)
         const formulaInput = document.getElementById('formulaInput');
         formulaInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -73,11 +71,9 @@ class TableManager {
             }
         });
 
-        // Формула-бар: кнопки
         document.getElementById('formulaConfirm').addEventListener('click', () => this.applyFormula());
         document.getElementById('formulaCancel').addEventListener('click', () => this.cancelFormula());
 
-        // Переключение листов
         document.querySelectorAll('.sheet-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
@@ -86,7 +82,6 @@ class TableManager {
             });
         });
 
-        // Модалка
         document.querySelector('.close-modal').addEventListener('click', () => {
             document.getElementById('editModal').classList.remove('active');
         });
@@ -97,7 +92,6 @@ class TableManager {
             this.saveCellValue();
         });
 
-        // Настройки
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
             const url = document.getElementById('apiUrl').value.trim();
             if (url) {
@@ -110,18 +104,14 @@ class TableManager {
             }
         });
 
-        // Загружаем URL в поле настроек
         if (this.apiUrl) {
             document.getElementById('apiUrl').value = this.apiUrl;
         }
 
-        // Глобальные клавиши
         document.addEventListener('keydown', (e) => {
-            // Escape для модалки
             if (e.key === 'Escape') {
                 document.getElementById('editModal').classList.remove('active');
             }
-            // Стрелки для навигации
             if (this.selectedCell && !document.querySelector('.modal.active')) {
                 this.handleArrowKeys(e);
             }
@@ -134,8 +124,8 @@ class TableManager {
     handleArrowKeys(e) {
         const { row, col } = this.selectedCell;
         const currentData = this.data[this.currentSheet];
-        const maxRow = currentData.rows.length + 1; // +1 для заголовка
-        const maxCol = currentData.headers.length;
+        const maxRow = currentData.rows.length;  // Все строки включая строку 1
+        const maxCol = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
 
         let newRow = row;
         let newCol = col;
@@ -156,7 +146,7 @@ class TableManager {
     }
 
     // ============================================================
-    // ПОЛУЧЕНИЕ БУКВЫ КОЛОНКИ (A, B, C, ... AA, AB, ...)
+    // ПОЛУЧЕНИЕ БУКВЫ КОЛОНКИ
     // ============================================================
     getColumnLetter(index) {
         let letter = '';
@@ -167,30 +157,19 @@ class TableManager {
         return letter;
     }
 
-    getColumnIndex(letter) {
-        let index = 0;
-        for (let i = 0; i < letter.length; i++) {
-            index = index * 26 + (letter.charCodeAt(i) - 64);
-        }
-        return index - 1;
-    }
-
     // ============================================================
     // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
     // ============================================================
     selectCell(row, col) {
-        // Снимаем предыдущее выделение
         document.querySelectorAll('.cell-selected, .row-selected, .col-selected')
             .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected'));
 
         this.selectedCell = { row, col };
 
-        // Подсвечиваем ячейку
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
             cell.classList.add('cell-selected');
             
-            // Подсвечиваем строку
             const rowElement = cell.closest('tr');
             if (rowElement) {
                 rowElement.querySelectorAll('td').forEach(td => {
@@ -200,33 +179,29 @@ class TableManager {
                 });
             }
             
-            // Подсвечиваем колонку
             document.querySelectorAll(`td[data-col="${col}"]`).forEach(td => {
                 if (!td.classList.contains('cell-selected')) {
                     td.classList.add('col-selected');
                 }
             });
             
-            // Обновляем строку формул
             const columnLetter = this.getColumnLetter(col - 1);
             document.getElementById('cellReference').textContent = `${columnLetter}${row}`;
             
-            // Показываем значение в строке формул
             const currentData = this.data[this.currentSheet];
-            const rowIndex = row - 2; // потому что строка 1 — заголовки
+            const rowIndex = row - 1;  // Теперь строка 1 — это индекс 0
             let value = '';
             if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
                 value = currentData.rows[rowIndex]?.[col - 1] || '';
             }
             document.getElementById('formulaInput').value = value;
             
-            // Обновляем статус-бар
             document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
     }
 
     // ============================================================
-    // ПРИМЕНЕНИЕ ФОРМУЛЫ (СОХРАНЕНИЕ ИЗ ФОРМУЛА-БАР)
+    // ПРИМЕНЕНИЕ ФОРМУЛЫ
     // ============================================================
     async applyFormula() {
         if (!this.selectedCell) return;
@@ -234,7 +209,6 @@ class TableManager {
         const value = document.getElementById('formulaInput').value.trim();
         const { row, col } = this.selectedCell;
 
-        // Сохраняем как обычное значение (пока без формул)
         this.editingCell = { row, col };
         document.getElementById('cellInput').value = value;
         await this.saveCellValue();
@@ -244,7 +218,7 @@ class TableManager {
         if (this.selectedCell) {
             const { row, col } = this.selectedCell;
             const currentData = this.data[this.currentSheet];
-            const rowIndex = row - 2;
+            const rowIndex = row - 1;
             let value = '';
             if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
                 value = currentData.rows[rowIndex]?.[col - 1] || '';
@@ -278,12 +252,12 @@ class TableManager {
             if (result.sheet1 || result.sheet2 || result.sheet3 || result.sheet4) {
                 ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
                     if (result[key] && result[key].length > 0) {
+                        // Сохраняем ВСЕ строки как есть (включая строку 1)
                         this.data[key] = {
-                            headers: result[key][0] || [],
-                            rows: result[key].slice(1) || []
+                            rows: result[key]  // Теперь это ВСЕ строки
                         };
                     } else {
-                        this.data[key] = { headers: [], rows: [] };
+                        this.data[key] = { rows: [] };
                     }
                 });
 
@@ -293,10 +267,8 @@ class TableManager {
                 this.showSyncStatus(true);
                 loading.style.display = 'none';
 
-                // Выбираем первую ячейку
+                // Выбираем первую ячейку (строка 1, колонка 1)
                 if (this.data[this.currentSheet].rows.length > 0) {
-                    this.selectCell(2, 1);
-                } else {
                     this.selectCell(1, 1);
                 }
             } else {
@@ -342,64 +314,70 @@ class TableManager {
         this.currentSheet = sheetName;
         this.renderTable();
         this.updateStats();
-        // Выбираем первую ячейку
         const currentData = this.data[this.currentSheet];
         if (currentData.rows.length > 0) {
-            this.selectCell(2, 1);
-        } else if (currentData.headers.length > 0) {
             this.selectCell(1, 1);
         }
-        // Обновляем имя в шапке
         const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
         document.getElementById('sheetNameDisplay').textContent = sheetLabels[sheetName] || sheetName;
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ (С НУМЕРАЦИЕЙ)
+    // ОТРИСОВКА ТАБЛИЦЫ (Строка 1 теперь как обычные данные)
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
 
-        const currentData = this.data[this.currentSheet] || { headers: [], rows: [] };
-        const headers = currentData.headers || [];
+        const currentData = this.data[this.currentSheet] || { rows: [] };
         const rows = currentData.rows || [];
+
+        // Определяем максимальное количество колонок
+        let maxCols = 0;
+        rows.forEach(row => {
+            if (row && row.length > maxCols) maxCols = row.length;
+        });
 
         // ---- ЗАГОЛОВКИ КОЛОНОК (буквы) ----
         let headerHtml = '<tr><th class="row-header"></th>';
-        headers.forEach((h, index) => {
-            const letter = this.getColumnLetter(index);
+        for (let i = 0; i < maxCols; i++) {
+            const letter = this.getColumnLetter(i);
             headerHtml += `<th>${letter}</th>`;
-        });
+        }
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // ---- ТЕЛО ТАБЛИЦЫ (строки с номерами) ----
+        // ---- ТЕЛО ТАБЛИЦЫ (все строки, включая строку 1) ----
         if (rows.length > 0) {
             let bodyHtml = '';
             rows.forEach((row, rowIndex) => {
-                const actualRow = rowIndex + 2; // строка 1 — заголовки
+                const actualRow = rowIndex + 1;  // Строка 1, 2, 3, ...
                 bodyHtml += `<tr>`;
                 bodyHtml += `<td class="row-header">${actualRow}</td>`;
-                row.forEach((cell, colIndex) => {
+                for (let colIndex = 0; colIndex < maxCols; colIndex++) {
                     const actualCol = colIndex + 1;
-                    const value = cell !== undefined && cell !== null ? cell : '';
+                    const value = row && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex] : '';
                     bodyHtml += `<td data-row="${actualRow}" data-col="${actualCol}" 
                                    onclick="tableManager.selectCell(${actualRow}, ${actualCol})"
-                                   ondblclick="tableManager.editCell(${actualRow}, ${actualCol})">
+                                   ondblclick="tableManager.editCell(${actualRow}, ${actualCol})"
+                                   style="min-width: 80px; max-width: 300px;">
                                    ${value}</td>`;
-                });
+                }
                 bodyHtml += '</tr>';
             });
             tbody.innerHTML = bodyHtml;
         } else {
-            tbody.innerHTML = `<tr>
+            bodyHtml = `<tr>
                 <td class="row-header">1</td>
-                <td colspan="${Math.max(headers.length, 1)}" style="text-align:center; padding:20px; color:#999;">
+                <td colspan="${Math.max(maxCols, 1)}" style="text-align:center; padding:20px; color:#999;">
                     Нет данных для отображения
                 </td>
             </tr>`;
+            tbody.innerHTML = bodyHtml;
         }
+
+        // ---- АВТО-ВЫРАВНИВАНИЕ ШИРИНЫ КОЛОНОК ----
+        this.autoFitColumns();
 
         // Обновляем имя листа
         const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
@@ -407,7 +385,62 @@ class TableManager {
     }
 
     // ============================================================
-    // РЕДАКТИРОВАНИЕ ЯЧЕЙКИ (через модалку)
+    // АВТО-ВЫРАВНИВАНИЕ ШИРИНЫ КОЛОНОК
+    // ============================================================
+    autoFitColumns() {
+        const table = document.getElementById('dataTable');
+        if (!table) return;
+
+        const rows = table.querySelectorAll('tr');
+        if (rows.length < 2) return;
+
+        // Получаем все ячейки в каждой колонке
+        const colCount = rows[0].querySelectorAll('td, th').length;
+        const colMaxLengths = new Array(colCount).fill(0);
+
+        // Проходим по всем строкам и ячейкам
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td, th');
+            cells.forEach((cell, index) => {
+                if (index < colCount) {
+                    const text = cell.textContent || '';
+                    // Учитываем, что в заголовках (буквы) текст короче
+                    const isHeader = cell.tagName === 'TH';
+                    const length = isHeader ? Math.max(text.length, 2) : text.length;
+                    if (length > colMaxLengths[index]) {
+                        colMaxLengths[index] = length;
+                    }
+                }
+            });
+        });
+
+        // Устанавливаем ширину колонок (в пикселях, с запасом)
+        const colElements = table.querySelectorAll('colgroup');
+        if (colElements.length === 0) {
+            // Создаем colgroup если его нет
+            const colgroup = document.createElement('colgroup');
+            table.prepend(colgroup);
+            for (let i = 0; i < colCount; i++) {
+                const col = document.createElement('col');
+                const width = Math.max(60, colMaxLengths[i] * 8 + 20);
+                col.style.width = Math.min(width, 300) + 'px';
+                colgroup.appendChild(col);
+            }
+        } else {
+            // Обновляем существующий colgroup
+            const colgroup = colElements[0];
+            const cols = colgroup.querySelectorAll('col');
+            cols.forEach((col, index) => {
+                if (index < colCount) {
+                    const width = Math.max(60, colMaxLengths[index] * 8 + 20);
+                    col.style.width = Math.min(width, 300) + 'px';
+                }
+            });
+        }
+    }
+
+    // ============================================================
+    // РЕДАКТИРОВАНИЕ ЯЧЕЙКИ
     // ============================================================
     editCell(row, col) {
         this.editingCell = { row, col };
@@ -420,7 +453,7 @@ class TableManager {
     }
 
     // ============================================================
-    // СОХРАНЕНИЕ ЯЧЕЙКИ (POST как text/plain)
+    // СОХРАНЕНИЕ ЯЧЕЙКИ
     // ============================================================
     async saveCellValue() {
         const value = document.getElementById('cellInput').value.trim();
@@ -456,14 +489,17 @@ class TableManager {
             if (result.success) {
                 // Обновляем локальные данные
                 const currentData = this.data[this.currentSheet];
-                const rowIndex = row - 2;
+                const rowIndex = row - 1;  // Теперь строка 1 — индекс 0
                 if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                    // Если колонки не хватает, расширяем массив
+                    if (currentData.rows[rowIndex].length < col) {
+                        currentData.rows[rowIndex].length = col;
+                    }
                     currentData.rows[rowIndex][col - 1] = value;
                 }
                 
                 this.renderTable();
                 document.getElementById('editModal').classList.remove('active');
-                // Обновляем строку формул
                 document.getElementById('formulaInput').value = value;
                 this.showToast('✅ Ячейка обновлена!');
             } else {
@@ -480,9 +516,11 @@ class TableManager {
     // ОБНОВЛЕНИЕ СТАТИСТИКИ
     // ============================================================
     updateStats() {
-        const currentData = this.data[this.currentSheet] || { headers: [], rows: [] };
-        document.getElementById('rowCount').textContent = `Строк: ${currentData.rows.length}`;
-        document.getElementById('colCount').textContent = `Колонок: ${currentData.headers.length}`;
+        const currentData = this.data[this.currentSheet] || { rows: [] };
+        const rowCount = currentData.rows.length;
+        const colCount = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
+        document.getElementById('rowCount').textContent = `Строк: ${rowCount}`;
+        document.getElementById('colCount').textContent = `Колонок: ${colCount}`;
         document.getElementById('lastSync').textContent = 
             `Последняя синхронизация: ${new Date().toLocaleString()}`;
         if (!this.selectedCell) {
@@ -544,9 +582,6 @@ class TableManager {
     }
 }
 
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
 let tableManager;
 document.addEventListener('DOMContentLoaded', () => {
     tableManager = new TableManager();
