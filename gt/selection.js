@@ -19,14 +19,10 @@ class TableSelection {
     // ОЧИСТКА ВЫДЕЛЕНИЯ
     // ============================================================
     clearSelection() {
-        // Снимаем синие классы с ячеек
         document.querySelectorAll('.cell-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
-        
-        // Снимаем зеленые классы с заголовков
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
             .forEach(el => el.classList.remove('partial', 'full', 'selected'));
-        
         this.selectionRange = null;
         this.selectedCell = null;
         document.getElementById('cellInfo').textContent = 'Выбрано: —';
@@ -39,7 +35,6 @@ class TableSelection {
     // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
     // ============================================================
     selectCell(row, col) {
-        // Снимаем все старые классы
         document.querySelectorAll('.cell-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
@@ -48,7 +43,6 @@ class TableSelection {
         this.selectedCell = { row, col };
         this.selectionRange = { startRow: row, startCol: col, endRow: row, endCol: col };
 
-        // ---- СИНЕЕ ВЫДЕЛЕНИЕ ТОЛЬКО ДЛЯ ЯЧЕЕК ----
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
             cell.classList.add('cell-selected');
@@ -67,7 +61,6 @@ class TableSelection {
             document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
         
-        // ---- ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ДЛЯ ЗАГОЛОВКОВ ----
         this.updateHeaderSelection();
         this.updateToolbarVisibility();
     }
@@ -91,7 +84,6 @@ class TableSelection {
     // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ
     // ============================================================
     updateSelectionVisual() {
-        // Снимаем все старые классы
         document.querySelectorAll('.cell-selected, .range-selected')
             .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
@@ -133,7 +125,7 @@ class TableSelection {
     }
 
     // ============================================================
-    // ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ (ОТДЕЛЬНЫЙ МЕТОД)
+    // ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
     // ============================================================
     updateHeaderSelection() {
         if (!this.selectionRange) return;
@@ -165,9 +157,11 @@ class TableSelection {
             }
         });
 
-        // ---- ЗЕЛЕНЕЕМ КОЛОНКИ ----
+        // ---- ЗЕЛЕНЕЕМ КОЛОНКИ (через data-letter) ----
         document.querySelectorAll('.col-header').forEach(el => {
-            const letter = el.textContent;
+            const letter = el.dataset.letter;
+            if (!letter) return;
+            
             const colIndex = this.core.getColumnIndex(letter) + 1;
             
             if (colIndex >= minCol && colIndex <= maxCol) {
@@ -180,7 +174,7 @@ class TableSelection {
             }
         });
 
-        // ---- ЗЕЛЕНЕЕМ УГОЛОК (при выделении всего листа) ----
+        // ---- ЗЕЛЕНЕЕМ УГОЛОК ----
         const isFullSheet = (minRow === 1 && maxRow === maxRows && minCol === 1 && maxCol === maxCols);
         if (isFullSheet) {
             document.querySelector('.corner-header')?.classList.add('selected');
@@ -204,7 +198,6 @@ class TableSelection {
             endCol: maxCol
         };
         this.selectedCell = { row: 1, col: 1 };
-        
         this.updateSelectionVisual();
     }
 
