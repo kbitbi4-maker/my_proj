@@ -4,40 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GT Manager - Google Tables</title>
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Подключаем стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <!-- ============================================================
-    ШАПКА
-    ============================================================ -->
+    <!-- ШАПКА -->
     <header class="app-header">
         <div class="header-left">
-            <button class="menu-btn" id="menuToggle" title="Меню">
-                <i class="fas fa-bars"></i>
-            </button>
+            <button class="menu-btn" id="menuToggle" title="Меню"><i class="fas fa-bars"></i></button>
             <h1 class="app-title">Таблица</h1>
             <span class="sheet-name" id="sheetNameDisplay">Лист 1</span>
         </div>
         <div class="header-right">
-            <button class="sync-btn" id="syncBtn" title="Синхронизация с Google Таблицей">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <span class="sync-status">Синхр.</span>
-            </button>
-            <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+            <button class="sync-btn" id="syncBtn" title="Синхронизация"><i class="fas fa-cloud-upload-alt"></i><span class="sync-status">Синхр.</span></button>
+            <button class="refresh-btn" id="refreshBtn" title="Обновить"><i class="fas fa-sync-alt"></i></button>
         </div>
     </header>
 
-    <!-- ============================================================
-    СТРОКА ФОРМУЛ (FORMULA BAR)
-    ============================================================ -->
+    <!-- СТРОКА ФОРМУЛ -->
     <div class="formula-bar">
         <div class="cell-reference" id="cellReference">A1</div>
         <div class="formula-input">
@@ -50,47 +34,46 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    НАВИГАЦИЯ (ТАБЫ)
-    ============================================================ -->
+    <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ ДЛЯ ВЫДЕЛЕННЫХ ЯЧЕЕК -->
+    <div class="selection-toolbar" id="selectionToolbar">
+        <span style="font-size:12px;color:#5f6368;font-weight:500;"><i class="fas fa-arrows-alt"></i> Выделено: <span id="selectionCount">0</span> ячеек</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button id="toolbarClearBtn" class="toolbar-btn" title="Очистить (Delete)"><i class="fas fa-eraser"></i> Очистить</button>
+            <button id="toolbarCopyBtn" class="toolbar-btn" title="Копировать (Ctrl+C)"><i class="fas fa-copy"></i> Копировать</button>
+            <button id="toolbarPasteBtn" class="toolbar-btn" title="Вставить (Ctrl+V)"><i class="fas fa-paste"></i> Вставить</button>
+            <div style="display:flex;align-items:center;gap:4px;border-left:1px solid #dadce0;padding-left:8px;">
+                <input type="text" id="toolbarReplaceFind" placeholder="Найти..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
+                <span style="font-size:12px;color:#5f6368;">→</span>
+                <input type="text" id="toolbarReplaceWith" placeholder="Заменить..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
+                <button id="toolbarReplaceBtn" class="toolbar-btn" title="Заменить в выделенных"><i class="fas fa-exchange-alt"></i> Заменить</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;border-left:1px solid #dadce0;padding-left:8px;">
+                <input type="text" id="toolbarFillValue" placeholder="Значение..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
+                <button id="toolbarFillBtn" class="toolbar-btn" title="Заполнить все"><i class="fas fa-fill-drip"></i> Заполнить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- НАВИГАЦИЯ -->
     <nav class="main-nav">
         <ul>
-            <li class="active" data-page="table">
-                <i class="fas fa-table"></i> <span>Таблица</span>
-            </li>
-            <li data-page="overview">
-                <i class="fas fa-chart-pie"></i> <span>Обзор</span>
-            </li>
-            <li data-page="settings">
-                <i class="fas fa-cog"></i> <span>Настройки</span>
-            </li>
+            <li class="active" data-page="table"><i class="fas fa-table"></i> <span>Таблица</span></li>
+            <li data-page="overview"><i class="fas fa-chart-pie"></i> <span>Обзор</span></li>
+            <li data-page="settings"><i class="fas fa-cog"></i> <span>Настройки</span></li>
         </ul>
     </nav>
 
-    <!-- ============================================================
-    ОСНОВНОЙ КОНТЕНТ
-    ============================================================ -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="app-content">
-
-        <!-- ===================== -->
-        <!-- СТРАНИЦА: ТАБЛИЦА     -->
-        <!-- ===================== -->
+        <!-- СТРАНИЦА ТАБЛИЦЫ -->
         <section id="page-table" class="page active">
-
-            <!-- Индикатор загрузки -->
-            <div id="loadingIndicator" class="loading">
-                <i class="fas fa-spinner fa-spin"></i> Загрузка данных...
-            </div>
-
-            <!-- Переключатель листов -->
+            <div id="loadingIndicator" class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка данных...</div>
             <div class="sheet-selector" id="sheetSelector">
                 <button class="sheet-tab active" data-sheet="sheet1">Лист 1</button>
                 <button class="sheet-tab" data-sheet="sheet2">Лист 2</button>
                 <button class="sheet-tab" data-sheet="sheet3">Лист 3</button>
                 <button class="sheet-tab" data-sheet="sheet4">Лист 4</button>
             </div>
-
-            <!-- Контейнер таблицы -->
             <div class="table-container">
                 <div class="table-scroll">
                     <table id="dataTable">
@@ -99,8 +82,6 @@
                     </table>
                 </div>
             </div>
-
-            <!-- Статус бар -->
             <div class="stats-bar">
                 <span id="rowCount">Строк: 0</span>
                 <span id="colCount">Колонок: 0</span>
@@ -109,88 +90,51 @@
             </div>
         </section>
 
-        <!-- ===================== -->
-        <!-- СТРАНИЦА: ОБЗОР       -->
-        <!-- ===================== -->
+        <!-- СТРАНИЦА ОБЗОРА -->
         <section id="page-overview" class="page">
             <h2>Обзор данных</h2>
             <div class="overview-cards">
-                <div class="card">
-                    <h3>Всего записей</h3>
-                    <span id="totalRecords">0</span>
-                </div>
-                <div class="card">
-                    <h3>Статус</h3>
-                    <span id="dataStatus">Ожидание...</span>
-                </div>
-                <div class="card">
-                    <h3>Листов</h3>
-                    <span>4</span>
-                </div>
+                <div class="card"><h3>Всего записей</h3><span id="totalRecords">0</span></div>
+                <div class="card"><h3>Статус</h3><span id="dataStatus">Ожидание...</span></div>
+                <div class="card"><h3>Листов</h3><span>4</span></div>
             </div>
         </section>
 
-        <!-- ===================== -->
-        <!-- СТРАНИЦА: НАСТРОЙКИ   -->
-        <!-- ===================== -->
+        <!-- СТРАНИЦА НАСТРОЕК -->
         <section id="page-settings" class="page">
             <h2>Настройки подключения</h2>
             <div class="settings-form">
-
-                <!-- Настройка API URL -->
                 <div class="form-group">
                     <label>URL веб-приложения Google Sheets:</label>
                     <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
                     <button id="saveSettingsBtn">Сохранить</button>
                 </div>
-
-                <!-- Режим отображения -->
                 <div class="form-group">
                     <label>Режим отображения:</label>
-                    <select id="displayMode">
-                        <option value="table">Таблица</option>
-                        <option value="cards">Карточки</option>
-                    </select>
+                    <select id="displayMode"><option value="table">Таблица</option><option value="cards">Карточки</option></select>
                 </div>
-
-                <!-- УПРАВЛЕНИЕ РАЗМЕРАМИ -->
                 <div class="form-group">
                     <label>Управление размерами:</label>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-
-                        <!-- Сброс размеров -->
-                        <button id="resetSizesBtn" style="padding: 6px 16px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                            Сбросить размеры
-                        </button>
-
-                        <!-- Ширина колонки -->
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label style="font-size: 12px; color: #5f6368;">Ширина колонки (пикс):</label>
-                            <input type="number" id="colWidthInput" value="120" style="width: 80px; padding: 4px 8px; border: 1px solid #dadce0; border-radius: 4px;">
-                            <button id="applyColWidthBtn" style="padding: 4px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer;">Применить</button>
+                    <div class="sizes-control">
+                        <button id="resetSizesBtn" class="btn-reset">Сбросить размеры</button>
+                        <div class="size-group">
+                            <span class="size-label">Ширина колонки (пикс):</span>
+                            <input type="number" id="colWidthInput" class="size-input" value="120">
+                            <button id="applyColWidthBtn" class="btn-apply">Применить</button>
                         </div>
-
-                        <!-- Высота строки -->
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label style="font-size: 12px; color: #5f6368;">Высота строки (пикс):</label>
-                            <input type="number" id="rowHeightInput" value="28" style="width: 80px; padding: 4px 8px; border: 1px solid #dadce0; border-radius: 4px;">
-                            <button id="applyRowHeightBtn" style="padding: 4px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer;">Применить</button>
+                        <div class="size-group">
+                            <span class="size-label">Высота строки (пикс):</span>
+                            <input type="number" id="rowHeightInput" class="size-input" value="28">
+                            <button id="applyRowHeightBtn" class="btn-apply">Применить</button>
                         </div>
-
                     </div>
-                    <small style="color: #5f6368; font-size: 11px; margin-top: 4px;">
-                        Изменения применяются к текущему листу. Для применения к выбранной колонке/строке сначала выделите ячейку.
-                    </small>
+                    <div class="sizes-hint">Изменения применяются к текущему листу. Сначала выделите ячейку в нужной колонке/строке.</div>
                 </div>
-
             </div>
         </section>
-
     </main>
 
-    <!-- ============================================================
-    МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ
-    ============================================================ -->
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -203,11 +147,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    ПОДКЛЮЧАЕМ СКРИПТЫ
-    ============================================================ -->
     <script src="config.js"></script>
     <script src="script.js"></script>
-
 </body>
 </html>
