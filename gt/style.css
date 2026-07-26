@@ -55,7 +55,9 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .table-scroll{width:100%;height:100%;overflow:auto}
 #dataTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;border:1px solid #dadce0}
 
-/* ЗАГОЛОВКИ - БАЗОВЫЕ СТИЛИ */
+/* ============================================================
+   ЗАГОЛОВКИ (БАЗОВЫЕ СТИЛИ)
+   ============================================================ */
 .corner-header{min-width:36px!important;max-width:36px!important;width:36px!important;cursor:pointer!important;background:#f8f9fa!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;padding:0!important;height:28px;position:sticky;top:0;left:0;z-index:3;user-select:none!important}
 .corner-header:hover{background:#e8eaed!important}
 .corner-header i{font-size:10px;color:#5f6368}
@@ -67,47 +69,23 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .row-header:hover{background:#e8eaed!important}
 
 /* ============================================================
-   ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ (ПРИНУДИТЕЛЬНЫЕ ПРАВИЛА)
+   ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ (НОВЫЕ ПРАВИЛА)
    ============================================================ */
+.row-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
+.row-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
+.col-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
+.col-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
+.corner-header.selected{background-color:#c6d9f0!important}
 
-/* Строки - частичное выделение */
-.row-header.partial {
-    background-color: #d2e3fc !important;
-    color: #0b57d0 !important;
-    font-weight: 500 !important;
-}
-
-/* Строки - полное выделение */
-.row-header.full {
-    background-color: #c6d9f0 !important;
-    color: #0b57d0 !important;
-    font-weight: 600 !important;
-}
-
-/* Колонки - частичное выделение */
-.col-header.partial {
-    background-color: #d2e3fc !important;
-    color: #0b57d0 !important;
-    font-weight: 500 !important;
-}
-
-/* Колонки - полное выделение */
-.col-header.full {
-    background-color: #c6d9f0 !important;
-    color: #0b57d0 !important;
-    font-weight: 600 !important;
-}
-
-/* Уголок при выделении всего листа */
-.corner-header.selected {
-    background-color: #c6d9f0 !important;
-}
-
-/* ЯЧЕЙКИ */
+/* ============================================================
+   ЯЧЕЙКИ
+   ============================================================ */
 .data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;transition:background 0.1s;min-height:28px;vertical-align:top;background:#ffffff;font-size:13px;color:#202124}
 .data-cell:hover{background:#f1f3f4!important}
 
-/* ВЫДЕЛЕНИЕ ЯЧЕЕК */
+/* ============================================================
+   ВЫДЕЛЕНИЕ ЯЧЕЕК
+   ============================================================ */
 .data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
 .data-cell.range-selected{background-color:#e8f0fe!important}
 tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected){background-color:transparent!important}
