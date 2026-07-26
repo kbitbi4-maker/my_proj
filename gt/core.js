@@ -28,8 +28,10 @@ class TableCore {
         }
 
         const loading = document.getElementById('loadingIndicator');
-        loading.style.display = 'flex';
-        loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка данных...';
+        if (loading) {
+            loading.style.display = 'flex';
+            loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка данных...';
+        }
 
         try {
             const response = await fetch(this.apiUrl);
@@ -52,12 +54,14 @@ class TableCore {
                 this.renderTable();
                 this.updateStats();
                 this.updateOverview();
-                loading.style.display = 'none';
+                if (loading) loading.style.display = 'none';
 
+                // БЕЗОПАСНЫЙ ВЫЗОВ selectCell
                 if (this.data[this.currentSheet].rows.length > 0) {
-                    // Вызовем через глобальный объект
-                    if (window.tableSelection) {
+                    if (window.tableSelection && typeof window.tableSelection.selectCell === 'function') {
                         window.tableSelection.selectCell(1, 1);
+                    } else {
+                        console.warn('⚠️ tableSelection ещё не инициализирован, пропускаем selectCell');
                     }
                 }
                 return true;
@@ -67,11 +71,13 @@ class TableCore {
 
         } catch (error) {
             console.error('❌ Ошибка загрузки:', error);
-            loading.innerHTML = `
-                <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
-                <span>❌ Ошибка: ${error.message}</span>
-            `;
-            loading.style.display = 'flex';
+            if (loading) {
+                loading.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
+                    <span>❌ Ошибка: ${error.message}</span>
+                `;
+                loading.style.display = 'flex';
+            }
             return false;
         }
     }
@@ -383,6 +389,9 @@ class TableCore {
         }
     }
 
+    // ============================================================
+    // TOAST УВЕДОМЛЕНИЕ
+    // ============================================================
     showToast(message) {
         const toast = document.createElement('div');
         toast.style.cssText = `
