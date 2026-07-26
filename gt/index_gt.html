@@ -2,26 +2,38 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GT Manager - Google Tables</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- ШАПКА -->
+
+    <!-- ============================================================
+    ШАПКА
+    ============================================================ -->
     <header class="app-header">
         <div class="header-left">
-            <button class="menu-btn" id="menuToggle" title="Меню"><i class="fas fa-bars"></i></button>
+            <button class="menu-btn" id="menuToggle" title="Меню">
+                <i class="fas fa-bars"></i>
+            </button>
             <h1 class="app-title">Таблица</h1>
             <span class="sheet-name" id="sheetNameDisplay">Лист 1</span>
         </div>
         <div class="header-right">
-            <button class="sync-btn" id="syncBtn" title="Синхронизация"><i class="fas fa-cloud-upload-alt"></i><span class="sync-status">Синхр.</span></button>
-            <button class="refresh-btn" id="refreshBtn" title="Обновить"><i class="fas fa-sync-alt"></i></button>
+            <button class="sync-btn" id="syncBtn" title="Синхронизация">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span class="sync-status">Синхр.</span>
+            </button>
+            <button class="refresh-btn" id="refreshBtn" title="Обновить">
+                <i class="fas fa-sync-alt"></i>
+            </button>
         </div>
     </header>
 
-    <!-- СТРОКА ФОРМУЛ -->
+    <!-- ============================================================
+    СТРОКА ФОРМУЛ
+    ============================================================ -->
     <div class="formula-bar">
         <div class="cell-reference" id="cellReference">A1</div>
         <div class="formula-input">
@@ -29,45 +41,72 @@
             <input type="text" id="formulaInput" placeholder="Введите значение или формулу">
         </div>
         <div class="formula-actions">
-            <button id="formulaConfirm" title="Подтвердить (Enter)">✓</button>
-            <button id="formulaCancel" title="Отменить (Esc)">✗</button>
+            <button id="formulaConfirm" title="Подтвердить">✓</button>
+            <button id="formulaCancel" title="Отменить">✗</button>
         </div>
     </div>
 
-    <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ ДЛЯ ВЫДЕЛЕННЫХ ЯЧЕЕК -->
+    <!-- ============================================================
+    ПАНЕЛЬ ИНСТРУМЕНТОВ (ДЕСКТОП)
+    ============================================================ -->
     <div class="selection-toolbar" id="selectionToolbar">
-        <span style="font-size:12px;color:#5f6368;font-weight:500;"><i class="fas fa-arrows-alt"></i> Выделено: <span id="selectionCount">0</span> ячеек</span>
+        <span style="font-size:12px;color:#5f6368;font-weight:500;">
+            <i class="fas fa-arrows-alt"></i> Выделено: <span id="selectionCount">0</span> ячеек
+        </span>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button id="toolbarClearBtn" class="toolbar-btn" title="Очистить (Delete)"><i class="fas fa-eraser"></i> Очистить</button>
-            <button id="toolbarCopyBtn" class="toolbar-btn" title="Копировать (Ctrl+C)"><i class="fas fa-copy"></i> Копировать</button>
-            <button id="toolbarPasteBtn" class="toolbar-btn" title="Вставить (Ctrl+V)"><i class="fas fa-paste"></i> Вставить</button>
+            <button id="toolbarCopyBtn" class="toolbar-btn" title="Копировать (Ctrl+C)">
+                <i class="fas fa-copy"></i> Копировать
+            </button>
+            <button id="toolbarPasteBtn" class="toolbar-btn" title="Вставить (Ctrl+V)">
+                <i class="fas fa-paste"></i> Вставить
+            </button>
+            <button id="toolbarClearBtn" class="toolbar-btn" title="Очистить">
+                <i class="fas fa-eraser"></i> Очистить
+            </button>
             <div style="display:flex;align-items:center;gap:4px;border-left:1px solid #dadce0;padding-left:8px;">
                 <input type="text" id="toolbarReplaceFind" placeholder="Найти..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
                 <span style="font-size:12px;color:#5f6368;">→</span>
                 <input type="text" id="toolbarReplaceWith" placeholder="Заменить..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
-                <button id="toolbarReplaceBtn" class="toolbar-btn" title="Заменить в выделенных"><i class="fas fa-exchange-alt"></i> Заменить</button>
+                <button id="toolbarReplaceBtn" class="toolbar-btn" title="Заменить">
+                    <i class="fas fa-exchange-alt"></i> Заменить
+                </button>
             </div>
             <div style="display:flex;align-items:center;gap:4px;border-left:1px solid #dadce0;padding-left:8px;">
                 <input type="text" id="toolbarFillValue" placeholder="Значение..." style="padding:4px 8px;border:1px solid #dadce0;border-radius:4px;font-size:12px;width:100px;">
-                <button id="toolbarFillBtn" class="toolbar-btn" title="Заполнить все"><i class="fas fa-fill-drip"></i> Заполнить</button>
+                <button id="toolbarFillBtn" class="toolbar-btn" title="Заполнить">
+                    <i class="fas fa-fill-drip"></i> Заполнить
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ -->
+    <!-- ============================================================
+    НАВИГАЦИЯ (ДЕСКТОП)
+    ============================================================ -->
     <nav class="main-nav">
         <ul>
-            <li class="active" data-page="table"><i class="fas fa-table"></i> <span>Таблица</span></li>
-            <li data-page="overview"><i class="fas fa-chart-pie"></i> <span>Обзор</span></li>
-            <li data-page="settings"><i class="fas fa-cog"></i> <span>Настройки</span></li>
+            <li class="active" data-page="table">
+                <i class="fas fa-table"></i> <span>Таблица</span>
+            </li>
+            <li data-page="overview">
+                <i class="fas fa-chart-pie"></i> <span>Обзор</span>
+            </li>
+            <li data-page="settings">
+                <i class="fas fa-cog"></i> <span>Настройки</span>
+            </li>
         </ul>
     </nav>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <!-- ============================================================
+    ОСНОВНОЙ КОНТЕНТ
+    ============================================================ -->
     <main class="app-content">
+
         <!-- СТРАНИЦА ТАБЛИЦЫ -->
         <section id="page-table" class="page active">
-            <div id="loadingIndicator" class="loading"><i class="fas fa-spinner fa-spin"></i> Загрузка данных...</div>
+            <div id="loadingIndicator" class="loading">
+                <i class="fas fa-spinner fa-spin"></i> Загрузка данных...
+            </div>
             <div class="sheet-selector" id="sheetSelector">
                 <button class="sheet-tab active" data-sheet="sheet1">Лист 1</button>
                 <button class="sheet-tab" data-sheet="sheet2">Лист 2</button>
@@ -111,7 +150,10 @@
                 </div>
                 <div class="form-group">
                     <label>Режим отображения:</label>
-                    <select id="displayMode"><option value="table">Таблица</option><option value="cards">Карточки</option></select>
+                    <select id="displayMode">
+                        <option value="table">Таблица</option>
+                        <option value="cards">Карточки</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Управление размерами:</label>
@@ -134,7 +176,42 @@
         </section>
     </main>
 
-    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
+    <!-- ============================================================
+    НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ)
+    ============================================================ -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-page="table">
+            <i class="fas fa-table"></i>
+            <span>Таблица</span>
+        </button>
+        <button class="nav-btn" data-page="overview">
+            <i class="fas fa-chart-pie"></i>
+            <span>Обзор</span>
+        </button>
+        <button class="nav-btn" data-page="settings">
+            <i class="fas fa-cog"></i>
+            <span>Настройки</span>
+        </button>
+        <button class="nav-btn" id="toolsBtn">
+            <i class="fas fa-tools"></i>
+            <span>Инструменты</span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+    ВСПЛЫВАЮЩЕЕ МЕНЮ ИНСТРУМЕНТОВ (МОБИЛЬНОЕ)
+    ============================================================ -->
+    <div class="tools-menu" id="toolsMenu">
+        <button id="mobileCopyBtn"><i class="fas fa-copy"></i> Копировать</button>
+        <button id="mobilePasteBtn"><i class="fas fa-paste"></i> Вставить</button>
+        <button id="mobileClearBtn"><i class="fas fa-eraser"></i> Очистить</button>
+        <button id="mobileReplaceBtn"><i class="fas fa-exchange-alt"></i> Заменить</button>
+        <button id="mobileFillBtn"><i class="fas fa-fill-drip"></i> Заполнить</button>
+    </div>
+
+    <!-- ============================================================
+    МОДАЛКА РЕДАКТИРОВАНИЯ
+    ============================================================ -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -147,12 +224,15 @@
         </div>
     </div>
 
+    <!-- ============================================================
+    ПОДКЛЮЧАЕМ СКРИПТЫ
+    ============================================================ -->
     <script src="config.js"></script>
-<script src="core.js"></script>
-<script src="selection.js"></script>
-<script src="clipboard.js"></script>
-<script src="ui.js"></script>
-<script src="script.js"></script>
-    
+    <script src="core.js"></script>
+    <script src="selection.js"></script>
+    <script src="clipboard.js"></script>
+    <script src="ui.js"></script>
+    <script src="script.js"></script>
+
 </body>
 </html>
