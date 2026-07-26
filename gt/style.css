@@ -84,68 +84,15 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .data-cell:hover{background:rgba(0,0,0,0.04)}
 
 /* ============================================================
-   ВЫДЕЛЕНИЕ (НЕ МЕНЯЕТ ФОН ЯЧЕЙКИ)
+   ВЫДЕЛЕНИЕ ДИАПАЗОНА (СИНЯЯ ЗАЛИВКА)
    ============================================================ */
+.data-cell.range-selected{background-color:#e8f0fe!important}
 
-/* Активная ячейка — только синяя рамка, фон не трогаем */
-.data-cell.cell-selected {
-    outline: 2px solid #1a73e8 !important;
-    outline-offset: -1px !important;
-    z-index: 3;
-    position: relative;
-}
+.data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
 
-/* Диапазон — полупрозрачная подсветка поверх содержимого */
-.data-cell.range-selected::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(26, 115, 232, 0.08);
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Активная ячейка в диапазоне — рамка + подсветка */
-.data-cell.cell-selected::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(26, 115, 232, 0.08);
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* ============================================================
-   ВЫДЕЛЕНИЕ СТРОКИ/КОЛОНКИ (ПОЛУПРОЗРАЧНОЕ)
-   ============================================================ */
-
-/* Подсветка строки */
-tr.row-selected .data-cell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(26, 115, 232, 0.06);
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Подсветка колонки */
-td.col-selected::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: rgba(26, 115, 232, 0.06);
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* ============================================================
-   ЧТОБЫ СОДЕРЖИМОЕ БЫЛО ПОВЕРХ ПОДСВЕТКИ
-   ============================================================ */
-.data-cell>* {
-    position: relative;
-    z-index: 2;
-}
+/* Убираем лишнюю подсветку при наведении на выделенные ячейки */
+.data-cell.range-selected:hover{background-color:#e8f0fe!important}
+.data-cell.cell-selected:hover{background-color:#e8f0fe!important}
 
 /* ============================================================
    СТАТУС БАР
