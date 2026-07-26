@@ -1,6 +1,6 @@
 // ============================================================
-// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ
-// Все обработчики интерфейса
+// ui.js - UI-СОБЫТИЯ И ГОРЯЧИЕ КЛАВИШИ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// Поддержка Ctrl+C / Ctrl+V на любой раскладке
 // ============================================================
 
 class TableUI {
@@ -13,11 +13,13 @@ class TableUI {
 
     bindEvents() {
         // ============================================================
-        // ПРИНУДИТЕЛЬНЫЙ ПЕРЕХВАТ ГОРЯЧИХ КЛАВИШ (РАБОТАЕТ ВСЕГДА)
+        // ПРИНУДИТЕЛЬНЫЙ ПЕРЕХВАТ ГОРЯЧИХ КЛАВИШ (РАБОТАЕТ НА ЛЮБОЙ РАСКЛАДКЕ)
         // ============================================================
         window.addEventListener('keydown', (e) => {
-            const isCtrlC = e.ctrlKey && (e.key === 'c' || e.key === 'C');
-            const isCtrlV = e.ctrlKey && (e.key === 'v' || e.key === 'V');
+            // ОПРЕДЕЛЯЕМ Ctrl+C / Ctrl+V БЕЗ ПРИВЯЗКИ К РАСКЛАДКЕ
+            // Используем event.code вместо event.key
+            const isCtrlC = e.ctrlKey && (e.code === 'KeyC');
+            const isCtrlV = e.ctrlKey && (e.code === 'KeyV');
             
             const activeElement = document.activeElement;
             const isInputFocused = activeElement && (
@@ -334,7 +336,6 @@ class TableUI {
         document.getElementById('editModal').classList.add('active');
         setTimeout(() => document.getElementById('cellInput').focus(), 100);
         
-        // Временно сохраняем координаты
         this._editingCell = { row, col };
     }
 
