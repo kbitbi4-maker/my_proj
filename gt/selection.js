@@ -90,7 +90,7 @@ class TableSelection {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (ОПТИМИЗИРОВАННОЕ)
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
     // ============================================================
     updateSelectionVisual() {
         // Снимаем старые классы
@@ -111,20 +111,7 @@ class TableSelection {
         // ---- 1. ВКЛЮЧАЕМ РЕЖИМ ВЫДЕЛЕНИЯ (CSS сделает всё остальное) ----
         table.classList.add('range-mode');
 
-        // ---- 2. ПОДСВЕТКА СТРОК И КОЛОНОК ----
-        // Подсветка строк
-        for (let r = minRow; r <= maxRow; r++) {
-            const rowCells = document.querySelectorAll(`td[data-row="${r}"]`);
-            rowCells.forEach(cell => cell.classList.add('row-selected'));
-        }
-
-        // Подсветка колонок
-        for (let c = minCol; c <= maxCol; c++) {
-            const colCells = document.querySelectorAll(`td[data-col="${c}"]`);
-            colCells.forEach(cell => cell.classList.add('col-selected'));
-        }
-
-        // ---- 3. АКТИВНАЯ ЯЧЕЙКА ----
+        // ---- 2. АКТИВНАЯ ЯЧЕЙКА ----
         const activeCell = document.querySelector(
             `td[data-row="${this.selectedCell.row}"][data-col="${this.selectedCell.col}"]`
         );
@@ -132,10 +119,10 @@ class TableSelection {
             activeCell.classList.add('cell-selected');
         }
 
-        // ---- 4. ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ ----
+        // ---- 3. ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ ----
         this.updateHeaderSelection();
 
-        // ---- 5. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
+        // ---- 4. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
         const colLetter = this.core.getColumnLetter(this.selectedCell.col - 1);
         document.getElementById('cellReference').textContent = `${colLetter}${this.selectedCell.row}`;
         const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
