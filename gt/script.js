@@ -1,7 +1,6 @@
 // ==========================================================================
-// script.js - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕННЫМИ ГОРЯЧИМИ КЛАВИШАМИ
-// Поддержка: выделение, копирование (Ctrl+C), вставка (Ctrl+V),
-//            очистка (Delete), массовое редактирование
+// script.js - ПОЛНАЯ ВЕРСИЯ С ОТКЛЮЧЕННЫМ СТАНДАРТНЫМ ВЫДЕЛЕНИЕМ
+// Выделение работает ТОЛЬКО через программную логику
 // ==========================================================================
 
 class TableManager {
@@ -22,7 +21,7 @@ class TableManager {
         this.dragStartCell = null;
         this.isShiftPressed = false;
         
-        // Буфер обмена (для копирования)
+        // Буфер обмена
         this.clipboardData = null;
         
         // Настройки размеров
@@ -30,6 +29,7 @@ class TableManager {
         this.rowHeights = JSON.parse(localStorage.getItem('gt_row_heights') || '{}');
         
         this.editingCell = null;
+        this.isMouseDown = false;
         this.init();
     }
 
@@ -39,6 +39,13 @@ class TableManager {
     init() {
         console.log('🚀 TableManager инициализирован');
         console.log('📡 API URL:', this.apiUrl);
+
+        // ОТКЛЮЧАЕМ СТАНДАРТНОЕ ВЫДЕЛЕНИЕ ТЕКСТА В ТАБЛИЦЕ
+        document.addEventListener('selectstart', (e) => {
+            if (e.target.closest('#dataTable')) {
+                e.preventDefault();
+            }
+        });
 
         if (this.apiUrl) {
             this.loadData();
@@ -57,11 +64,11 @@ class TableManager {
     }
 
     // ============================================================
-    // ПРИВЯЗКА СОБЫТИЙ (ПОЛНОСТЬЮ ИСПРАВЛЕНА)
+    // ПРИВЯЗКА СОБЫТИЙ
     // ============================================================
     bindEvents() {
         // ============================================================
-        // ГЛОБАЛЬНЫЕ ГОРЯЧИЕ КЛАВИШИ (С ПРИОРИТЕТОМ)
+        // ГЛОБАЛЬНЫЕ ГОРЯЧИЕ КЛАВИШИ
         // ============================================================
         document.addEventListener('keydown', (e) => {
             // Ctrl+C — копирование
@@ -260,15 +267,26 @@ class TableManager {
         });
 
         // ============================================================
-        // ОБРАБОТЧИКИ МЫШИ ДЛЯ DRAG-ВЫДЕЛЕНИЯ
+        // ОБРАБОТЧИКИ МЫШИ ДЛЯ ВЫДЕЛЕНИЯ (ОБНОВЛЕНЫ)
         // ============================================================
-        document.getElementById('dataTable').addEventListener('mousedown', (e) => {
+        // Отключаем стандартное выделение текста в таблице
+        const table = document.getElementById('dataTable');
+        table.addEventListener('mousedown', (e) => {
+            // Если клик на заголовке — не мешаем
+            if (e.target.closest('.row-header') || e.target.closest('.col-header') || e.target.closest('.corner-header')) {
+                return;
+            }
+            
             const cell = e.target.closest('.data-cell');
             if (!cell) return;
             if (e.button !== 0) return;
             
+            e.preventDefault(); // Отключаем стандартное выделение текста
+            
             const row = parseInt(cell.dataset.row);
             const col = parseInt(cell.dataset.col);
+            
+            this.isMouseDown = true;
             
             if (e.shiftKey && this.selectedCell) {
                 this.expandSelection(row, col);
@@ -277,45 +295,71 @@ class TableManager {
             }
         });
 
-        document.getElementById('dataTable').addEventListener('mouseover', (e) => {
+        table.addEventListener('mousemove', (e) => {
+            if (!this.isMouseDown || !this.isDragging) return;
+            
             const cell = e.target.closest('.data-cell');
             if (!cell) return;
-            if (this.isDragging) {
-                const row = parseInt(cell.dataset.row);
-                const col = parseInt(cell.dataset.col);
-                this.continueDrag(row, col);
-            }
+            
+            e.preventDefault();
+            
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            this.continueDrag(row, col);
         });
 
         document.addEventListener('mouseup', () => {
-            if (this.isDragging) {
-                this.endDrag();
+            if (this.isMouseDown) {
+                this.isMouseDown = false;
+                if (this.isDragging) {
+                    this.endDrag();
+                }
             }
         });
 
-        // Обновляем панель инструментов при выделении
+        // ============================================================
+        // КЛИКИ ПО ЗАГОЛОВКАМ
+        // ============================================================
+        // Клик по уголку (выделить всё)
+        document.querySelector('.corner-header')?.addEventListener('click', () => {
+            this.selectAll();
+        });
+
+        // Клики по заголовкам строк и колонок обрабатываются через onclick в HTML
+        // Но добавим обработчики для надежности
+        document.querySelectorAll('.row-header:not(.corner-header)').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const row = parseInt(el.textContent);
+                if (!isNaN(row)) {
+                    this.selectRow(row);
+                }
+            });
+        });
+
+        document.querySelectorAll('.col-header').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const letter = el.textContent;
+                const col = this.getColumnIndex(letter) + 1;
+                if (col > 0) {
+                    this.selectColumn(col);
+                }
+            });
+        });
+
         this.updateToolbarVisibility();
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИДИМОСТИ ПАНЕЛИ ИНСТРУМЕНТОВ
+    // ПОЛУЧЕНИЕ ИНДЕКСА КОЛОНКИ ПО БУКВЕ
     // ============================================================
-    updateToolbarVisibility() {
-        const toolbar = document.getElementById('selectionToolbar');
-        if (!toolbar) return;
-        
-        const hasSelection = this.selectionRange !== null;
-        toolbar.classList.toggle('visible', hasSelection);
-        
-        if (hasSelection && this.selectionRange) {
-            const { startRow, startCol, endRow, endCol } = this.selectionRange;
-            const minRow = Math.min(startRow, endRow);
-            const maxRow = Math.max(startRow, endRow);
-            const minCol = Math.min(startCol, endCol);
-            const maxCol = Math.max(startCol, endCol);
-            const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
-            document.getElementById('selectionCount').textContent = count;
+    getColumnIndex(letter) {
+        let index = 0;
+        for (let i = 0; i < letter.length; i++) {
+            index = index * 26 + (letter.charCodeAt(i) - 64);
         }
+        return index - 1;
     }
 
     // ============================================================
@@ -564,7 +608,7 @@ class TableManager {
     }
 
     // ============================================================
-    // КОПИРОВАНИЕ (Ctrl+C) - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // КОПИРОВАНИЕ (Ctrl+C)
     // ============================================================
     copySelection() {
         if (!this.selectionRange) {
@@ -603,24 +647,20 @@ class TableManager {
             copiedData.push(rowData);
         }
 
-        // Сохраняем в буфер обмена приложения
         this.clipboardData = {
             data: copiedData,
             rows: copiedData.length,
             cols: copiedData[0]?.length || 0
         };
 
-        // Копируем в системный буфер обмена
         const textRepresentation = copiedData.map(row => row.join('\t')).join('\n');
         
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textRepresentation)
                 .then(() => {
                     console.log('✅ Скопировано в системный буфер обмена');
-                    console.log('📋 Данные:\n', textRepresentation.substring(0, 200) + '...');
                 })
-                .catch(err => {
-                    console.warn('⚠️ Не удалось скопировать в системный буфер:', err);
+                .catch(() => {
                     this.fallbackCopy(textRepresentation);
                 });
         } else {
@@ -630,7 +670,6 @@ class TableManager {
         const rows = copiedData.length;
         const cols = copiedData[0]?.length || 0;
         this.showToast(`✅ Скопировано: ${rows} × ${cols} ячеек (${cellCount} непустых)`);
-        console.log(`📋 Скопировано: ${rows} × ${cols} ячеек`);
         console.log('📋 clipboardData:', this.clipboardData);
     }
 
@@ -638,8 +677,6 @@ class TableManager {
     // FALLBACK ДЛЯ КОПИРОВАНИЯ
     // ============================================================
     fallbackCopy(text) {
-        console.log('📋 Используем fallback копирование...');
-        
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
@@ -647,26 +684,19 @@ class TableManager {
         textarea.style.top = '-9999px';
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
-        
         textarea.select();
         textarea.setSelectionRange(0, textarea.value.length);
-        
         try {
-            const success = document.execCommand('copy');
-            if (success) {
-                console.log('✅ Fallback: скопировано через execCommand');
-            } else {
-                console.warn('⚠️ Fallback: execCommand не сработал');
-            }
+            document.execCommand('copy');
+            console.log('✅ Fallback: скопировано');
         } catch (err) {
             console.error('❌ Fallback ошибка:', err);
         }
-        
         document.body.removeChild(textarea);
     }
 
     // ============================================================
-    // ВСТАВКА (Ctrl+V) - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // ВСТАВКА (Ctrl+V)
     // ============================================================
     async pasteSelection() {
         if (!this.clipboardData) {
@@ -730,7 +760,7 @@ class TableManager {
     }
 
     // ============================================================
-    // ОЧИСТКА ВЫДЕЛЕННЫХ ЯЧЕЕК (Delete)
+    // ОЧИСТКА ВЫДЕЛЕННЫХ ЯЧЕЕК
     // ============================================================
     async clearSelectedCells() {
         if (!this.selectionRange) {
@@ -912,6 +942,27 @@ class TableManager {
         } catch (error) {
             console.error('❌ Ошибка заполнения:', error);
             this.showToast('❌ Ошибка при заполнении ячеек');
+        }
+    }
+
+    // ============================================================
+    // ОБНОВЛЕНИЕ ВИДИМОСТИ ПАНЕЛИ ИНСТРУМЕНТОВ
+    // ============================================================
+    updateToolbarVisibility() {
+        const toolbar = document.getElementById('selectionToolbar');
+        if (!toolbar) return;
+        
+        const hasSelection = this.selectionRange !== null;
+        toolbar.classList.toggle('visible', hasSelection);
+        
+        if (hasSelection && this.selectionRange) {
+            const { startRow, startCol, endRow, endCol } = this.selectionRange;
+            const minRow = Math.min(startRow, endRow);
+            const maxRow = Math.max(startRow, endRow);
+            const minCol = Math.min(startCol, endCol);
+            const maxCol = Math.max(startCol, endCol);
+            const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
+            document.getElementById('selectionCount').textContent = count;
         }
     }
 
@@ -1118,7 +1169,7 @@ class TableManager {
                                    class="data-cell"
                                    style="min-width:${width}px; max-width:${width}px; 
                                           word-wrap: break-word; white-space: normal; padding: 6px 8px;
-                                          cursor: cell;">${value}</td>`;
+                                          cursor: cell; user-select: none;">${value}</td>`;
                 }
                 bodyHtml += '</tr>';
             });
