@@ -1,1 +1,382 @@
+/* style.css - Минималистичный стиль как в WhatsApp/Google Tables */
 
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body {
+    background: #ece5dd;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ===== ШАПКА ===== */
+.app-header {
+    background: #075e54;
+    color: white;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.app-title {
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.header-right {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.sync-btn, .refresh-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sync-btn:hover, .refresh-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.sync-status {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* ===== НАВИГАЦИЯ (как WhatsApp) ===== */
+.main-nav {
+    background: #ffffff;
+    border-bottom: 1px solid #ddd;
+    padding: 0 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.main-nav li {
+    padding: 14px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #555;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.main-nav li:hover {
+    background: #f0f0f0;
+}
+
+.main-nav li.active {
+    color: #075e54;
+    border-bottom-color: #075e54;
+    background: #f0f7f6;
+}
+
+.main-nav li i {
+    font-size: 18px;
+}
+
+/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+.app-content {
+    height: calc(100vh - 140px);
+    overflow: auto;
+    padding: 20px;
+    background: #fff;
+}
+
+.page {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== ТАБЛИЦА (стиль Google Tables) ===== */
+.table-container {
+    overflow: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+#dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+#dataTable thead {
+    background: #f8f9fa;
+    border-bottom: 2px solid #ddd;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#dataTable th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #202124;
+    border-right: 1px solid #e8e8e8;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+}
+
+#dataTable td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: cell;
+    transition: background 0.15s;
+}
+
+#dataTable tbody tr:hover {
+    background: #f5f7fa;
+}
+
+#dataTable tbody tr:active {
+    background: #e8f0fe;
+}
+
+/* ===== СТАТУС БАР ===== */
+.stats-bar {
+    margin-top: 15px;
+    padding: 10px 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    gap: 25px;
+    font-size: 13px;
+    color: #5f6368;
+    flex-wrap: wrap;
+}
+
+.stats-bar span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* ===== ЗАГРУЗКА ===== */
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 40px;
+    justify-content: center;
+    color: #5f6368;
+    font-size: 16px;
+}
+
+.loading i {
+    font-size: 28px;
+    color: #075e54;
+}
+
+/* ===== МОДАЛКА ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    min-width: 350px;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-content h3 {
+    margin-bottom: 20px;
+    color: #202124;
+}
+
+#cellInput {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+    margin-bottom: 16px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+#saveCellBtn {
+    background: #075e54;
+    color: white;
+}
+
+#saveCellBtn:hover {
+    background: #054d44;
+}
+
+#cancelCellBtn {
+    background: #f1f3f4;
+    color: #333;
+}
+
+#cancelCellBtn:hover {
+    background: #e0e0e0;
+}
+
+/* ===== СТРАНИЦА НАСТРОЕК ===== */
+.settings-form {
+    max-width: 600px;
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #202124;
+}
+
+.form-group input, .form-group select {
+    padding: 10px 14px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group button {
+    padding: 10px 20px;
+    background: #075e54;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    align-self: flex-start;
+}
+
+.form-group button:hover {
+    background: #054d44;
+}
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 10px 16px;
+    }
+    .app-title {
+        font-size: 16px;
+    }
+    .main-nav li {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    .main-nav li span {
+        display: none;
+    }
+    #dataTable th, #dataTable td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    .modal-content {
+        min-width: unset;
+        width: 90%;
+        padding: 20px;
+    }
+}
