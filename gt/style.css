@@ -26,14 +26,14 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 #formulaConfirm{color:#1a73e8}
 #formulaCancel{color:#d93025}
 
-/* ПАНЕЛЬ ИНСТРУМЕНТОВ */
+/* ПАНЕЛЬ ИНСТРУМЕНТОВ (ДЕСКТОП) */
 .selection-toolbar{display:none;background:#f8f9fa;border-bottom:1px solid #dadce0;padding:6px 16px;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0}
 .selection-toolbar.visible{display:flex}
 .toolbar-btn{padding:4px 12px;background:white;border:1px solid #dadce0;border-radius:4px;cursor:pointer;font-size:12px;color:#202124;display:flex;align-items:center;gap:4px;transition:all 0.2s}
 .toolbar-btn:hover{background:#e8f0fe;border-color:#1a73e8}
 .toolbar-btn i{font-size:13px}
 
-/* НАВИГАЦИЯ */
+/* НАВИГАЦИЯ (ДЕСКТОП) */
 .main-nav{background:#ffffff;border-bottom:1px solid #dadce0;padding:0 20px;flex-shrink:0}
 .main-nav ul{list-style:none;display:flex;gap:0;margin:0;padding:0}
 .main-nav li{padding:10px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#5f6368;border-bottom:3px solid transparent;transition:all 0.2s;font-size:13px;font-weight:500}
@@ -55,9 +55,7 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .table-scroll{width:100%;height:100%;overflow:auto}
 #dataTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;border:1px solid #dadce0}
 
-/* ============================================================
-   ЗАГОЛОВКИ - БАЗОВЫЕ СТИЛИ (СВЕТЛО-ЗЕЛЕНЫЕ)
-   ============================================================ */
+/* ЗАГОЛОВКИ */
 .corner-header{min-width:36px!important;max-width:36px!important;width:36px!important;cursor:pointer!important;background:#e8f5e9!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;padding:0!important;height:28px;position:sticky;top:0;left:0;z-index:3;user-select:none!important}
 .corner-header:hover{background:#c8e6c9!important}
 .corner-header i{font-size:10px;color:#1b5e20}
@@ -68,47 +66,32 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .row-header{background:#e8f5e9!important;color:#1b5e20!important;font-size:11px!important;text-align:center!important;min-width:36px!important;max-width:36px!important;width:36px!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;user-select:none!important;font-weight:400!important;padding:2px 0!important;position:sticky;left:0;z-index:1;cursor:pointer!important}
 .row-header:hover{background:#c8e6c9!important}
 
-/* ============================================================
-   ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ
-   ============================================================ */
+/* ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ */
 .row-header.partial{background-color:#c8e6c9!important;color:#1b5e20!important;font-weight:500!important}
 .row-header.full{background-color:#a5d6a7!important;color:#1b5e20!important;font-weight:600!important}
 .col-header.partial{background-color:#c8e6c9!important;color:#1b5e20!important;font-weight:500!important}
 .col-header.full{background-color:#a5d6a7!important;color:#1b5e20!important;font-weight:600!important}
 .corner-header.selected{background-color:#a5d6a7!important}
 
-/* ============================================================
-   ЯЧЕЙКИ (С ПЕРЕНОСОМ ТЕКСТА И БЕЗ ОБРЕЗКИ)
-   ============================================================ */
+/* ЯЧЕЙКИ */
 .data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;min-height:28px;vertical-align:top;background:transparent;font-size:13px;color:#202124;position:relative}
 .data-cell:hover{background:rgba(0,0,0,0.04)}
 
-/* ============================================================
-   ВЫДЕЛЕНИЕ ДИАПАЗОНА (СИНЯЯ ЗАЛИВКА)
-   ============================================================ */
+/* ВЫДЕЛЕНИЕ */
 .data-cell.range-selected{background-color:#e8f0fe!important}
-
 .data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
-
-/* Убираем лишнюю подсветку при наведении на выделенные ячейки */
 .data-cell.range-selected:hover{background-color:#e8f0fe!important}
 .data-cell.cell-selected:hover{background-color:#e8f0fe!important}
 
-/* ============================================================
-   СТАТУС БАР
-   ============================================================ */
+/* СТАТУС БАР */
 .stats-bar{background:#f8f9fa;border-top:1px solid #dadce0;padding:6px 16px;display:flex;gap:24px;font-size:12px;color:#5f6368;flex-shrink:0;flex-wrap:wrap}
 .stats-bar span{display:flex;align-items:center;gap:4px}
 
-/* ============================================================
-   ЗАГРУЗКА
-   ============================================================ */
+/* ЗАГРУЗКА */
 .loading{display:flex;align-items:center;gap:12px;padding:30px;justify-content:center;color:#5f6368;font-size:14px}
 .loading i{font-size:24px;color:#1a73e8}
 
-/* ============================================================
-   МОДАЛКА
-   ============================================================ */
+/* МОДАЛКА */
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
 .modal.active{display:flex}
 .modal-content{background:white;padding:28px;border-radius:12px;min-width:340px;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.3);position:relative}
@@ -122,9 +105,7 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 #cancelCellBtn{background:#f1f3f4;color:#333}
 #cancelCellBtn:hover{background:#e0e0e0}
 
-/* ============================================================
-   СТРАНИЦА ОБЗОРА
-   ============================================================ */
+/* СТРАНИЦЫ */
 #page-overview{padding:24px;overflow-y:auto}
 #page-overview h2{color:#202124;margin-bottom:20px;font-weight:400}
 .overview-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
@@ -132,9 +113,6 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .card h3{font-size:13px;color:#5f6368;font-weight:400;margin-bottom:8px}
 .card span{font-size:28px;font-weight:500;color:#202124}
 
-/* ============================================================
-   СТРАНИЦА НАСТРОЕК
-   ============================================================ */
 #page-settings{padding:24px;overflow-y:auto}
 #page-settings h2{color:#202124;margin-bottom:20px;font-weight:400}
 .settings-form{max-width:600px}
@@ -144,9 +122,7 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .form-group button{padding:8px 20px;background:#1a73e8;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;align-self:flex-start}
 .form-group button:hover{background:#1557b0}
 
-/* ============================================================
-   УПРАВЛЕНИЕ РАЗМЕРАМИ
-   ============================================================ */
+/* УПРАВЛЕНИЕ РАЗМЕРАМИ */
 .sizes-control{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .btn-reset{padding:6px 16px;background:#d93025;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px}
 .btn-reset:hover{background:#b3261e}
@@ -158,31 +134,86 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .sizes-hint{color:#5f6368;font-size:11px;margin-top:4px}
 
 /* ============================================================
-   АДАПТИВНОСТЬ
+   НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ)
+   ============================================================ */
+.bottom-nav{display:none;background:#ffffff;border-top:1px solid #dadce0;padding:4px 0;flex-shrink:0;justify-content:space-around;align-items:center;position:sticky;bottom:0;z-index:50}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;background:transparent;border:none;font-size:10px;color:#5f6368;cursor:pointer;min-height:48px;min-width:48px}
+.nav-btn i{font-size:20px}
+.nav-btn.active{color:#1a73e8}
+.nav-btn.active i{color:#1a73e8}
+.nav-btn:hover{background:#f1f3f4;border-radius:8px}
+
+/* ============================================================
+   ВСПЛЫВАЮЩЕЕ МЕНЮ ИНСТРУМЕНТОВ (МОБИЛЬНОЕ)
+   ============================================================ */
+.tools-menu{display:none;position:fixed;bottom:70px;left:10px;right:10px;background:white;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.2);padding:12px;z-index:200;flex-wrap:wrap;justify-content:center;gap:8px}
+.tools-menu.open{display:flex}
+.tools-menu button{flex:1 0 calc(50% - 8px);min-height:44px;padding:8px;border:1px solid #dadce0;border-radius:8px;background:white;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.tools-menu button:hover{background:#e8f0fe}
+.tools-menu button i{font-size:16px}
+
+/* ============================================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ (< 768px)
    ============================================================ */
 @media (max-width:768px){
-.app-header{padding:6px 12px;min-height:46px}
-.app-title{font-size:15px}
-.menu-btn{font-size:18px}
-.formula-bar{padding:2px 8px;min-height:34px}
-.cell-reference{font-size:11px;min-width:40px;padding:0 6px}
+.app-header{padding:6px 12px;min-height:48px}
+.app-title{font-size:16px}
+.sheet-name{display:none}
+.sync-btn,.refresh-btn{padding:8px 12px;min-height:40px;font-size:12px}
+.sync-status{display:none}
+.formula-bar{padding:2px 8px;min-height:36px}
+.cell-reference{font-size:12px;min-width:40px;padding:0 6px}
 #formulaInput{font-size:12px}
-.main-nav li{padding:8px 12px;font-size:12px}
-.main-nav li span{display:none}
-.data-cell{padding:4px 6px;font-size:12px}
-.row-header{min-width:28px!important;max-width:28px!important;width:28px!important;font-size:10px!important}
-.corner-header{min-width:28px!important;max-width:28px!important;width:28px!important;height:24px!important}
-.col-header{font-size:10px!important;padding:2px 2px!important;height:24px!important}
-.stats-bar{font-size:11px;gap:12px;padding:4px 12px}
+.formula-actions button{font-size:14px;padding:6px 8px;min-height:36px}
+
+.selection-toolbar{position:fixed;bottom:65px;left:0;right:0;z-index:100;border-radius:0;border-top:1px solid #dadce0;background:#f8f9fa;padding:8px 12px;flex-wrap:wrap;gap:6px}
+.selection-toolbar.visible{display:flex}
+.toolbar-btn{font-size:12px;padding:6px 10px;min-height:36px}
+
+.main-nav{display:none}
+.bottom-nav{display:flex}
+
+.sheet-tab{font-size:12px;padding:4px 12px;min-height:36px}
+.sheet-selector{padding:4px 8px 0 8px;gap:4px;overflow-x:auto;flex-wrap:nowrap}
+.sheet-tab{white-space:nowrap}
+
+.data-cell{padding:8px 10px;font-size:14px;min-height:40px}
+.row-header{min-width:32px!important;max-width:32px!important;width:32px!important;font-size:11px!important;min-height:40px}
+.corner-header{min-width:32px!important;max-width:32px!important;width:32px!important;height:32px!important}
+.col-header{font-size:11px!important;padding:4px 2px!important;height:32px!important;min-height:32px}
+.stats-bar{font-size:11px;gap:12px;padding:4px 12px;flex-wrap:wrap}
 .modal-content{min-width:unset;width:92%;padding:20px}
-.sheet-tab{font-size:12px;padding:4px 12px}
 .sizes-control{flex-direction:column;align-items:stretch;gap:8px}
 .sizes-control .size-group{flex-wrap:wrap}
+
+#page-settings{padding:16px}
+#page-overview{padding:16px}
+.overview-cards{grid-template-columns:1fr 1fr;gap:12px}
+.card{padding:16px}
+.card span{font-size:24px}
 }
 
 /* ============================================================
-   АНИМАЦИИ
+   ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (< 480px)
    ============================================================ */
+@media (max-width:480px){
+.app-title{font-size:14px}
+.header-left{gap:8px}
+.menu-btn{font-size:16px;padding:4px 6px}
+.sync-btn,.refresh-btn{padding:6px 10px;min-height:36px;font-size:11px}
+.sync-btn i,.refresh-btn i{font-size:14px}
+
+.data-cell{padding:6px 8px;font-size:13px;min-height:36px}
+.row-header{min-width:28px!important;max-width:28px!important;width:28px!important;font-size:10px!important;min-height:36px}
+.corner-header{min-width:28px!important;max-width:28px!important;width:28px!important;height:28px!important}
+.col-header{font-size:10px!important;padding:2px 2px!important;height:28px!important;min-height:28px}
+
+.tools-menu button{flex:1 0 100%;min-height:40px}
+.nav-btn{min-height:44px;padding:4px 8px;font-size:9px}
+.nav-btn i{font-size:18px}
+}
+
+/* АНИМАЦИИ */
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
 .data-cell::selection{background:#c6d9f0}
