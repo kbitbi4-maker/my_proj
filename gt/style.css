@@ -55,19 +55,53 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .table-scroll{width:100%;height:100%;overflow:auto}
 #dataTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;border:1px solid #dadce0}
 
-/* ЗАГОЛОВКИ */
+/* ЗАГОЛОВКИ - БАЗОВЫЕ СТИЛИ */
 .corner-header{min-width:36px!important;max-width:36px!important;width:36px!important;cursor:pointer!important;background:#f8f9fa!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;padding:0!important;height:28px;position:sticky;top:0;left:0;z-index:3;user-select:none!important}
 .corner-header:hover{background:#e8eaed!important}
-.corner-header.selected{background:#c6d9f0!important}
 .corner-header i{font-size:10px;color:#5f6368}
+
 .col-header{background:#f8f9fa!important;color:#5f6368!important;font-size:11px!important;font-weight:400!important;text-align:center!important;padding:4px 2px!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;position:sticky!important;top:0!important;z-index:2!important;user-select:none!important;height:28px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer!important}
 .col-header:hover{background:#e8eaed!important}
-.col-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
-.col-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
+
 .row-header{background:#f8f9fa!important;color:#5f6368!important;font-size:11px!important;text-align:center!important;min-width:36px!important;max-width:36px!important;width:36px!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;user-select:none!important;font-weight:400!important;padding:2px 0!important;position:sticky;left:0;z-index:1;cursor:pointer!important}
 .row-header:hover{background:#e8eaed!important}
-.row-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
-.row-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
+
+/* ============================================================
+   ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ (ПРИНУДИТЕЛЬНЫЕ ПРАВИЛА)
+   ============================================================ */
+
+/* Строки - частичное выделение */
+.row-header.partial {
+    background-color: #d2e3fc !important;
+    color: #0b57d0 !important;
+    font-weight: 500 !important;
+}
+
+/* Строки - полное выделение */
+.row-header.full {
+    background-color: #c6d9f0 !important;
+    color: #0b57d0 !important;
+    font-weight: 600 !important;
+}
+
+/* Колонки - частичное выделение */
+.col-header.partial {
+    background-color: #d2e3fc !important;
+    color: #0b57d0 !important;
+    font-weight: 500 !important;
+}
+
+/* Колонки - полное выделение */
+.col-header.full {
+    background-color: #c6d9f0 !important;
+    color: #0b57d0 !important;
+    font-weight: 600 !important;
+}
+
+/* Уголок при выделении всего листа */
+.corner-header.selected {
+    background-color: #c6d9f0 !important;
+}
 
 /* ЯЧЕЙКИ */
 .data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;transition:background 0.1s;min-height:28px;vertical-align:top;background:#ffffff;font-size:13px;color:#202124}
