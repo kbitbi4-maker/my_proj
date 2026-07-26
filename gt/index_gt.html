@@ -5,31 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GT Manager - Google Tables</title>
     
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Подключаем стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- ШАПКА -->
+
+    <!-- ============================================================
+    ШАПКА
+    ============================================================ -->
     <header class="app-header">
         <div class="header-left">
-            <button class="menu-btn" id="menuToggle">
+            <button class="menu-btn" id="menuToggle" title="Меню">
                 <i class="fas fa-bars"></i>
             </button>
             <h1 class="app-title">Таблица</h1>
             <span class="sheet-name" id="sheetNameDisplay">Лист 1</span>
         </div>
         <div class="header-right">
-            <button class="sync-btn" id="syncBtn" title="Синхронизация">
+            <button class="sync-btn" id="syncBtn" title="Синхронизация с Google Таблицей">
                 <i class="fas fa-cloud-upload-alt"></i>
                 <span class="sync-status">Синхр.</span>
             </button>
-            <button class="refresh-btn" id="refreshBtn" title="Обновить">
+            <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
     </header>
 
-    <!-- СТРОКА ФОРМУЛ (Formula Bar) -->
+    <!-- ============================================================
+    СТРОКА ФОРМУЛ (FORMULA BAR)
+    ============================================================ -->
     <div class="formula-bar">
         <div class="cell-reference" id="cellReference">A1</div>
         <div class="formula-input">
@@ -42,7 +50,9 @@
         </div>
     </div>
 
-    <!-- НАВИГАЦИЯ (табы) -->
+    <!-- ============================================================
+    НАВИГАЦИЯ (ТАБЫ)
+    ============================================================ -->
     <nav class="main-nav">
         <ul>
             <li class="active" data-page="table">
@@ -57,14 +67,21 @@
         </ul>
     </nav>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <!-- ============================================================
+    ОСНОВНОЙ КОНТЕНТ
+    ============================================================ -->
     <main class="app-content">
-        <!-- Страница таблицы -->
+
+        <!-- ===================== -->
+        <!-- СТРАНИЦА: ТАБЛИЦА     -->
+        <!-- ===================== -->
         <section id="page-table" class="page active">
+
+            <!-- Индикатор загрузки -->
             <div id="loadingIndicator" class="loading">
                 <i class="fas fa-spinner fa-spin"></i> Загрузка данных...
             </div>
-            
+
             <!-- Переключатель листов -->
             <div class="sheet-selector" id="sheetSelector">
                 <button class="sheet-tab active" data-sheet="sheet1">Лист 1</button>
@@ -82,7 +99,7 @@
                     </table>
                 </div>
             </div>
-            
+
             <!-- Статус бар -->
             <div class="stats-bar">
                 <span id="rowCount">Строк: 0</span>
@@ -92,7 +109,9 @@
             </div>
         </section>
 
-        <!-- Страница обзора -->
+        <!-- ===================== -->
+        <!-- СТРАНИЦА: ОБЗОР       -->
+        <!-- ===================== -->
         <section id="page-overview" class="page">
             <h2>Обзор данных</h2>
             <div class="overview-cards">
@@ -111,15 +130,21 @@
             </div>
         </section>
 
-        <!-- Страница настроек -->
+        <!-- ===================== -->
+        <!-- СТРАНИЦА: НАСТРОЙКИ   -->
+        <!-- ===================== -->
         <section id="page-settings" class="page">
             <h2>Настройки подключения</h2>
             <div class="settings-form">
+
+                <!-- Настройка API URL -->
                 <div class="form-group">
                     <label>URL веб-приложения Google Sheets:</label>
                     <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
                     <button id="saveSettingsBtn">Сохранить</button>
                 </div>
+
+                <!-- Режим отображения -->
                 <div class="form-group">
                     <label>Режим отображения:</label>
                     <select id="displayMode">
@@ -127,11 +152,45 @@
                         <option value="cards">Карточки</option>
                     </select>
                 </div>
+
+                <!-- УПРАВЛЕНИЕ РАЗМЕРАМИ -->
+                <div class="form-group">
+                    <label>Управление размерами:</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+
+                        <!-- Сброс размеров -->
+                        <button id="resetSizesBtn" style="padding: 6px 16px; background: #d93025; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Сбросить размеры
+                        </button>
+
+                        <!-- Ширина колонки -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 12px; color: #5f6368;">Ширина колонки (пикс):</label>
+                            <input type="number" id="colWidthInput" value="120" style="width: 80px; padding: 4px 8px; border: 1px solid #dadce0; border-radius: 4px;">
+                            <button id="applyColWidthBtn" style="padding: 4px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer;">Применить</button>
+                        </div>
+
+                        <!-- Высота строки -->
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <label style="font-size: 12px; color: #5f6368;">Высота строки (пикс):</label>
+                            <input type="number" id="rowHeightInput" value="28" style="width: 80px; padding: 4px 8px; border: 1px solid #dadce0; border-radius: 4px;">
+                            <button id="applyRowHeightBtn" style="padding: 4px 12px; background: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer;">Применить</button>
+                        </div>
+
+                    </div>
+                    <small style="color: #5f6368; font-size: 11px; margin-top: 4px;">
+                        Изменения применяются к текущему листу. Для применения к выбранной колонке/строке сначала выделите ячейку.
+                    </small>
+                </div>
+
             </div>
         </section>
+
     </main>
 
-    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
+    <!-- ============================================================
+    МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ
+    ============================================================ -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -144,8 +203,11 @@
         </div>
     </div>
 
-    <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
+    <!-- ============================================================
+    ПОДКЛЮЧАЕМ СКРИПТЫ
+    ============================================================ -->
     <script src="config.js"></script>
     <script src="script.js"></script>
+
 </body>
 </html>
