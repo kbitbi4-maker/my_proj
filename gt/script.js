@@ -1,5 +1,7 @@
-// script.js - ОБНОВЛЕННАЯ ВЕРСИЯ С JSON КАК PLAIN TEXT
-// ОТПРАВЛЯЕТ POST КАК text/plain ДЛЯ ОБХОДА CORS
+// ==========================================================================
+// script.js - ПОЛНОСТЬЮ ОБНОВЛЕН ДЛЯ ЭТАПА 1
+// ПОДДЕРЖКА: нумерация строк, буквы колонок, выделение ячеек, формула-бар
+// ==========================================================================
 
 class TableManager {
     constructor() {
@@ -11,10 +13,14 @@ class TableManager {
             sheet4: { headers: [], rows: [] }
         };
         this.currentSheet = 'sheet1';
+        this.selectedCell = null; // { row, col }
         this.editingCell = null;
         this.init();
     }
 
+    // ============================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
     init() {
         console.log('🚀 TableManager инициализирован');
         console.log('📡 API URL:', this.apiUrl);
@@ -33,141 +39,223 @@ class TableManager {
         }
 
         this.bindEvents();
-        this.createSheetSelector();
     }
 
+    // ============================================================
+    // ПРИВЯЗКА СОБЫТИЙ
+    // ============================================================
     bindEvents() {
-        const syncBtn = document.getElementById('syncBtn');
-        if (syncBtn) {
-            syncBtn.addEventListener('click', () => { this.syncData(); });
-        }
+        // Синхронизация
+        document.getElementById('syncBtn').addEventListener('click', () => this.syncData());
+        document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
 
-        const refreshBtn = document.getElementById('refreshBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => { this.loadData(); });
-        }
-
+        // Навигация по табам
         document.querySelectorAll('.main-nav li').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
                 const page = item.dataset.page;
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                const targetPage = document.getElementById(`page-${page}`);
-                if (targetPage) targetPage.classList.add('active');
+                document.getElementById(`page-${page}`).classList.add('active');
             });
         });
 
-        const closeModal = document.querySelector('.close-modal');
-        if (closeModal) {
-            closeModal.addEventListener('click', () => {
-                document.getElementById('editModal').classList.remove('active');
+        // Формула-бар: подтверждение (Enter)
+        const formulaInput = document.getElementById('formulaInput');
+        formulaInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.applyFormula();
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                this.cancelFormula();
+            }
+        });
+
+        // Формула-бар: кнопки
+        document.getElementById('formulaConfirm').addEventListener('click', () => this.applyFormula());
+        document.getElementById('formulaCancel').addEventListener('click', () => this.cancelFormula());
+
+        // Переключение листов
+        document.querySelectorAll('.sheet-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.switchSheet(tab.dataset.sheet);
             });
-        }
-        
-        const cancelBtn = document.getElementById('cancelCellBtn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => {
-                document.getElementById('editModal').classList.remove('active');
-            });
-        }
-        
-        const saveBtn = document.getElementById('saveCellBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
-                this.saveCellValue();
-            });
+        });
+
+        // Модалка
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+        });
+        document.getElementById('cancelCellBtn').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+        });
+        document.getElementById('saveCellBtn').addEventListener('click', () => {
+            this.saveCellValue();
+        });
+
+        // Настройки
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            const url = document.getElementById('apiUrl').value.trim();
+            if (url) {
+                this.apiUrl = url;
+                localStorage.setItem('gt_api_url', url);
+                alert('✅ Настройки сохранены!');
+                this.loadData();
+            } else {
+                alert('❌ Введите корректный URL');
+            }
+        });
+
+        // Загружаем URL в поле настроек
+        if (this.apiUrl) {
+            document.getElementById('apiUrl').value = this.apiUrl;
         }
 
-        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-        if (saveSettingsBtn) {
-            saveSettingsBtn.addEventListener('click', () => {
-                const url = document.getElementById('apiUrl').value.trim();
-                if (url) {
-                    this.apiUrl = url;
-                    localStorage.setItem('gt_api_url', url);
-                    alert('✅ Настройки сохранены!');
-                    this.loadData();
-                } else {
-                    alert('❌ Введите корректный URL');
-                }
-            });
+        // Глобальные клавиши
+        document.addEventListener('keydown', (e) => {
+            // Escape для модалки
+            if (e.key === 'Escape') {
+                document.getElementById('editModal').classList.remove('active');
+            }
+            // Стрелки для навигации
+            if (this.selectedCell && !document.querySelector('.modal.active')) {
+                this.handleArrowKeys(e);
+            }
+        });
+    }
+
+    // ============================================================
+    // НАВИГАЦИЯ СТРЕЛКАМИ
+    // ============================================================
+    handleArrowKeys(e) {
+        const { row, col } = this.selectedCell;
+        const currentData = this.data[this.currentSheet];
+        const maxRow = currentData.rows.length + 1; // +1 для заголовка
+        const maxCol = currentData.headers.length;
+
+        let newRow = row;
+        let newCol = col;
+
+        switch(e.key) {
+            case 'ArrowUp': newRow = Math.max(1, row - 1); break;
+            case 'ArrowDown': newRow = Math.min(maxRow, row + 1); break;
+            case 'ArrowLeft': newCol = Math.max(1, col - 1); break;
+            case 'ArrowRight': newCol = Math.min(maxCol, col + 1); break;
+            default: return;
         }
 
-        const apiUrlInput = document.getElementById('apiUrl');
-        if (apiUrlInput && this.apiUrl) {
-            apiUrlInput.value = this.apiUrl;
+        e.preventDefault();
+
+        if (newRow !== row || newCol !== col) {
+            this.selectCell(newRow, newCol);
         }
     }
 
-    createSheetSelector() {
-        const container = document.querySelector('.table-container');
-        if (!container) return;
+    // ============================================================
+    // ПОЛУЧЕНИЕ БУКВЫ КОЛОНКИ (A, B, C, ... AA, AB, ...)
+    // ============================================================
+    getColumnLetter(index) {
+        let letter = '';
+        while (index >= 0) {
+            letter = String.fromCharCode(65 + (index % 26)) + letter;
+            index = Math.floor(index / 26) - 1;
+        }
+        return letter;
+    }
 
-        const selectorDiv = document.createElement('div');
-        selectorDiv.className = 'sheet-selector';
-        selectorDiv.style.cssText = `
-            display: flex; gap: 8px; padding: 10px 15px;
-            background: #f8f9fa; border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap;
-        `;
+    getColumnIndex(letter) {
+        let index = 0;
+        for (let i = 0; i < letter.length; i++) {
+            index = index * 26 + (letter.charCodeAt(i) - 64);
+        }
+        return index - 1;
+    }
 
-        const sheetNames = ['sheet1', 'sheet2', 'sheet3', 'sheet4'];
-        const sheetLabels = ['Лист 1', 'Лист 2', 'Лист 3', 'Лист 4'];
+    // ============================================================
+    // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
+    // ============================================================
+    selectCell(row, col) {
+        // Снимаем предыдущее выделение
+        document.querySelectorAll('.cell-selected, .row-selected, .col-selected')
+            .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected'));
 
-        sheetNames.forEach((name, index) => {
-            const btn = document.createElement('button');
-            btn.textContent = sheetLabels[index];
-            btn.dataset.sheet = name;
-            btn.style.cssText = `
-                padding: 6px 16px; border: 2px solid #ddd; border-radius: 20px;
-                background: ${name === this.currentSheet ? '#075e54' : 'white'};
-                color: ${name === this.currentSheet ? 'white' : '#333'};
-                cursor: pointer; font-size: 13px; transition: all 0.2s;
-                font-weight: ${name === this.currentSheet ? '600' : '400'};
-            `;
+        this.selectedCell = { row, col };
+
+        // Подсвечиваем ячейку
+        const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
+        if (cell) {
+            cell.classList.add('cell-selected');
             
-            btn.addEventListener('mouseenter', () => {
-                if (name !== this.currentSheet) {
-                    btn.style.background = '#f0f0f0';
-                }
-            });
-            btn.addEventListener('mouseleave', () => {
-                if (name !== this.currentSheet) {
-                    btn.style.background = 'white';
-                }
-            });
-            
-            btn.addEventListener('click', () => {
-                this.switchSheet(name);
-                document.querySelectorAll('.sheet-selector button').forEach(b => {
-                    const sheetName = b.dataset.sheet;
-                    b.style.background = sheetName === name ? '#075e54' : 'white';
-                    b.style.color = sheetName === name ? 'white' : '#333';
-                    b.style.fontWeight = sheetName === name ? '600' : '400';
+            // Подсвечиваем строку
+            const rowElement = cell.closest('tr');
+            if (rowElement) {
+                rowElement.querySelectorAll('td').forEach(td => {
+                    if (!td.classList.contains('cell-selected')) {
+                        td.classList.add('row-selected');
+                    }
                 });
+            }
+            
+            // Подсвечиваем колонку
+            document.querySelectorAll(`td[data-col="${col}"]`).forEach(td => {
+                if (!td.classList.contains('cell-selected')) {
+                    td.classList.add('col-selected');
+                }
             });
             
-            selectorDiv.appendChild(btn);
-        });
-
-        const tableContainer = container.querySelector('#dataTable');
-        if (tableContainer) {
-            container.insertBefore(selectorDiv, tableContainer);
-        } else {
-            container.prepend(selectorDiv);
+            // Обновляем строку формул
+            const columnLetter = this.getColumnLetter(col - 1);
+            document.getElementById('cellReference').textContent = `${columnLetter}${row}`;
+            
+            // Показываем значение в строке формул
+            const currentData = this.data[this.currentSheet];
+            const rowIndex = row - 2; // потому что строка 1 — заголовки
+            let value = '';
+            if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                value = currentData.rows[rowIndex]?.[col - 1] || '';
+            }
+            document.getElementById('formulaInput').value = value;
+            
+            // Обновляем статус-бар
+            document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
     }
 
-    switchSheet(sheetName) {
-        this.currentSheet = sheetName;
-        this.renderTable();
-        this.updateStats();
+    // ============================================================
+    // ПРИМЕНЕНИЕ ФОРМУЛЫ (СОХРАНЕНИЕ ИЗ ФОРМУЛА-БАР)
+    // ============================================================
+    async applyFormula() {
+        if (!this.selectedCell) return;
+
+        const value = document.getElementById('formulaInput').value.trim();
+        const { row, col } = this.selectedCell;
+
+        // Сохраняем как обычное значение (пока без формул)
+        this.editingCell = { row, col };
+        document.getElementById('cellInput').value = value;
+        await this.saveCellValue();
     }
 
-    // ============================================
+    cancelFormula() {
+        if (this.selectedCell) {
+            const { row, col } = this.selectedCell;
+            const currentData = this.data[this.currentSheet];
+            const rowIndex = row - 2;
+            let value = '';
+            if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                value = currentData.rows[rowIndex]?.[col - 1] || '';
+            }
+            document.getElementById('formulaInput').value = value;
+        }
+    }
+
+    // ============================================================
     // ЗАГРУЗКА ДАННЫХ (GET)
-    // ============================================
+    // ============================================================
     async loadData() {
         if (!this.apiUrl) {
             alert('❌ Сначала настройте API URL в разделе "Настройки"');
@@ -175,26 +263,17 @@ class TableManager {
         }
 
         const loading = document.getElementById('loadingIndicator');
-        if (loading) {
-            loading.style.display = 'flex';
-            loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка данных...';
-        }
-
-        console.log('📤 GET запрос к:', this.apiUrl);
+        loading.style.display = 'flex';
+        loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка данных...';
 
         try {
             const response = await fetch(this.apiUrl);
-            if (!response.ok) {
-                throw new Error(`HTTP ошибка: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP ошибка: ${response.status}`);
 
             const text = await response.text();
             let result;
-            try {
-                result = JSON.parse(text);
-            } catch (e) {
-                throw new Error(`Невалидный JSON: ${text.substring(0, 100)}...`);
-            }
+            try { result = JSON.parse(text); } 
+            catch (e) { throw new Error(`Невалидный JSON: ${text.substring(0, 100)}...`); }
 
             if (result.sheet1 || result.sheet2 || result.sheet3 || result.sheet4) {
                 ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
@@ -212,85 +291,124 @@ class TableManager {
                 this.updateStats();
                 this.updateOverview();
                 this.showSyncStatus(true);
-                if (loading) loading.style.display = 'none';
+                loading.style.display = 'none';
+
+                // Выбираем первую ячейку
+                if (this.data[this.currentSheet].rows.length > 0) {
+                    this.selectCell(2, 1);
+                } else {
+                    this.selectCell(1, 1);
+                }
             } else {
                 throw new Error('Неизвестная структура ответа');
             }
 
         } catch (error) {
             console.error('❌ Ошибка загрузки:', error);
-            if (loading) {
-                loading.innerHTML = `
-                    <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
-                    <span>❌ Ошибка: ${error.message}</span>
-                `;
-                loading.style.display = 'flex';
-            }
+            loading.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
+                <span>❌ Ошибка: ${error.message}</span>
+            `;
+            loading.style.display = 'flex';
             this.showSyncStatus(false);
         }
     }
 
+    // ============================================================
+    // СИНХРОНИЗАЦИЯ
+    // ============================================================
     async syncData() {
         const btn = document.getElementById('syncBtn');
-        if (!btn) return;
-        
         const icon = btn.querySelector('i');
         const status = btn.querySelector('.sync-status');
         
-        if (icon) icon.classList.add('fa-spin');
-        if (status) status.textContent = 'Синхр...';
+        icon.classList.add('fa-spin');
+        status.textContent = 'Синхр...';
         btn.disabled = true;
 
         await this.loadData();
 
-        if (icon) icon.classList.remove('fa-spin');
-        if (status) status.textContent = 'Синхр.';
+        icon.classList.remove('fa-spin');
+        status.textContent = 'Синхр.';
         btn.disabled = false;
-
         btn.style.background = 'rgba(76, 175, 80, 0.4)';
         setTimeout(() => { btn.style.background = ''; }, 1000);
     }
 
+    // ============================================================
+    // ПЕРЕКЛЮЧЕНИЕ ЛИСТА
+    // ============================================================
+    switchSheet(sheetName) {
+        this.currentSheet = sheetName;
+        this.renderTable();
+        this.updateStats();
+        // Выбираем первую ячейку
+        const currentData = this.data[this.currentSheet];
+        if (currentData.rows.length > 0) {
+            this.selectCell(2, 1);
+        } else if (currentData.headers.length > 0) {
+            this.selectCell(1, 1);
+        }
+        // Обновляем имя в шапке
+        const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
+        document.getElementById('sheetNameDisplay').textContent = sheetLabels[sheetName] || sheetName;
+    }
+
+    // ============================================================
+    // ОТРИСОВКА ТАБЛИЦЫ (С НУМЕРАЦИЕЙ)
+    // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
-
-        if (!thead || !tbody) return;
 
         const currentData = this.data[this.currentSheet] || { headers: [], rows: [] };
         const headers = currentData.headers || [];
         const rows = currentData.rows || [];
 
-        if (headers.length > 0) {
-            thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-        } else {
-            thead.innerHTML = '<tr><th>Нет данных</th></tr>';
-        }
+        // ---- ЗАГОЛОВКИ КОЛОНОК (буквы) ----
+        let headerHtml = '<tr><th class="row-header"></th>';
+        headers.forEach((h, index) => {
+            const letter = this.getColumnLetter(index);
+            headerHtml += `<th>${letter}</th>`;
+        });
+        headerHtml += '</tr>';
+        thead.innerHTML = headerHtml;
 
+        // ---- ТЕЛО ТАБЛИЦЫ (строки с номерами) ----
         if (rows.length > 0) {
-            tbody.innerHTML = rows.map((row, rowIndex) => {
-                const actualRow = rowIndex + 2;
-                return `<tr>
-                    ${row.map((cell, colIndex) => {
-                        const actualCol = colIndex + 1;
-                        return `<td data-row="${actualRow}" data-col="${actualCol}" 
-                            onclick="tableManager.editCell(${actualRow}, ${actualCol})">
-                            ${cell !== undefined && cell !== null ? cell : ''}
-                        </td>`;
-                    }).join('')}
-                </tr>`;
-            }).join('');
+            let bodyHtml = '';
+            rows.forEach((row, rowIndex) => {
+                const actualRow = rowIndex + 2; // строка 1 — заголовки
+                bodyHtml += `<tr>`;
+                bodyHtml += `<td class="row-header">${actualRow}</td>`;
+                row.forEach((cell, colIndex) => {
+                    const actualCol = colIndex + 1;
+                    const value = cell !== undefined && cell !== null ? cell : '';
+                    bodyHtml += `<td data-row="${actualRow}" data-col="${actualCol}" 
+                                   onclick="tableManager.selectCell(${actualRow}, ${actualCol})"
+                                   ondblclick="tableManager.editCell(${actualRow}, ${actualCol})">
+                                   ${value}</td>`;
+                });
+                bodyHtml += '</tr>';
+            });
+            tbody.innerHTML = bodyHtml;
         } else {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#999;">Нет данных для отображения</td></tr>';
+            tbody.innerHTML = `<tr>
+                <td class="row-header">1</td>
+                <td colspan="${Math.max(headers.length, 1)}" style="text-align:center; padding:20px; color:#999;">
+                    Нет данных для отображения
+                </td>
+            </tr>`;
         }
 
-        const sheetLabels = { sheet1: 'Лист "1"', sheet2: 'Лист "2"', sheet3: 'Лист "3"', sheet4: 'Лист "4"' };
-        const titleElement = document.querySelector('.app-title');
-        if (titleElement) {
-            titleElement.textContent = `Таблица (${sheetLabels[this.currentSheet] || this.currentSheet})`;
-        }
+        // Обновляем имя листа
+        const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
+        document.getElementById('sheetNameDisplay').textContent = sheetLabels[this.currentSheet] || this.currentSheet;
     }
 
+    // ============================================================
+    // РЕДАКТИРОВАНИЕ ЯЧЕЙКИ (через модалку)
+    // ============================================================
     editCell(row, col) {
         this.editingCell = { row, col };
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
@@ -301,9 +419,9 @@ class TableManager {
         }
     }
 
-    // ============================================
+    // ============================================================
     // СОХРАНЕНИЕ ЯЧЕЙКИ (POST как text/plain)
-    // ============================================
+    // ============================================================
     async saveCellValue() {
         const value = document.getElementById('cellInput').value.trim();
         const { row, col } = this.editingCell;
@@ -316,7 +434,6 @@ class TableManager {
         const sheetNumber = this.currentSheet.replace('sheet', '');
 
         try {
-            // Формируем JSON данные
             const jsonData = {
                 action: 'updateCell',
                 sheet: sheetNumber,
@@ -325,37 +442,29 @@ class TableManager {
                 value: value
             };
 
-            console.log('📤 Отправка POST (JSON как plain text):', jsonData);
-
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain', // КЛЮЧЕВОЙ МОМЕНТ: обход CORS
-                },
-                body: JSON.stringify(jsonData) // JSON, но отправляем как текст
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(jsonData)
             });
 
             const text = await response.text();
-            console.log('📥 Ответ сервера:', text);
-            
             let result;
-            try {
-                result = JSON.parse(text);
-            } catch (e) {
-                console.error('❌ Невалидный JSON:', text);
-                throw new Error('Сервер вернул невалидный ответ');
-            }
+            try { result = JSON.parse(text); } 
+            catch (e) { throw new Error('Сервер вернул невалидный ответ'); }
 
             if (result.success) {
                 // Обновляем локальные данные
                 const currentData = this.data[this.currentSheet];
                 const rowIndex = row - 2;
-                if (currentData.rows[rowIndex] && currentData.rows[rowIndex][col - 1] !== undefined) {
+                if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
                     currentData.rows[rowIndex][col - 1] = value;
                 }
                 
                 this.renderTable();
                 document.getElementById('editModal').classList.remove('active');
+                // Обновляем строку формул
+                document.getElementById('formulaInput').value = value;
                 this.showToast('✅ Ячейка обновлена!');
             } else {
                 throw new Error(result.error || 'Неизвестная ошибка');
@@ -367,14 +476,23 @@ class TableManager {
         }
     }
 
+    // ============================================================
+    // ОБНОВЛЕНИЕ СТАТИСТИКИ
+    // ============================================================
     updateStats() {
         const currentData = this.data[this.currentSheet] || { headers: [], rows: [] };
         document.getElementById('rowCount').textContent = `Строк: ${currentData.rows.length}`;
         document.getElementById('colCount').textContent = `Колонок: ${currentData.headers.length}`;
         document.getElementById('lastSync').textContent = 
             `Последняя синхронизация: ${new Date().toLocaleString()}`;
+        if (!this.selectedCell) {
+            document.getElementById('cellInfo').textContent = 'Выбрано: —';
+        }
     }
 
+    // ============================================================
+    // ОБНОВЛЕНИЕ СТРАНИЦЫ ОБЗОРА
+    // ============================================================
     updateOverview() {
         let totalRecords = 0;
         ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
@@ -385,6 +503,9 @@ class TableManager {
             totalRecords > 0 ? '✅ Данные загружены' : '⏳ Нет данных';
     }
 
+    // ============================================================
+    // СТАТУС СИНХРОНИЗАЦИИ
+    // ============================================================
     showSyncStatus(success) {
         const status = document.querySelector('.sync-status');
         if (!status) return;
@@ -401,15 +522,17 @@ class TableManager {
         }, 3000);
     }
 
+    // ============================================================
+    // TOAST УВЕДОМЛЕНИЕ
+    // ============================================================
     showToast(message) {
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #323232; color: white; padding: 12px 24px;
-            border-radius: 8px; font-size: 14px; z-index: 9999;
+            background: #323232; color: white; padding: 10px 22px;
+            border-radius: 8px; font-size: 13px; z-index: 9999;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             animation: fadeIn 0.3s ease;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
         `;
         toast.textContent = message;
         document.body.appendChild(toast);
@@ -421,6 +544,9 @@ class TableManager {
     }
 }
 
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
 let tableManager;
 document.addEventListener('DOMContentLoaded', () => {
     tableManager = new TableManager();
