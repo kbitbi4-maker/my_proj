@@ -119,7 +119,6 @@ class TableUI {
                 toolsMenu.classList.toggle('open', !isOpen);
             });
 
-            // Закрываем меню при клике вне его
             document.addEventListener('click', (e) => {
                 if (!toolsMenu.contains(e.target) && e.target !== toolsBtn) {
                     toolsMenu.classList.remove('open');
@@ -279,9 +278,12 @@ class TableUI {
         });
 
         // ============================================================
-        // КЛИКИ ПО ЗАГОЛОВКАМ (ЧЕРЕЗ addEventListener)
+        // КЛИКИ ПО ЗАГОЛОВКАМ (С ЗАЩИТОЙ ОТ ОШИБОК)
         // ============================================================
         document.getElementById('dataTable').addEventListener('click', (e) => {
+            // Защита: проверяем, что e.target — это DOM-элемент
+            if (!e.target || typeof e.target.closest !== 'function') return;
+            
             const target = e.target.closest('th, td');
             if (!target) return;
 
@@ -374,7 +376,6 @@ class TableUI {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
         
-        // Синхронизируем активные кнопки
         const desktopBtn = document.querySelector(`.main-nav li[data-page="${page}"]`);
         const mobileBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
         if (desktopBtn) desktopBtn.classList.add('active');
