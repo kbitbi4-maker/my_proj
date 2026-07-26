@@ -1,6 +1,5 @@
 // ============================================================
-// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ОПТИМИЗИРОВАННАЯ)
-// Выделение НЕ меняет фон ячеек, только добавляет рамку и подсветку
+// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (С ВОССТАНОВЛЕННЫМ ВИЗУАЛОМ)
 // ============================================================
 
 class TableSelection {
@@ -18,21 +17,11 @@ class TableSelection {
     // ОЧИСТКА ВЫДЕЛЕНИЯ
     // ============================================================
     clearSelection() {
-        // Снимаем выделение с ячеек
-        document.querySelectorAll('.cell-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'range-selected'));
+        document.querySelectorAll('.cell-selected, .range-selected, .row-selected, .col-selected')
+            .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'row-selected', 'col-selected'));
         
-        // Снимаем подсветку строк и колонок
-        document.querySelectorAll('.row-selected, .col-selected')
-            .forEach(el => el.classList.remove('row-selected', 'col-selected'));
-        
-        // Снимаем выделение с заголовков
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
             .forEach(el => el.classList.remove('partial', 'full', 'selected'));
-        
-        // Убираем режим выделения с таблицы
-        const table = document.getElementById('dataTable');
-        if (table) table.classList.remove('range-mode');
         
         this.selectionRange = null;
         this.selectedCell = null;
@@ -69,7 +58,6 @@ class TableSelection {
             document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
         
-        // Подсветка заголовков
         this.updateHeaderSelection();
         this.updateToolbarVisibility();
     }
@@ -90,7 +78,20 @@ class TableSelection {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+    // ПОСТРОЕНИЕ CSS-СЕЛЕКТОРА ДЛЯ ДИАПАЗОНА
+    // ============================================================
+    buildRangeSelector(minRow, maxRow, minCol, maxCol) {
+        const selectors = [];
+        for (let r = minRow; r <= maxRow; r++) {
+            for (let c = minCol; c <= maxCol; c++) {
+                selectors.push(`td[data-row="${r}"][data-col="${c}"]`);
+            }
+        }
+        return selectors.join(', ');
+    }
+
+    // ============================================================
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ
     // ============================================================
     updateSelectionVisual() {
         // Снимаем старые классы
@@ -105,11 +106,12 @@ class TableSelection {
         const minCol = Math.min(startCol, endCol);
         const maxCol = Math.max(startCol, endCol);
 
-        const table = document.getElementById('dataTable');
-        if (!table) return;
-
-        // ---- 1. ВКЛЮЧАЕМ РЕЖИМ ВЫДЕЛЕНИЯ (CSS сделает всё остальное) ----
-        table.classList.add('range-mode');
+        // ---- 1. ПОДСВЕТКА ДИАПАЗОНА (ОДНИМ СЕЛЕКТОРОМ) ----
+        const selector = this.buildRangeSelector(minRow, maxRow, minCol, maxCol);
+        const cells = document.querySelectorAll(selector);
+        cells.forEach(cell => {
+            cell.classList.add('range-selected');
+        });
 
         // ---- 2. АКТИВНАЯ ЯЧЕЙКА ----
         const activeCell = document.querySelector(
@@ -148,7 +150,6 @@ class TableSelection {
         const maxCols = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
         const maxRows = currentData.rows.length;
 
-        // Снимаем старые классы с заголовков
         document.querySelectorAll('.row-header.partial, .row-header.full, .col-header.partial, .col-header.full, .corner-header.selected')
             .forEach(el => el.classList.remove('partial', 'full', 'selected'));
 
