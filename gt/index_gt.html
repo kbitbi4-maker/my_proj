@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GT Manager - Google Tables001</title>
+    <title>GT Manager - Google Tables</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ============================================================
-    ШАПКА
-    ============================================================ -->
+    <!-- ШАПКА -->
     <header class="app-header">
         <div class="header-left">
             <button class="menu-btn" id="menuToggle" title="Меню">
@@ -31,9 +29,7 @@
         </div>
     </header>
 
-    <!-- ============================================================
-    СТРОКА ФОРМУЛ
-    ============================================================ -->
+    <!-- СТРОКА ФОРМУЛ -->
     <div class="formula-bar">
         <div class="cell-reference" id="cellReference">A1</div>
         <div class="formula-input">
@@ -46,9 +42,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    ПАНЕЛЬ ИНСТРУМЕНТОВ (ДЕСКТОП)
-    ============================================================ -->
+    <!-- ПАНЕЛЬ ИНСТРУМЕНТОВ (ДЕСКТОП) -->
     <div class="selection-toolbar" id="selectionToolbar">
         <span style="font-size:12px;color:#5f6368;font-weight:500;">
             <i class="fas fa-arrows-alt"></i> Выделено: <span id="selectionCount">0</span> ячеек
@@ -80,9 +74,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    НАВИГАЦИЯ (ДЕСКТОП)
-    ============================================================ -->
+    <!-- НАВИГАЦИЯ (ДЕСКТОП) -->
     <nav class="main-nav">
         <ul>
             <li class="active" data-page="table">
@@ -97,9 +89,7 @@
         </ul>
     </nav>
 
-    <!-- ============================================================
-    ОСНОВНОЙ КОНТЕНТ
-    ============================================================ -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="app-content">
 
         <!-- СТРАНИЦА ТАБЛИЦЫ -->
@@ -176,9 +166,7 @@
         </section>
     </main>
 
-    <!-- ============================================================
-    НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ)
-    ============================================================ -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (МОБИЛЬНАЯ) -->
     <nav class="bottom-nav">
         <button class="nav-btn active" data-page="table">
             <i class="fas fa-table"></i>
@@ -198,9 +186,7 @@
         </button>
     </nav>
 
-    <!-- ============================================================
-    ВСПЛЫВАЮЩЕЕ МЕНЮ ИНСТРУМЕНТОВ (МОБИЛЬНОЕ)
-    ============================================================ -->
+    <!-- ВСПЛЫВАЮЩЕЕ МЕНЮ ИНСТРУМЕНТОВ (МОБИЛЬНОЕ) -->
     <div class="tools-menu" id="toolsMenu">
         <button id="mobileCopyBtn"><i class="fas fa-copy"></i> Копировать</button>
         <button id="mobilePasteBtn"><i class="fas fa-paste"></i> Вставить</button>
@@ -209,9 +195,7 @@
         <button id="mobileFillBtn"><i class="fas fa-fill-drip"></i> Заполнить</button>
     </div>
 
-    <!-- ============================================================
-    МОДАЛКА РЕДАКТИРОВАНИЯ
-    ============================================================ -->
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -224,18 +208,16 @@
         </div>
     </div>
 
-    <!-- ============================================================
-    ПОДКЛЮЧАЕМ СКРИПТЫ
-    ============================================================ -->
-<script src="config.js"></script>
-<script src="core.js"></script>
-<script src="selection.js"></script>
-<script src="clipboard.js"></script>
-<script src="formula-parser.js"></script>
-<script src="formula-engine.js"></script>
-<script src="formula-sync.js"></script>
-<script src="ui.js"></script>
-<script src="script.js"></script>
-    
+    <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
+    <script src="config.js"></script>
+    <script src="core.js"></script>
+    <script src="selection.js"></script>
+    <script src="clipboard.js"></script>
+    <script src="formula-parser.js"></script>
+    <script src="formula-engine.js"></script>
+    <script src="formula-sync.js"></script>
+    <script src="ui.js"></script>
+    <script src="script.js"></script>
+
 </body>
 </html>
