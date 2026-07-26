@@ -36,7 +36,7 @@ class TableCore {
     }
 
     // ============================================================
-    // ЗАГРУЗКА ДАННЫХ (С СОХРАНЕНИЕМ ФОРМУЛ)
+    // ЗАГРУЗКА ДАННЫХ (С ПАРСИНГОМ ЗНАЧЕНИЙ И ФОРМУЛ)
     // ============================================================
     async loadData() {
         if (!this.apiUrl) {
@@ -65,39 +65,49 @@ class TableCore {
             let loaded = false;
 
             for (const key of sheetKeys) {
-                if (result[key] && Array.isArray(result[key])) {
-                    const sheetName = 'sheet' + key;
-                    const data = result[key];
+                const data = result[key];
+                if (!data) continue;
+                
+                const sheetName = 'sheet' + key;
+                
+                // ---- ВАРИАНТ 1: { values: [...], formulas: [...] } ----
+                if (data.values && Array.isArray(data.values)) {
+                    this.data[sheetName] = { rows: data.values };
                     
-                    // Сохраняем значения
-                    this.data[sheetName] = { rows: data };
-                    
-                    // Сохраняем формулы (если есть)
+                    // Сохраняем формулы
                     this.formulas[sheetName] = { rows: [] };
-                    for (let r = 0; r < data.length; r++) {
-                        this.formulas[sheetName].rows[r] = [];
-                        for (let c = 0; c < data[r].length; c++) {
-                            const cellValue = data[r][c];
-                            if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
-                                this.formulas[sheetName].rows[r][c] = cellValue;
-                            } else {
-                                this.formulas[sheetName].rows[r][c] = '';
+                    if (data.formulas && Array.isArray(data.formulas)) {
+                        for (let r = 0; r < data.formulas.length; r++) {
+                            this.formulas[sheetName].rows[r] = [];
+                            for (let c = 0; c < data.formulas[r].length; c++) {
+                                this.formulas[sheetName].rows[r][c] = data.formulas[r][c] || '';
                             }
                         }
                     }
-                    
                     loaded = true;
-                    console.log(`✅ Лист ${key} загружен: ${data.length} строк`);
+                    console.log(`✅ Лист ${key} загружен: ${data.values.length} строк, ${data.formulas ? data.formulas.length : 0} формул`);
+                    continue;
+                }
+                
+                // ---- ВАРИАНТ 2: просто массив (старый формат) ----
+                if (Array.isArray(data)) {
+                    this.data[sheetName] = { rows: data };
+                    this.formulas[sheetName] = { rows: [] };
+                    loaded = true;
+                    console.log(`✅ Лист ${key} загружен (только значения): ${data.length} строк`);
+                    continue;
                 }
             }
 
             if (!loaded) {
+                // Проверяем старый формат sheet1, sheet2, ...
                 for (const key of ['sheet1', 'sheet2', 'sheet3', 'sheet4']) {
-                    if (result[key] && Array.isArray(result[key])) {
-                        this.data[key] = { rows: result[key] };
+                    const data = result[key];
+                    if (data && Array.isArray(data)) {
+                        this.data[key] = { rows: data };
                         this.formulas[key] = { rows: [] };
                         loaded = true;
-                        console.log(`✅ ${key} загружен: ${result[key].length} строк`);
+                        console.log(`✅ ${key} загружен (старый формат): ${data.length} строк`);
                     }
                 }
             }
