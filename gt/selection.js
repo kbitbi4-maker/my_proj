@@ -1,6 +1,6 @@
 // ============================================================
-// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК
-// Клики, протягивание, Shift-диапазоны, заголовки
+// selection.js - ЛОГИКА ВЫДЕЛЕНИЯ ЯЧЕЕК (ИСПРАВЛЕННАЯ)
+// Убрано ложное затемнение, добавлено позеленение заголовков
 // ============================================================
 
 class TableSelection {
@@ -18,8 +18,8 @@ class TableSelection {
     // ОЧИСТКА ВЫДЕЛЕНИЯ
     // ============================================================
     clearSelection() {
-        document.querySelectorAll('.cell-selected, .row-selected, .col-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected', 'range-selected'));
+        document.querySelectorAll('.cell-selected, .range-selected, .row-header.selected, .col-header.selected, .corner-header.selected')
+            .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'selected'));
         this.selectionRange = null;
         this.selectedCell = null;
         document.getElementById('cellInfo').textContent = 'Выбрано: —';
@@ -32,8 +32,8 @@ class TableSelection {
     // ВЫДЕЛЕНИЕ ЯЧЕЙКИ
     // ============================================================
     selectCell(row, col) {
-        document.querySelectorAll('.cell-selected, .row-selected, .col-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected', 'range-selected'));
+        document.querySelectorAll('.cell-selected, .range-selected, .row-header.selected, .col-header.selected, .corner-header.selected')
+            .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'selected'));
 
         this.selectedCell = { row, col };
         this.selectionRange = { startRow: row, startCol: col, endRow: row, endCol: col };
@@ -41,21 +41,6 @@ class TableSelection {
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
         if (cell) {
             cell.classList.add('cell-selected');
-            
-            const rowElement = cell.closest('tr');
-            if (rowElement) {
-                rowElement.querySelectorAll('td').forEach(td => {
-                    if (!td.classList.contains('cell-selected')) {
-                        td.classList.add('row-selected');
-                    }
-                });
-            }
-            
-            document.querySelectorAll(`td[data-col="${col}"]`).forEach(td => {
-                if (!td.classList.contains('cell-selected')) {
-                    td.classList.add('col-selected');
-                }
-            });
             
             const columnLetter = this.core.getColumnLetter(col - 1);
             document.getElementById('cellReference').textContent = `${columnLetter}${row}`;
@@ -89,11 +74,12 @@ class TableSelection {
     }
 
     // ============================================================
-    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ
+    // ОБНОВЛЕНИЕ ВИЗУАЛА ВЫДЕЛЕНИЯ (БЕЗ ЛОЖНОГО ЗАТЕМНЕНИЯ)
     // ============================================================
     updateSelectionVisual() {
-        document.querySelectorAll('.cell-selected, .row-selected, .col-selected, .range-selected')
-            .forEach(el => el.classList.remove('cell-selected', 'row-selected', 'col-selected', 'range-selected'));
+        // Снимаем все старые классы
+        document.querySelectorAll('.cell-selected, .range-selected, .row-header.selected, .col-header.selected, .corner-header.selected')
+            .forEach(el => el.classList.remove('cell-selected', 'range-selected', 'selected'));
 
         if (!this.selectionRange) return;
 
@@ -103,6 +89,7 @@ class TableSelection {
         const minCol = Math.min(startCol, endCol);
         const maxCol = Math.max(startCol, endCol);
 
+        // ---- 1. ПОДСВЕТКА ЯЧЕЕК ----
         for (let r = minRow; r <= maxRow; r++) {
             for (let c = minCol; c <= maxCol; c++) {
                 const cell = document.querySelector(`td[data-row="${r}"][data-col="${c}"]`);
@@ -116,22 +103,57 @@ class TableSelection {
             }
         }
 
-        for (let r = minRow; r <= maxRow; r++) {
-            document.querySelectorAll(`td[data-row="${r}"]`).forEach(td => {
-                if (!td.classList.contains('cell-selected') && !td.classList.contains('range-selected')) {
-                    td.classList.add('row-selected');
+        // ---- 2. ПОДСВЕТКА ЗАГОЛОВКОВ СТРОК (зеленые номера) ----
+        // Если выделена вся строка или диапазон, захватывающий всю строку
+        const currentData = this.core.data[this.core.currentSheet];
+        const maxCols = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
+        const isFullRow = (minCol === 1 && maxCol === maxCols);
+        const isFullCol = (minRow === 1 && maxRow === currentData.rows.length);
+        const isFullSheet = isFullRow && isFullCol;
+
+        // Подсветка номеров строк
+        document.querySelectorAll('.row-header:not(.corner-header)').forEach(el => {
+            const rowNum = parseInt(el.textContent);
+            if (rowNum >= minRow && rowNum <= maxRow) {
+                if (isFullRow || isFullSheet) {
+                    el.classList.add('selected');
+                } else if (this.selectionRange.startRow === this.selectionRange.endRow) {
+                    // Если выделена одна строка
+                    if (rowNum === this.selectionRange.startRow) {
+                        el.classList.add('selected');
+                    }
+                } else {
+                    // Диапазон строк
+                    el.classList.add('selected');
                 }
-            });
+            }
+        });
+
+        // Подсветка букв колонок
+        document.querySelectorAll('.col-header').forEach(el => {
+            const letter = el.textContent;
+            const colIndex = this.core.getColumnIndex(letter) + 1;
+            if (colIndex >= minCol && colIndex <= maxCol) {
+                if (isFullCol || isFullSheet) {
+                    el.classList.add('selected');
+                } else if (this.selectionRange.startCol === this.selectionRange.endCol) {
+                    // Если выделена одна колонка
+                    if (colIndex === this.selectionRange.startCol) {
+                        el.classList.add('selected');
+                    }
+                } else {
+                    // Диапазон колонок
+                    el.classList.add('selected');
+                }
+            }
+        });
+
+        // Подсветка уголка (при выделении всего листа)
+        if (isFullSheet) {
+            document.querySelector('.corner-header')?.classList.add('selected');
         }
 
-        for (let c = minCol; c <= maxCol; c++) {
-            document.querySelectorAll(`td[data-col="${c}"]`).forEach(td => {
-                if (!td.classList.contains('cell-selected') && !td.classList.contains('range-selected')) {
-                    td.classList.add('col-selected');
-                }
-            });
-        }
-
+        // ---- 3. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
         const colLetter = this.core.getColumnLetter(this.selectedCell.col - 1);
         document.getElementById('cellReference').textContent = `${colLetter}${this.selectedCell.row}`;
         const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
