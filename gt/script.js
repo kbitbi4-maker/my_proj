@@ -1,5 +1,5 @@
 // ============================================================
-// script.js - ТОЧКА ВХОДА (ИСПРАВЛЕННАЯ)
+// script.js - ТОЧКА ВХОДА (ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ)
 // Сборка всех модулей и инициализация
 // ============================================================
 
@@ -16,11 +16,13 @@ window.tableClipboard = clipboard;
 // Инициализация UI (привязка всех событий)
 const ui = new TableUI(core, selection, clipboard);
 
-// РУЧНОЙ ЗАПУСК ЗАГРУЗКИ ПОСЛЕ ИНИЦИАЛИЗАЦИИ
-// Ждем, пока все модули зарегистрируются
-setTimeout(() => {
+// ЗАГРУЗКА ДАННЫХ (с проверкой на наличие URL и инициализацию)
+function initializeApp() {
     if (core.apiUrl) {
-        core.loadData();
+        // Небольшая задержка для гарантии, что все обработчики привязаны
+        setTimeout(() => {
+            core.loadData();
+        }, 50);
     } else {
         const loading = document.getElementById('loadingIndicator');
         if (loading) {
@@ -31,7 +33,11 @@ setTimeout(() => {
             loading.style.display = 'flex';
         }
     }
-}, 100);
+}
+
+// Запускаем приложение
+initializeApp();
 
 console.log('🚀 Приложение инициализировано');
 console.log('📦 Модули: core, selection, clipboard, ui');
+console.log('📡 API URL:', core.apiUrl || 'не настроен');
