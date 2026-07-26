@@ -1,5 +1,5 @@
-// script.js - ОБНОВЛЕННАЯ ВЕРСИЯ ДЛЯ РАБОТЫ С НОВЫМ API
-// Теперь получает ВСЕ 4 листа одним запросом
+// script.js - ОБНОВЛЕННАЯ ВЕРСИЯ С JSON КАК PLAIN TEXT
+// ОТПРАВЛЯЕТ POST КАК text/plain ДЛЯ ОБХОДА CORS
 
 class TableManager {
     constructor() {
@@ -10,7 +10,7 @@ class TableManager {
             sheet3: { headers: [], rows: [] },
             sheet4: { headers: [], rows: [] }
         };
-        this.currentSheet = 'sheet1'; // Активный лист
+        this.currentSheet = 'sheet1';
         this.editingCell = null;
         this.init();
     }
@@ -37,28 +37,20 @@ class TableManager {
     }
 
     bindEvents() {
-        // Синхронизация (кнопка облачка)
         const syncBtn = document.getElementById('syncBtn');
         if (syncBtn) {
-            syncBtn.addEventListener('click', () => {
-                this.syncData();
-            });
+            syncBtn.addEventListener('click', () => { this.syncData(); });
         }
 
-        // Обновление (кнопка refresh)
         const refreshBtn = document.getElementById('refreshBtn');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.loadData();
-            });
+            refreshBtn.addEventListener('click', () => { this.loadData(); });
         }
 
-        // Навигация по страницам
         document.querySelectorAll('.main-nav li').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
-                
                 const page = item.dataset.page;
                 document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
                 const targetPage = document.getElementById(`page-${page}`);
@@ -66,7 +58,6 @@ class TableManager {
             });
         });
 
-        // Модальное окно редактирования
         const closeModal = document.querySelector('.close-modal');
         if (closeModal) {
             closeModal.addEventListener('click', () => {
@@ -88,7 +79,6 @@ class TableManager {
             });
         }
 
-        // Сохранение настроек
         const saveSettingsBtn = document.getElementById('saveSettingsBtn');
         if (saveSettingsBtn) {
             saveSettingsBtn.addEventListener('click', () => {
@@ -104,27 +94,21 @@ class TableManager {
             });
         }
 
-        // Загружаем URL в поле настроек
         const apiUrlInput = document.getElementById('apiUrl');
         if (apiUrlInput && this.apiUrl) {
             apiUrlInput.value = this.apiUrl;
         }
     }
 
-    // Создание переключателя листов
     createSheetSelector() {
         const container = document.querySelector('.table-container');
         if (!container) return;
 
-        // Создаем панель для переключения листов
         const selectorDiv = document.createElement('div');
         selectorDiv.className = 'sheet-selector';
         selectorDiv.style.cssText = `
-            display: flex;
-            gap: 8px;
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e0e0e0;
+            display: flex; gap: 8px; padding: 10px 15px;
+            background: #f8f9fa; border-bottom: 2px solid #e0e0e0;
             flex-wrap: wrap;
         `;
 
@@ -136,14 +120,10 @@ class TableManager {
             btn.textContent = sheetLabels[index];
             btn.dataset.sheet = name;
             btn.style.cssText = `
-                padding: 6px 16px;
-                border: 2px solid #ddd;
-                border-radius: 20px;
+                padding: 6px 16px; border: 2px solid #ddd; border-radius: 20px;
                 background: ${name === this.currentSheet ? '#075e54' : 'white'};
                 color: ${name === this.currentSheet ? 'white' : '#333'};
-                cursor: pointer;
-                font-size: 13px;
-                transition: all 0.2s;
+                cursor: pointer; font-size: 13px; transition: all 0.2s;
                 font-weight: ${name === this.currentSheet ? '600' : '400'};
             `;
             
@@ -160,7 +140,6 @@ class TableManager {
             
             btn.addEventListener('click', () => {
                 this.switchSheet(name);
-                // Обновляем стили кнопок
                 document.querySelectorAll('.sheet-selector button').forEach(b => {
                     const sheetName = b.dataset.sheet;
                     b.style.background = sheetName === name ? '#075e54' : 'white';
@@ -172,7 +151,6 @@ class TableManager {
             selectorDiv.appendChild(btn);
         });
 
-        // Вставляем перед таблицей
         const tableContainer = container.querySelector('#dataTable');
         if (tableContainer) {
             container.insertBefore(selectorDiv, tableContainer);
@@ -181,14 +159,15 @@ class TableManager {
         }
     }
 
-    // Переключение между листами
     switchSheet(sheetName) {
         this.currentSheet = sheetName;
         this.renderTable();
         this.updateStats();
     }
 
-    // Загрузка данных из Google Sheets
+    // ============================================
+    // ЗАГРУЗКА ДАННЫХ (GET)
+    // ============================================
     async loadData() {
         if (!this.apiUrl) {
             alert('❌ Сначала настройте API URL в разделе "Настройки"');
@@ -201,32 +180,23 @@ class TableManager {
             loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка данных...';
         }
 
-        console.log('📤 Отправка запроса к:', this.apiUrl);
+        console.log('📤 GET запрос к:', this.apiUrl);
 
         try {
             const response = await fetch(this.apiUrl);
-            console.log('📥 Статус ответа:', response.status);
-
             if (!response.ok) {
                 throw new Error(`HTTP ошибка: ${response.status}`);
             }
 
             const text = await response.text();
-            console.log('📄 Ответ от сервера получен (длина):', text.length);
-
-            // Парсим JSON
             let result;
             try {
                 result = JSON.parse(text);
             } catch (e) {
-                throw new Error(`Не удалось разобрать JSON: ${text.substring(0, 100)}...`);
+                throw new Error(`Невалидный JSON: ${text.substring(0, 100)}...`);
             }
 
-            console.log('✅ Данные загружены, ключи:', Object.keys(result));
-
-            // Проверяем структуру ответа
             if (result.sheet1 || result.sheet2 || result.sheet3 || result.sheet4) {
-                // Обрабатываем каждый лист
                 ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
                     if (result[key] && result[key].length > 0) {
                         this.data[key] = {
@@ -238,20 +208,13 @@ class TableManager {
                     }
                 });
 
-                console.log('📊 Данные загружены:', {
-                    sheet1: this.data.sheet1.rows.length,
-                    sheet2: this.data.sheet2.rows.length,
-                    sheet3: this.data.sheet3.rows.length,
-                    sheet4: this.data.sheet4.rows.length
-                });
-
                 this.renderTable();
                 this.updateStats();
                 this.updateOverview();
                 this.showSyncStatus(true);
                 if (loading) loading.style.display = 'none';
             } else {
-                throw new Error('Неизвестная структура ответа. Ожидались ключи: sheet1, sheet2, sheet3, sheet4');
+                throw new Error('Неизвестная структура ответа');
             }
 
         } catch (error) {
@@ -260,9 +223,6 @@ class TableManager {
                 loading.innerHTML = `
                     <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
                     <span>❌ Ошибка: ${error.message}</span>
-                    <br><small style="color: #666; margin-top: 10px; display: block;">
-                        Проверьте консоль (F12) для деталей
-                    </small>
                 `;
                 loading.style.display = 'flex';
             }
@@ -270,7 +230,6 @@ class TableManager {
         }
     }
 
-    // Синхронизация (ручное обновление)
     async syncData() {
         const btn = document.getElementById('syncBtn');
         if (!btn) return;
@@ -288,14 +247,10 @@ class TableManager {
         if (status) status.textContent = 'Синхр.';
         btn.disabled = false;
 
-        // Анимация подтверждения
         btn.style.background = 'rgba(76, 175, 80, 0.4)';
-        setTimeout(() => {
-            btn.style.background = '';
-        }, 1000);
+        setTimeout(() => { btn.style.background = ''; }, 1000);
     }
 
-    // Отрисовка таблицы для текущего листа
     renderTable() {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
@@ -306,17 +261,15 @@ class TableManager {
         const headers = currentData.headers || [];
         const rows = currentData.rows || [];
 
-        // Заголовки
         if (headers.length > 0) {
             thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
         } else {
             thead.innerHTML = '<tr><th>Нет данных</th></tr>';
         }
 
-        // Строки
         if (rows.length > 0) {
             tbody.innerHTML = rows.map((row, rowIndex) => {
-                const actualRow = rowIndex + 2; // +2 потому что строка 1 - заголовки
+                const actualRow = rowIndex + 2;
                 return `<tr>
                     ${row.map((cell, colIndex) => {
                         const actualCol = colIndex + 1;
@@ -331,20 +284,13 @@ class TableManager {
             tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:30px; color:#999;">Нет данных для отображения</td></tr>';
         }
 
-        // Обновляем информацию о текущем листе
-        const sheetLabels = {
-            sheet1: 'Лист "1"',
-            sheet2: 'Лист "2"',
-            sheet3: 'Лист "3"',
-            sheet4: 'Лист "4"'
-        };
+        const sheetLabels = { sheet1: 'Лист "1"', sheet2: 'Лист "2"', sheet3: 'Лист "3"', sheet4: 'Лист "4"' };
         const titleElement = document.querySelector('.app-title');
         if (titleElement) {
             titleElement.textContent = `Таблица (${sheetLabels[this.currentSheet] || this.currentSheet})`;
         }
     }
 
-    // Редактирование ячейки
     editCell(row, col) {
         this.editingCell = { row, col };
         const cell = document.querySelector(`td[data-row="${row}"][data-col="${col}"]`);
@@ -355,7 +301,9 @@ class TableManager {
         }
     }
 
-    // Сохранение значения ячейки
+    // ============================================
+    // СОХРАНЕНИЕ ЯЧЕЙКИ (POST как text/plain)
+    // ============================================
     async saveCellValue() {
         const value = document.getElementById('cellInput').value.trim();
         const { row, col } = this.editingCell;
@@ -365,33 +313,43 @@ class TableManager {
             return;
         }
 
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+
         try {
+            // Формируем JSON данные
+            const jsonData = {
+                action: 'updateCell',
+                sheet: sheetNumber,
+                row: row,
+                col: col,
+                value: value
+            };
+
+            console.log('📤 Отправка POST (JSON как plain text):', jsonData);
+
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain', // КЛЮЧЕВОЙ МОМЕНТ: обход CORS
                 },
-                body: JSON.stringify({
-                    action: 'updateCell',
-                    sheet: this.currentSheet.replace('sheet', ''), // "1", "2", "3" или "4"
-                    row: row,
-                    col: col,
-                    value: value
-                })
+                body: JSON.stringify(jsonData) // JSON, но отправляем как текст
             });
 
             const text = await response.text();
+            console.log('📥 Ответ сервера:', text);
+            
             let result;
             try {
                 result = JSON.parse(text);
             } catch (e) {
-                result = { success: false, error: text };
+                console.error('❌ Невалидный JSON:', text);
+                throw new Error('Сервер вернул невалидный ответ');
             }
 
             if (result.success) {
                 // Обновляем локальные данные
                 const currentData = this.data[this.currentSheet];
-                const rowIndex = row - 2; // Преобразуем в индекс массива
+                const rowIndex = row - 2;
                 if (currentData.rows[rowIndex] && currentData.rows[rowIndex][col - 1] !== undefined) {
                     currentData.rows[rowIndex][col - 1] = value;
                 }
@@ -409,35 +367,27 @@ class TableManager {
         }
     }
 
-    // Обновление статистики
     updateStats() {
         const currentData = this.data[this.currentSheet] || { headers: [], rows: [] };
-        const totalRows = currentData.rows.length;
-        const totalCols = currentData.headers.length;
-        
-        document.getElementById('rowCount').textContent = `Строк: ${totalRows}`;
-        document.getElementById('colCount').textContent = `Колонок: ${totalCols}`;
+        document.getElementById('rowCount').textContent = `Строк: ${currentData.rows.length}`;
+        document.getElementById('colCount').textContent = `Колонок: ${currentData.headers.length}`;
         document.getElementById('lastSync').textContent = 
             `Последняя синхронизация: ${new Date().toLocaleString()}`;
     }
 
-    // Обновление страницы обзора
     updateOverview() {
         let totalRecords = 0;
         ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
             totalRecords += this.data[key].rows.length;
         });
-        
         document.getElementById('totalRecords').textContent = totalRecords;
         document.getElementById('dataStatus').textContent = 
             totalRecords > 0 ? '✅ Данные загружены' : '⏳ Нет данных';
     }
 
-    // Статус синхронизации
     showSyncStatus(success) {
         const status = document.querySelector('.sync-status');
         if (!status) return;
-        
         if (success) {
             status.textContent = '✅ Синхр.';
             status.style.color = '#81c784';
@@ -451,7 +401,6 @@ class TableManager {
         }, 3000);
     }
 
-    // Toast уведомление
     showToast(message) {
         const toast = document.createElement('div');
         toast.style.cssText = `
@@ -472,7 +421,6 @@ class TableManager {
     }
 }
 
-// Инициализация
 let tableManager;
 document.addEventListener('DOMContentLoaded', () => {
     tableManager = new TableManager();
