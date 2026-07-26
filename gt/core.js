@@ -121,7 +121,7 @@ class TableCore {
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ (С data-letter ДЛЯ КОЛОНОК)
+    // ОТРИСОВКА ТАБЛИЦЫ (БЕЗ onclick — только data-атрибуты)
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
@@ -138,9 +138,10 @@ class TableCore {
         const colWidths = this.calculateColumnWidths(rows, maxCols);
         this.saveColumnWidths(colWidths);
 
-        // ---- ЗАГОЛОВКИ ----
+        // ---- ЗАГОЛОВКИ (БЕЗ onclick) ----
         let headerHtml = '<tr>';
-        headerHtml += `<th class="row-header corner-header" onclick="window.tableSelection?.selectAll()" title="Выделить всё">`;
+        // Уголок — data-action="selectAll"
+        headerHtml += `<th class="row-header corner-header" data-action="selectAll" title="Выделить всё">`;
         headerHtml += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">`;
         headerHtml += `<i class="fas fa-caret-down" style="font-size:10px;color:#5f6368;"></i>`;
         headerHtml += `</div></th>`;
@@ -148,15 +149,15 @@ class TableCore {
         for (let i = 0; i < maxCols; i++) {
             const letter = this.getColumnLetter(i);
             const width = colWidths[i] || 100;
-            // data-letter для чистого получения буквы без пробелов
-            headerHtml += `<th class="col-header" data-letter="${letter}" onclick="window.tableSelection?.selectColumn(${i + 1})" 
+            // Колонки — data-action="selectColumn" и data-col-index
+            headerHtml += `<th class="col-header" data-action="selectColumn" data-col-index="${i + 1}" data-letter="${letter}" 
                            style="min-width:${width}px; max-width:${width}px; cursor:pointer;">
                            ${letter}</th>`;
         }
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // ---- ТЕЛО ТАБЛИЦЫ ----
+        // ---- ТЕЛО ТАБЛИЦЫ (БЕЗ onclick) ----
         if (rows.length > 0) {
             let bodyHtml = '';
             const sheetKey = `${this.currentSheet}`;
@@ -169,7 +170,8 @@ class TableCore {
                 }
                 
                 bodyHtml += `<tr style="${rowHeight}">`;
-                bodyHtml += `<td class="row-header" onclick="window.tableSelection?.selectRow(${actualRow})" 
+                // Номер строки — data-action="selectRow"
+                bodyHtml += `<td class="row-header" data-action="selectRow" data-row-index="${actualRow}" 
                               style="cursor:pointer;">${actualRow}</td>`;
                 
                 for (let colIndex = 0; colIndex < maxCols; colIndex++) {
