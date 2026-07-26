@@ -1,6 +1,7 @@
 /* ==========================================================================
-   GOOGLE TABLES STYLE - ОБНОВЛЕН
-   Поддержка переноса слов и ручного изменения размеров
+   GOOGLE TABLES STYLE - ПОЛНАЯ ВЕРСИЯ
+   Поддержка выделения как в Google Sheets, переноса слов,
+   ручного изменения размеров, адаптивности
    ========================================================================== */
 
 * {
@@ -92,7 +93,7 @@ body {
 }
 
 /* ===========================
-   СТРОКА ФОРМУЛ
+   СТРОКА ФОРМУЛ (FORMULA BAR)
    =========================== */
 .formula-bar {
     background: #f8f9fa;
@@ -172,7 +173,7 @@ body {
 #formulaCancel { color: #d93025; }
 
 /* ===========================
-   НАВИГАЦИЯ
+   НАВИГАЦИЯ (ТАБЫ)
    =========================== */
 .main-nav {
     background: #ffffff;
@@ -284,24 +285,58 @@ body {
     table-layout: fixed;
 }
 
-/* Заголовки колонок (буквы) */
-#dataTable thead th {
-    background: #f8f9fa;
-    color: #5f6368;
-    font-size: 11px;
-    font-weight: 500;
-    text-align: center;
-    padding: 4px 2px;
-    border-bottom: 1px solid #dadce0;
-    border-right: 1px solid #dadce0;
+/* ===========================
+   ЗАГОЛОВКИ ТАБЛИЦЫ
+   =========================== */
+
+/* Уголок (выделение всего) */
+.corner-header {
+    min-width: 36px !important;
+    max-width: 36px !important;
+    width: 36px !important;
+    cursor: pointer !important;
+    background: #f8f9fa !important;
+    border-right: 1px solid #dadce0 !important;
+    border-bottom: 1px solid #dadce0 !important;
+    padding: 0 !important;
+    height: 28px;
     position: sticky;
     top: 0;
-    z-index: 2;
-    user-select: none;
+    left: 0;
+    z-index: 3;
+}
+.corner-header:hover {
+    background: #e8eaed !important;
+}
+.corner-header.selected {
+    background: #d2e3fc !important;
+}
+
+/* Заголовки колонок (буквы) */
+.col-header {
+    background: #f8f9fa !important;
+    color: #5f6368 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    padding: 4px 2px !important;
+    border-bottom: 1px solid #dadce0 !important;
+    border-right: 1px solid #dadce0 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+    user-select: none !important;
     height: 28px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: pointer !important;
+}
+.col-header:hover {
+    background: #e8eaed !important;
+}
+.col-header.selected {
+    background: #d2e3fc !important;
 }
 
 /* Заголовки строк (цифры) */
@@ -321,10 +356,19 @@ body {
     position: sticky;
     left: 0;
     z-index: 1;
+    cursor: pointer !important;
+}
+.row-header:hover {
+    background: #e8eaed !important;
+}
+.row-header.selected {
+    background: #d2e3fc !important;
 }
 
-/* Базовые ячейки */
-#dataTable td {
+/* ===========================
+   ЯЧЕЙКИ ТАБЛИЦЫ
+   =========================== */
+.data-cell {
     padding: 6px 8px;
     border-right: 1px solid #e8eaed;
     border-bottom: 1px solid #e8eaed;
@@ -335,49 +379,46 @@ body {
     transition: background 0.1s;
     min-height: 28px;
     vertical-align: top;
+    background: #ffffff;
+}
+.data-cell:hover {
+    background: #f1f3f4 !important;
 }
 
 /* ===========================
-   ВЫДЕЛЕНИЕ ЯЧЕЕК
+   ВЫДЕЛЕНИЕ ЯЧЕЕЙ
    =========================== */
-td.cell-selected {
-    outline: 2px solid #1a73e8;
-    outline-offset: -1px;
+
+/* Выделенная ячейка (активная) */
+.data-cell.cell-selected {
+    outline: 2px solid #1a73e8 !important;
+    outline-offset: -1px !important;
     background-color: #e8f0fe !important;
     z-index: 3;
     position: relative;
 }
 
-tr.row-selected td:not(.cell-selected) {
-    background-color: #f1f3f4;
+/* Выделение диапазона (неактивные ячейки) */
+.data-cell.range-selected {
+    background-color: #e8f0fe !important;
 }
 
-td.col-selected:not(.cell-selected) {
-    background-color: #f1f3f4;
+/* Подсветка строки */
+tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected) {
+    background-color: #f1f3f4 !important;
 }
 
-#dataTable td:hover:not(.cell-selected) {
-    background-color: #f8f9fa;
+/* Подсветка колонки */
+td.col-selected:not(.cell-selected):not(.range-selected) {
+    background-color: #f1f3f4 !important;
 }
 
-/* ===========================
-   РЕЗАЙЗЕРЫ (ручное изменение размеров)
-   =========================== */
-.resize-handle {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 6px;
-    height: 6px;
-    cursor: nw-resize;
-    background: #1a73e8;
-    opacity: 0;
-    transition: opacity 0.2s;
+/* Заголовки при выделении */
+tr.row-selected .row-header {
+    background-color: #d2e3fc !important;
 }
-
-td:hover .resize-handle,
-th:hover .resize-handle {
-    opacity: 0.6;
+.col-header.col-selected {
+    background-color: #d2e3fc !important;
 }
 
 /* ===========================
@@ -418,7 +459,7 @@ th:hover .resize-handle {
 }
 
 /* ===========================
-   МОДАЛКА
+   МОДАЛКА РЕДАКТИРОВАНИЯ
    =========================== */
 .modal {
     display: none;
@@ -574,8 +615,61 @@ th:hover .resize-handle {
     background: #1557b0;
 }
 
+/* Контейнер для кнопок управления размерами */
+.sizes-control {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.sizes-control .btn-reset {
+    padding: 6px 16px;
+    background: #d93025;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.sizes-control .btn-reset:hover {
+    background: #b3261e;
+}
+.sizes-control .btn-apply {
+    padding: 4px 12px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.sizes-control .btn-apply:hover {
+    background: #1557b0;
+}
+.sizes-control .size-input {
+    width: 80px;
+    padding: 4px 8px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.sizes-control .size-label {
+    font-size: 12px;
+    color: #5f6368;
+}
+.sizes-control .size-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sizes-hint {
+    color: #5f6368;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
 /* ===========================
-   АДАПТИВНОСТЬ
+   АДАПТИВНОСТЬ (МОБИЛЬНЫЕ)
    =========================== */
 @media (max-width: 768px) {
     .app-header {
@@ -607,7 +701,7 @@ th:hover .resize-handle {
     .main-nav li span {
         display: none;
     }
-    #dataTable td {
+    .data-cell {
         padding: 4px 6px;
         font-size: 12px;
     }
@@ -617,10 +711,16 @@ th:hover .resize-handle {
         width: 28px !important;
         font-size: 10px !important;
     }
-    #dataTable thead th {
-        font-size: 10px;
-        padding: 2px 2px;
-        height: 24px;
+    .corner-header {
+        min-width: 28px !important;
+        max-width: 28px !important;
+        width: 28px !important;
+        height: 24px !important;
+    }
+    .col-header {
+        font-size: 10px !important;
+        padding: 2px 2px !important;
+        height: 24px !important;
     }
     .stats-bar {
         font-size: 11px;
@@ -636,4 +736,34 @@ th:hover .resize-handle {
         font-size: 12px;
         padding: 4px 12px;
     }
+    .sizes-control {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .sizes-control .size-group {
+        flex-wrap: wrap;
+    }
+}
+
+/* ===========================
+   ДОПОЛНИТЕЛЬНО: ПОДСКАЗКИ ПРИ НАВЕДЕНИИ
+   =========================== */
+[title] {
+    position: relative;
+}
+
+/* Анимация для тостов */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(10px); }
+}
+
+/* Стиль для выделенного текста в ячейках */
+.data-cell::selection {
+    background: #c6d9f0;
 }
