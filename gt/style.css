@@ -1,5 +1,6 @@
 /* ==========================================================================
-   GOOGLE TABLES STYLE - ПОЛНОСТЬЮ ОБНОВЛЕН
+   GOOGLE TABLES STYLE - ОБНОВЛЕН
+   Поддержка переноса слов и ручного изменения размеров
    ========================================================================== */
 
 * {
@@ -91,7 +92,7 @@ body {
 }
 
 /* ===========================
-   СТРОКА ФОРМУЛ (FORMULA BAR)
+   СТРОКА ФОРМУЛ
    =========================== */
 .formula-bar {
     background: #f8f9fa;
@@ -171,7 +172,7 @@ body {
 #formulaCancel { color: #d93025; }
 
 /* ===========================
-   НАВИГАЦИЯ (ТАБЫ)
+   НАВИГАЦИЯ
    =========================== */
 .main-nav {
     background: #ffffff;
@@ -244,7 +245,7 @@ body {
 }
 
 /* ===========================
-   ТАБЛИЦА (GOOGLE TABLES STYLE)
+   ТАБЛИЦА
    =========================== */
 .app-content {
     flex: 1;
@@ -293,13 +294,14 @@ body {
     padding: 4px 2px;
     border-bottom: 1px solid #dadce0;
     border-right: 1px solid #dadce0;
-    min-width: 80px;
-    max-width: 200px;
     position: sticky;
     top: 0;
     z-index: 2;
     user-select: none;
     height: 28px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Заголовки строк (цифры) */
@@ -323,24 +325,21 @@ body {
 
 /* Базовые ячейки */
 #dataTable td {
-    padding: 4px 8px;
+    padding: 6px 8px;
     border-right: 1px solid #e8eaed;
     border-bottom: 1px solid #e8eaed;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-wrap: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
     cursor: cell;
     transition: background 0.1s;
-    height: 28px;
-    min-width: 80px;
-    max-width: 200px;
+    min-height: 28px;
+    vertical-align: top;
 }
 
 /* ===========================
-   ВЫДЕЛЕНИЕ ЯЧЕЕК (GOOGLE STYLE)
+   ВЫДЕЛЕНИЕ ЯЧЕЕК
    =========================== */
-
-/* Выбранная ячейка */
 td.cell-selected {
     outline: 2px solid #1a73e8;
     outline-offset: -1px;
@@ -349,19 +348,36 @@ td.cell-selected {
     position: relative;
 }
 
-/* Подсветка строки */
 tr.row-selected td:not(.cell-selected) {
     background-color: #f1f3f4;
 }
 
-/* Подсветка колонки */
 td.col-selected:not(.cell-selected) {
     background-color: #f1f3f4;
 }
 
-/* Ячейка при наведении */
 #dataTable td:hover:not(.cell-selected) {
     background-color: #f8f9fa;
+}
+
+/* ===========================
+   РЕЗАЙЗЕРЫ (ручное изменение размеров)
+   =========================== */
+.resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 6px;
+    height: 6px;
+    cursor: nw-resize;
+    background: #1a73e8;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+td:hover .resize-handle,
+th:hover .resize-handle {
+    opacity: 0.6;
 }
 
 /* ===========================
@@ -592,9 +608,8 @@ td.col-selected:not(.cell-selected) {
         display: none;
     }
     #dataTable td {
-        padding: 2px 4px;
+        padding: 4px 6px;
         font-size: 12px;
-        min-width: 60px;
     }
     .row-header {
         min-width: 28px !important;
@@ -603,7 +618,6 @@ td.col-selected:not(.cell-selected) {
         font-size: 10px !important;
     }
     #dataTable thead th {
-        min-width: 60px;
         font-size: 10px;
         padding: 2px 2px;
         height: 24px;
@@ -622,42 +636,4 @@ td.col-selected:not(.cell-selected) {
         font-size: 12px;
         padding: 4px 12px;
     }
-}
-/* ===========================
-   АВТО-ВЫРАВНИВАНИЕ КОЛОНОК
-   =========================== */
-
-/* Базовые стили для таблицы с авто-шириной */
-#dataTable {
-    table-layout: fixed; /* Фиксированная ширина колонок */
-    width: 100%;
-}
-
-#dataTable colgroup col {
-    /* Ширина будет установлена через JS */
-    min-width: 60px;
-    max-width: 300px;
-}
-
-/* Ячейки с длинным текстом - обрезаем с многоточием */
-#dataTable td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* При наведении показываем полный текст в подсказке */
-#dataTable td:hover {
-    overflow: visible;
-    white-space: normal;
-    word-break: break-all;
-    position: relative;
-    z-index: 10;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-/* Для длинных значений в ячейках */
-#dataTable td[title] {
-    cursor: help;
 }
