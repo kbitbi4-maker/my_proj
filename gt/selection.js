@@ -110,16 +110,22 @@ class TableSelection {
             }
         }
 
-        // ---- 2. ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ СТРОК ----
-        document.querySelectorAll('.row-header:not(.corner-header)').forEach(el => {
+        // ---- 2. ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ СТРОК (ВСЕ, КРОМЕ УГОЛКА) ----
+        document.querySelectorAll('.row-header').forEach(el => {
+            // Пропускаем уголок
+            if (el.classList.contains('corner-header')) return;
+            
             const rowNum = parseInt(el.textContent);
+            if (isNaN(rowNum)) return;
+            
             if (rowNum >= minRow && rowNum <= maxRow) {
-                // Проверяем, полностью ли выделена строка
                 const isFullRow = (minCol === 1 && maxCol === maxCols);
                 if (isFullRow) {
-                    el.classList.add('full');  // Ярко-зеленый
+                    el.classList.add('full');
+                    console.log(`✅ Строка ${rowNum}: добавлен класс full`);
                 } else {
-                    el.classList.add('partial');  // Светло-зеленый
+                    el.classList.add('partial');
+                    console.log(`✅ Строка ${rowNum}: добавлен класс partial`);
                 }
             }
         });
@@ -129,12 +135,13 @@ class TableSelection {
             const letter = el.textContent;
             const colIndex = this.core.getColumnIndex(letter) + 1;
             if (colIndex >= minCol && colIndex <= maxCol) {
-                // Проверяем, полностью ли выделена колонка
                 const isFullCol = (minRow === 1 && maxRow === maxRows);
                 if (isFullCol) {
-                    el.classList.add('full');  // Ярко-зеленый
+                    el.classList.add('full');
+                    console.log(`✅ Колонка ${letter}: добавлен класс full`);
                 } else {
-                    el.classList.add('partial');  // Светло-зеленый
+                    el.classList.add('partial');
+                    console.log(`✅ Колонка ${letter}: добавлен класс partial`);
                 }
             }
         });
@@ -143,6 +150,7 @@ class TableSelection {
         const isFullSheet = (minRow === 1 && maxRow === maxRows && minCol === 1 && maxCol === maxCols);
         if (isFullSheet) {
             document.querySelector('.corner-header')?.classList.add('selected');
+            console.log('✅ Уголок: добавлен класс selected');
         }
 
         // ---- 5. ОБНОВЛЕНИЕ ИНФОРМАЦИИ ----
