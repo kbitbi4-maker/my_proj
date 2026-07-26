@@ -1,24 +1,22 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GT Manager - Google Tables Mirror</title>
+    <title>GT Manager - Google Tables</title>
     
-    <!-- Font Awesome для иконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Подключаем стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Шапка как в WhatsApp/Google Tables -->
+    <!-- ШАПКА -->
     <header class="app-header">
         <div class="header-left">
             <button class="menu-btn" id="menuToggle">
                 <i class="fas fa-bars"></i>
             </button>
             <h1 class="app-title">Таблица</h1>
+            <span class="sheet-name" id="sheetNameDisplay">Лист 1</span>
         </div>
         <div class="header-right">
             <button class="sync-btn" id="syncBtn" title="Синхронизация">
@@ -31,51 +29,70 @@
         </div>
     </header>
 
-    <!-- Основное меню (как в WhatsApp) -->
-    <nav class="main-nav" id="mainNav">
+    <!-- СТРОКА ФОРМУЛ (Formula Bar) -->
+    <div class="formula-bar">
+        <div class="cell-reference" id="cellReference">A1</div>
+        <div class="formula-input">
+            <span class="fx-label">fx</span>
+            <input type="text" id="formulaInput" placeholder="Введите значение или формулу">
+        </div>
+        <div class="formula-actions">
+            <button id="formulaConfirm" title="Подтвердить (Enter)">✓</button>
+            <button id="formulaCancel" title="Отменить (Esc)">✗</button>
+        </div>
+    </div>
+
+    <!-- НАВИГАЦИЯ (табы) -->
+    <nav class="main-nav">
         <ul>
             <li class="active" data-page="table">
-                <i class="fas fa-table"></i>
-                <span>Таблица</span>
+                <i class="fas fa-table"></i> <span>Таблица</span>
             </li>
             <li data-page="overview">
-                <i class="fas fa-chart-pie"></i>
-                <span>Обзор</span>
+                <i class="fas fa-chart-pie"></i> <span>Обзор</span>
             </li>
             <li data-page="settings">
-                <i class="fas fa-cog"></i>
-                <span>Настройки</span>
+                <i class="fas fa-cog"></i> <span>Настройки</span>
             </li>
         </ul>
     </nav>
 
-    <!-- Основной контент -->
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
     <main class="app-content">
         <!-- Страница таблицы -->
         <section id="page-table" class="page active">
-            <!-- Индикатор загрузки -->
             <div id="loadingIndicator" class="loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <span>Загрузка данных...</span>
+                <i class="fas fa-spinner fa-spin"></i> Загрузка данных...
             </div>
             
+            <!-- Переключатель листов -->
+            <div class="sheet-selector" id="sheetSelector">
+                <button class="sheet-tab active" data-sheet="sheet1">Лист 1</button>
+                <button class="sheet-tab" data-sheet="sheet2">Лист 2</button>
+                <button class="sheet-tab" data-sheet="sheet3">Лист 3</button>
+                <button class="sheet-tab" data-sheet="sheet4">Лист 4</button>
+            </div>
+
             <!-- Контейнер таблицы -->
             <div class="table-container">
-                <table id="dataTable">
-                    <thead id="tableHead"></thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+                <div class="table-scroll">
+                    <table id="dataTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
             </div>
             
-            <!-- Панель статистики -->
+            <!-- Статус бар -->
             <div class="stats-bar">
                 <span id="rowCount">Строк: 0</span>
                 <span id="colCount">Колонок: 0</span>
                 <span id="lastSync">Последняя синхронизация: никогда</span>
+                <span id="cellInfo">Выбрано: —</span>
             </div>
         </section>
 
-        <!-- Страница обзора (заглушка) -->
+        <!-- Страница обзора -->
         <section id="page-overview" class="page">
             <h2>Обзор данных</h2>
             <div class="overview-cards">
@@ -86,6 +103,10 @@
                 <div class="card">
                     <h3>Статус</h3>
                     <span id="dataStatus">Ожидание...</span>
+                </div>
+                <div class="card">
+                    <h3>Листов</h3>
+                    <span>4</span>
                 </div>
             </div>
         </section>
@@ -110,7 +131,7 @@
         </section>
     </main>
 
-    <!-- Модалка редактирования ячейки -->
+    <!-- МОДАЛКА РЕДАКТИРОВАНИЯ -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -123,7 +144,7 @@
         </div>
     </div>
 
-    <!-- Подключаем скрипты -->
+    <!-- ПОДКЛЮЧАЕМ СКРИПТЫ -->
     <script src="config.js"></script>
     <script src="script.js"></script>
 </body>
