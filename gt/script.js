@@ -1,6 +1,7 @@
 // ==========================================================================
-// script.js - ПОЛНАЯ ВЕРСИЯ
-// Поддержка: копирование, очистка, замена значений, массовое редактирование
+// script.js - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕННЫМИ ГОРЯЧИМИ КЛАВИШАМИ
+// Поддержка: выделение, копирование (Ctrl+C), вставка (Ctrl+V),
+//            очистка (Delete), массовое редактирование
 // ==========================================================================
 
 class TableManager {
@@ -56,14 +57,84 @@ class TableManager {
     }
 
     // ============================================================
-    // ПРИВЯЗКА СОБЫТИЙ
+    // ПРИВЯЗКА СОБЫТИЙ (ПОЛНОСТЬЮ ИСПРАВЛЕНА)
     // ============================================================
     bindEvents() {
-        // Кнопки синхронизации
+        // ============================================================
+        // ГЛОБАЛЬНЫЕ ГОРЯЧИЕ КЛАВИШИ (С ПРИОРИТЕТОМ)
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+C — копирование
+            if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
+                }
+                e.preventDefault();
+                this.copySelection();
+                console.log('🔄 Ctrl+C перехвачен для копирования ячеек');
+                return;
+            }
+
+            // Ctrl+V — вставка
+            if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
+                }
+                e.preventDefault();
+                this.pasteSelection();
+                console.log('🔄 Ctrl+V перехвачен для вставки ячеек');
+                return;
+            }
+
+            // Delete / Backspace — очистка
+            if ((e.key === 'Delete' || e.key === 'Backspace') && !document.querySelector('.modal.active')) {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
+                }
+                e.preventDefault();
+                if (this.selectionRange) {
+                    this.clearSelectedCells();
+                    console.log('🔄 Delete перехвачен для очистки ячеек');
+                }
+                return;
+            }
+
+            // Escape — снять выделение
+            if (e.key === 'Escape') {
+                document.getElementById('editModal').classList.remove('active');
+                this.clearSelection();
+                return;
+            }
+
+            // Shift
+            if (e.key === 'Shift') {
+                this.isShiftPressed = true;
+            }
+
+            // Стрелки
+            if (this.selectedCell && !document.querySelector('.modal.active')) {
+                this.handleArrowKeys(e);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Shift') {
+                this.isShiftPressed = false;
+            }
+        });
+
+        // ============================================================
+        // КНОПКИ СИНХРОНИЗАЦИИ
+        // ============================================================
         document.getElementById('syncBtn').addEventListener('click', () => this.syncData());
         document.getElementById('refreshBtn').addEventListener('click', () => this.loadData());
 
-        // Навигация по табам
+        // ============================================================
+        // НАВИГАЦИЯ ПО ТАБАМ
+        // ============================================================
         document.querySelectorAll('.main-nav li').forEach(item => {
             item.addEventListener('click', () => {
                 document.querySelectorAll('.main-nav li').forEach(el => el.classList.remove('active'));
@@ -74,7 +145,9 @@ class TableManager {
             });
         });
 
-        // Формула-бар
+        // ============================================================
+        // ФОРМУЛА-БАР
+        // ============================================================
         const formulaInput = document.getElementById('formulaInput');
         formulaInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -90,7 +163,9 @@ class TableManager {
         document.getElementById('formulaConfirm').addEventListener('click', () => this.applyFormula());
         document.getElementById('formulaCancel').addEventListener('click', () => this.cancelFormula());
 
-        // Переключение листов
+        // ============================================================
+        // ПЕРЕКЛЮЧАТЕЛЬ ЛИСТОВ
+        // ============================================================
         document.querySelectorAll('.sheet-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.sheet-tab').forEach(t => t.classList.remove('active'));
@@ -99,7 +174,9 @@ class TableManager {
             });
         });
 
-        // Модалка
+        // ============================================================
+        // МОДАЛКА РЕДАКТИРОВАНИЯ
+        // ============================================================
         document.querySelector('.close-modal').addEventListener('click', () => {
             document.getElementById('editModal').classList.remove('active');
         });
@@ -110,7 +187,9 @@ class TableManager {
             this.saveCellValue();
         });
 
-        // Настройки
+        // ============================================================
+        // НАСТРОЙКИ
+        // ============================================================
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
             const url = document.getElementById('apiUrl').value.trim();
             if (url) {
@@ -128,54 +207,7 @@ class TableManager {
         }
 
         // ============================================================
-        // ГОРЯЧИЕ КЛАВИШИ
-        // ============================================================
-        document.addEventListener('keydown', (e) => {
-            // Escape — закрыть модалку и снять выделение
-            if (e.key === 'Escape') {
-                document.getElementById('editModal').classList.remove('active');
-                this.clearSelection();
-            }
-            
-            // Shift
-            if (e.key === 'Shift') {
-                this.isShiftPressed = true;
-            }
-
-            // Ctrl+C — копировать
-            if (e.ctrlKey && e.key === 'c') {
-                e.preventDefault();
-                this.copySelection();
-            }
-
-            // Ctrl+V — вставить
-            if (e.ctrlKey && e.key === 'v') {
-                e.preventDefault();
-                this.pasteSelection();
-            }
-
-            // Delete / Backspace — очистить ячейки
-            if ((e.key === 'Delete' || e.key === 'Backspace') && !document.querySelector('.modal.active')) {
-                e.preventDefault();
-                if (this.selectionRange) {
-                    this.clearSelectedCells();
-                }
-            }
-
-            // Стрелки
-            if (this.selectedCell && !document.querySelector('.modal.active')) {
-                this.handleArrowKeys(e);
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'Shift') {
-                this.isShiftPressed = false;
-            }
-        });
-
-        // ============================================================
-        // КНОПКИ УПРАВЛЕНИЯ РАЗМЕРАМИ
+        // УПРАВЛЕНИЕ РАЗМЕРАМИ
         // ============================================================
         document.getElementById('resetSizesBtn').addEventListener('click', () => {
             this.resetSizes();
@@ -200,9 +232,36 @@ class TableManager {
         });
 
         // ============================================================
+        // ПАНЕЛЬ ИНСТРУМЕНТОВ
+        // ============================================================
+        document.getElementById('toolbarCopyBtn').addEventListener('click', () => this.copySelection());
+        document.getElementById('toolbarPasteBtn').addEventListener('click', () => this.pasteSelection());
+        document.getElementById('toolbarClearBtn').addEventListener('click', () => {
+            if (this.selectionRange) {
+                this.clearSelectedCells();
+            }
+        });
+        document.getElementById('toolbarReplaceBtn').addEventListener('click', () => {
+            const find = document.getElementById('toolbarReplaceFind').value;
+            const replace = document.getElementById('toolbarReplaceWith').value;
+            if (find) {
+                this.replaceInSelection(find, replace);
+            } else {
+                this.showToast('⚠️ Введите текст для поиска');
+            }
+        });
+        document.getElementById('toolbarFillBtn').addEventListener('click', () => {
+            const value = document.getElementById('toolbarFillValue').value;
+            if (value !== undefined && value !== null) {
+                this.fillSelection(value);
+            } else {
+                this.showToast('⚠️ Введите значение для заполнения');
+            }
+        });
+
+        // ============================================================
         // ОБРАБОТЧИКИ МЫШИ ДЛЯ DRAG-ВЫДЕЛЕНИЯ
         // ============================================================
-        // Используем делегирование событий на таблице
         document.getElementById('dataTable').addEventListener('mousedown', (e) => {
             const cell = e.target.closest('.data-cell');
             if (!cell) return;
@@ -233,332 +292,29 @@ class TableManager {
                 this.endDrag();
             }
         });
+
+        // Обновляем панель инструментов при выделении
+        this.updateToolbarVisibility();
     }
 
     // ============================================================
-    // КОПИРОВАНИЕ ВЫДЕЛЕННЫХ ЯЧЕЕК (Ctrl+C)
+    // ОБНОВЛЕНИЕ ВИДИМОСТИ ПАНЕЛИ ИНСТРУМЕНТОВ
     // ============================================================
-    copySelection() {
-        if (!this.selectionRange) {
-            this.showToast('⚠️ Нет выделенных ячеек для копирования');
-            return;
-        }
-
-        const { startRow, startCol, endRow, endCol } = this.selectionRange;
-        const minRow = Math.min(startRow, endRow);
-        const maxRow = Math.max(startRow, endRow);
-        const minCol = Math.min(startCol, endCol);
-        const maxCol = Math.max(startCol, endCol);
-
-        const currentData = this.data[this.currentSheet];
-        const copiedData = [];
-
-        for (let r = minRow; r <= maxRow; r++) {
-            const rowData = [];
-            for (let c = minCol; c <= maxCol; c++) {
-                const rowIndex = r - 1;
-                if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
-                    rowData.push(currentData.rows[rowIndex]?.[c - 1] || '');
-                } else {
-                    rowData.push('');
-                }
-            }
-            copiedData.push(rowData);
-        }
-
-        this.clipboardData = {
-            data: copiedData,
-            rows: copiedData.length,
-            cols: copiedData[0]?.length || 0
-        };
-
-        // Также копируем в системный буфер обмена (текстовое представление)
-        const textRepresentation = copiedData.map(row => row.join('\t')).join('\n');
-        navigator.clipboard.writeText(textRepresentation).catch(() => {
-            // Если не удалось, игнорируем
-        });
-
-        this.showToast(`✅ Скопировано: ${copiedData.length} × ${copiedData[0]?.length || 0} ячеек`);
-        console.log('📋 Скопировано:', this.clipboardData);
-    }
-
-    // ============================================================
-    // ВСТАВКА (Ctrl+V)
-    // ============================================================
-    async pasteSelection() {
-        if (!this.clipboardData) {
-            this.showToast('⚠️ Буфер обмена пуст. Сначала скопируйте ячейки (Ctrl+C)');
-            return;
-        }
-
-        if (!this.selectedCell) {
-            this.showToast('⚠️ Выберите целевую ячейку для вставки');
-            return;
-        }
-
-        const targetRow = this.selectedCell.row;
-        const targetCol = this.selectedCell.col;
-        const { data, rows, cols } = this.clipboardData;
-
-        const sheetNumber = this.currentSheet.replace('sheet', '');
-        const currentData = this.data[this.currentSheet];
-        const updates = [];
-
-        for (let r = 0; r < rows; r++) {
-            const rowIndex = targetRow + r - 1;
-            if (rowIndex >= currentData.rows.length) {
-                // Добавляем пустые строки если нужно
-                currentData.rows.push([]);
-            }
-            for (let c = 0; c < cols; c++) {
-                const colIndex = targetCol + c - 1;
-                const value = data[r]?.[c] || '';
-                
-                // Расширяем массив если нужно
-                if (currentData.rows[rowIndex].length < colIndex + 1) {
-                    currentData.rows[rowIndex].length = colIndex + 1;
-                }
-                
-                currentData.rows[rowIndex][colIndex] = value;
-                updates.push({
-                    row: targetRow + r,
-                    col: targetCol + c,
-                    value: value
-                });
-            }
-        }
-
-        // Сохраняем в Google Таблицу
-        try {
-            for (const update of updates) {
-                const jsonData = {
-                    action: 'updateCell',
-                    sheet: sheetNumber,
-                    row: update.row,
-                    col: update.col,
-                    value: update.value
-                };
-
-                await fetch(this.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(jsonData)
-                });
-            }
-
-            this.renderTable();
-            this.showToast(`✅ Вставлено: ${rows} × ${cols} ячеек`);
-        } catch (error) {
-            console.error('❌ Ошибка вставки:', error);
-            this.showToast('❌ Ошибка при вставке данных');
-        }
-    }
-
-    // ============================================================
-    // ОЧИСТКА ВЫДЕЛЕННЫХ ЯЧЕЕК (Delete / Backspace)
-    // ============================================================
-    async clearSelectedCells() {
-        if (!this.selectionRange) {
-            this.showToast('⚠️ Нет выделенных ячеек для очистки');
-            return;
-        }
-
-        const { startRow, startCol, endRow, endCol } = this.selectionRange;
-        const minRow = Math.min(startRow, endRow);
-        const maxRow = Math.max(startRow, endRow);
-        const minCol = Math.min(startCol, endCol);
-        const maxCol = Math.max(startCol, endCol);
-
-        const sheetNumber = this.currentSheet.replace('sheet', '');
-        const currentData = this.data[this.currentSheet];
-        const updates = [];
-
-        for (let r = minRow; r <= maxRow; r++) {
-            const rowIndex = r - 1;
-            if (rowIndex >= currentData.rows.length) continue;
-            for (let c = minCol; c <= maxCol; c++) {
-                const colIndex = c - 1;
-                if (colIndex >= currentData.rows[rowIndex].length) continue;
-                
-                currentData.rows[rowIndex][colIndex] = '';
-                updates.push({
-                    row: r,
-                    col: c,
-                    value: ''
-                });
-            }
-        }
-
-        // Сохраняем в Google Таблицу
-        try {
-            for (const update of updates) {
-                const jsonData = {
-                    action: 'updateCell',
-                    sheet: sheetNumber,
-                    row: update.row,
-                    col: update.col,
-                    value: ''
-                };
-
-                await fetch(this.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(jsonData)
-                });
-            }
-
-            this.renderTable();
-            this.showToast(`✅ Очищено: ${updates.length} ячеек`);
-        } catch (error) {
-            console.error('❌ Ошибка очистки:', error);
-            this.showToast('❌ Ошибка при очистке ячеек');
-        }
-    }
-
-    // ============================================================
-    // МАССОВОЕ РЕДАКТИРОВАНИЕ (замена значений во всех выделенных ячейках)
-    // ============================================================
-    async replaceInSelection(findText, replaceText) {
-        if (!this.selectionRange) {
-            this.showToast('⚠️ Нет выделенных ячеек');
-            return;
-        }
-
-        if (!findText || findText === '') {
-            this.showToast('⚠️ Введите текст для поиска');
-            return;
-        }
-
-        const { startRow, startCol, endRow, endCol } = this.selectionRange;
-        const minRow = Math.min(startRow, endRow);
-        const maxRow = Math.max(startRow, endRow);
-        const minCol = Math.min(startCol, endCol);
-        const maxCol = Math.max(startCol, endCol);
-
-        const sheetNumber = this.currentSheet.replace('sheet', '');
-        const currentData = this.data[this.currentSheet];
-        const updates = [];
-        let replacedCount = 0;
-
-        for (let r = minRow; r <= maxRow; r++) {
-            const rowIndex = r - 1;
-            if (rowIndex >= currentData.rows.length) continue;
-            for (let c = minCol; c <= maxCol; c++) {
-                const colIndex = c - 1;
-                if (colIndex >= currentData.rows[rowIndex].length) continue;
-                
-                const currentValue = String(currentData.rows[rowIndex][colIndex] || '');
-                if (currentValue.includes(findText)) {
-                    const newValue = currentValue.replaceAll(findText, replaceText);
-                    currentData.rows[rowIndex][colIndex] = newValue;
-                    updates.push({
-                        row: r,
-                        col: c,
-                        value: newValue
-                    });
-                    replacedCount++;
-                }
-            }
-        }
-
-        if (replacedCount === 0) {
-            this.showToast('⚠️ Текст "' + findText + '" не найден в выделенных ячейках');
-            return;
-        }
-
-        // Сохраняем в Google Таблицу
-        try {
-            for (const update of updates) {
-                const jsonData = {
-                    action: 'updateCell',
-                    sheet: sheetNumber,
-                    row: update.row,
-                    col: update.col,
-                    value: update.value
-                };
-
-                await fetch(this.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(jsonData)
-                });
-            }
-
-            this.renderTable();
-            this.showToast(`✅ Заменено в ${replacedCount} ячейках`);
-        } catch (error) {
-            console.error('❌ Ошибка замены:', error);
-            this.showToast('❌ Ошибка при замене значений');
-        }
-    }
-
-    // ============================================================
-    // МАССОВОЕ ЗАПОЛНЕНИЕ (ввести значение во все выделенные ячейки)
-    // ============================================================
-    async fillSelection(value) {
-        if (!this.selectionRange) {
-            this.showToast('⚠️ Нет выделенных ячеек');
-            return;
-        }
-
-        if (value === undefined || value === null) {
-            this.showToast('⚠️ Введите значение для заполнения');
-            return;
-        }
-
-        const { startRow, startCol, endRow, endCol } = this.selectionRange;
-        const minRow = Math.min(startRow, endRow);
-        const maxRow = Math.max(startRow, endRow);
-        const minCol = Math.min(startCol, endCol);
-        const maxCol = Math.max(startCol, endCol);
-
-        const sheetNumber = this.currentSheet.replace('sheet', '');
-        const currentData = this.data[this.currentSheet];
-        const updates = [];
-
-        for (let r = minRow; r <= maxRow; r++) {
-            const rowIndex = r - 1;
-            if (rowIndex >= currentData.rows.length) {
-                // Добавляем пустые строки если нужно
-                currentData.rows.push([]);
-            }
-            for (let c = minCol; c <= maxCol; c++) {
-                const colIndex = c - 1;
-                if (currentData.rows[rowIndex].length < colIndex + 1) {
-                    currentData.rows[rowIndex].length = colIndex + 1;
-                }
-                currentData.rows[rowIndex][colIndex] = value;
-                updates.push({
-                    row: r,
-                    col: c,
-                    value: value
-                });
-            }
-        }
-
-        // Сохраняем в Google Таблицу
-        try {
-            for (const update of updates) {
-                const jsonData = {
-                    action: 'updateCell',
-                    sheet: sheetNumber,
-                    row: update.row,
-                    col: update.col,
-                    value: update.value
-                };
-
-                await fetch(this.apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(jsonData)
-                });
-            }
-
-            this.renderTable();
-            this.showToast(`✅ Заполнено ${updates.length} ячеек значением "${value}"`);
-        } catch (error) {
-            console.error('❌ Ошибка заполнения:', error);
-            this.showToast('❌ Ошибка при заполнении ячеек');
+    updateToolbarVisibility() {
+        const toolbar = document.getElementById('selectionToolbar');
+        if (!toolbar) return;
+        
+        const hasSelection = this.selectionRange !== null;
+        toolbar.classList.toggle('visible', hasSelection);
+        
+        if (hasSelection && this.selectionRange) {
+            const { startRow, startCol, endRow, endCol } = this.selectionRange;
+            const minRow = Math.min(startRow, endRow);
+            const maxRow = Math.max(startRow, endRow);
+            const minCol = Math.min(startCol, endCol);
+            const maxCol = Math.max(startCol, endCol);
+            const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
+            document.getElementById('selectionCount').textContent = count;
         }
     }
 
@@ -616,6 +372,7 @@ class TableManager {
         document.getElementById('cellInfo').textContent = 'Выбрано: —';
         document.getElementById('cellReference').textContent = 'A1';
         document.getElementById('formulaInput').value = '';
+        this.updateToolbarVisibility();
     }
 
     // ============================================================
@@ -660,6 +417,7 @@ class TableManager {
             
             document.getElementById('cellInfo').textContent = `Выбрано: ${columnLetter}${row}`;
         }
+        this.updateToolbarVisibility();
     }
 
     // ============================================================
@@ -726,6 +484,8 @@ class TableManager {
         const count = (maxRow - minRow + 1) * (maxCol - minCol + 1);
         document.getElementById('cellInfo').textContent = 
             `Выбрано: ${this.getColumnLetter(minCol - 1)}${minRow}:${this.getColumnLetter(maxCol - 1)}${maxRow} (${count} ячеек)`;
+        
+        this.updateToolbarVisibility();
     }
 
     // ============================================================
@@ -801,6 +561,358 @@ class TableManager {
     endDrag() {
         this.isDragging = false;
         this.dragStartCell = null;
+    }
+
+    // ============================================================
+    // КОПИРОВАНИЕ (Ctrl+C) - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // ============================================================
+    copySelection() {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек для копирования');
+            console.log('❌ Нет выделенных ячеек');
+            return;
+        }
+
+        console.log('📋 Начинаем копирование...');
+        console.log('📋 selectionRange:', this.selectionRange);
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        console.log(`📋 Диапазон: строки ${minRow}-${maxRow}, колонки ${minCol}-${maxCol}`);
+
+        const currentData = this.data[this.currentSheet];
+        const copiedData = [];
+        let cellCount = 0;
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowData = [];
+            for (let c = minCol; c <= maxCol; c++) {
+                const rowIndex = r - 1;
+                let value = '';
+                if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
+                    const cellValue = currentData.rows[rowIndex]?.[c - 1];
+                    value = (cellValue !== undefined && cellValue !== null) ? String(cellValue) : '';
+                }
+                rowData.push(value);
+                if (value !== '') cellCount++;
+            }
+            copiedData.push(rowData);
+        }
+
+        // Сохраняем в буфер обмена приложения
+        this.clipboardData = {
+            data: copiedData,
+            rows: copiedData.length,
+            cols: copiedData[0]?.length || 0
+        };
+
+        // Копируем в системный буфер обмена
+        const textRepresentation = copiedData.map(row => row.join('\t')).join('\n');
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(textRepresentation)
+                .then(() => {
+                    console.log('✅ Скопировано в системный буфер обмена');
+                    console.log('📋 Данные:\n', textRepresentation.substring(0, 200) + '...');
+                })
+                .catch(err => {
+                    console.warn('⚠️ Не удалось скопировать в системный буфер:', err);
+                    this.fallbackCopy(textRepresentation);
+                });
+        } else {
+            this.fallbackCopy(textRepresentation);
+        }
+
+        const rows = copiedData.length;
+        const cols = copiedData[0]?.length || 0;
+        this.showToast(`✅ Скопировано: ${rows} × ${cols} ячеек (${cellCount} непустых)`);
+        console.log(`📋 Скопировано: ${rows} × ${cols} ячеек`);
+        console.log('📋 clipboardData:', this.clipboardData);
+    }
+
+    // ============================================================
+    // FALLBACK ДЛЯ КОПИРОВАНИЯ
+    // ============================================================
+    fallbackCopy(text) {
+        console.log('📋 Используем fallback копирование...');
+        
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        
+        try {
+            const success = document.execCommand('copy');
+            if (success) {
+                console.log('✅ Fallback: скопировано через execCommand');
+            } else {
+                console.warn('⚠️ Fallback: execCommand не сработал');
+            }
+        } catch (err) {
+            console.error('❌ Fallback ошибка:', err);
+        }
+        
+        document.body.removeChild(textarea);
+    }
+
+    // ============================================================
+    // ВСТАВКА (Ctrl+V) - ИСПРАВЛЕННАЯ ВЕРСИЯ
+    // ============================================================
+    async pasteSelection() {
+        if (!this.clipboardData) {
+            this.showToast('⚠️ Буфер обмена пуст. Сначала скопируйте ячейки (Ctrl+C)');
+            return;
+        }
+
+        if (!this.selectedCell) {
+            this.showToast('⚠️ Выберите целевую ячейку для вставки');
+            return;
+        }
+
+        console.log('📋 Вставка данных:', this.clipboardData);
+
+        const targetRow = this.selectedCell.row;
+        const targetCol = this.selectedCell.col;
+        const { data, rows, cols } = this.clipboardData;
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = 0; r < rows; r++) {
+            const rowIndex = targetRow + r - 1;
+            if (rowIndex >= currentData.rows.length) {
+                currentData.rows.push([]);
+            }
+            for (let c = 0; c < cols; c++) {
+                const colIndex = targetCol + c - 1;
+                const value = data[r]?.[c] || '';
+                if (currentData.rows[rowIndex].length < colIndex + 1) {
+                    currentData.rows[rowIndex].length = colIndex + 1;
+                }
+                currentData.rows[rowIndex][colIndex] = value;
+                updates.push({ row: targetRow + r, col: targetCol + c, value: value });
+            }
+        }
+
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+            this.renderTable();
+            this.showToast(`✅ Вставлено: ${rows} × ${cols} ячеек`);
+            console.log(`✅ Вставлено: ${rows} × ${cols} ячеек`);
+        } catch (error) {
+            console.error('❌ Ошибка вставки:', error);
+            this.showToast('❌ Ошибка при вставке данных');
+        }
+    }
+
+    // ============================================================
+    // ОЧИСТКА ВЫДЕЛЕННЫХ ЯЧЕЕК (Delete)
+    // ============================================================
+    async clearSelectedCells() {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек для очистки');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) continue;
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (colIndex >= currentData.rows[rowIndex].length) continue;
+                
+                currentData.rows[rowIndex][colIndex] = '';
+                updates.push({ row: r, col: c, value: '' });
+            }
+        }
+
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: ''
+                };
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+            this.renderTable();
+            this.showToast(`✅ Очищено: ${updates.length} ячеек`);
+        } catch (error) {
+            console.error('❌ Ошибка очистки:', error);
+            this.showToast('❌ Ошибка при очистке ячеек');
+        }
+    }
+
+    // ============================================================
+    // ЗАМЕНА В ВЫДЕЛЕННЫХ ЯЧЕЙКАХ
+    // ============================================================
+    async replaceInSelection(findText, replaceText) {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек');
+            return;
+        }
+
+        if (!findText || findText === '') {
+            this.showToast('⚠️ Введите текст для поиска');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+        let replacedCount = 0;
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) continue;
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (colIndex >= currentData.rows[rowIndex].length) continue;
+                
+                const currentValue = String(currentData.rows[rowIndex][colIndex] || '');
+                if (currentValue.includes(findText)) {
+                    const newValue = currentValue.replaceAll(findText, replaceText);
+                    currentData.rows[rowIndex][colIndex] = newValue;
+                    updates.push({ row: r, col: c, value: newValue });
+                    replacedCount++;
+                }
+            }
+        }
+
+        if (replacedCount === 0) {
+            this.showToast('⚠️ Текст "' + findText + '" не найден в выделенных ячейках');
+            return;
+        }
+
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+            this.renderTable();
+            this.showToast(`✅ Заменено в ${replacedCount} ячейках`);
+        } catch (error) {
+            console.error('❌ Ошибка замены:', error);
+            this.showToast('❌ Ошибка при замене значений');
+        }
+    }
+
+    // ============================================================
+    // МАССОВОЕ ЗАПОЛНЕНИЕ ВЫДЕЛЕННЫХ ЯЧЕЕК
+    // ============================================================
+    async fillSelection(value) {
+        if (!this.selectionRange) {
+            this.showToast('⚠️ Нет выделенных ячеек');
+            return;
+        }
+
+        if (value === undefined || value === null) {
+            this.showToast('⚠️ Введите значение для заполнения');
+            return;
+        }
+
+        const { startRow, startCol, endRow, endCol } = this.selectionRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+
+        const sheetNumber = this.currentSheet.replace('sheet', '');
+        const currentData = this.data[this.currentSheet];
+        const updates = [];
+
+        for (let r = minRow; r <= maxRow; r++) {
+            const rowIndex = r - 1;
+            if (rowIndex >= currentData.rows.length) {
+                currentData.rows.push([]);
+            }
+            for (let c = minCol; c <= maxCol; c++) {
+                const colIndex = c - 1;
+                if (currentData.rows[rowIndex].length < colIndex + 1) {
+                    currentData.rows[rowIndex].length = colIndex + 1;
+                }
+                currentData.rows[rowIndex][colIndex] = value;
+                updates.push({ row: r, col: c, value: value });
+            }
+        }
+
+        try {
+            for (const update of updates) {
+                const jsonData = {
+                    action: 'updateCell',
+                    sheet: sheetNumber,
+                    row: update.row,
+                    col: update.col,
+                    value: update.value
+                };
+                await fetch(this.apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(jsonData)
+                });
+            }
+            this.renderTable();
+            this.showToast(`✅ Заполнено ${updates.length} ячеек значением "${value}"`);
+        } catch (error) {
+            console.error('❌ Ошибка заполнения:', error);
+            this.showToast('❌ Ошибка при заполнении ячеек');
+        }
     }
 
     // ============================================================
@@ -937,7 +1049,6 @@ class TableManager {
             if (row && row.length > maxCols) maxCols = row.length;
         });
 
-        // Ширина колонок
         const colWidths = [];
         const dataRows = rows.slice(1);
 
@@ -968,7 +1079,6 @@ class TableManager {
             });
         }
 
-        // Заголовки
         let headerHtml = '<tr>';
         headerHtml += `<th class="row-header corner-header" onclick="tableManager.selectAll()" title="Выделить всё">`;
         headerHtml += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">`;
@@ -985,7 +1095,6 @@ class TableManager {
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // Тело таблицы
         if (rows.length > 0) {
             let bodyHtml = '';
             rows.forEach((row, rowIndex) => {
@@ -1024,7 +1133,6 @@ class TableManager {
             tbody.innerHTML = bodyHtml;
         }
 
-        // Восстанавливаем выделение
         if (this.selectionRange) {
             this.updateSelectionVisual();
         }
