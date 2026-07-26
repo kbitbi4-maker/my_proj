@@ -18,9 +18,15 @@ class TableCore {
         this.rowHeights = JSON.parse(localStorage.getItem('gt_row_heights') || '{}');
         
         // ---- ДВИЖОК ФОРМУЛ ----
-        this.formulaParser = new FormulaParser();
-        this.engine = new FormulaEngine(this.data);
-        this.sync = new FormulaSync(this.apiUrl, this.engine);
+        if (typeof FormulaParser !== 'undefined') {
+            this.formulaParser = new FormulaParser();
+            this.engine = new FormulaEngine(this.data);
+            this.sync = new FormulaSync(this.apiUrl, this.engine);
+        } else {
+            this.formulaParser = null;
+            this.engine = null;
+            this.sync = null;
+        }
     }
 
     // ============================================================
@@ -47,37 +53,56 @@ class TableCore {
             try { result = JSON.parse(text); } 
             catch (e) { throw new Error(`Невалидный JSON: ${text.substring(0, 100)}...`); }
 
-            if (result.sheet1 || result.sheet2 || result.sheet3 || result.sheet4) {
-                ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
-                    if (result[key] && result[key].length > 0) {
-                        this.data[key] = { rows: result[key] };
-                    } else {
-                        this.data[key] = { rows: [] };
-                    }
-                });
+            console.log('📊 Структура ответа:', Object.keys(result));
 
-                // ---- ОБНОВЛЯЕМ ДВИЖОК ФОРМУЛ ----
-                if (this.engine) {
-                    this.engine.setData(this.data);
-                }
-                if (this.sync) {
-                    this.sync.clearStatuses();
-                }
+            // ---- ПАРСИНГ С КЛЮЧАМИ "1", "2", "3", "4" ----
+            const sheetKeys = ["1", "2", "3", "4"];
+            let loaded = false;
 
-                this.renderTable();
-                this.updateStats();
-                this.updateOverview();
-                if (loading) loading.style.display = 'none';
-
-                if (this.data[this.currentSheet].rows.length > 0) {
-                    if (window.tableSelection && typeof window.tableSelection.selectCell === 'function') {
-                        window.tableSelection.selectCell(1, 1);
-                    }
+            for (const key of sheetKeys) {
+                if (result[key] && Array.isArray(result[key])) {
+                    const sheetName = 'sheet' + key;
+                    this.data[sheetName] = { rows: result[key] };
+                    loaded = true;
+                    console.log(`✅ Лист ${key} загружен: ${result[key].length} строк`);
                 }
-                return true;
-            } else {
-                throw new Error('Неизвестная структура ответа');
             }
+
+            // ---- ЕСЛИ НЕ НАШЛИ "1","2","3","4" — ПРОВЕРЯЕМ "sheet1","sheet2"... ----
+            if (!loaded) {
+                for (const key of ['sheet1', 'sheet2', 'sheet3', 'sheet4']) {
+                    if (result[key] && Array.isArray(result[key])) {
+                        this.data[key] = { rows: result[key] };
+                        loaded = true;
+                        console.log(`✅ ${key} загружен: ${result[key].length} строк`);
+                    }
+                }
+            }
+
+            // ---- ЕСЛИ ВСЁ ПУСТО ----
+            if (!loaded) {
+                throw new Error('Не удалось распарсить данные. Получены ключи: ' + Object.keys(result).join(', '));
+            }
+
+            // ---- ОБНОВЛЯЕМ ДВИЖОК ФОРМУЛ ----
+            if (this.engine) {
+                this.engine.setData(this.data);
+            }
+            if (this.sync) {
+                this.sync.clearStatuses();
+            }
+
+            this.renderTable();
+            this.updateStats();
+            this.updateOverview();
+            if (loading) loading.style.display = 'none';
+
+            if (this.data[this.currentSheet].rows.length > 0) {
+                if (window.tableSelection && typeof window.tableSelection.selectCell === 'function') {
+                    window.tableSelection.selectCell(1, 1);
+                }
+            }
+            return true;
 
         } catch (error) {
             console.error('❌ Ошибка загрузки:', error);
@@ -85,6 +110,7 @@ class TableCore {
                 loading.innerHTML = `
                     <i class="fas fa-exclamation-triangle" style="color: #f44336;"></i>
                     <span>❌ Ошибка: ${error.message}</span>
+                    <br><small style="color:#666;font-size:12px;">Проверьте консоль (F12) для деталей</small>
                 `;
                 loading.style.display = 'flex';
             }
