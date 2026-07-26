@@ -1,14 +1,15 @@
 // ==========================================================================
 // script.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
-// Строка 1 теперь отображается как обычные данные, а не как заголовки
-// Авто-выравнивание ширины колонок
+// Выравнивание: каждая колонка по своему самому длинному значению
+// Строка 1 не влияет на ширину (или влияет отдельно)
+// Поддержка переноса слов и ручного изменения размеров
 // ==========================================================================
 
 class TableManager {
     constructor() {
         this.apiUrl = localStorage.getItem('gt_api_url') || '';
         this.data = { 
-            sheet1: { rows: [] },  // Теперь rows содержит ВСЕ строки, включая строку 1
+            sheet1: { rows: [] },
             sheet2: { rows: [] },
             sheet3: { rows: [] },
             sheet4: { rows: [] }
@@ -16,6 +17,12 @@ class TableManager {
         this.currentSheet = 'sheet1';
         this.selectedCell = null;
         this.editingCell = null;
+        
+        // Настройки ширины колонок (сохраняются для каждого листа)
+        this.columnWidths = JSON.parse(localStorage.getItem('gt_column_widths') || '{}');
+        // Настройки высоты строк (сохраняются для каждого листа)
+        this.rowHeights = JSON.parse(localStorage.getItem('gt_row_heights') || '{}');
+        
         this.init();
     }
 
@@ -124,7 +131,7 @@ class TableManager {
     handleArrowKeys(e) {
         const { row, col } = this.selectedCell;
         const currentData = this.data[this.currentSheet];
-        const maxRow = currentData.rows.length;  // Все строки включая строку 1
+        const maxRow = currentData.rows.length;
         const maxCol = currentData.rows.length > 0 ? currentData.rows[0].length : 0;
 
         let newRow = row;
@@ -189,7 +196,7 @@ class TableManager {
             document.getElementById('cellReference').textContent = `${columnLetter}${row}`;
             
             const currentData = this.data[this.currentSheet];
-            const rowIndex = row - 1;  // Теперь строка 1 — это индекс 0
+            const rowIndex = row - 1;
             let value = '';
             if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
                 value = currentData.rows[rowIndex]?.[col - 1] || '';
@@ -228,7 +235,7 @@ class TableManager {
     }
 
     // ============================================================
-    // ЗАГРУЗКА ДАННЫХ (GET)
+    // ЗАГРУЗКА ДАННЫХ
     // ============================================================
     async loadData() {
         if (!this.apiUrl) {
@@ -252,10 +259,7 @@ class TableManager {
             if (result.sheet1 || result.sheet2 || result.sheet3 || result.sheet4) {
                 ['sheet1', 'sheet2', 'sheet3', 'sheet4'].forEach(key => {
                     if (result[key] && result[key].length > 0) {
-                        // Сохраняем ВСЕ строки как есть (включая строку 1)
-                        this.data[key] = {
-                            rows: result[key]  // Теперь это ВСЕ строки
-                        };
+                        this.data[key] = { rows: result[key] };
                     } else {
                         this.data[key] = { rows: [] };
                     }
@@ -267,7 +271,6 @@ class TableManager {
                 this.showSyncStatus(true);
                 loading.style.display = 'none';
 
-                // Выбираем первую ячейку (строка 1, колонка 1)
                 if (this.data[this.currentSheet].rows.length > 0) {
                     this.selectCell(1, 1);
                 }
@@ -323,7 +326,7 @@ class TableManager {
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ (Строка 1 теперь как обычные данные)
+    // ОТРИСОВКА ТАБЛИЦЫ (С ПРАВИЛЬНЫМ ВЫРАВНИВАНИЕМ)
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
@@ -338,11 +341,55 @@ class TableManager {
             if (row && row.length > maxCols) maxCols = row.length;
         });
 
+        // ---- ВЫЧИСЛЯЕМ ШИРИНУ КАЖДОЙ КОЛОНКИ (по данным БЕЗ строки 1) ----
+        const colWidths = [];
+        const headerRow = rows.length > 0 ? rows[0] : []; // Строка 1 (названия)
+        const dataRows = rows.slice(1); // Все остальные строки
+
+        for (let colIndex = 0; colIndex < maxCols; colIndex++) {
+            let maxLength = 0;
+            
+            // Проверяем только строки данных (со 2-й по последнюю)
+            dataRows.forEach(row => {
+                if (row && row[colIndex] !== undefined && row[colIndex] !== null) {
+                    const text = String(row[colIndex]);
+                    // Длина в символах (для кириллицы и латиницы)
+                    const length = this.getStringWidth(text);
+                    if (length > maxLength) maxLength = length;
+                }
+            });
+
+            // Если в колонке нет данных, ставим минимальную ширину
+            if (maxLength === 0) maxLength = 8;
+
+            // Сохраняем ширину для этой колонки (в пикселях)
+            // 1 символ ≈ 8 пикселей + отступы
+            let width = Math.max(80, Math.min(maxLength * 8 + 20, 400));
+            
+            // Если есть ручная настройка ширины — используем её
+            const sheetKey = `${this.currentSheet}`;
+            if (this.columnWidths[sheetKey] && this.columnWidths[sheetKey][colIndex] !== undefined) {
+                width = this.columnWidths[sheetKey][colIndex];
+            }
+            
+            colWidths.push(width);
+        }
+
+        // Сохраняем вычисленные ширины (если нет ручных настроек)
+        const sheetKey = `${this.currentSheet}`;
+        if (!this.columnWidths[sheetKey]) {
+            this.columnWidths[sheetKey] = {};
+            colWidths.forEach((width, index) => {
+                this.columnWidths[sheetKey][index] = width;
+            });
+        }
+
         // ---- ЗАГОЛОВКИ КОЛОНОК (буквы) ----
         let headerHtml = '<tr><th class="row-header"></th>';
         for (let i = 0; i < maxCols; i++) {
             const letter = this.getColumnLetter(i);
-            headerHtml += `<th>${letter}</th>`;
+            const width = colWidths[i] || 100;
+            headerHtml += `<th style="min-width:${width}px; max-width:${width}px;">${letter}</th>`;
         }
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
@@ -351,16 +398,26 @@ class TableManager {
         if (rows.length > 0) {
             let bodyHtml = '';
             rows.forEach((row, rowIndex) => {
-                const actualRow = rowIndex + 1;  // Строка 1, 2, 3, ...
-                bodyHtml += `<tr>`;
+                const actualRow = rowIndex + 1;
+                
+                // Проверяем, есть ли ручная высота для этой строки
+                let rowHeight = '';
+                if (this.rowHeights[sheetKey] && this.rowHeights[sheetKey][actualRow]) {
+                    rowHeight = `height: ${this.rowHeights[sheetKey][actualRow]}px;`;
+                }
+                
+                bodyHtml += `<tr style="${rowHeight}">`;
                 bodyHtml += `<td class="row-header">${actualRow}</td>`;
+                
                 for (let colIndex = 0; colIndex < maxCols; colIndex++) {
                     const actualCol = colIndex + 1;
                     const value = row && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex] : '';
+                    const width = colWidths[colIndex] || 100;
+                    
                     bodyHtml += `<td data-row="${actualRow}" data-col="${actualCol}" 
                                    onclick="tableManager.selectCell(${actualRow}, ${actualCol})"
                                    ondblclick="tableManager.editCell(${actualRow}, ${actualCol})"
-                                   style="min-width: 80px; max-width: 300px;">
+                                   style="min-width:${width}px; max-width:${width}px; word-wrap: break-word; white-space: normal; padding: 6px 8px;">
                                    ${value}</td>`;
                 }
                 bodyHtml += '</tr>';
@@ -376,67 +433,67 @@ class TableManager {
             tbody.innerHTML = bodyHtml;
         }
 
-        // ---- АВТО-ВЫРАВНИВАНИЕ ШИРИНЫ КОЛОНОК ----
-        this.autoFitColumns();
-
         // Обновляем имя листа
         const sheetLabels = { sheet1: 'Лист 1', sheet2: 'Лист 2', sheet3: 'Лист 3', sheet4: 'Лист 4' };
         document.getElementById('sheetNameDisplay').textContent = sheetLabels[this.currentSheet] || this.currentSheet;
     }
 
     // ============================================================
-    // АВТО-ВЫРАВНИВАНИЕ ШИРИНЫ КОЛОНОК
+    // ВСПОМОГАТЕЛЬНАЯ: РАСЧЕТ ШИРИНЫ СТРОКИ (с учетом кириллицы)
     // ============================================================
-    autoFitColumns() {
-        const table = document.getElementById('dataTable');
-        if (!table) return;
-
-        const rows = table.querySelectorAll('tr');
-        if (rows.length < 2) return;
-
-        // Получаем все ячейки в каждой колонке
-        const colCount = rows[0].querySelectorAll('td, th').length;
-        const colMaxLengths = new Array(colCount).fill(0);
-
-        // Проходим по всем строкам и ячейкам
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td, th');
-            cells.forEach((cell, index) => {
-                if (index < colCount) {
-                    const text = cell.textContent || '';
-                    // Учитываем, что в заголовках (буквы) текст короче
-                    const isHeader = cell.tagName === 'TH';
-                    const length = isHeader ? Math.max(text.length, 2) : text.length;
-                    if (length > colMaxLengths[index]) {
-                        colMaxLengths[index] = length;
-                    }
-                }
-            });
-        });
-
-        // Устанавливаем ширину колонок (в пикселях, с запасом)
-        const colElements = table.querySelectorAll('colgroup');
-        if (colElements.length === 0) {
-            // Создаем colgroup если его нет
-            const colgroup = document.createElement('colgroup');
-            table.prepend(colgroup);
-            for (let i = 0; i < colCount; i++) {
-                const col = document.createElement('col');
-                const width = Math.max(60, colMaxLengths[i] * 8 + 20);
-                col.style.width = Math.min(width, 300) + 'px';
-                colgroup.appendChild(col);
+    getStringWidth(text) {
+        if (!text) return 0;
+        const str = String(text);
+        let width = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str[i];
+            // Кириллица и латиница примерно одинаковой ширины
+            // Широкие символы (W, M, Ж, Ш, Щ) — чуть шире
+            if ('WMWMЖШЩ'.includes(char)) {
+                width += 1.2;
+            } else {
+                width += 0.9;
             }
-        } else {
-            // Обновляем существующий colgroup
-            const colgroup = colElements[0];
-            const cols = colgroup.querySelectorAll('col');
-            cols.forEach((col, index) => {
-                if (index < colCount) {
-                    const width = Math.max(60, colMaxLengths[index] * 8 + 20);
-                    col.style.width = Math.min(width, 300) + 'px';
-                }
-            });
         }
+        return Math.ceil(width);
+    }
+
+    // ============================================================
+    // ИЗМЕНЕНИЕ ШИРИНЫ КОЛОНКИ (вручную)
+    // ============================================================
+    setColumnWidth(colIndex, width) {
+        const sheetKey = `${this.currentSheet}`;
+        if (!this.columnWidths[sheetKey]) {
+            this.columnWidths[sheetKey] = {};
+        }
+        this.columnWidths[sheetKey][colIndex] = Math.max(60, Math.min(500, width));
+        localStorage.setItem('gt_column_widths', JSON.stringify(this.columnWidths));
+        this.renderTable();
+    }
+
+    // ============================================================
+    // ИЗМЕНЕНИЕ ВЫСОТЫ СТРОКИ (вручную)
+    // ============================================================
+    setRowHeight(rowIndex, height) {
+        const sheetKey = `${this.currentSheet}`;
+        if (!this.rowHeights[sheetKey]) {
+            this.rowHeights[sheetKey] = {};
+        }
+        this.rowHeights[sheetKey][rowIndex] = Math.max(24, Math.min(200, height));
+        localStorage.setItem('gt_row_heights', JSON.stringify(this.rowHeights));
+        this.renderTable();
+    }
+
+    // ============================================================
+    // СБРОС РАЗМЕРОВ К НАСТРОЙКАМ ПО УМОЛЧАНИЮ
+    // ============================================================
+    resetSizes() {
+        const sheetKey = `${this.currentSheet}`;
+        delete this.columnWidths[sheetKey];
+        delete this.rowHeights[sheetKey];
+        localStorage.setItem('gt_column_widths', JSON.stringify(this.columnWidths));
+        localStorage.setItem('gt_row_heights', JSON.stringify(this.rowHeights));
+        this.renderTable();
     }
 
     // ============================================================
@@ -487,11 +544,9 @@ class TableManager {
             catch (e) { throw new Error('Сервер вернул невалидный ответ'); }
 
             if (result.success) {
-                // Обновляем локальные данные
                 const currentData = this.data[this.currentSheet];
-                const rowIndex = row - 1;  // Теперь строка 1 — индекс 0
+                const rowIndex = row - 1;
                 if (rowIndex >= 0 && rowIndex < currentData.rows.length) {
-                    // Если колонки не хватает, расширяем массив
                     if (currentData.rows[rowIndex].length < col) {
                         currentData.rows[rowIndex].length = col;
                     }
