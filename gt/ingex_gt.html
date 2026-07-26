@@ -1,1 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GT Manager - Google Tables Mirror</title>
+    
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Подключаем стили -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Шапка как в WhatsApp/Google Tables -->
+    <header class="app-header">
+        <div class="header-left">
+            <button class="menu-btn" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="app-title">Таблица</h1>
+        </div>
+        <div class="header-right">
+            <button class="sync-btn" id="syncBtn" title="Синхронизация">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span class="sync-status">Синхр.</span>
+            </button>
+            <button class="refresh-btn" id="refreshBtn" title="Обновить">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </header>
 
+    <!-- Основное меню (как в WhatsApp) -->
+    <nav class="main-nav" id="mainNav">
+        <ul>
+            <li class="active" data-page="table">
+                <i class="fas fa-table"></i>
+                <span>Таблица</span>
+            </li>
+            <li data-page="overview">
+                <i class="fas fa-chart-pie"></i>
+                <span>Обзор</span>
+            </li>
+            <li data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="app-content">
+        <!-- Страница таблицы -->
+        <section id="page-table" class="page active">
+            <!-- Индикатор загрузки -->
+            <div id="loadingIndicator" class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Загрузка данных...</span>
+            </div>
+            
+            <!-- Контейнер таблицы -->
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Панель статистики -->
+            <div class="stats-bar">
+                <span id="rowCount">Строк: 0</span>
+                <span id="colCount">Колонок: 0</span>
+                <span id="lastSync">Последняя синхронизация: никогда</span>
+            </div>
+        </section>
+
+        <!-- Страница обзора (заглушка) -->
+        <section id="page-overview" class="page">
+            <h2>Обзор данных</h2>
+            <div class="overview-cards">
+                <div class="card">
+                    <h3>Всего записей</h3>
+                    <span id="totalRecords">0</span>
+                </div>
+                <div class="card">
+                    <h3>Статус</h3>
+                    <span id="dataStatus">Ожидание...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Страница настроек -->
+        <section id="page-settings" class="page">
+            <h2>Настройки подключения</h2>
+            <div class="settings-form">
+                <div class="form-group">
+                    <label>URL веб-приложения Google Sheets:</label>
+                    <input type="text" id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                    <button id="saveSettingsBtn">Сохранить</button>
+                </div>
+                <div class="form-group">
+                    <label>Режим отображения:</label>
+                    <select id="displayMode">
+                        <option value="table">Таблица</option>
+                        <option value="cards">Карточки</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Модалка редактирования ячейки -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Редактирование ячейки</h3>
+            <input type="text" id="cellInput" placeholder="Введите новое значение">
+            <div class="modal-buttons">
+                <button id="saveCellBtn">Сохранить</button>
+                <button id="cancelCellBtn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем скрипты -->
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
