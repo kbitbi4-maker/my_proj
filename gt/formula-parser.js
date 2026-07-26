@@ -18,7 +18,7 @@ class FormulaParser {
             POWER: { minArgs: 2, maxArgs: 2 },
             SQRT: { minArgs: 1, maxArgs: 1 },
         };
-    }
+    } 
 
     parse(formula) {
         if (!formula || typeof formula !== 'string') {
