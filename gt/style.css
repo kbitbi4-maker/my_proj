@@ -69,42 +69,82 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .row-header:hover{background:#c8e6c9!important}
 
 /* ============================================================
-   ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ (ПРАВИЛЬНАЯ ЛОГИКА)
+   ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ
    ============================================================ */
-/* Частичное выделение диапазона — средне-зеленый */
 .row-header.partial{background-color:#c8e6c9!important;color:#1b5e20!important;font-weight:500!important}
-.col-header.partial{background-color:#c8e6c9!important;color:#1b5e20!important;font-weight:500!important}
-
-/* Полное выделение строки или колонки — ярко-зеленый */
 .row-header.full{background-color:#a5d6a7!important;color:#1b5e20!important;font-weight:600!important}
+.col-header.partial{background-color:#c8e6c9!important;color:#1b5e20!important;font-weight:500!important}
 .col-header.full{background-color:#a5d6a7!important;color:#1b5e20!important;font-weight:600!important}
-
-/* Выделение всего листа — ярко-зеленый */
 .corner-header.selected{background-color:#a5d6a7!important}
-
-/* ============================================================
-   СИНЕЕ ВЫДЕЛЕНИЕ ТОЛЬКО ДЛЯ ЯЧЕЕК
-   ============================================================ */
-.data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
-.data-cell.range-selected{background-color:#e8f0fe!important}
 
 /* ============================================================
    ЯЧЕЙКИ (БАЗОВЫЕ СТИЛИ)
    ============================================================ */
-.data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;transition:background 0.1s;min-height:28px;vertical-align:top;background:#ffffff;font-size:13px;color:#202124}
-.data-cell:hover{background:#f1f3f4!important}
+.data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;min-height:28px;vertical-align:top;background:transparent;font-size:13px;color:#202124;position:relative}
+.data-cell:hover{background:rgba(0,0,0,0.04)}
 
 /* ============================================================
-   УБИРАЕМ СИНЕЕ ВЫДЕЛЕНИЕ С ЗАГОЛОВКОВ
+   ВЫДЕЛЕНИЕ (НЕ МЕНЯЕТ ФОН ЯЧЕЙКИ)
    ============================================================ */
-.row-header.cell-selected,
-.row-header.range-selected,
-.col-header.cell-selected,
-.col-header.range-selected,
-.corner-header.cell-selected,
-.corner-header.range-selected {
-    background-color: transparent !important;
-    outline: none !important;
+
+/* Активная ячейка — только синяя рамка, фон не трогаем */
+.data-cell.cell-selected {
+    outline: 2px solid #1a73e8 !important;
+    outline-offset: -1px !important;
+    z-index: 3;
+    position: relative;
+}
+
+/* Диапазон — полупрозрачная подсветка поверх содержимого */
+.data-cell.range-selected::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(26, 115, 232, 0.08);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Активная ячейка в диапазоне — рамка + подсветка */
+.data-cell.cell-selected::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(26, 115, 232, 0.08);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ============================================================
+   ВЫДЕЛЕНИЕ СТРОКИ/КОЛОНКИ (ПОЛУПРОЗРАЧНОЕ)
+   ============================================================ */
+
+/* Подсветка строки */
+tr.row-selected .data-cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(26, 115, 232, 0.06);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Подсветка колонки */
+td.col-selected::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(26, 115, 232, 0.06);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ============================================================
+   ЧТОБЫ СОДЕРЖИМОЕ БЫЛО ПОВЕРХ ПОДСВЕТКИ
+   ============================================================ */
+.data-cell>* {
+    position: relative;
+    z-index: 2;
 }
 
 /* ============================================================
