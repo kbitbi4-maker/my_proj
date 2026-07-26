@@ -121,7 +121,7 @@ class TableCore {
     }
 
     // ============================================================
-    // ОТРИСОВКА ТАБЛИЦЫ (БЕЗ onclick — только data-атрибуты)
+    // ОТРИСОВКА ТАБЛИЦЫ (БЕЗ РАСЧЁТА ШИРИНЫ)
     // ============================================================
     renderTable() {
         const thead = document.getElementById('tableHead');
@@ -135,29 +135,23 @@ class TableCore {
             if (row && row.length > maxCols) maxCols = row.length;
         });
 
-        const colWidths = this.calculateColumnWidths(rows, maxCols);
-        this.saveColumnWidths(colWidths);
-
-        // ---- ЗАГОЛОВКИ (БЕЗ onclick) ----
+        // ---- ЗАГОЛОВКИ ----
         let headerHtml = '<tr>';
-        // Уголок — data-action="selectAll"
         headerHtml += `<th class="row-header corner-header" data-action="selectAll" title="Выделить всё">`;
         headerHtml += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">`;
-        headerHtml += `<i class="fas fa-caret-down" style="font-size:10px;color:#5f6368;"></i>`;
+        headerHtml += `<i class="fas fa-caret-down" style="font-size:10px;color:#1b5e20;"></i>`;
         headerHtml += `</div></th>`;
         
         for (let i = 0; i < maxCols; i++) {
             const letter = this.getColumnLetter(i);
-            const width = colWidths[i] || 100;
-            // Колонки — data-action="selectColumn" и data-col-index
             headerHtml += `<th class="col-header" data-action="selectColumn" data-col-index="${i + 1}" data-letter="${letter}" 
-                           style="min-width:${width}px; max-width:${width}px; cursor:pointer;">
+                           style="cursor:pointer;">
                            ${letter}</th>`;
         }
         headerHtml += '</tr>';
         thead.innerHTML = headerHtml;
 
-        // ---- ТЕЛО ТАБЛИЦЫ (БЕЗ onclick) ----
+        // ---- ТЕЛО ТАБЛИЦЫ ----
         if (rows.length > 0) {
             let bodyHtml = '';
             const sheetKey = `${this.currentSheet}`;
@@ -170,20 +164,17 @@ class TableCore {
                 }
                 
                 bodyHtml += `<tr style="${rowHeight}">`;
-                // Номер строки — data-action="selectRow"
                 bodyHtml += `<td class="row-header" data-action="selectRow" data-row-index="${actualRow}" 
                               style="cursor:pointer;">${actualRow}</td>`;
                 
                 for (let colIndex = 0; colIndex < maxCols; colIndex++) {
                     const actualCol = colIndex + 1;
                     const value = row && row[colIndex] !== undefined && row[colIndex] !== null ? row[colIndex] : '';
-                    const width = colWidths[colIndex] || 100;
                     
                     bodyHtml += `<td data-row="${actualRow}" data-col="${actualCol}" 
                                    class="data-cell"
-                                   style="min-width:${width}px; max-width:${width}px; 
-                                          word-wrap: break-word; white-space: normal; padding: 6px 8px;
-                                          cursor: cell; user-select: none;">${value}</td>`;
+                                   style="cursor:cell; user-select:none;" 
+                                   title="${value}">${value}</td>`;
                 }
                 bodyHtml += '</tr>';
             });
@@ -208,44 +199,6 @@ class TableCore {
     }
 
     // ============================================================
-    // РАСЧЕТ ШИРИНЫ КОЛОНОК
-    // ============================================================
-    calculateColumnWidths(rows, maxCols) {
-        const colWidths = [];
-        const dataRows = rows.slice(1);
-
-        for (let colIndex = 0; colIndex < maxCols; colIndex++) {
-            let maxLength = 0;
-            dataRows.forEach(row => {
-                if (row && row[colIndex] !== undefined && row[colIndex] !== null) {
-                    const text = String(row[colIndex]);
-                    const length = this.getStringWidth(text);
-                    if (length > maxLength) maxLength = length;
-                }
-            });
-            if (maxLength === 0) maxLength = 8;
-            let width = Math.max(80, Math.min(maxLength * 8 + 20, 400));
-            
-            const sheetKey = `${this.currentSheet}`;
-            if (this.columnWidths[sheetKey] && this.columnWidths[sheetKey][colIndex] !== undefined) {
-                width = this.columnWidths[sheetKey][colIndex];
-            }
-            colWidths.push(width);
-        }
-        return colWidths;
-    }
-
-    saveColumnWidths(colWidths) {
-        const sheetKey = `${this.currentSheet}`;
-        if (!this.columnWidths[sheetKey]) {
-            this.columnWidths[sheetKey] = {};
-            colWidths.forEach((width, index) => {
-                this.columnWidths[sheetKey][index] = width;
-            });
-        }
-    }
-
-    // ============================================================
     // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
     // ============================================================
     getColumnLetter(index) {
@@ -267,35 +220,9 @@ class TableCore {
         return index - 1;
     }
 
-    getStringWidth(text) {
-        if (!text) return 0;
-        const str = String(text);
-        let width = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str[i];
-            if ('WMWMЖШЩ'.includes(char)) {
-                width += 1.2;
-            } else {
-                width += 0.9;
-            }
-        }
-        return Math.ceil(width);
-    }
-
     // ============================================================
-    // УПРАВЛЕНИЕ РАЗМЕРАМИ
+    // УПРАВЛЕНИЕ РАЗМЕРАМИ (ТОЛЬКО ВЫСОТА СТРОК)
     // ============================================================
-    setColumnWidth(colIndex, width) {
-        const sheetKey = `${this.currentSheet}`;
-        if (!this.columnWidths[sheetKey]) {
-            this.columnWidths[sheetKey] = {};
-        }
-        this.columnWidths[sheetKey][colIndex] = Math.max(60, Math.min(500, width));
-        localStorage.setItem('gt_column_widths', JSON.stringify(this.columnWidths));
-        this.renderTable();
-        this.showToast(`✅ Ширина колонки ${this.getColumnLetter(colIndex)} установлена: ${width}px`);
-    }
-
     setRowHeight(rowIndex, height) {
         const sheetKey = `${this.currentSheet}`;
         if (!this.rowHeights[sheetKey]) {
@@ -309,9 +236,7 @@ class TableCore {
 
     resetSizes() {
         const sheetKey = `${this.currentSheet}`;
-        delete this.columnWidths[sheetKey];
         delete this.rowHeights[sheetKey];
-        localStorage.setItem('gt_column_widths', JSON.stringify(this.columnWidths));
         localStorage.setItem('gt_row_heights', JSON.stringify(this.rowHeights));
         this.renderTable();
         this.showToast('✅ Размеры сброшены к настройкам по умолчанию');
