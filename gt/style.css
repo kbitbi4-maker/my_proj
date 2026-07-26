@@ -55,7 +55,9 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .table-scroll{width:100%;height:100%;overflow:auto}
 #dataTable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;border:1px solid #dadce0}
 
-/* ЗАГОЛОВКИ - БАЗОВЫЕ СТИЛИ */
+/* ============================================================
+   ЗАГОЛОВКИ - БАЗОВЫЕ СТИЛИ (СЕРЫЕ)
+   ============================================================ */
 .corner-header{min-width:36px!important;max-width:36px!important;width:36px!important;cursor:pointer!important;background:#f8f9fa!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;padding:0!important;height:28px;position:sticky;top:0;left:0;z-index:3;user-select:none!important}
 .corner-header:hover{background:#e8eaed!important}
 .corner-header i{font-size:10px;color:#5f6368}
@@ -66,32 +68,55 @@ body{background:#ffffff;height:100vh;overflow:hidden;display:flex;flex-direction
 .row-header{background:#f8f9fa!important;color:#5f6368!important;font-size:11px!important;text-align:center!important;min-width:36px!important;max-width:36px!important;width:36px!important;border-right:1px solid #dadce0!important;border-bottom:1px solid #dadce0!important;user-select:none!important;font-weight:400!important;padding:2px 0!important;position:sticky;left:0;z-index:1;cursor:pointer!important}
 .row-header:hover{background:#e8eaed!important}
 
-/* ПОЗЕЛЕНЕНИЕ ЗАГОЛОВКОВ */
+/* ============================================================
+   ЗЕЛЕНОЕ ВЫДЕЛЕНИЕ ЗАГОЛОВКОВ
+   ============================================================ */
 .row-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
 .row-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
 .col-header.partial{background-color:#d2e3fc!important;color:#0b57d0!important;font-weight:500!important}
 .col-header.full{background-color:#c6d9f0!important;color:#0b57d0!important;font-weight:600!important}
 .corner-header.selected{background-color:#c6d9f0!important}
 
-/* ЯЧЕЙКИ */
+/* ============================================================
+   СИНЕЕ ВЫДЕЛЕНИЕ ТОЛЬКО ДЛЯ ЯЧЕЕК
+   ============================================================ */
+.data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
+.data-cell.range-selected{background-color:#e8f0fe!important}
+
+/* ============================================================
+   ЯЧЕЙКИ (БАЗОВЫЕ СТИЛИ)
+   ============================================================ */
 .data-cell{padding:6px 8px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;word-wrap:break-word;white-space:normal;overflow-wrap:break-word;cursor:cell;transition:background 0.1s;min-height:28px;vertical-align:top;background:#ffffff;font-size:13px;color:#202124}
 .data-cell:hover{background:#f1f3f4!important}
 
-/* ВЫДЕЛЕНИЕ ЯЧЕЕК */
-.data-cell.cell-selected{outline:2px solid #1a73e8!important;outline-offset:-1px!important;background-color:#e8f0fe!important;z-index:3;position:relative}
-.data-cell.range-selected{background-color:#e8f0fe!important}
-tr.row-selected td.data-cell:not(.cell-selected):not(.range-selected){background-color:transparent!important}
-td.col-selected:not(.cell-selected):not(.range-selected){background-color:transparent!important}
+/* ============================================================
+   УБИРАЕМ СИНЕЕ ВЫДЕЛЕНИЕ С ЗАГОЛОВКОВ (ЕСЛИ ВДРУГ ПОПАЛО)
+   ============================================================ */
+.row-header.cell-selected,
+.row-header.range-selected,
+.col-header.cell-selected,
+.col-header.range-selected,
+.corner-header.cell-selected,
+.corner-header.range-selected {
+    background-color: #f8f9fa !important;
+    outline: none !important;
+}
 
-/* СТАТУС БАР */
+/* ============================================================
+   СТАТУС БАР
+   ============================================================ */
 .stats-bar{background:#f8f9fa;border-top:1px solid #dadce0;padding:6px 16px;display:flex;gap:24px;font-size:12px;color:#5f6368;flex-shrink:0;flex-wrap:wrap}
 .stats-bar span{display:flex;align-items:center;gap:4px}
 
-/* ЗАГРУЗКА */
+/* ============================================================
+   ЗАГРУЗКА
+   ============================================================ */
 .loading{display:flex;align-items:center;gap:12px;padding:30px;justify-content:center;color:#5f6368;font-size:14px}
 .loading i{font-size:24px;color:#1a73e8}
 
-/* МОДАЛКА */
+/* ============================================================
+   МОДАЛКА
+   ============================================================ */
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
 .modal.active{display:flex}
 .modal-content{background:white;padding:28px;border-radius:12px;min-width:340px;max-width:500px;box-shadow:0 8px 30px rgba(0,0,0,0.3);position:relative}
@@ -105,7 +130,9 @@ td.col-selected:not(.cell-selected):not(.range-selected){background-color:transp
 #cancelCellBtn{background:#f1f3f4;color:#333}
 #cancelCellBtn:hover{background:#e0e0e0}
 
-/* СТРАНИЦА ОБЗОРА */
+/* ============================================================
+   СТРАНИЦА ОБЗОРА
+   ============================================================ */
 #page-overview{padding:24px;overflow-y:auto}
 #page-overview h2{color:#202124;margin-bottom:20px;font-weight:400}
 .overview-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
@@ -113,7 +140,9 @@ td.col-selected:not(.cell-selected):not(.range-selected){background-color:transp
 .card h3{font-size:13px;color:#5f6368;font-weight:400;margin-bottom:8px}
 .card span{font-size:28px;font-weight:500;color:#202124}
 
-/* СТРАНИЦА НАСТРОЕК */
+/* ============================================================
+   СТРАНИЦА НАСТРОЕК
+   ============================================================ */
 #page-settings{padding:24px;overflow-y:auto}
 #page-settings h2{color:#202124;margin-bottom:20px;font-weight:400}
 .settings-form{max-width:600px}
@@ -123,7 +152,9 @@ td.col-selected:not(.cell-selected):not(.range-selected){background-color:transp
 .form-group button{padding:8px 20px;background:#1a73e8;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;align-self:flex-start}
 .form-group button:hover{background:#1557b0}
 
-/* УПРАВЛЕНИЕ РАЗМЕРАМИ */
+/* ============================================================
+   УПРАВЛЕНИЕ РАЗМЕРАМИ
+   ============================================================ */
 .sizes-control{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .btn-reset{padding:6px 16px;background:#d93025;color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px}
 .btn-reset:hover{background:#b3261e}
@@ -134,7 +165,9 @@ td.col-selected:not(.cell-selected):not(.range-selected){background-color:transp
 .size-group{display:flex;align-items:center;gap:6px}
 .sizes-hint{color:#5f6368;font-size:11px;margin-top:4px}
 
-/* АДАПТИВНОСТЬ */
+/* ============================================================
+   АДАПТИВНОСТЬ
+   ============================================================ */
 @media (max-width:768px){
 .app-header{padding:6px 12px;min-height:46px}
 .app-title{font-size:15px}
@@ -155,7 +188,9 @@ td.col-selected:not(.cell-selected):not(.range-selected){background-color:transp
 .sizes-control .size-group{flex-wrap:wrap}
 }
 
-/* АНИМАЦИИ */
+/* ============================================================
+   АНИМАЦИИ
+   ============================================================ */
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(10px)}}
 .data-cell::selection{background:#c6d9f0}
