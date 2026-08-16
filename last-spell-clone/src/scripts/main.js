@@ -9,12 +9,14 @@ class Game{
         this.audioManager=new AudioManager();
         this.wizard=null;
         this.animationId=null;
+        this.currentVariant=1;
     }
     
     init(){
         console.log('Game init start');
         this.menuManager.init();
         this.initWizard();
+        this.createVariantButton();
         console.log('Game init done');
     }
     
@@ -29,25 +31,79 @@ class Game{
         canvas.width=canvas.parentElement.clientWidth;
         canvas.height=canvas.parentElement.clientHeight;
         
-        // Создаём волшебника
         this.wizard=new Wizard(ctx, canvas.width, canvas.height);
-        
-        // Запускаем анимацию
         this.animateWizard(ctx, canvas);
+    }
+    
+    createVariantButton(){
+        const container=document.getElementById('wizard-container');
+        if(!container) return;
+        
+        const button=document.createElement('div');
+        button.id='variant-btn';
+        button.textContent='1';
+        button.style.cssText=`
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 44px;
+            height: 44px;
+            background: rgba(10, 5, 5, 0.8);
+            border: 2px solid #4a2a1a;
+            color: #d4a040;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 10;
+            transition: all 0.3s ease;
+            user-select: none;
+        `;
+        
+        button.addEventListener('mouseenter', ()=>{
+            button.style.background='rgba(30, 20, 10, 0.9)';
+            button.style.borderColor='#6a3a2a';
+            button.style.transform='scale(1.05)';
+        });
+        
+        button.addEventListener('mouseleave', ()=>{
+            button.style.background='rgba(10, 5, 5, 0.8)';
+            button.style.borderColor='#4a2a1a';
+            button.style.transform='scale(1)';
+        });
+        
+        button.addEventListener('click', ()=>{
+            this.switchVariant(button);
+        });
+        
+        container.appendChild(button);
+    }
+    
+    switchVariant(button){
+        this.currentVariant = this.currentVariant === 1 ? 2 : 1;
+        button.textContent = this.currentVariant;
+        
+        if(this.wizard){
+            this.wizard.setAnimationVariant(this.currentVariant);
+        }
+        
+        console.log('Switched to variant:', this.currentVariant);
     }
     
     animateWizard(ctx, canvas){
         let frame=0;
         
         const animate=()=>{
-            // Очищаем canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Тёмный фон
             ctx.fillStyle='#0a0505';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Рисуем простой фон (звёзды/угольки)
+            // Рисуем фон (звёзды)
             this.drawBackground(ctx, canvas);
             
             // Рисуем волшебника
@@ -63,7 +119,6 @@ class Game{
     }
     
     drawBackground(ctx, canvas){
-        // Несколько мерцающих точек (звёзды)
         const numStars=30;
         for(let i=0; i<numStars; i++){
             const x=(i*137+50)%canvas.width;
@@ -74,7 +129,6 @@ class Game{
             ctx.fillRect(x, y, size, size);
         }
         
-        // Лёгкая дымка внизу
         const gradient=ctx.createLinearGradient(0, canvas.height*0.7, 0, canvas.height);
         gradient.addColorStop(0, 'rgba(10, 5, 5, 0)');
         gradient.addColorStop(1, 'rgba(20, 10, 8, 0.3)');
