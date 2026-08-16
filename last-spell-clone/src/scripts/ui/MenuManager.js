@@ -27,23 +27,27 @@ export class MenuManager{
         });
     }
     
-    handleButtonClick(buttonId){
+    async handleButtonClick(buttonId){
         if(buttonId === 'btn3'){
-            console.log('Copying structure...');
-            this.copyStructure();
+            console.log('📋 Копирование структуры...');
+            await this.copyStructure();
         } else {
             alert('Кнопка ' + buttonId + ' пока не работает');
         }
     }
     
-    copyStructure(){
+    async copyStructure(){
         try {
-            const text = this.projectScanner.getStructureForClipboard();
-            console.log('Structure generated, length:', text.length);
+            this.showNotification('🔍 Сканирование файлов проекта...', 'info');
             
+            // Асинхронно получаем структуру
+            const text = await this.projectScanner.getStructureForClipboard();
+            console.log('✅ Структура сгенерирована, длина:', text.length);
+            
+            // Копируем в буфер
             if(navigator.clipboard && navigator.clipboard.writeText){
                 navigator.clipboard.writeText(text).then(() => {
-                    alert('✅ Структура проекта скопирована в буфер обмена!');
+                    this.showNotification('✅ Структура проекта скопирована в буфер обмена!', 'success');
                 }).catch(err => {
                     console.error('Clipboard error:', err);
                     this.fallbackCopy(text);
@@ -53,7 +57,7 @@ export class MenuManager{
             }
         } catch(error) {
             console.error('Error in copyStructure:', error);
-            alert('Ошибка: ' + error.message);
+            this.showNotification('❌ Ошибка: ' + error.message, 'error');
         }
     }
     
@@ -66,19 +70,58 @@ export class MenuManager{
         
         try {
             document.execCommand('copy');
-            alert('✅ Структура скопирована (fallback метод)!');
+            this.showNotification('✅ Структура скопирована!', 'success');
         } catch(err) {
             console.error('Fallback error:', err);
-            const win = window.open('', '_blank', 'width=600,height=400');
-            if(win){
-                win.document.write('<html><head><title>Структура проекта</title><style>body{background:#0a0505;color:#d4a040;padding:20px;font-family:monospace;white-space:pre}</style></head><body><pre>' + text + '</pre></body></html>');
-                win.document.close();
-                alert('Открыто окно со структурой. Скопируйте вручную.');
-            } else {
-                alert('Не удалось открыть окно. Проверьте блокировку всплывающих окон.');
-            }
+            this.showStructureInPopup(text);
         }
         
         document.body.removeChild(textarea);
+    }
+    
+    showStructureInPopup(text){
+        const win = window.open('', '_blank', 'width=600,height=400');
+        if(win){
+            win.document.write(`<html><head><title>Структура проекта</title><style>body{background:#0a0505;color:#d4a040;padding:20px;font-family:monospace;white-space:pre}</style></head><body><pre>${text}</pre></body></html>`);
+            win.document.close();
+            this.showNotification('📂 Открыто окно со структурой', 'info');
+        } else {
+            this.showNotification('❌ Не удалось открыть окно', 'error');
+        }
+    }
+    
+    showNotification(message, type = 'info'){
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 11px;
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+            color: #e0d5c0;
+            border: 2px solid #4a2a1a;
+            background: ${type === 'success' ? 'rgba(30, 80, 30, 0.9)' : 
+                      type === 'error' ? 'rgba(80, 30, 30, 0.9)' : 
+                      'rgba(30, 30, 50, 0.9)'};
+            border-color: ${type === 'success' ? '#4a8a3a' : 
+                          type === 'error' ? '#8a3a3a' : 
+                          '#4a4a6a'};
+            animation: slideUp 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
     }
 }
