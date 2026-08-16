@@ -52,11 +52,9 @@ export class Wizard{
         const y=this.y;
         this.updateAnimations(frame);
         
-        // Отрисовка фона
         ctx.fillStyle='#0a0505';
         ctx.fillRect(0, 0, this.width, this.height);
         
-        // Звёзды
         for(let i=0; i<30; i++){
             const sx=(i*137+50)%this.width;
             const sy=(i*251+30)%this.height;
@@ -66,21 +64,27 @@ export class Wizard{
             ctx.fillRect(sx, sy, size, size);
         }
         
-        // Волшебник
-        const staffOffset=this.staffAngle*20*s;
+        // ВАРИАНТ 1: посох качается
         if(this.animationVariant===1){
+            const staffOffset=this.staffAngle*20*s;
             this.drawWizardBase(ctx, s, x, y, this.getBreathData(0), staffOffset);
-        } else {
-            this.drawWizardBase(ctx, s, x, y, this.getBreathData(this.breathFrame), staffOffset);
+        } 
+        // ВАРИАНТ 2: только дыхание, посох НЕ качается
+        else {
+            this.drawWizardBase(ctx, s, x, y, this.getBreathData(this.breathFrame), 0);
         }
     }
     
     updateAnimations(frame){
-        this.staffAngle+=this.staffSpeed*this.staffDirection;
-        if(this.staffAngle>this.staffAmplitude || this.staffAngle<-this.staffAmplitude){
-            this.staffDirection*=-1;
+        // Анимация посоха ТОЛЬКО для варианта 1
+        if(this.animationVariant===1){
+            this.staffAngle+=this.staffSpeed*this.staffDirection;
+            if(this.staffAngle>this.staffAmplitude || this.staffAngle<-this.staffAmplitude){
+                this.staffDirection*=-1;
+            }
         }
         
+        // Дыхание для обоих вариантов
         this.breathTimer++;
         const frameDelay=Math.floor(60/this.breathSpeed);
         if(this.breathTimer%frameDelay===0){
@@ -93,7 +97,6 @@ export class Wizard{
     }
     
     getBreathData(frame){
-        // Используем сохранённый scale
         const s=this.scale;
         let chestWidth=0, shoulderRaise=0, handRaise=0;
         
@@ -139,7 +142,7 @@ export class Wizard{
         ctx.fillStyle='#d4b896';
         ctx.fillRect(cx-12*s, cy-76*s, 24*s, 22*s);
         
-        // Глаза (полузакрытые)
+        // Глаза
         ctx.fillStyle='#8a7a6a';
         ctx.fillRect(cx-9*s, cy-72*s, 6*s, 2*s);
         ctx.fillRect(cx+3*s, cy-72*s, 6*s, 2*s);
@@ -155,7 +158,7 @@ export class Wizard{
         ctx.fillRect(cx-10*s, cy-76*s, 8*s, 2*s);
         ctx.fillRect(cx+2*s, cy-76*s, 8*s, 2*s);
         
-        // Нос (маленький и чёткий)
+        // Нос
         ctx.fillStyle='#c4a886';
         ctx.fillRect(cx-2*s, cy-68*s, 4*s, 3*s);
         ctx.fillRect(cx-3*s, cy-65*s, 6*s, 2*s);
@@ -188,6 +191,23 @@ export class Wizard{
         ctx.fillRect(cx-28*s, cy-4*s, 56*s, 4*s);
         ctx.fillRect(cx-22*s, cy-0*s, 44*s, 4*s);
         
+        // === КОНТУРЫ (тёмные, для крупных элементов) ===
+        const outlineColor='#3a3a4a';
+        
+        // Контур левого плеча
+        ctx.fillStyle=outlineColor;
+        ctx.fillRect(cx-32*s-chestExtra/2, cy-60*s-shoulderUp, 2*s, 14*s);
+        ctx.fillRect(cx-32*s-chestExtra/2, cy-54*s-shoulderUp, 16*s, 2*s);
+        
+        // Контур правого плеча
+        ctx.fillRect(cx+30*s+chestExtra/2, cy-60*s-shoulderUp, 2*s, 14*s);
+        ctx.fillRect(cx+16*s+chestExtra/2, cy-54*s-shoulderUp, 16*s, 2*s);
+        
+        // Контур мантии (левая сторона)
+        ctx.fillRect(cx-26*s-chestExtra/2, cy-46*s-shoulderUp, 2*s, 50*s);
+        // Контур мантии (правая сторона)
+        ctx.fillRect(cx+24*s+chestExtra/2, cy-46*s-shoulderUp, 2*s, 50*s);
+        
         // === ПЛЕЧИ И МАНТИЯ ===
         ctx.fillStyle='#4a4a5a';
         ctx.fillRect(cx-16*s, cy-60*s-shoulderUp, 32*s, 6*s);
@@ -204,34 +224,103 @@ export class Wizard{
         ctx.fillRect(cx-28*s-chestExtra/3, cy-12*s, 56*s+chestExtra*0.7, 16*s);
         ctx.fillRect(cx-26*s-chestExtra/4, cy+4*s, 52*s+chestExtra*0.5, 16*s);
         
-        // === РУКИ ===
+        // Складки
+        ctx.fillStyle='#4a4a5a';
+        ctx.fillRect(cx-20*s-chestExtra/3, cy-48*s-shoulderUp/2, 2*s, 24*s);
+        ctx.fillRect(cx-12*s-chestExtra/4, cy-44*s-shoulderUp/2, 2*s, 28*s);
+        ctx.fillRect(cx-4*s, cy-40*s, 2*s, 32*s);
+        ctx.fillRect(cx+4*s, cy-40*s, 2*s, 32*s);
+        ctx.fillRect(cx+12*s+chestExtra/4, cy-44*s-shoulderUp/2, 2*s, 28*s);
+        ctx.fillRect(cx+20*s+chestExtra/3, cy-48*s-shoulderUp/2, 2*s, 24*s);
+        
+        // === РУКИ (с контурами) ===
+        // Левая рука (контур)
+        ctx.fillStyle=outlineColor;
+        ctx.fillRect(cx-30*s, cy-46*s, 2*s, 18*s);
+        ctx.fillRect(cx-32*s, cy-30*s, 2*s, 14*s);
+        ctx.fillRect(cx-30*s, cy-18*s, 2*s, 10*s);
+        
+        // Левая рука (основной цвет)
         ctx.fillStyle='#5a5a6a';
         ctx.fillRect(cx-28*s, cy-44*s, 10*s, 16*s);
         ctx.fillRect(cx-30*s, cy-28*s, 12*s, 12*s);
+        ctx.fillRect(cx-28*s, cy-16*s, 10*s, 8*s);
         
+        // Кисть левой руки (контур)
+        ctx.fillStyle=outlineColor;
+        ctx.fillRect(cx-28*s, cy-14*s, 2*s, 8*s);
+        ctx.fillRect(cx-22*s, cy-14*s, 2*s, 8*s);
+        ctx.fillRect(cx-28*s, cy-12*s, 8*s, 2*s);
+        
+        // Кисть левой руки
         ctx.fillStyle='#d4b896';
         ctx.fillRect(cx-26*s, cy-12*s, 6*s, 6*s);
+        ctx.fillRect(cx-28*s, cy-10*s, 8*s, 2*s);
+        // Пальцы левой руки
+        ctx.fillRect(cx-28*s, cy-8*s, 2*s, 4*s);
+        ctx.fillRect(cx-24*s, cy-8*s, 2*s, 4*s);
+        ctx.fillRect(cx-26*s, cy-6*s, 4*s, 3*s);
+        
+        // Правая рука (контур)
+        ctx.fillStyle=outlineColor;
+        ctx.fillRect(cx+18*s+staffOffset, cy-50*s-handUp, 2*s, 20*s+handUp);
+        ctx.fillRect(cx+16*s+staffOffset, cy-32*s-handUp, 2*s, 16*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-18*s-handUp, 2*s, 12*s+handUp);
         
         // Правая рука
         ctx.fillStyle='#5a5a6a';
         ctx.fillRect(cx+18*s+staffOffset, cy-48*s-handUp, 10*s, 18*s+handUp);
         ctx.fillRect(cx+16*s+staffOffset, cy-30*s-handUp, 12*s, 14*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-16*s-handUp, 10*s, 10*s+handUp);
         
+        // Кисть правой руки (контур)
+        ctx.fillStyle=outlineColor;
+        ctx.fillRect(cx+18*s+staffOffset, cy-14*s-handUp, 2*s, 8*s+handUp);
+        ctx.fillRect(cx+26*s+staffOffset, cy-14*s-handUp, 2*s, 8*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-12*s-handUp, 10*s, 2*s);
+        
+        // Кисть правой руки
         ctx.fillStyle='#d4b896';
         ctx.fillRect(cx+20*s+staffOffset, cy-12*s-handUp, 6*s, 6*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-10*s-handUp, 8*s, 2*s);
+        // Пальцы правой руки (держат посох)
+        ctx.fillRect(cx+18*s+staffOffset, cy-8*s-handUp, 2*s, 4*s);
+        ctx.fillRect(cx+22*s+staffOffset, cy-8*s-handUp, 2*s, 4*s);
+        ctx.fillRect(cx+20*s+staffOffset, cy-6*s-handUp, 4*s, 3*s);
         
         // === ПОСОХ ===
         ctx.fillStyle='#5a3a1a';
         ctx.fillRect(cx+24*s+staffOffset, cy-68*s-handUp, 4*s, 80*s+handUp);
+        ctx.fillRect(cx+23*s+staffOffset, cy-68*s-handUp, 6*s, 2*s);
+        ctx.fillRect(cx+23*s+staffOffset, cy+10*s-handUp, 6*s, 2*s);
         
+        // Узоры на посохе
+        ctx.fillStyle='#6a4a2a';
+        for(let i=0; i<6; i++){
+            ctx.fillRect(cx+25*s+staffOffset, cy-(60-i*10)*s-handUp, 2*s, 4*s);
+        }
+        
+        // Навершие посоха
         ctx.fillStyle='#6a4a2a';
         ctx.fillRect(cx+22*s+staffOffset, cy-72*s-handUp, 8*s, 6*s);
         ctx.fillRect(cx+20*s+staffOffset, cy-76*s-handUp, 12*s, 6*s);
         
         // Кристалл
-        ctx.fillStyle='rgba(80, 180, 255, 0.8)';
+        const glowPulse=Math.sin(Date.now()/1000)*0.3+0.7;
+        ctx.fillStyle=`rgba(80, 180, 255, ${glowPulse*0.8})`;
         ctx.fillRect(cx+22*s+staffOffset, cy-80*s-handUp, 8*s, 8*s);
         ctx.fillRect(cx+20*s+staffOffset, cy-76*s-handUp, 12*s, 4*s);
+        
+        // Свечение кристалла
+        ctx.fillStyle=`rgba(80, 180, 255, ${glowPulse*0.2})`;
+        ctx.fillRect(cx+16*s+staffOffset, cy-86*s-handUp, 20*s, 20*s);
+        ctx.fillRect(cx+10*s+staffOffset, cy-80*s-handUp, 32*s, 8*s);
+        ctx.fillRect(cx+18*s+staffOffset, cy-88*s-handUp, 16*s, 16*s);
+        
+        // Блики
+        ctx.fillStyle=`rgba(255, 255, 255, ${glowPulse*0.3})`;
+        ctx.fillRect(cx+24*s+staffOffset, cy-78*s-handUp, 2*s, 2*s);
+        ctx.fillRect(cx+26*s+staffOffset, cy-76*s-handUp, 1*s, 1*s);
         
         // === ПОЯС ===
         ctx.fillStyle='#3a2a1a';
@@ -242,5 +331,8 @@ export class Wizard{
         ctx.fillRect(cx-6*s, cy-16*s, 12*s, 8*s);
         ctx.fillStyle='#6a5a3a';
         ctx.fillRect(cx-4*s, cy-14*s, 8*s, 4*s);
+        ctx.fillStyle='#aa8a4a';
+        ctx.fillRect(cx-5*s, cy-15*s, 10*s, 1*s);
+        ctx.fillRect(cx-5*s, cy-10*s, 10*s, 1*s);
     }
 }
