@@ -5,3 +5,7 @@ body{background:#0a0505;font-family:'Press Start 2P',monospace;overflow:hidden;h
 #wizard-canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
 #main-menu{width:60%;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a0d0d 0%,#0a0505 100%);border-left:3px solid #2a1a1a}
 .pixelated{image-rendering:pixelated;image-rendering:crisp-edges}
+/* Кнопка переключения анимаций */
+#variant-btn{position:absolute;top:20px;left:20px;width:44px;height:44px;background:rgba(10,5,5,0.8);border:2px solid #4a2a1a;color:#d4a040;font-family:'Press Start 2P',monospace;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;z-index:10;transition:all 0.3s ease;user-select:none}
+#variant-btn:hover{background:rgba(30,20,10,0.9);border-color:#6a3a2a;transform:scale(1.05)}
+@media(max-width:768px){#wizard-container{display:none}#main-menu{width:100%}}
