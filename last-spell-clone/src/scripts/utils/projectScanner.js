@@ -1,6 +1,6 @@
 export class ProjectScanner{
     constructor(){
-        // Базовые папки для сканирования (только папки, не файлы!)
+        // Базовые папки для сканирования
         this.baseFolders = [
             'src/',
             'src/assets/',
@@ -19,35 +19,57 @@ export class ProjectScanner{
             'src/styles/components/'
         ];
         
-        // Расширения файлов для поиска
-        this.extensions = {
-            scripts: ['.js', '.ts'],
-            styles: ['.css', '.scss', '.less'],
-            config: ['.json', '.js'],
-            assets: ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.mp3', '.wav', '.ttf', '.woff']
-        };
-        
         // Кэш результатов
         this.cache = {};
         this.lastScanTime = null;
+        
+        // ДИНАМИЧЕСКИЙ СПИСОК - будем генерировать на лету
+        this.commonFileNames = [
+            // JS файлы
+            'main.js', 'app.js', 'index.js', 'bootstrap.js',
+            'Engine.js', 'Game.js', 'StateManager.js', 'SceneManager.js', 'GameLoop.js',
+            'MenuManager.js', 'UIManager.js', 'UIRenderer.js',
+            'Button.js', 'Panel.js', 'Modal.js', 'Tooltip.js', 'Slider.js',
+            'helpers.js', 'constants.js', 'projectScanner.js', 'math.js', 'random.js',
+            'AudioManager.js', 'SoundController.js', 'Sound.js', 'MusicPlayer.js',
+            'Renderer.js', 'ParticleSystem.js', 'AnimationManager.js', 'Shader.js', 'Sprite.js',
+            'gameConfig.js', 'menuConfig.js', 'config.js',
+            // Новый файл!
+            'new.js', 'test.js', 'debug.js', 'utils.js',
+            // CSS файлы
+            'main.css', 'menu.css', 'buttons.css', 'style.css', 'ui.css',
+            // Медиа файлы
+            'logo.png', 'menu-background.png', 'background.png', 'wall.png',
+            'menu-music.mp3', 'sound.mp3', 'music.mp3', 'theme.mp3',
+            'font.ttf', 'font.woff', 'font.woff2', 'regular.ttf', 'bold.ttf'
+        ];
     }
     
-    // ГЛАВНЫЙ МЕТОД - автоматическое сканирование
+    // ГЛАВНЫЙ МЕТОД - полное автоматическое сканирование
     async scanProject(){
-        console.log('🔍 Автоматическое сканирование проекта...');
+        console.log('🔍 Полное автоматическое сканирование проекта...');
         const startTime = Date.now();
         
         try {
+            const allFiles = {};
+            
             // 1. Сканируем корневые файлы
-            const rootFiles = await this.scanRootFiles();
+            const rootFiles = ['index.html', 'README.md', '.gitignore', 'package.json'];
+            for (const file of rootFiles) {
+                const exists = await this.checkFileExists(file);
+                if (exists) {
+                    allFiles[file] = true;
+                    console.log(`  ✅ Найден: ${file}`);
+                }
+            }
             
-            // 2. Сканируем все папки рекурсивно
-            const folderFiles = await this.scanAllFolders();
+            // 2. Сканируем ВСЕ папки со ВСЕМИ возможными файлами
+            for (const folder of this.baseFolders) {
+                const folderFiles = await this.scanFolderDynamic(folder);
+                Object.assign(allFiles, folderFiles);
+            }
             
-            // 3. Объединяем результаты
-            const allFiles = { ...rootFiles, ...folderFiles };
-            
-            // 4. Сортируем
+            // 3. Сортируем
             const sortedFiles = this.sortFiles(allFiles);
             
             this.cache = sortedFiles;
@@ -64,49 +86,13 @@ export class ProjectScanner{
         }
     }
     
-    // Сканирование корневых файлов
-    async scanRootFiles(){
-        const rootFiles = [
-            'index.html',
-            'README.md',
-            '.gitignore',
-            'package.json',
-            'package-lock.json'
-        ];
-        
+    // ДИНАМИЧЕСКОЕ сканирование папки - проверяет ВСЕ возможные файлы
+    async scanFolderDynamic(folderPath){
         const results = {};
         
-        for (const file of rootFiles) {
-            const exists = await this.checkFileExists(file);
-            if (exists) {
-                results[file] = true;
-                console.log(`  ✅ Найден: ${file}`);
-            }
-        }
-        
-        return results;
-    }
-    
-    // Сканирование всех папок
-    async scanAllFolders(){
-        const results = {};
-        
-        for (const folder of this.baseFolders) {
-            const files = await this.scanFolder(folder);
-            Object.assign(results, files);
-        }
-        
-        return results;
-    }
-    
-    // Сканирование конкретной папки
-    async scanFolder(folderPath){
-        const results = {};
-        
-        // Пробуем найти index файлы
-        const indexFiles = ['index.html', 'index.js', 'index.css'];
-        for (const indexFile of indexFiles) {
-            const fullPath = folderPath + indexFile;
+        // Проверяем все возможные имена файлов в этой папке
+        for (const fileName of this.commonFileNames) {
+            const fullPath = folderPath + fileName;
             const exists = await this.checkFileExists(fullPath);
             if (exists) {
                 results[fullPath] = true;
@@ -114,98 +100,16 @@ export class ProjectScanner{
             }
         }
         
-        // Для папки scripts - ищем все .js файлы
-        if (folderPath.includes('scripts/') || folderPath.includes('core/') || 
-            folderPath.includes('ui/') || folderPath.includes('utils/') ||
-            folderPath.includes('audio/') || folderPath.includes('graphics/')) {
-            
-            // Пробуем найти типичные файлы в этой папке
-            const possibleFiles = this.getPossibleFilesForFolder(folderPath);
-            for (const file of possibleFiles) {
-                const exists = await this.checkFileExists(folderPath + file);
-                if (exists) {
-                    results[folderPath + file] = true;
-                    console.log(`  ✅ Найден: ${folderPath + file}`);
-                }
-            }
-        }
-        
-        // Для папки styles - ищем .css файлы
-        if (folderPath.includes('styles/')) {
-            const possibleStyles = ['main.css', 'menu.css', 'buttons.css', 'style.css'];
-            for (const style of possibleStyles) {
-                const fullPath = folderPath + style;
+        // Дополнительно: проверяем файлы с числовыми суффиксами (file1.js, file2.js и т.д.)
+        for (let i = 1; i <= 10; i++) {
+            for (const ext of ['.js', '.css', '.json']) {
+                const fileName = `file${i}${ext}`;
+                const fullPath = folderPath + fileName;
                 const exists = await this.checkFileExists(fullPath);
                 if (exists) {
                     results[fullPath] = true;
                     console.log(`  ✅ Найден: ${fullPath}`);
                 }
-            }
-        }
-        
-        // Для папки config - ищем .js файлы
-        if (folderPath.includes('config/')) {
-            const possibleConfigs = ['gameConfig.js', 'menuConfig.js', 'config.js'];
-            for (const config of possibleConfigs) {
-                const fullPath = folderPath + config;
-                const exists = await this.checkFileExists(fullPath);
-                if (exists) {
-                    results[fullPath] = true;
-                    console.log(`  ✅ Найден: ${fullPath}`);
-                }
-            }
-        }
-        
-        // Для папок assets - ищем медиафайлы
-        if (folderPath.includes('assets/')) {
-            const mediaFiles = await this.scanMediaFiles(folderPath);
-            Object.assign(results, mediaFiles);
-        }
-        
-        return results;
-    }
-    
-    // Получение возможных файлов для папки
-    getPossibleFilesForFolder(folderPath){
-        const name = folderPath.split('/').filter(Boolean).pop();
-        
-        const commonFiles = {
-            'core': ['Engine.js', 'Game.js', 'StateManager.js'],
-            'ui': ['MenuManager.js', 'UIManager.js', 'components/'],
-            'ui/components': ['Button.js', 'Panel.js', 'Modal.js'],
-            'utils': ['helpers.js', 'constants.js', 'projectScanner.js'],
-            'audio': ['AudioManager.js', 'SoundController.js'],
-            'graphics': ['Renderer.js', 'ParticleSystem.js', 'AnimationManager.js'],
-            'scripts': ['main.js', 'app.js', 'index.js']
-        };
-        
-        // Ищем по имени папки
-        for (const [key, files] of Object.entries(commonFiles)) {
-            if (folderPath.includes(key)) {
-                return files;
-            }
-        }
-        
-        return [];
-    }
-    
-    // Сканирование медиафайлов
-    async scanMediaFiles(folderPath){
-        const results = {};
-        
-        // Список возможных медиафайлов
-        const mediaFiles = [
-            'logo.png', 'menu-background.png', 'background.png',
-            'menu-music.mp3', 'sound.mp3', 'music.mp3',
-            'font.ttf', 'font.woff', 'font.woff2'
-        ];
-        
-        for (const file of mediaFiles) {
-            const fullPath = folderPath + file;
-            const exists = await this.checkFileExists(fullPath);
-            if (exists) {
-                results[fullPath] = true;
-                console.log(`  ✅ Найден: ${fullPath}`);
             }
         }
         
@@ -302,14 +206,9 @@ export class ProjectScanner{
     // ГЛАВНЫЙ МЕТОД для получения структуры
     async generateStructureForAI(){
         console.log('📂 Генерация структуры проекта...');
-        
-        // Сканируем проект
         const files = await this.scanProject();
-        
-        // Строим дерево
         const tree = this.buildTreeFromResults(files);
         
-        // Форматируем
         let structure = 'last-spell-clone/\n';
         structure += this.formatTreeWithStatus(tree, '');
         
@@ -336,7 +235,6 @@ export class ProjectScanner{
         return 'v1.0.2.21'
     }
     
-    // Резервная структура (если сканирование не удалось)
     getFallbackStructure(){
         return `last-spell-clone/\n├── index.html\n├── src/\n│   ├── scripts/\n│   │   ├── main.js\n│   │   ├── core/\n│   │   │   └── Engine.js\n│   │   ├── ui/\n│   │   │   └── MenuManager.js\n│   │   ├── audio/\n│   │   │   └── AudioManager.js\n│   │   └── utils/\n│   │       └── projectScanner.js\n│   └── styles/\n│       ├── main.css\n│       └── menu.css\n└── .gitignore`;
     }
