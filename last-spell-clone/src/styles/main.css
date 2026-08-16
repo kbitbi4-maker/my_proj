@@ -1,11 +1,7 @@
-/* Обнуление отступов для всех элементов */
 *{margin:0;padding:0;box-sizing:border-box}
-
-/* Стиль body */
-body{background:#1a0a0a;font-family:'Press Start 2P',monospace;overflow:hidden;height:100vh;color:#e0d5c0}
-
-/* Контейнер игры */
-#game-container{width:100vw;height:100vh;position:relative;background:#0d0505}
-
-/* Класс для пиксельной графики */
+body{background:#0a0505;font-family:'Press Start 2P',monospace;overflow:hidden;height:100vh;color:#e0d5c0}
+#game-container{width:100vw;height:100vh;position:relative;display:flex;background:#0d0505}
+#wizard-container{width:40%;height:100vh;position:relative;background:#0a0505;display:flex;align-items:center;justify-content:center}
+#wizard-canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+#main-menu{width:60%;height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a0d0d 0%,#0a0505 100%);border-left:3px solid #2a1a1a}
 .pixelated{image-rendering:pixelated;image-rendering:crisp-edges}
