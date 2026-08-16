@@ -14,4 +14,4 @@
 .notification-success{background:rgba(30,80,30,0.9);border-color:#4a8a3a}
 .notification-error{background:rgba(80,30,30,0.9);border-color:#8a3a3a}
 .notification-info{background:rgba(30,30,50,0.9);border-color:#4a4a6a}
-@media(max-width:768px){#wizard-container{display:none}#main-menu{width:100%}.menu-content{min-width:280px;min-height:350px;padding:20px;gap:20px}.logo-container h1{font-size:20px}.logo-container h2{font-size:12px}.menu-btn{font-size:11px;padding:12px 16px}}
+@media(max-width:768px){.menu-content{min-width:280px;min-height:350px;padding:20px;gap:20px}.logo-container h1{font-size:20px}.logo-container h2{font-size:12px}.menu-btn{font-size:11px;padding:12px 16px}}
