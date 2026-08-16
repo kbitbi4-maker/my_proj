@@ -3,8 +3,9 @@ import { ProjectScanner } from '../utils/projectScanner.js';
 export class MenuManager{
     constructor(){
         this.buttons={};
+        this.isVisible=true;
         this.projectScanner=new ProjectScanner();
-        this.isScanning = false;
+        this.isScanning=false;
     }
     
     init(){
@@ -46,11 +47,9 @@ export class MenuManager{
             this.isScanning = true;
             this.showNotification('🔍 Сканирование файлов проекта...', 'info');
             
-            // Получаем структуру
             const text = await this.projectScanner.getStructureForClipboard();
             console.log('✅ Структура сгенерирована');
             
-            // Копируем в буфер
             if(navigator.clipboard && navigator.clipboard.writeText){
                 await navigator.clipboard.writeText(text);
                 this.showNotification('✅ Структура скопирована в буфер обмена!', 'success');
