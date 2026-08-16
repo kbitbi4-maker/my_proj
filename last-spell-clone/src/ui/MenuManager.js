@@ -1,4 +1,4 @@
-// Импорт сканера проекта
+// Импорт сканера проекта 
 import { ProjectScanner } from '../utils/projectScanner.js';
 
 // Класс управления меню
