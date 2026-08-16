@@ -25,11 +25,9 @@ class Game{
         canvas.width=window.innerWidth;
         canvas.height=window.innerHeight;
         
-        // Простая заливка
         ctx.fillStyle='#0a0505';
         ctx.fillRect(0,0,canvas.width,canvas.height);
         
-        // Небольшая анимация
         let y = 0;
         setInterval(() => {
             ctx.fillStyle='#0a0505';
