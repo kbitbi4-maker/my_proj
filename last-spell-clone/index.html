@@ -1,1 +1,42 @@
-
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эльдерлихт #4 - Апокалипсис</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="stylesheet" href="src/styles/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- Главное меню -->
+        <div id="main-menu">
+            <div class="menu-background">
+                <canvas id="menu-canvas"></canvas>
+            </div>
+            <div class="menu-content">
+                <div class="logo-container">
+                    <h1>Эльдерлихт #4</h1>
+                    <h2>Апокалипсис 2</h2>
+                </div>
+                <div class="menu-buttons">
+                    <button id="btn1" class="menu-btn">Продолжить</button>
+                    <button id="btn2" class="menu-btn">Настройки</button>
+                    <button id="btn3" class="menu-btn">Авторы</button>
+                    <button id="btn4" class="menu-btn">Выйти</button>
+                </div>
+                <div class="version">v1.0.2.21</div>
+            </div>
+        </div>
+    </div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="src/scripts/main.js"></script>
+</body>
+</html>
