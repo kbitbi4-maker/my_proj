@@ -1,37 +1,36 @@
-export class Engine {
-    constructor() {
-        this.isRunning = false;
-        this.fps = 60;
-        this.lastTime = 0;
-        this.gameLoop = this.gameLoop.bind(this);
+// Основной движок игры
+export class Engine{
+    // Конструктор
+    constructor(){
+        this.isRunning=false;
+        this.fps=60;
+        this.lastTime=0;
+        this.gameLoop=this.gameLoop.bind(this)
     }
-
-    async init() {
-        // Initialize core engine systems
-        this.isRunning = true;
+    
+    // Инициализация движка
+    async init(){
+        this.isRunning=true;
         this.gameLoop();
-        return true;
+        return true
     }
-
-    gameLoop(timestamp) {
-        if (!this.isRunning) return;
-        
-        const deltaTime = timestamp - this.lastTime;
-        
-        if (deltaTime >= 1000 / this.fps) {
+    
+    // Основной игровой цикл
+    gameLoop(timestamp){
+        if(!this.isRunning)return;
+        const deltaTime=timestamp-this.lastTime;
+        if(deltaTime>=1000/this.fps){
             this.update(deltaTime);
-            this.lastTime = timestamp;
+            this.lastTime=timestamp
         }
-        
-        requestAnimationFrame(this.gameLoop);
+        requestAnimationFrame(this.gameLoop)
     }
-
-    update(deltaTime) {
-        // Main game update loop
-        // Will be expanded later
-    }
-
-    stop() {
-        this.isRunning = false;
+    
+    // Обновление игровой логики
+    update(deltaTime){}
+    
+    // Остановка движка
+    stop(){
+        this.isRunning=false
     }
 }
