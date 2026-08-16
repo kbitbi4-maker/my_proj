@@ -3,9 +3,13 @@ export class Wizard{
         this.ctx=ctx;
         this.width=width;
         this.height=height;
-        this.scale=Math.min(width, height)/400;
+        
+        // Автоматический расчёт масштаба с отступами
+        this.calculateScale(width, height);
+        
+        // Центр волшебника
         this.x=width/2;
-        this.y=height/2+20*this.scale;
+        this.y=height/2+10*this.scale;
         
         // Анимация 1: посох качается
         this.staffAngle=0;
@@ -13,13 +17,35 @@ export class Wizard{
         this.staffSpeed=0.02;
         this.staffAmplitude=0.3;
         
-        // Анимация 2: дыхание (по кадрам)
+        // Анимация 2: дыхание (4 фрейма для плавности)
         this.breathFrame=0;
         this.breathTimer=0;
-        this.breathSpeed=1.2;
+        this.breathSpeed=0.8; // снижена скорость
         this.breathPhase=0;
+        this.maxBreathFrame=4; // теперь 4 фрейма
         
         this.animationVariant=1;
+    }
+    
+    calculateScale(width, height){
+        // Размер волшебника в условных единицах (базовый размер)
+        const baseWidth = 120;
+        const baseHeight = 280;
+        
+        // Доступное пространство с отступами 10%
+        const padding = 0.1;
+        const availWidth = width * (1 - padding * 2);
+        const availHeight = height * (1 - padding * 2);
+        
+        // Расчёт масштаба по ширине и высоте
+        const scaleX = availWidth / baseWidth;
+        const scaleY = availHeight / baseHeight;
+        
+        // Берём минимальный масштаб, чтобы волшебник точно влез
+        this.scale = Math.min(scaleX, scaleY, 3.5); // ограничиваем максимальный масштаб
+        this.scale = Math.max(this.scale, 0.3); // минимальный масштаб
+        
+        console.log(`Wizard scale: ${this.scale.toFixed(2)}, width: ${width}, height: ${height}`);
     }
     
     setAnimationVariant(variant){
@@ -30,9 +56,9 @@ export class Wizard{
     resize(width, height){
         this.width=width;
         this.height=height;
-        this.scale=Math.min(width, height)/400;
+        this.calculateScale(width, height);
         this.x=width/2;
-        this.y=height/2+20*this.scale;
+        this.y=height/2+10*this.scale;
     }
     
     draw(frame){
@@ -51,23 +77,27 @@ export class Wizard{
     }
     
     updateAnimations(frame){
+        // Анимация 1: посох
         this.staffAngle+=this.staffSpeed*this.staffDirection;
         if(this.staffAngle>this.staffAmplitude || this.staffAngle<-this.staffAmplitude){
             this.staffDirection*=-1;
         }
         
+        // Анимация 2: дыхание (4 фрейма, медленнее)
         this.breathTimer++;
-        if(this.breathTimer % Math.floor(60/this.breathSpeed) === 0){
+        const frameDelay = Math.floor(60 / this.breathSpeed);
+        if(this.breathTimer % frameDelay === 0){
             this.breathPhase++;
-            const maxFrame=3;
-            if(this.breathPhase>maxFrame){
-                this.breathPhase=0;
+            // Цикл: 0→1→2→3→2→1→0→1→2→3→...
+            if(this.breathPhase > this.maxBreathFrame){
+                this.breathPhase = 0;
             }
-            if(this.breathPhase===3){
-                this.breathPhase=1;
+            // Пропускаем фрейм 3 для плавного перехода (3 = пик, затем сразу возврат)
+            if(this.breathPhase === this.maxBreathFrame){
+                this.breathPhase = this.maxBreathFrame - 1;
             }
         }
-        this.breathFrame=this.breathPhase;
+        this.breathFrame = this.breathPhase;
     }
     
     drawVariant1(ctx, s, x, y){
@@ -76,35 +106,31 @@ export class Wizard{
     }
     
     drawVariant2(ctx, s, x, y, frame){
-        let breathOffset=0;
         let chestWidth=0;
         let shoulderRaise=0;
         let handRaise=0;
         
+        // Плавные значения для 4 фреймов
         switch(this.breathFrame){
-            case 0:
-                breathOffset=0;
+            case 0: // Исходное положение
                 chestWidth=0;
                 shoulderRaise=0;
                 handRaise=0;
                 break;
-            case 1:
-                breathOffset=2*s;
-                chestWidth=4*s;
-                shoulderRaise=3*s;
-                handRaise=4*s;
-                break;
-            case 2:
-                breathOffset=3*s;
-                chestWidth=6*s;
-                shoulderRaise=5*s;
-                handRaise=7*s;
-                break;
-            case 3:
-                breathOffset=1*s;
+            case 1: // Начало вдоха
                 chestWidth=2*s;
                 shoulderRaise=2*s;
                 handRaise=3*s;
+                break;
+            case 2: // Пик вдоха
+                chestWidth=4*s;
+                shoulderRaise=4*s;
+                handRaise=6*s;
+                break;
+            case 3: // Выдох (возврат к исходному)
+                chestWidth=1*s;
+                shoulderRaise=1*s;
+                handRaise=2*s;
                 break;
         }
         
@@ -112,274 +138,224 @@ export class Wizard{
     }
     
     drawWizardBase(ctx, s, x, y, chestWidth, shoulderRaise, handRaise, staffOffset){
-        const sw = s * 3; // Масштаб детализации (увеличен в 3 раза)
         const cx = x;
         const cy = y;
         
-        // ========== ШЛЯПА (детализированная) ==========
-        // Основание шляпы
+        // ========== ШЛЯПА ==========
         ctx.fillStyle='#5a4a5a';
-        ctx.fillRect(cx-30*sw, cy-85*sw, 60*sw, 6*sw);
-        ctx.fillRect(cx-26*sw, cy-91*sw, 52*sw, 8*sw);
-        ctx.fillRect(cx-22*sw, cy-97*sw, 44*sw, 8*sw);
-        ctx.fillRect(cx-18*sw, cy-103*sw, 36*sw, 8*sw);
-        ctx.fillRect(cx-14*sw, cy-109*sw, 28*sw, 8*sw);
-        ctx.fillRect(cx-10*sw, cy-115*sw, 20*sw, 8*sw);
-        ctx.fillRect(cx-6*sw, cy-121*sw, 12*sw, 8*sw);
-        ctx.fillRect(cx-4*sw, cy-127*sw, 8*sw, 8*sw);
-        ctx.fillRect(cx-2*sw, cy-133*sw, 4*sw, 8*sw);
+        ctx.fillRect(cx-30*s, cy-85*s, 60*s, 6*s);
+        ctx.fillRect(cx-26*s, cy-91*s, 52*s, 8*s);
+        ctx.fillRect(cx-22*s, cy-97*s, 44*s, 8*s);
+        ctx.fillRect(cx-18*s, cy-103*s, 36*s, 8*s);
+        ctx.fillRect(cx-14*s, cy-109*s, 28*s, 8*s);
+        ctx.fillRect(cx-10*s, cy-115*s, 20*s, 8*s);
+        ctx.fillRect(cx-6*s, cy-121*s, 12*s, 8*s);
+        ctx.fillRect(cx-4*s, cy-127*s, 8*s, 8*s);
+        ctx.fillRect(cx-2*s, cy-133*s, 4*s, 8*s);
         
-        // Поля шляпы (широкие)
+        // Поля шляпы
         ctx.fillStyle='#4a3a4a';
-        ctx.fillRect(cx-36*sw, cy-83*sw, 72*sw, 4*sw);
-        ctx.fillRect(cx-38*sw, cy-79*sw, 76*sw, 2*sw);
-        ctx.fillRect(cx-36*sw, cy-77*sw, 72*sw, 2*sw);
+        ctx.fillRect(cx-36*s, cy-83*s, 72*s, 4*s);
+        ctx.fillRect(cx-38*s, cy-79*s, 76*s, 2*s);
+        ctx.fillRect(cx-36*s, cy-77*s, 72*s, 2*s);
         
-        // Узор на шляпе (золотая полоса)
+        // Золотой узор на шляпе
         ctx.fillStyle='#8a7a4a';
-        ctx.fillRect(cx-22*sw, cy-95*sw, 44*sw, 2*sw);
-        ctx.fillRect(cx-18*sw, cy-101*sw, 36*sw, 2*sw);
+        ctx.fillRect(cx-22*s, cy-95*s, 44*s, 2*s);
+        ctx.fillRect(cx-18*s, cy-101*s, 36*s, 2*s);
         
-        // ========== ЛИЦО (детализированное) ==========
-        // Основа лица
+        // ========== ЛИЦО ==========
         ctx.fillStyle='#d4b896';
-        ctx.fillRect(cx-12*sw, cy-76*sw, 24*sw, 22*sw);
-        ctx.fillRect(cx-10*sw, cy-54*sw, 20*sw, 4*sw);
+        ctx.fillRect(cx-12*s, cy-76*s, 24*s, 22*s);
+        ctx.fillRect(cx-10*s, cy-54*s, 20*s, 4*s);
         
-        // Скулы (лёгкая тень)
+        // Скулы
         ctx.fillStyle='#c4a886';
-        ctx.fillRect(cx-12*sw, cy-70*sw, 3*sw, 8*sw);
-        ctx.fillRect(cx+9*sw, cy-70*sw, 3*sw, 8*sw);
+        ctx.fillRect(cx-12*s, cy-70*s, 3*s, 8*s);
+        ctx.fillRect(cx+9*s, cy-70*s, 3*s, 8*s);
         
-        // ========== ГЛАЗА (полузакрытые, мудрые) ==========
-        // Левое веко (полузакрытое)
+        // ========== ГЛАЗА (полузакрытые) ==========
         ctx.fillStyle='#8a7a6a';
-        ctx.fillRect(cx-9*sw, cy-72*sw, 6*sw, 2*sw);
-        ctx.fillRect(cx-8*sw, cy-70*sw, 4*sw, 3*sw);
-        // Правый глаз (полузакрытое)
-        ctx.fillRect(cx+3*sw, cy-72*sw, 6*sw, 2*sw);
-        ctx.fillRect(cx+4*sw, cy-70*sw, 4*sw, 3*sw);
+        ctx.fillRect(cx-9*s, cy-72*s, 6*s, 2*s);
+        ctx.fillRect(cx-8*s, cy-70*s, 4*s, 3*s);
+        ctx.fillRect(cx+3*s, cy-72*s, 6*s, 2*s);
+        ctx.fillRect(cx+4*s, cy-70*s, 4*s, 3*s);
         
-        // Зрачки (смотрят вдаль)
         ctx.fillStyle='#2a2a3a';
-        ctx.fillRect(cx-6*sw, cy-71*sw, 2*sw, 2*sw);
-        ctx.fillRect(cx+4*sw, cy-71*sw, 2*sw, 2*sw);
+        ctx.fillRect(cx-6*s, cy-71*s, 2*s, 2*s);
+        ctx.fillRect(cx+4*s, cy-71*s, 2*s, 2*s);
         
-        // Блики в глазах
         ctx.fillStyle='#d4d4e0';
-        ctx.fillRect(cx-5*sw, cy-72*sw, 1*sw, 1*sw);
-        ctx.fillRect(cx+5*sw, cy-72*sw, 1*sw, 1*sw);
+        ctx.fillRect(cx-5*s, cy-72*s, 1*s, 1*s);
+        ctx.fillRect(cx+5*s, cy-72*s, 1*s, 1*s);
         
-        // Мудрые морщины вокруг глаз
+        // Морщины вокруг глаз
         ctx.fillStyle='#a89070';
-        ctx.fillRect(cx-10*sw, cy-74*sw, 2*sw, 1*sw);
-        ctx.fillRect(cx+8*sw, cy-74*sw, 2*sw, 1*sw);
-        ctx.fillRect(cx-11*sw, cy-69*sw, 2*sw, 1*sw);
-        ctx.fillRect(cx+9*sw, cy-69*sw, 2*sw, 1*sw);
+        ctx.fillRect(cx-10*s, cy-74*s, 2*s, 1*s);
+        ctx.fillRect(cx+8*s, cy-74*s, 2*s, 1*s);
+        ctx.fillRect(cx-11*s, cy-69*s, 2*s, 1*s);
+        ctx.fillRect(cx+9*s, cy-69*s, 2*s, 1*s);
         
-        // ========== БРОВИ (кустистые, седые) ==========
+        // ========== БРОВИ ==========
         ctx.fillStyle='#b8b8c0';
-        ctx.fillRect(cx-10*sw, cy-76*sw, 8*sw, 2*sw);
-        ctx.fillRect(cx+2*sw, cy-76*sw, 8*sw, 2*sw);
-        ctx.fillRect(cx-9*sw, cy-78*sw, 6*sw, 2*sw);
-        ctx.fillRect(cx+3*sw, cy-78*sw, 6*sw, 2*sw);
+        ctx.fillRect(cx-10*s, cy-76*s, 8*s, 2*s);
+        ctx.fillRect(cx+2*s, cy-76*s, 8*s, 2*s);
+        ctx.fillRect(cx-9*s, cy-78*s, 6*s, 2*s);
+        ctx.fillRect(cx+3*s, cy-78*s, 6*s, 2*s);
         
-        // ========== НОС (выразительный) ==========
+        // ========== НОС ==========
         ctx.fillStyle='#c4a886';
-        ctx.fillRect(cx-3*sw, cy-68*sw, 6*sw, 4*sw);
-        ctx.fillRect(cx-4*sw, cy-64*sw, 8*sw, 3*sw);
-        ctx.fillRect(cx-5*sw, cy-61*sw, 10*sw, 2*sw);
-        // Ноздри
+        ctx.fillRect(cx-3*s, cy-68*s, 6*s, 4*s);
+        ctx.fillRect(cx-4*s, cy-64*s, 8*s, 3*s);
+        ctx.fillRect(cx-5*s, cy-61*s, 10*s, 2*s);
         ctx.fillStyle='#a08070';
-        ctx.fillRect(cx-3*sw, cy-60*sw, 2*sw, 1*sw);
-        ctx.fillRect(cx+1*sw, cy-60*sw, 2*sw, 1*sw);
+        ctx.fillRect(cx-3*s, cy-60*s, 2*s, 1*s);
+        ctx.fillRect(cx+1*s, cy-60*s, 2*s, 1*s);
         
-        // ========== БОРОДА (длинная, седая, детализированная) ==========
+        // ========== БОРОДА ==========
         ctx.fillStyle='#c8c8d0';
-        // Верхняя часть бороды
-        ctx.fillRect(cx-14*sw, cy-56*sw, 28*sw, 4*sw);
-        ctx.fillRect(cx-16*sw, cy-52*sw, 32*sw, 4*sw);
-        ctx.fillRect(cx-18*sw, cy-48*sw, 36*sw, 4*sw);
-        // Средняя часть
-        ctx.fillRect(cx-20*sw, cy-44*sw, 40*sw, 4*sw);
-        ctx.fillRect(cx-22*sw, cy-40*sw, 44*sw, 4*sw);
-        ctx.fillRect(cx-24*sw, cy-36*sw, 48*sw, 4*sw);
-        // Нижняя часть
-        ctx.fillRect(cx-26*sw, cy-32*sw, 52*sw, 4*sw);
-        ctx.fillRect(cx-28*sw, cy-28*sw, 56*sw, 4*sw);
-        ctx.fillRect(cx-30*sw, cy-24*sw, 60*sw, 4*sw);
-        ctx.fillRect(cx-32*sw, cy-20*sw, 64*sw, 4*sw);
-        // Кончик бороды
-        ctx.fillRect(cx-34*sw, cy-16*sw, 68*sw, 4*sw);
-        ctx.fillRect(cx-32*sw, cy-12*sw, 64*sw, 4*sw);
-        ctx.fillRect(cx-28*sw, cy-8*sw, 56*sw, 4*sw);
-        ctx.fillRect(cx-22*sw, cy-4*sw, 44*sw, 4*sw);
+        ctx.fillRect(cx-14*s, cy-56*s, 28*s, 4*s);
+        ctx.fillRect(cx-16*s, cy-52*s, 32*s, 4*s);
+        ctx.fillRect(cx-18*s, cy-48*s, 36*s, 4*s);
+        ctx.fillRect(cx-20*s, cy-44*s, 40*s, 4*s);
+        ctx.fillRect(cx-22*s, cy-40*s, 44*s, 4*s);
+        ctx.fillRect(cx-24*s, cy-36*s, 48*s, 4*s);
+        ctx.fillRect(cx-26*s, cy-32*s, 52*s, 4*s);
+        ctx.fillRect(cx-28*s, cy-28*s, 56*s, 4*s);
+        ctx.fillRect(cx-30*s, cy-24*s, 60*s, 4*s);
+        ctx.fillRect(cx-32*s, cy-20*s, 64*s, 4*s);
+        ctx.fillRect(cx-34*s, cy-16*s, 68*s, 4*s);
+        ctx.fillRect(cx-32*s, cy-12*s, 64*s, 4*s);
+        ctx.fillRect(cx-28*s, cy-8*s, 56*s, 4*s);
+        ctx.fillRect(cx-22*s, cy-4*s, 44*s, 4*s);
         
-        // Пряди бороды (текстура)
+        // Пряди бороды
         ctx.fillStyle='#b8b8c0';
-        ctx.fillRect(cx-20*sw, cy-48*sw, 2*sw, 20*sw);
-        ctx.fillRect(cx-12*sw, cy-44*sw, 2*sw, 24*sw);
-        ctx.fillRect(cx-4*sw, cy-40*sw, 2*sw, 28*sw);
-        ctx.fillRect(cx+4*sw, cy-40*sw, 2*sw, 28*sw);
-        ctx.fillRect(cx+12*sw, cy-44*sw, 2*sw, 24*sw);
-        ctx.fillRect(cx+20*sw, cy-48*sw, 2*sw, 20*sw);
+        ctx.fillRect(cx-20*s, cy-48*s, 2*s, 20*s);
+        ctx.fillRect(cx-12*s, cy-44*s, 2*s, 24*s);
+        ctx.fillRect(cx-4*s, cy-40*s, 2*s, 28*s);
+        ctx.fillRect(cx+4*s, cy-40*s, 2*s, 28*s);
+        ctx.fillRect(cx+12*s, cy-44*s, 2*s, 24*s);
+        ctx.fillRect(cx+20*s, cy-48*s, 2*s, 20*s);
         
-        // ========== ПЛЕЧИ И МАНТИЯ (детализированные) ==========
+        // Седые пряди
+        ctx.fillStyle='#d8d8e0';
+        ctx.fillRect(cx-16*s, cy-52*s, 2*s, 8*s);
+        ctx.fillRect(cx+14*s, cy-52*s, 2*s, 8*s);
+        ctx.fillRect(cx-8*s, cy-44*s, 2*s, 10*s);
+        ctx.fillRect(cx+6*s, cy-44*s, 2*s, 10*s);
+        
+        // ========== ПЛЕЧИ И МАНТИЯ ==========
         const chestExtra=chestWidth;
         const shoulderUp=shoulderRaise;
         
         // Воротник
         ctx.fillStyle='#4a4a5a';
-        ctx.fillRect(cx-16*sw, cy-60*sw-shoulderUp, 32*sw, 6*sw);
-        ctx.fillRect(cx-18*sw, cy-54*sw-shoulderUp, 36*sw, 4*sw);
+        ctx.fillRect(cx-16*s, cy-60*s-shoulderUp, 32*s, 6*s);
+        ctx.fillRect(cx-18*s, cy-54*s-shoulderUp, 36*s, 4*s);
         
-        // Плечи (с наплечниками)
+        // Плечи
         ctx.fillStyle='#5a5a6a';
-        // Левое плечо
-        ctx.fillRect(cx-30*sw-chestExtra/2, cy-58*sw-shoulderUp, 12*sw, 8*sw);
-        ctx.fillRect(cx-34*sw-chestExtra/2, cy-54*sw-shoulderUp, 16*sw, 6*sw);
-        // Правое плечо
-        ctx.fillRect(cx+18*sw+chestExtra/2, cy-58*sw-shoulderUp, 12*sw, 8*sw);
-        ctx.fillRect(cx+18*sw+chestExtra/2, cy-54*sw-shoulderUp, 16*sw, 6*sw);
+        ctx.fillRect(cx-30*s-chestExtra/2, cy-58*s-shoulderUp, 12*s, 8*s);
+        ctx.fillRect(cx-34*s-chestExtra/2, cy-54*s-shoulderUp, 16*s, 6*s);
+        ctx.fillRect(cx+18*s+chestExtra/2, cy-58*s-shoulderUp, 12*s, 8*s);
+        ctx.fillRect(cx+18*s+chestExtra/2, cy-54*s-shoulderUp, 16*s, 6*s);
         
-        // Основная мантия
+        // Мантия
         ctx.fillStyle='#5a5a6a';
-        ctx.fillRect(cx-24*sw-chestExtra/2, cy-52*sw-shoulderUp, 48*sw+chestExtra, 20*sw);
-        ctx.fillRect(cx-26*sw-chestExtra/2, cy-32*sw-shoulderUp/2, 52*sw+chestExtra, 20*sw);
-        ctx.fillRect(cx-28*sw-chestExtra/3, cy-12*sw, 56*sw+chestExtra*0.7, 16*sw);
-        ctx.fillRect(cx-26*sw-chestExtra/4, cy+4*sw, 52*sw+chestExtra*0.5, 16*sw);
-        ctx.fillRect(cx-22*sw-chestExtra/5, cy+20*sw, 44*sw+chestExtra*0.3, 12*sw);
+        ctx.fillRect(cx-24*s-chestExtra/2, cy-52*s-shoulderUp, 48*s+chestExtra, 20*s);
+        ctx.fillRect(cx-26*s-chestExtra/2, cy-32*s-shoulderUp/2, 52*s+chestExtra, 20*s);
+        ctx.fillRect(cx-28*s-chestExtra/3, cy-12*s, 56*s+chestExtra*0.7, 16*s);
+        ctx.fillRect(cx-26*s-chestExtra/4, cy+4*s, 52*s+chestExtra*0.5, 16*s);
+        ctx.fillRect(cx-22*s-chestExtra/5, cy+20*s, 44*s+chestExtra*0.3, 12*s);
         
-        // Складки мантии (детализированные)
+        // Складки
         ctx.fillStyle='#4a4a5a';
-        // Вертикальные складки
-        ctx.fillRect(cx-20*sw-chestExtra/3, cy-48*sw-shoulderUp/2, 2*sw, 24*sw);
-        ctx.fillRect(cx-12*sw-chestExtra/4, cy-44*sw-shoulderUp/2, 2*sw, 28*sw);
-        ctx.fillRect(cx-4*sw, cy-40*sw, 2*sw, 32*sw);
-        ctx.fillRect(cx+4*sw, cy-40*sw, 2*sw, 32*sw);
-        ctx.fillRect(cx+12*sw+chestExtra/4, cy-44*sw-shoulderUp/2, 2*sw, 28*sw);
-        ctx.fillRect(cx+20*sw+chestExtra/3, cy-48*sw-shoulderUp/2, 2*sw, 24*sw);
+        ctx.fillRect(cx-20*s-chestExtra/3, cy-48*s-shoulderUp/2, 2*s, 24*s);
+        ctx.fillRect(cx-12*s-chestExtra/4, cy-44*s-shoulderUp/2, 2*s, 28*s);
+        ctx.fillRect(cx-4*s, cy-40*s, 2*s, 32*s);
+        ctx.fillRect(cx+4*s, cy-40*s, 2*s, 32*s);
+        ctx.fillRect(cx+12*s+chestExtra/4, cy-44*s-shoulderUp/2, 2*s, 28*s);
+        ctx.fillRect(cx+20*s+chestExtra/3, cy-48*s-shoulderUp/2, 2*s, 24*s);
         
-        // Горизонтальные складки
-        ctx.fillRect(cx-24*sw-chestExtra/3, cy-40*sw-shoulderUp/2, 48*sw+chestExtra*0.7, 1*sw);
-        ctx.fillRect(cx-26*sw-chestExtra/3, cy-28*sw-shoulderUp/3, 52*sw+chestExtra*0.7, 1*sw);
-        ctx.fillRect(cx-26*sw-chestExtra/4, cy-16*sw, 52*sw+chestExtra*0.5, 1*sw);
-        
-        // ========== РУКАВА (детализированные) ==========
+        // ========== РУКАВА ==========
         const handUp=handRaise;
         
-        // Левый рукав (свисает)
         ctx.fillStyle='#5a5a6a';
-        ctx.fillRect(cx-28*sw, cy-44*sw, 10*sw, 16*sw);
-        ctx.fillRect(cx-30*sw, cy-28*sw, 12*sw, 12*sw);
-        ctx.fillRect(cx-28*sw, cy-16*sw, 10*sw, 8*sw);
+        ctx.fillRect(cx-28*s, cy-44*s, 10*s, 16*s);
+        ctx.fillRect(cx-30*s, cy-28*s, 12*s, 12*s);
+        ctx.fillRect(cx-28*s, cy-16*s, 10*s, 8*s);
         
-        // Кисть левой руки
         ctx.fillStyle='#d4b896';
-        ctx.fillRect(cx-26*sw, cy-12*sw, 6*sw, 6*sw);
-        ctx.fillRect(cx-28*sw, cy-10*sw, 8*sw, 2*sw);
+        ctx.fillRect(cx-26*s, cy-12*s, 6*s, 6*s);
+        ctx.fillRect(cx-28*s, cy-10*s, 8*s, 2*s);
         
         // Правый рукав (с посохом)
         ctx.fillStyle='#5a5a6a';
-        ctx.fillRect(cx+18*sw+staffOffset, cy-48*sw-handUp, 10*sw, 18*sw+handUp);
-        ctx.fillRect(cx+16*sw+staffOffset, cy-30*sw-handUp, 12*sw, 14*sw+handUp);
-        ctx.fillRect(cx+18*sw+staffOffset, cy-16*sw-handUp, 10*sw, 10*sw+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-48*s-handUp, 10*s, 18*s+handUp);
+        ctx.fillRect(cx+16*s+staffOffset, cy-30*s-handUp, 12*s, 14*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-16*s-handUp, 10*s, 10*s+handUp);
         
-        // Кисть правой руки (держит посох)
         ctx.fillStyle='#d4b896';
-        ctx.fillRect(cx+20*sw+staffOffset, cy-12*sw-handUp, 6*sw, 6*sw+handUp);
-        ctx.fillRect(cx+18*sw+staffOffset, cy-10*sw-handUp, 8*sw, 2*sw);
+        ctx.fillRect(cx+20*s+staffOffset, cy-12*s-handUp, 6*s, 6*s+handUp);
+        ctx.fillRect(cx+18*s+staffOffset, cy-10*s-handUp, 8*s, 2*s);
         
-        // ========== ПОСОХ (детализированный) ==========
-        // Древко
+        // ========== ПОСОХ ==========
         ctx.fillStyle='#5a3a1a';
-        ctx.fillRect(cx+24*sw+staffOffset, cy-68*sw-handUp, 4*sw, 80*sw+handUp);
-        ctx.fillRect(cx+23*sw+staffOffset, cy-68*sw-handUp, 6*sw, 2*sw);
-        ctx.fillRect(cx+23*sw+staffOffset, cy+10*sw-handUp, 6*sw, 2*sw);
+        ctx.fillRect(cx+24*s+staffOffset, cy-68*s-handUp, 4*s, 80*s+handUp);
+        ctx.fillRect(cx+23*s+staffOffset, cy-68*s-handUp, 6*s, 2*s);
+        ctx.fillRect(cx+23*s+staffOffset, cy+10*s-handUp, 6*s, 2*s);
         
         // Узоры на посохе
         ctx.fillStyle='#6a4a2a';
-        ctx.fillRect(cx+25*sw+staffOffset, cy-60*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+25*sw+staffOffset, cy-50*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+25*sw+staffOffset, cy-40*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+25*sw+staffOffset, cy-30*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+25*sw+staffOffset, cy-20*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+25*sw+staffOffset, cy-10*sw-handUp, 2*sw, 4*sw);
+        for(let i=0; i<6; i++){
+            ctx.fillRect(cx+25*s+staffOffset, cy-(60-i*10)*s-handUp, 2*s, 4*s);
+        }
         
-        // Навершие посоха (основа)
+        // Навершие
         ctx.fillStyle='#6a4a2a';
-        ctx.fillRect(cx+22*sw+staffOffset, cy-72*sw-handUp, 8*sw, 6*sw);
-        ctx.fillRect(cx+20*sw+staffOffset, cy-76*sw-handUp, 12*sw, 6*sw);
+        ctx.fillRect(cx+22*s+staffOffset, cy-72*s-handUp, 8*s, 6*s);
+        ctx.fillRect(cx+20*s+staffOffset, cy-76*s-handUp, 12*s, 6*s);
         
-        // Кристалл (большой, светящийся)
+        // Кристалл
         const glowPulse = Math.sin(Date.now() / 1000) * 0.3 + 0.7;
         ctx.fillStyle=`rgba(80, 180, 255, ${glowPulse * 0.8})`;
-        ctx.fillRect(cx+22*sw+staffOffset, cy-80*sw-handUp, 8*sw, 8*sw);
-        ctx.fillRect(cx+20*sw+staffOffset, cy-76*sw-handUp, 12*sw, 4*sw);
+        ctx.fillRect(cx+22*s+staffOffset, cy-80*s-handUp, 8*s, 8*s);
+        ctx.fillRect(cx+20*s+staffOffset, cy-76*s-handUp, 12*s, 4*s);
         
-        // Свечение кристалла
+        // Свечение
         ctx.fillStyle=`rgba(80, 180, 255, ${glowPulse * 0.2})`;
-        ctx.fillRect(cx+16*sw+staffOffset, cy-86*sw-handUp, 20*sw, 20*sw);
-        ctx.fillRect(cx+10*sw+staffOffset, cy-80*sw-handUp, 32*sw, 8*sw);
-        ctx.fillRect(cx+18*sw+staffOffset, cy-88*sw-handUp, 16*sw, 16*sw);
+        ctx.fillRect(cx+16*s+staffOffset, cy-86*s-handUp, 20*s, 20*s);
+        ctx.fillRect(cx+10*s+staffOffset, cy-80*s-handUp, 32*s, 8*s);
+        ctx.fillRect(cx+18*s+staffOffset, cy-88*s-handUp, 16*s, 16*s);
         
-        // Блики на кристалле
+        // Блики
         ctx.fillStyle=`rgba(255, 255, 255, ${glowPulse * 0.3})`;
-        ctx.fillRect(cx+24*sw+staffOffset, cy-78*sw-handUp, 2*sw, 2*sw);
-        ctx.fillRect(cx+26*sw+staffOffset, cy-76*sw-handUp, 1*sw, 1*sw);
+        ctx.fillRect(cx+24*s+staffOffset, cy-78*s-handUp, 2*s, 2*s);
+        ctx.fillRect(cx+26*s+staffOffset, cy-76*s-handUp, 1*s, 1*s);
         
-        // ========== ПОЯС (детализированный) ==========
+        // ========== ПОЯС ==========
         ctx.fillStyle='#3a2a1a';
-        ctx.fillRect(cx-26*sw-chestExtra/4, cy-14*sw, 52*sw+chestExtra/2, 4*sw);
-        ctx.fillRect(cx-28*sw-chestExtra/4, cy-12*sw, 56*sw+chestExtra/2, 2*sw);
+        ctx.fillRect(cx-26*s-chestExtra/4, cy-14*s, 52*s+chestExtra/2, 4*s);
+        ctx.fillRect(cx-28*s-chestExtra/4, cy-12*s, 56*s+chestExtra/2, 2*s);
         
-        // Пряжка (золотая, детализированная)
         ctx.fillStyle='#8a7a4a';
-        ctx.fillRect(cx-6*sw, cy-16*sw, 12*sw, 8*sw);
+        ctx.fillRect(cx-6*s, cy-16*s, 12*s, 8*s);
         ctx.fillStyle='#6a5a3a';
-        ctx.fillRect(cx-4*sw, cy-14*sw, 8*sw, 4*sw);
+        ctx.fillRect(cx-4*s, cy-14*s, 8*s, 4*s);
         ctx.fillStyle='#aa8a4a';
-        ctx.fillRect(cx-5*sw, cy-15*sw, 10*sw, 1*sw);
-        ctx.fillRect(cx-5*sw, cy-10*sw, 10*sw, 1*sw);
+        ctx.fillRect(cx-5*s, cy-15*s, 10*s, 1*s);
+        ctx.fillRect(cx-5*s, cy-10*s, 10*s, 1*s);
         
-        // ========== МЕЛКИЕ ДЕТАЛИ ==========
-        // Складки на рукавах
-        ctx.fillStyle='#4a4a5a';
-        ctx.fillRect(cx-28*sw, cy-38*sw, 2*sw, 4*sw);
-        ctx.fillRect(cx-28*sw, cy-30*sw, 2*sw, 4*sw);
-        ctx.fillRect(cx+20*sw+staffOffset, cy-36*sw-handUp, 2*sw, 4*sw);
-        ctx.fillRect(cx+20*sw+staffOffset, cy-26*sw-handUp, 2*sw, 4*sw);
-        
-        // Тень под шляпой
-        ctx.fillStyle='rgba(0,0,0,0.15)';
-        ctx.fillRect(cx-14*sw, cy-76*sw, 28*sw, 2*sw);
-        ctx.fillRect(cx-12*sw, cy-74*sw, 24*sw, 1*sw);
-        
-        // Лёгкая тень на лице (скулы)
-        ctx.fillStyle='rgba(0,0,0,0.05)';
-        ctx.fillRect(cx-10*sw, cy-68*sw, 4*sw, 4*sw);
-        ctx.fillRect(cx+6*sw, cy-68*sw, 4*sw, 4*sw);
-        
-        // Борода - добавление седых прядей
-        ctx.fillStyle='#d8d8e0';
-        ctx.fillRect(cx-16*sw, cy-52*sw, 2*sw, 8*sw);
-        ctx.fillRect(cx+14*sw, cy-52*sw, 2*sw, 8*sw);
-        ctx.fillRect(cx-8*sw, cy-44*sw, 2*sw, 10*sw);
-        ctx.fillRect(cx+6*sw, cy-44*sw, 2*sw, 10*sw);
-        ctx.fillRect(cx-4*sw, cy-36*sw, 2*sw, 12*sw);
-        ctx.fillRect(cx+2*sw, cy-36*sw, 2*sw, 12*sw);
-        
-        // ========== СВЕТОТЕНЬ (объём) ==========
-        // Тень с левой стороны мантии
+        // ========== СВЕТОТЕНЬ ==========
         ctx.fillStyle='rgba(0,0,0,0.08)';
-        ctx.fillRect(cx-28*sw-chestExtra/2, cy-50*sw-shoulderUp, 4*sw, 40*sw);
-        ctx.fillRect(cx-30*sw-chestExtra/3, cy-30*sw-shoulderUp/2, 4*sw, 30*sw);
-        ctx.fillRect(cx-30*sw-chestExtra/4, cy-10*sw, 4*sw, 20*sw);
+        ctx.fillRect(cx-28*s-chestExtra/2, cy-50*s-shoulderUp, 4*s, 40*s);
+        ctx.fillRect(cx-30*s-chestExtra/3, cy-30*s-shoulderUp/2, 4*s, 30*s);
+        ctx.fillRect(cx-30*s-chestExtra/4, cy-10*s, 4*s, 20*s);
         
-        // Свет с правой стороны (блик)
         ctx.fillStyle='rgba(255,255,255,0.04)';
-        ctx.fillRect(cx+24*sw+chestExtra/2, cy-50*sw-shoulderUp, 4*sw, 40*sw);
-        ctx.fillRect(cx+26*sw+chestExtra/3, cy-30*sw-shoulderUp/2, 4*sw, 30*sw);
-        ctx.fillRect(cx+26*sw+chestExtra/4, cy-10*sw, 4*sw, 20*sw);
+        ctx.fillRect(cx+24*s+chestExtra/2, cy-50*s-shoulderUp, 4*s, 40*s);
+        ctx.fillRect(cx+26*s+chestExtra/3, cy-30*s-shoulderUp/2, 4*s, 30*s);
+        ctx.fillRect(cx+26*s+chestExtra/4, cy-10*s, 4*s, 20*s);
     }
 }
