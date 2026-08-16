@@ -1,16 +1,12 @@
-// Импорт сканера проекта 
 import { ProjectScanner } from '../utils/projectScanner.js';
 
-// Класс управления меню
 export class MenuManager{
-    // Конструктор
     constructor(){
         this.buttons={};
         this.isVisible=true;
         this.projectScanner=new ProjectScanner()
     }
     
-    // Инициализация меню
     init(){
         const btnIds=['btn1','btn2','btn3','btn4'];
         btnIds.forEach(id=>{
@@ -27,7 +23,6 @@ export class MenuManager{
         })
     }
     
-    // Назначение обработчика события для кнопки
     setupButtonEvent(button,id){
         button.addEventListener('click',()=>{
             console.log(`Button ${id} clicked`);
@@ -35,7 +30,6 @@ export class MenuManager{
         })
     }
     
-    // Обработчик нажатия на кнопки
     async handleButtonClick(buttonId){
         switch(buttonId){
             case'btn1':
@@ -57,22 +51,20 @@ export class MenuManager{
         }
     }
     
-    // Копирование структуры проекта (синхронная версия)
     copyProjectStructure(){
         try{
             this.showNotification('Генерация структуры проекта...','info');
             
-            // Получаем структуру синхронно
+            // Получаем структуру
             const fullMessage = this.projectScanner.getStructureForClipboard();
             
             // Копируем в буфер обмена
             navigator.clipboard.writeText(fullMessage).then(() => {
                 this.showNotification('✅ Структура проекта скопирована в буфер обмена!','success');
-                console.log('Project structure copied to clipboard:');
+                console.log('Project structure copied:');
                 console.log(fullMessage);
             }).catch((err) => {
                 console.error('Clipboard error:', err);
-                // Если не удалось скопировать, используем fallback
                 this.fallbackCopy(fullMessage);
             });
             
@@ -83,9 +75,7 @@ export class MenuManager{
         }
     }
     
-    // Fallback метод копирования (если clipboard не работает)
     fallbackCopy(text){
-        // Создаем временный textarea
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
@@ -96,7 +86,7 @@ export class MenuManager{
         try {
             textarea.select();
             document.execCommand('copy');
-            this.showNotification('✅ Структура скопирована (методом fallback)!','success');
+            this.showNotification('✅ Структура скопирована!','success');
         } catch (err) {
             console.error('Fallback copy failed:', err);
             this.showNotification('❌ Не удалось скопировать. Открываю окно...','error');
@@ -106,7 +96,6 @@ export class MenuManager{
         document.body.removeChild(textarea);
     }
     
-    // Получение версии игры
     getVersion(){
         try{
             const versionElement=document.querySelector('.version');
@@ -117,7 +106,6 @@ export class MenuManager{
         return'v1.0.0'
     }
     
-    // Показ уведомления
     showNotification(message,type='info'){
         const notification=document.createElement('div');
         notification.className=`notification notification-${type}`;
@@ -159,7 +147,6 @@ export class MenuManager{
         },3000)
     }
     
-    // Показ структуры в новом окне
     showStructureInPopup(){
         const structure = this.projectScanner.generateStructureForAI();
         const popup=window.open('','_blank','width=600,height=400');
@@ -191,7 +178,6 @@ export class MenuManager{
                         navigator.clipboard.writeText(text).then(() => {
                             alert('Структура скопирована в буфер обмена!');
                         }).catch(() => {
-                            // Fallback
                             const textarea = document.createElement('textarea');
                             textarea.value = text;
                             document.body.appendChild(textarea);
@@ -208,14 +194,12 @@ export class MenuManager{
         }
     }
     
-    // Показать меню
     show(){
         const menu=document.getElementById('main-menu');
         if(menu)menu.style.display='flex';
         this.isVisible=true
     }
     
-    // Скрыть меню
     hide(){
         const menu=document.getElementById('main-menu');
         if(menu)menu.style.display='none';
