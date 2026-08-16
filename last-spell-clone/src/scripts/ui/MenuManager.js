@@ -4,6 +4,7 @@ export class MenuManager{
     constructor(){
         this.buttons={};
         this.projectScanner=new ProjectScanner();
+        this.isScanning = false;
     }
     
     init(){
@@ -29,35 +30,40 @@ export class MenuManager{
     
     async handleButtonClick(buttonId){
         if(buttonId === 'btn3'){
+            if(this.isScanning){
+                this.showNotification('⏳ Сканирование уже выполняется...', 'info');
+                return;
+            }
             console.log('📋 Копирование структуры...');
             await this.copyStructure();
         } else {
-            alert('Кнопка ' + buttonId + ' пока не работает');
+            this.showNotification('Кнопка ' + buttonId + ' пока не работает', 'info');
         }
     }
     
     async copyStructure(){
         try {
+            this.isScanning = true;
             this.showNotification('🔍 Сканирование файлов проекта...', 'info');
             
-            // Асинхронно получаем структуру
+            // Получаем структуру
             const text = await this.projectScanner.getStructureForClipboard();
-            console.log('✅ Структура сгенерирована, длина:', text.length);
+            console.log('✅ Структура сгенерирована');
             
             // Копируем в буфер
             if(navigator.clipboard && navigator.clipboard.writeText){
-                navigator.clipboard.writeText(text).then(() => {
-                    this.showNotification('✅ Структура проекта скопирована в буфер обмена!', 'success');
-                }).catch(err => {
-                    console.error('Clipboard error:', err);
-                    this.fallbackCopy(text);
-                });
+                await navigator.clipboard.writeText(text);
+                this.showNotification('✅ Структура скопирована в буфер обмена!', 'success');
             } else {
                 this.fallbackCopy(text);
             }
+            
         } catch(error) {
             console.error('Error in copyStructure:', error);
             this.showNotification('❌ Ошибка: ' + error.message, 'error');
+            this.fallbackCopy('Ошибка сканирования: ' + error.message);
+        } finally {
+            this.isScanning = false;
         }
     }
     
