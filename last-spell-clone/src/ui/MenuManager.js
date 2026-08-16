@@ -48,7 +48,7 @@ export class MenuManager{
                 break;
             case'btn3':
                 console.log('Show credits - copying project structure');
-                await this.copyProjectStructure();
+                this.copyProjectStructure();
                 break;
             case'btn4':
                 console.log('Exit game');
@@ -57,22 +57,53 @@ export class MenuManager{
         }
     }
     
-    // Копирование структуры проекта
-    async copyProjectStructure(){
+    // Копирование структуры проекта (синхронная версия)
+    copyProjectStructure(){
         try{
-            this.showNotification('Сканирование структуры проекта...','info');
-            const structure=await this.projectScanner.generateStructureForAI();
-            const timestamp=new Date().toLocaleString();
-            const fullMessage=`=== СТРУКТУРА ПРОЕКТА ===\nВерсия: ${this.getVersion()}\nДата: ${timestamp}\n\n${structure}\n\n=== КОНЕЦ СТРУКТУРЫ ===`;
-            await navigator.clipboard.writeText(fullMessage);
-            this.showNotification('✅ Структура проекта скопирована в буфер обмена!','success');
-            console.log('Project structure copied to clipboard:');
-            console.log(fullMessage)
+            this.showNotification('Генерация структуры проекта...','info');
+            
+            // Получаем структуру синхронно
+            const fullMessage = this.projectScanner.getStructureForClipboard();
+            
+            // Копируем в буфер обмена
+            navigator.clipboard.writeText(fullMessage).then(() => {
+                this.showNotification('✅ Структура проекта скопирована в буфер обмена!','success');
+                console.log('Project structure copied to clipboard:');
+                console.log(fullMessage);
+            }).catch((err) => {
+                console.error('Clipboard error:', err);
+                // Если не удалось скопировать, используем fallback
+                this.fallbackCopy(fullMessage);
+            });
+            
         }catch(error){
-            console.error('Error copying project structure:',error);
+            console.error('Error copying project structure:', error);
             this.showNotification('❌ Ошибка при копировании структуры','error');
             this.showStructureInPopup()
         }
+    }
+    
+    // Fallback метод копирования (если clipboard не работает)
+    fallbackCopy(text){
+        // Создаем временный textarea
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        
+        try {
+            textarea.select();
+            document.execCommand('copy');
+            this.showNotification('✅ Структура скопирована (методом fallback)!','success');
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            this.showNotification('❌ Не удалось скопировать. Открываю окно...','error');
+            this.showStructureInPopup();
+        }
+        
+        document.body.removeChild(textarea);
     }
     
     // Получение версии игры
@@ -128,12 +159,51 @@ export class MenuManager{
         },3000)
     }
     
-    // Показ структуры в новом окне (если копирование не удалось)
+    // Показ структуры в новом окне
     showStructureInPopup(){
-        const structure=this.projectScanner.getDefaultStructure();
+        const structure = this.projectScanner.generateStructureForAI();
         const popup=window.open('','_blank','width=600,height=400');
         if(popup){
-            popup.document.write(`<!DOCTYPE html><html><head><title>Структура проекта</title><style>body{background:#0a0505;color:#e0d5c0;font-family:'Courier New',monospace;padding:20px;margin:0;white-space:pre-wrap}pre{color:#d4a040;font-size:14px;line-height:1.6}.header{color:#8a6a4a;border-bottom:2px solid #4a2a1a;padding-bottom:10px;margin-bottom:20px}.footer{color:#4a3a2a;margin-top:20px;font-size:12px;border-top:1px solid #2a1a1a;padding-top:10px}</style></head><body><div class="header">=== СТРУКТУРА ПРОЕКТА ===</div><pre>${structure}</pre><div class="footer">Нажмите Ctrl+C для копирования</div></body></html>`);
+            popup.document.write(`<!DOCTYPE html>
+            <html>
+            <head>
+                <title>Структура проекта</title>
+                <style>
+                    body{background:#0a0505;color:#e0d5c0;font-family:'Courier New',monospace;padding:20px;margin:0;white-space:pre-wrap}
+                    pre{color:#d4a040;font-size:14px;line-height:1.6}
+                    .header{color:#8a6a4a;border-bottom:2px solid #4a2a1a;padding-bottom:10px;margin-bottom:20px}
+                    .footer{color:#4a3a2a;margin-top:20px;font-size:12px;border-top:1px solid #2a1a1a;padding-top:10px}
+                    .copy-btn{background:#2a1a0a;border:2px solid #4a2a1a;color:#d4a040;padding:10px 20px;font-family:'Courier New',monospace;cursor:pointer;margin-top:10px}
+                    .copy-btn:hover{background:#3a2a1a}
+                </style>
+            </head>
+            <body>
+                <div class="header">=== СТРУКТУРА ПРОЕКТА ===</div>
+                <pre>${structure}</pre>
+                <div class="footer">
+                    Нажмите Ctrl+A затем Ctrl+C для копирования
+                    <br>
+                    <button class="copy-btn" onclick="copyStructure()">📋 Копировать</button>
+                </div>
+                <script>
+                    function copyStructure(){
+                        const text = document.querySelector('pre').textContent;
+                        navigator.clipboard.writeText(text).then(() => {
+                            alert('Структура скопирована в буфер обмена!');
+                        }).catch(() => {
+                            // Fallback
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            alert('Структура скопирована!');
+                        });
+                    }
+                <\/script>
+            </body>
+            </html>`);
             popup.document.close()
         }
     }
