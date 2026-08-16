@@ -1,8 +1,5 @@
-// Класс для сканирования структуры проекта
 export class ProjectScanner{
-    // Конструктор
     constructor(){
-        // Список всех файлов проекта с их статусом существования
         this.projectFiles = {
             'index.html': true,
             'README.md': true,
@@ -34,18 +31,14 @@ export class ProjectScanner{
         }
     }
     
-    // Получение структуры с отметками существования файлов
     generateStructureForAI(){
         let result = 'last-spell-clone/\n';
         result += this.buildTreeWithStatus();
         return result
     }
     
-    // Построение дерева со статусами
     buildTreeWithStatus(){
         const tree = {};
-        
-        // Сортируем файлы для красивого вывода
         const sortedFiles = Object.keys(this.projectFiles).sort();
         
         sortedFiles.forEach(filePath => {
@@ -54,7 +47,6 @@ export class ProjectScanner{
             
             parts.forEach((part, index) => {
                 if (index === parts.length - 1) {
-                    // Это файл
                     if (!current._files) current._files = [];
                     const exists = this.projectFiles[filePath];
                     current._files.push({
@@ -63,7 +55,6 @@ export class ProjectScanner{
                         path: filePath
                     });
                 } else {
-                    // Это папка
                     if (!current[part]) current[part] = {};
                     current = current[part];
                 }
@@ -73,25 +64,21 @@ export class ProjectScanner{
         return this.formatTreeWithStatus(tree, '')
     }
     
-    // Форматирование дерева со статусами
     formatTreeWithStatus(tree, prefix){
         let result = '';
         const items = Object.keys(tree);
         const files = tree._files || [];
         const folders = items.filter(item => item !== '_files');
         
-        // Сначала выводим папки
         folders.forEach((folder, index) => {
             const isLast = index === folders.length - 1 && files.length === 0;
             const connector = isLast ? '└── ' : '├── ';
-            // Проверяем, есть ли в папке файлы
             const hasFiles = this.folderHasFiles(tree[folder]);
             const status = hasFiles ? ' ✅' : ' ❌';
             result += `${prefix}${connector}${folder}/${status}\n`;
             result += this.formatTreeWithStatus(tree[folder], prefix + (isLast ? '    ' : '│   '))
         });
         
-        // Затем выводим файлы
         files.forEach((file, index) => {
             const isLast = index === files.length - 1;
             const connector = isLast ? '└── ' : '├── ';
@@ -102,11 +89,9 @@ export class ProjectScanner{
         return result
     }
     
-    // Проверка наличия файлов в папке
     folderHasFiles(folder){
         const files = folder._files || [];
         const folders = Object.keys(folder).filter(item => item !== '_files');
-        
         if (files.length > 0) return true;
         for (const subFolder of folders) {
             if (this.folderHasFiles(folder[subFolder])) return true
@@ -114,7 +99,6 @@ export class ProjectScanner{
         return false
     }
     
-    // Синхронный метод для копирования (без async)
     getStructureForClipboard(){
         const structure = this.generateStructureForAI();
         const timestamp = new Date().toLocaleString();
