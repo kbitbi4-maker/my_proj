@@ -1,26 +1,11 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Обнуление отступов для всех элементов */
+*{margin:0;padding:0;box-sizing:border-box}
 
-body {
-    background: #1a0a0a;
-    font-family: 'Press Start 2P', monospace;
-    overflow: hidden;
-    height: 100vh;
-    color: #e0d5c0;
-}
+/* Стиль body */
+body{background:#1a0a0a;font-family:'Press Start 2P',monospace;overflow:hidden;height:100vh;color:#e0d5c0}
 
-#game-container {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-    background: #0d0505;
-}
+/* Контейнер игры */
+#game-container{width:100vw;height:100vh;position:relative;background:#0d0505}
 
-/* Pixel art filter for retro look */
-.pixelated {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-}
+/* Класс для пиксельной графики */
+.pixelated{image-rendering:pixelated;image-rendering:crisp-edges}
