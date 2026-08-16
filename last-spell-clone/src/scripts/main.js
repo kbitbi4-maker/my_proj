@@ -4,7 +4,7 @@ import { Engine } from './core/Engine.js';
 // Импорт менеджера меню
 import { MenuManager } from './ui/MenuManager.js';
 
-// Импорт менеджера аудио
+// Импорт менеджера аудио (только один раз)
 import { AudioManager } from './audio/AudioManager.js';
 
 // Импорт сканера проекта
