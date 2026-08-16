@@ -1,42 +1,25 @@
-export class ProjectScanner {
-    constructor() {
-        // Определяем, какие файлы/папки игнорировать
-        this.ignorePatterns = [
-            'node_modules',
-            '.git',
-            '.vscode',
-            '.idea',
-            'dist',
-            'build',
-            '*.min.js',
-            '*.map',
-            '*.log',
-            '.DS_Store',
-            'Thumbs.db'
-        ];
+// Класс для сканирования структуры проекта
+export class ProjectScanner{
+    // Конструктор с настройками игнорируемых файлов
+    constructor(){
+        this.ignorePatterns=['node_modules','.git','.vscode','.idea','dist','build','*.min.js','*.map','*.log','.DS_Store','Thumbs.db']
     }
-
-    async scanProjectStructure() {
-        try {
-            // Получаем список всех файлов в проекте
-            const files = await this.getAllFiles();
-            
-            // Строим дерево
-            const tree = this.buildTree(files);
-            
-            return tree;
-        } catch (error) {
-            console.error('Error scanning project:', error);
-            return this.getDefaultStructure();
+    
+    // Основной метод сканирования структуры
+    async scanProjectStructure(){
+        try{
+            const files=await this.getAllFiles();
+            const tree=this.buildTree(files);
+            return tree
+        }catch(error){
+            console.error('Error scanning project:',error);
+            return this.getDefaultStructure()
         }
     }
-
-    async getAllFiles() {
-        // В браузере мы не можем просто так просканировать файловую систему
-        // Поэтому используем подход с fetch для проверки существования файлов
-        
-        // Список всех возможных файлов в нашем проекте
-        const possibleFiles = [
+    
+    // Получение списка всех файлов через fetch
+    async getAllFiles(){
+        const possibleFiles=[
             'index.html',
             'README.md',
             '.gitignore',
@@ -65,223 +48,151 @@ export class ProjectScanner {
             'src/config/gameConfig.js',
             'src/config/menuConfig.js'
         ];
-
-        const existingFiles = [];
-
-        for (const filePath of possibleFiles) {
-            try {
-                // Пытаемся загрузить файл
-                const response = await fetch(filePath, { method: 'HEAD' });
-                if (response.ok) {
-                    existingFiles.push(filePath);
+        const existingFiles=[];
+        for(const filePath of possibleFiles){
+            try{
+                const response=await fetch(filePath,{method:'HEAD'});
+                if(response.ok){
+                    existingFiles.push(filePath)
                 }
-            } catch (e) {
-                // Файл не существует, пропускаем
-            }
+            }catch(e){}
         }
-
-        return existingFiles;
+        return existingFiles
     }
-
-    buildTree(files) {
-        const tree = {};
-        
-        files.forEach(file => {
-            const parts = file.split('/');
-            let current = tree;
-            
-            parts.forEach((part, index) => {
-                if (index === parts.length - 1) {
-                    // Это файл
-                    if (!current._files) current._files = [];
-                    current._files.push(part);
-                } else {
-                    // Это папка
-                    if (!current[part]) current[part] = {};
-                    current = current[part];
+    
+    // Построение дерева из списка файлов
+    buildTree(files){
+        const tree={};
+        files.forEach(file=>{
+            const parts=file.split('/');
+            let current=tree;
+            parts.forEach((part,index)=>{
+                if(index===parts.length-1){
+                    if(!current._files)current._files=[];
+                    current._files.push(part)
+                }else{
+                    if(!current[part])current[part]={};
+                    current=current[part]
                 }
-            });
+            })
         });
-
-        return tree;
+        return tree
     }
-
-    formatTree(tree, prefix = '') {
-        let result = '';
-        const items = Object.keys(tree);
-        const files = tree._files || [];
-        const folders = items.filter(item => item !== '_files');
-        
-        // Сначала выводим папки
-        folders.forEach((folder, index) => {
-            const isLast = index === folders.length - 1 && files.length === 0;
-            const connector = isLast ? '└── ' : '├── ';
-            result += `${prefix}${connector}${folder}/\n`;
-            result += this.formatTree(tree[folder], prefix + (isLast ? '    ' : '│   '));
+    
+    // Форматирование дерева в строку
+    formatTree(tree,prefix=''){
+        let result='';
+        const items=Object.keys(tree);
+        const files=tree._files||[];
+        const folders=items.filter(item=>item!=='_files');
+        folders.forEach((folder,index)=>{
+            const isLast=index===folders.length-1&&files.length===0;
+            const connector=isLast?'└── ':'├── ';
+            result+=`${prefix}${connector}${folder}/\n`;
+            result+=this.formatTree(tree[folder],prefix+(isLast?'    ':'│   '))
         });
-
-        // Затем файлы
-        files.forEach((file, index) => {
-            const isLast = index === files.length - 1;
-            const connector = isLast ? '└── ' : '├── ';
-            result += `${prefix}${connector}${file}\n`;
+        files.forEach((file,index)=>{
+            const isLast=index===files.length-1;
+            const connector=isLast?'└── ':'├── ';
+            result+=`${prefix}${connector}${file}\n`
         });
-
-        return result;
+        return result
     }
-
-    getDefaultStructure() {
-        // Возвращаем структуру по умолчанию, если сканирование не удалось
-        return `last-spell-clone/
-├── index.html
-├── src/
-│   ├── assets/
-│   │   ├── images/
-│   │   │   ├── menu-background.png
-│   │   │   ├── logo.png
-│   │   │   └── ...
-│   │   ├── sounds/
-│   │   │   ├── menu-music.mp3
-│   │   │   └── ...
-│   │   └── fonts/
-│   ├── styles/
-│   │   ├── main.css
-│   │   ├── menu.css
-│   │   └── components/
-│   │       ├── buttons.css
-│   │       └── ...
-│   ├── scripts/
-│   │   ├── main.js
-│   │   ├── core/
-│   │   │   ├── Engine.js
-│   │   │   ├── Game.js
-│   │   │   └── StateManager.js
-│   │   ├── ui/
-│   │   │   ├── MenuManager.js
-│   │   │   ├── UIManager.js
-│   │   │   └── components/
-│   │   │       ├── Button.js
-│   │   │       └── ...
-│   │   ├── graphics/
-│   │   │   ├── Renderer.js
-│   │   │   ├── ParticleSystem.js
-│   │   │   └── AnimationManager.js
-│   │   ├── audio/
-│   │   │   ├── AudioManager.js
-│   │   │   └── SoundController.js
-│   │   └── utils/
-│   │       ├── helpers.js
-│   │       └── constants.js
-│   └── config/
-│       ├── gameConfig.js
-│       └── menuConfig.js
-├── README.md
-└── .gitignore`;
+    
+    // Структура по умолчанию на случай ошибки
+    getDefaultStructure(){
+        return`last-spell-clone/\n├── index.html\n├── src/\n│   ├── assets/\n│   │   ├── images/\n│   │   │   ├── menu-background.png\n│   │   │   ├── logo.png\n│   │   │   └── ...\n│   │   ├── sounds/\n│   │   │   ├── menu-music.mp3\n│   │   │   └── ...\n│   │   └── fonts/\n│   ├── styles/\n│   │   ├── main.css\n│   │   ├── menu.css\n│   │   └── components/\n│   │       ├── buttons.css\n│   │       └── ...\n│   ├── scripts/\n│   │   ├── main.js\n│   │   ├── core/\n│   │   │   ├── Engine.js\n│   │   │   ├── Game.js\n│   │   │   └── StateManager.js\n│   │   ├── ui/\n│   │   │   ├── MenuManager.js\n│   │   │   ├── UIManager.js\n│   │   │   └── components/\n│   │   │       ├── Button.js\n│   │   │       └── ...\n│   │   ├── graphics/\n│   │   │   ├── Renderer.js\n│   │   │   ├── ParticleSystem.js\n│   │   │   └── AnimationManager.js\n│   │   ├── audio/\n│   │   │   ├── AudioManager.js\n│   │   │   └── SoundController.js\n│   │   └── utils/\n│   │       ├── helpers.js\n│   │       └── constants.js\n│   └── config/\n│       ├── gameConfig.js\n│       └── menuConfig.js\n├── README.md\n└── .gitignore`
     }
-
-    // Метод для получения структуры в виде строки с отметками о существующих файлах
-    async getProjectStructure() {
-        const existingFiles = await this.getAllFiles();
-        const tree = this.buildTree(existingFiles);
-        
-        // Создаем строку с отметками
-        let result = 'last-spell-clone/\n';
-        result += this.formatTreeWithStatus(tree, existingFiles);
-        
-        return result;
+    
+    // Получение структуры со статусами файлов
+    async getProjectStructure(){
+        const existingFiles=await this.getAllFiles();
+        const tree=this.buildTree(existingFiles);
+        let result='last-spell-clone/\n';
+        result+=this.formatTreeWithStatus(tree,existingFiles);
+        return result
     }
-
-    formatTreeWithStatus(tree, existingFiles, prefix = '') {
-        let result = '';
-        const items = Object.keys(tree);
-        const files = tree._files || [];
-        const folders = items.filter(item => item !== '_files');
-        
-        folders.forEach((folder, index) => {
-            const isLast = index === folders.length - 1 && files.length === 0;
-            const connector = isLast ? '└── ' : '├── ';
-            const exists = this.folderHasFiles(tree[folder]);
-            const status = exists ? ' ✅' : ' ❌';
-            result += `${prefix}${connector}${folder}/${status}\n`;
-            result += this.formatTreeWithStatus(tree[folder], existingFiles, prefix + (isLast ? '    ' : '│   '));
+    
+    // Форматирование дерева со статусами (✅ или ❌)
+    formatTreeWithStatus(tree,existingFiles,prefix=''){
+        let result='';
+        const items=Object.keys(tree);
+        const files=tree._files||[];
+        const folders=items.filter(item=>item!=='_files');
+        folders.forEach((folder,index)=>{
+            const isLast=index===folders.length-1&&files.length===0;
+            const connector=isLast?'└── ':'├── ';
+            const exists=this.folderHasFiles(tree[folder]);
+            const status=exists?' ✅':' ❌';
+            result+=`${prefix}${connector}${folder}/${status}\n`;
+            result+=this.formatTreeWithStatus(tree[folder],existingFiles,prefix+(isLast?'    ':'│   '))
         });
-
-        files.forEach((file, index) => {
-            const isLast = index === files.length - 1;
-            const connector = isLast ? '└── ' : '├── ';
-            const fullPath = this.findFilePath(tree, file);
-            const exists = existingFiles.includes(fullPath);
-            const status = exists ? ' ✅' : ' ❌';
-            result += `${prefix}${connector}${file}${status}\n`;
+        files.forEach((file,index)=>{
+            const isLast=index===files.length-1;
+            const connector=isLast?'└── ':'├── ';
+            const fullPath=this.findFilePath(tree,file);
+            const exists=existingFiles.includes(fullPath);
+            const status=exists?' ✅':' ❌';
+            result+=`${prefix}${connector}${file}${status}\n`
         });
-
-        return result;
+        return result
     }
-
-    findFilePath(tree, targetFile, currentPath = '') {
-        // Рекурсивно ищем полный путь к файлу
-        const items = Object.keys(tree);
-        const files = tree._files || [];
-        
-        if (files.includes(targetFile)) {
-            return currentPath ? `${currentPath}/${targetFile}` : targetFile;
+    
+    // Поиск полного пути к файлу в дереве
+    findFilePath(tree,targetFile,currentPath=''){
+        const items=Object.keys(tree);
+        const files=tree._files||[];
+        if(files.includes(targetFile)){
+            return currentPath?`${currentPath}/${targetFile}`:targetFile
         }
-        
-        const folders = items.filter(item => item !== '_files');
-        for (const folder of folders) {
-            const newPath = currentPath ? `${currentPath}/${folder}` : folder;
-            const result = this.findFilePath(tree[folder], targetFile, newPath);
-            if (result) return result;
+        const folders=items.filter(item=>item!=='_files');
+        for(const folder of folders){
+            const newPath=currentPath?`${currentPath}/${folder}`:folder;
+            const result=this.findFilePath(tree[folder],targetFile,newPath);
+            if(result)return result
         }
-        
-        return null;
+        return null
     }
-
-    folderHasFiles(folder) {
-        // Проверяет, есть ли в папке файлы
-        const files = folder._files || [];
-        const folders = Object.keys(folder).filter(item => item !== '_files');
-        
-        if (files.length > 0) return true;
-        for (const subFolder of folders) {
-            if (this.folderHasFiles(folder[subFolder])) return true;
+    
+    // Проверка наличия файлов в папке
+    folderHasFiles(folder){
+        const files=folder._files||[];
+        const folders=Object.keys(folder).filter(item=>item!=='_files');
+        if(files.length>0)return true;
+        for(const subFolder of folders){
+            if(this.folderHasFiles(folder[subFolder]))return true
         }
-        return false;
+        return false
     }
-
-    // Генерирует компактное представление для копирования
-    async generateStructureForAI() {
-        const existingFiles = await this.getAllFiles();
-        
-        // Строим дерево с полными путями
-        let structure = 'last-spell-clone/\n';
-        const tree = this.buildTree(existingFiles);
-        structure += this.formatTreeWithPaths(tree, '');
-        
-        return structure;
+    
+    // Генерация структуры для копирования в буфер
+    async generateStructureForAI(){
+        const existingFiles=await this.getAllFiles();
+        let structure='last-spell-clone/\n';
+        const tree=this.buildTree(existingFiles);
+        structure+=this.formatTreeWithPaths(tree,'');
+        return structure
     }
-
-    formatTreeWithPaths(tree, prefix = '') {
-        let result = '';
-        const items = Object.keys(tree);
-        const files = tree._files || [];
-        const folders = items.filter(item => item !== '_files');
-        
-        folders.forEach((folder, index) => {
-            const isLast = index === folders.length - 1 && files.length === 0;
-            const connector = isLast ? '└── ' : '├── ';
-            const path = prefix ? `${prefix}/${folder}` : folder;
-            result += `${prefix}${connector}${folder}/\n`;
-            result += this.formatTreeWithPaths(tree[folder], path);
+    
+    // Форматирование дерева с путями
+    formatTreeWithPaths(tree,prefix=''){
+        let result='';
+        const items=Object.keys(tree);
+        const files=tree._files||[];
+        const folders=items.filter(item=>item!=='_files');
+        folders.forEach((folder,index)=>{
+            const isLast=index===folders.length-1&&files.length===0;
+            const connector=isLast?'└── ':'├── ';
+            const path=prefix?`${prefix}/${folder}`:folder;
+            result+=`${prefix}${connector}${folder}/\n`;
+            result+=this.formatTreeWithPaths(tree[folder],path)
         });
-
-        files.forEach((file, index) => {
-            const isLast = index === files.length - 1;
-            const connector = isLast ? '└── ' : '├── ';
-            const path = prefix ? `${prefix}/${file}` : file;
-            result += `${prefix}${connector}${file}\n`;
+        files.forEach((file,index)=>{
+            const isLast=index===files.length-1;
+            const connector=isLast?'└── ':'├── ';
+            const path=prefix?`${prefix}/${file}`:file;
+            result+=`${prefix}${connector}${file}\n`
         });
-
-        return result;
+        return result
     }
 }
