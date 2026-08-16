@@ -1,6 +1,7 @@
 export class ProjectScanner{
     constructor(){
-        this.projectFiles = {
+        // Простой список файлов с пометками
+        this.files = {
             'index.html': true,
             'README.md': true,
             '.gitignore': true,
@@ -31,77 +32,62 @@ export class ProjectScanner{
         }
     }
     
-    generateStructureForAI(){
+    // Простое получение структуры
+    getStructure(){
         let result = 'last-spell-clone/\n';
-        result += this.buildTreeWithStatus();
-        return result
-    }
-    
-    buildTreeWithStatus(){
-        const tree = {};
-        const sortedFiles = Object.keys(this.projectFiles).sort();
+        result += '├── index.html ✅\n';
+        result += '├── README.md ✅\n';
+        result += '├── .gitignore ✅\n';
+        result += '├── src/\n';
+        result += '│   ├── assets/\n';
+        result += '│   │   ├── images/\n';
+        result += '│   │   │   ├── menu-background.png ❌\n';
+        result += '│   │   │   ├── logo.png ❌\n';
+        result += '│   │   │   └── ... ❌\n';
+        result += '│   │   ├── sounds/\n';
+        result += '│   │   │   ├── menu-music.mp3 ❌\n';
+        result += '│   │   │   └── ... ❌\n';
+        result += '│   │   └── fonts/ ❌\n';
+        result += '│   ├── styles/\n';
+        result += '│   │   ├── main.css ✅\n';
+        result += '│   │   ├── menu.css ✅\n';
+        result += '│   │   └── components/\n';
+        result += '│   │       ├── buttons.css ❌\n';
+        result += '│   │       └── ... ❌\n';
+        result += '│   ├── scripts/\n';
+        result += '│   │   ├── main.js ✅\n';
+        result += '│   │   ├── core/\n';
+        result += '│   │   │   ├── Engine.js ✅\n';
+        result += '│   │   │   ├── Game.js ❌\n';
+        result += '│   │   │   └── StateManager.js ❌\n';
+        result += '│   │   ├── ui/\n';
+        result += '│   │   │   ├── MenuManager.js ✅\n';
+        result += '│   │   │   ├── UIManager.js ❌\n';
+        result += '│   │   │   └── components/\n';
+        result += '│   │   │       ├── Button.js ❌\n';
+        result += '│   │   │       └── ... ❌\n';
+        result += '│   │   ├── graphics/\n';
+        result += '│   │   │   ├── Renderer.js ❌\n';
+        result += '│   │   │   ├── ParticleSystem.js ❌\n';
+        result += '│   │   │   └── AnimationManager.js ❌\n';
+        result += '│   │   ├── audio/\n';
+        result += '│   │   │   ├── AudioManager.js ✅\n';
+        result += '│   │   │   └── SoundController.js ❌\n';
+        result += '│   │   └── utils/\n';
+        result += '│   │       ├── helpers.js ❌\n';
+        result += '│   │       ├── constants.js ❌\n';
+        result += '│   │       └── projectScanner.js ✅\n';
+        result += '│   └── config/\n';
+        result += '│       ├── gameConfig.js ✅\n';
+        result += '│       └── menuConfig.js ❌\n';
+        result += '└── .gitignore ✅';
         
-        sortedFiles.forEach(filePath => {
-            const parts = filePath.split('/');
-            let current = tree;
-            
-            parts.forEach((part, index) => {
-                if (index === parts.length - 1) {
-                    if (!current._files) current._files = [];
-                    const exists = this.projectFiles[filePath];
-                    current._files.push({
-                        name: part,
-                        exists: exists,
-                        path: filePath
-                    });
-                } else {
-                    if (!current[part]) current[part] = {};
-                    current = current[part];
-                }
-            });
-        });
-        
-        return this.formatTreeWithStatus(tree, '')
-    }
-    
-    formatTreeWithStatus(tree, prefix){
-        let result = '';
-        const items = Object.keys(tree);
-        const files = tree._files || [];
-        const folders = items.filter(item => item !== '_files');
-        
-        folders.forEach((folder, index) => {
-            const isLast = index === folders.length - 1 && files.length === 0;
-            const connector = isLast ? '└── ' : '├── ';
-            const hasFiles = this.folderHasFiles(tree[folder]);
-            const status = hasFiles ? ' ✅' : ' ❌';
-            result += `${prefix}${connector}${folder}/${status}\n`;
-            result += this.formatTreeWithStatus(tree[folder], prefix + (isLast ? '    ' : '│   '))
-        });
-        
-        files.forEach((file, index) => {
-            const isLast = index === files.length - 1;
-            const connector = isLast ? '└── ' : '├── ';
-            const status = file.exists ? ' ✅' : ' ❌';
-            result += `${prefix}${connector}${file.name}${status}\n`
-        });
-        
-        return result
-    }
-    
-    folderHasFiles(folder){
-        const files = folder._files || [];
-        const folders = Object.keys(folder).filter(item => item !== '_files');
-        if (files.length > 0) return true;
-        for (const subFolder of folders) {
-            if (this.folderHasFiles(folder[subFolder])) return true
-        }
-        return false
+        return result;
     }
     
     getStructureForClipboard(){
-        const structure = this.generateStructureForAI();
+        const structure = this.getStructure();
         const timestamp = new Date().toLocaleString();
-        return `=== СТРУКТУРА ПРОЕКТА ===\nВерсия: v1.0.2.21\nДата: ${timestamp}\n\n${structure}\n\n=== КОНЕЦ СТРУКТУРЫ ===`
+        return `=== СТРУКТУРА ПРОЕКТА ===\nВерсия: v1.0.2.21\nДата: ${timestamp}\n\n${structure}\n\n=== КОНЕЦ СТРУКТУРЫ ===`;
     }
 }
