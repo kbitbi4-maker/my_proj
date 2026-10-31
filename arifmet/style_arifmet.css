@@ -1,4 +1,4 @@
-/* version: v3.5 (Кнопка "Назад" в цвет иконок, увеличенная стрелка) */
+/* version: v3.6 (Кнопки в шапке без рамок и отступов, градиент цвета) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -19,45 +19,46 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     padding: 0; 
 }
 
-/* Квадратные кнопки (Назад, Карта, Настройки) */
+/* Общие стили для 3 квадратных кнопок слева */
 .nav-square-btn, .icon-btn { 
-    background: #475569; /* Как у иконок */
     color: white; 
-    border: none; 
+    border: none; /* Убрали рамки */
     cursor: pointer; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    transition: background 0.2s; 
+    transition: filter 0.2s; 
     padding: 0;
     flex-shrink: 0;
     aspect-ratio: 1 / 1; 
     height: 100%; 
     font-family: monospace; 
+    border-radius: 0; /* Убрали скругления */
 }
-.nav-square-btn:hover, .icon-btn:hover { background: #334155; }
+.nav-square-btn:hover, .icon-btn:hover { filter: brightness(1.1); }
 
-/* Специфично для кнопки Назад */
+/* Градиент цветов (от светлого к темному) */
 .nav-square-btn { 
-    border-radius: 0; 
-    font-size: 4.8vh; /* Увеличено вдвое (было 2.4vh) */
+    background: #c3cbf7; /* Самый светлый (+60% к #3f51b5) */
+    font-size: 4.8vh; 
+    color: #1a237e; /* Темный текст для контраста со светлым фоном */
 }
-/* Уменьшим размер стрелки, если она слишком большая на узких экранах */
-@media (max-height: 500px) {
-    .nav-square-btn { font-size: 3.5vh; }
+.icon-btn.map-btn { 
+    background: #97a4ec; /* Средний (+30% к #3f51b5) */
+    font-size: 2.4vh;
+    color: #1a237e;
+}
+.icon-btn.settings-btn { 
+    background: #6b7ce0; /* Темнее (+15% к #3f51b5) */
+    font-size: 2.4vh;
 }
 
-/* Иконки карты и настроек */
+/* Контейнер для иконок без отступов */
 .header-icons { 
     display: flex; 
-    gap: 2px; 
-    margin-left: 4px;
+    gap: 0; /* Убрали отступы */
+    margin-left: 0;
     flex-shrink: 0;
-}
-.icon-btn { 
-    font-size: 2vh; 
-    border: 1px solid #1f2a5e; 
-    border-radius: 2px;
 }
 
 /* Кнопка режима (ширина 33.4%) */
@@ -318,8 +319,8 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; padding: 0; }
-    .nav-square-btn { font-size: 3.5vh; }
-    .icon-btn { font-size: 1.8vh; }
+    .nav-square-btn { font-size: 4vh; }
+    .icon-btn { font-size: 2vh; }
     .header-menu-btn { font-size: 1.6vh; }
     
     .main-container { flex-direction: column; }
