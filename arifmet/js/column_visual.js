@@ -1,4 +1,4 @@
-// version: v3.2 (Универсальные переносы для любого количества знаков)
+// version: v3.3 (Добавлены отступы между разрядами и серый фон ячеек)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 
@@ -16,7 +16,7 @@ export function renderColumnVisual() {
     const num1 = parseInt(nums[0], 10);
     const num2 = parseInt(nums[1], 10);
 
-    // Инициализация состояния переносов (объект для хранения по индексу)
+    // Инициализация состояния переносов
     if (!carryState[state.activeIndex]) {
         carryState[state.activeIndex] = {};
     }
@@ -32,7 +32,13 @@ export function renderColumnVisual() {
 
     // Вспомогательная функция: рендер одной ячейки
     function cell(content, isClickable, digitPosFromRight, extraClass = '') {
-        const cls = `col-cell ${isClickable ? 'clickable' : ''} ${extraClass}`.trim();
+        let cls = `col-cell ${isClickable ? 'clickable' : ''} ${extraClass}`.trim();
+        
+        // Добавляем отступ для тысяч, миллионов (каждый 3-й разряд справа)
+        if (digitPosFromRight > 0 && digitPosFromRight % 3 === 0) {
+            cls += ' group-gap';
+        }
+        
         const data = isClickable ? `data-pos="${digitPosFromRight}"` : '';
         return `<div class="${cls}" ${data}>${content || ''}</div>`;
     }
@@ -49,20 +55,22 @@ export function renderColumnVisual() {
             carryClickable = true;
             carryContent = carries[posFromRight] || '';
         }
-        rowCarry += cell(carryContent, carryClickable, posFromRight);
+        // Если перенос пустой и не кликабельный (т.е. единицы) - делаем прозрачным
+        const carryEmptyClass = (!carryClickable && !carryContent) ? 'empty-cell' : '';
+        rowCarry += cell(carryContent, carryClickable, posFromRight, carryEmptyClass);
 
         // Ряды с числами
         const ch1 = s1[i], ch2 = s2[i];
-        rowNum1 += cell(ch1 === ' ' ? '' : ch1);
+        rowNum1 += cell(ch1 === ' ' ? '' : ch1, false, posFromRight, ch1 === ' ' ? 'empty-cell' : '');
         
         // Знак ставим только в самую левую ячейку второго числа
         const signHTML = (i === 0) ? `<span class="col-sign">${sign}</span>` : '';
-        rowNum2 += cell(signHTML + (ch2 === ' ' ? '' : ch2));
+        rowNum2 += cell(signHTML + (ch2 === ' ' ? '' : ch2), false, posFromRight, ch2 === ' ' ? 'empty-cell' : '');
 
         // Ряд ответа
         const chAns = paddedAns[i];
         const ansClass = report.isFullySolved ? 'ans-correct' : (report.isWrongAnswer ? 'ans-incorrect' : '');
-        rowAns += cell(chAns === ' ' ? '_' : chAns, false, -1, ansClass);
+        rowAns += cell(chAns === ' ' ? '_' : chAns, false, posFromRight, ansClass);
     }
 
     // Собираем сетку в зависимости от режима (Сложение/Вычитание)
@@ -89,7 +97,7 @@ export function renderColumnVisual() {
         `;
     }
 
-    const cacheKey = `${item.exampleText}_col_v3.2_${report.phase}_${userAns}_${JSON.stringify(carries)}`;
+    const cacheKey = `${item.exampleText}_col_v3.3_${report.phase}_${userAns}_${JSON.stringify(carries)}`;
     GameCanvas.renderZoneScene(gridHTML, cacheKey);
 
     // Обработчики кликов по переносам
