@@ -1,11 +1,11 @@
-/* version: v3.4 (Исправлена шапка: убран padding, кнопки-квадраты, ровная стрелка) */
+/* version: v3.5 (Кнопка "Назад" в цвет иконок, увеличенная стрелка) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
 .header { 
     display: flex; 
-    align-items: stretch; /* Растягиваем детей по высоте */
+    align-items: stretch;
     background: #3f51b5; 
     color: white; 
     position: sticky; 
@@ -16,12 +16,12 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     box-sizing: border-box; 
     box-shadow: 0 2px 10px rgba(0,0,0,0.3); 
     flex-shrink: 0; 
-    padding: 0; /* Убираем padding, чтобы кнопка режима точно совпадала по ширине */
+    padding: 0; 
 }
 
-/* Квадратные кнопки */
+/* Квадратные кнопки (Назад, Карта, Настройки) */
 .nav-square-btn, .icon-btn { 
-    background: #2c387e; 
+    background: #475569; /* Как у иконок */
     color: white; 
     border: none; 
     cursor: pointer; 
@@ -31,31 +31,34 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     transition: background 0.2s; 
     padding: 0;
     flex-shrink: 0;
-    aspect-ratio: 1 / 1; /* Квадрат */
-    height: 100%; /* Ровно высота шапки */
-    font-family: monospace; /* Для ровной стрелки */
+    aspect-ratio: 1 / 1; 
+    height: 100%; 
+    font-family: monospace; 
 }
+.nav-square-btn:hover, .icon-btn:hover { background: #334155; }
 
+/* Специфично для кнопки Назад */
 .nav-square-btn { 
-    border-radius: 0; /* Без скруглений, прикреплена к углу */
-    font-size: 2.4vh; 
-    background: #4c5a9e; /* Светлее основной полосы */
+    border-radius: 0; 
+    font-size: 4.8vh; /* Увеличено вдвое (было 2.4vh) */
 }
-.nav-square-btn:hover { background: #5f6eb8; }
+/* Уменьшим размер стрелки, если она слишком большая на узких экранах */
+@media (max-height: 500px) {
+    .nav-square-btn { font-size: 3.5vh; }
+}
 
+/* Иконки карты и настроек */
 .header-icons { 
     display: flex; 
-    gap: 2px; /* Тонкий зазор между квадратами */
+    gap: 2px; 
     margin-left: 4px;
     flex-shrink: 0;
 }
-
 .icon-btn { 
     font-size: 2vh; 
-    border: 1px solid #1f2a5e; /* Темная рамка, чтобы квадраты не сливались */
+    border: 1px solid #1f2a5e; 
     border-radius: 2px;
 }
-.icon-btn:hover { background: #334155; }
 
 /* Кнопка режима (ширина 33.4%) */
 .header-menu-btn { 
@@ -315,7 +318,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; padding: 0; }
-    .nav-square-btn { font-size: 2vh; }
+    .nav-square-btn { font-size: 3.5vh; }
     .icon-btn { font-size: 1.8vh; }
     .header-menu-btn { font-size: 1.6vh; }
     
