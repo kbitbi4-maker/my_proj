@@ -1,12 +1,16 @@
-// version: v1.2
+// version: v1.3 (Добавлена кнопка настроек)
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
+import { renderSettings } from './settings.js';
 
 // Слушатели оригинального модального окна карты
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
 document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
+
+// Слушатель кнопки настроек
+document.getElementById('settings-btn')?.addEventListener('click', renderSettings);
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
