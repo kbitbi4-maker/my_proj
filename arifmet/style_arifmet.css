@@ -1,18 +1,20 @@
-/* version: v2.5 (Фикс позиционирования нумпада на планшетах, сетка столбика с фоновыми ячейками и разрядными отступами) */
+/* version: v2.6 (Убраны ограничения min-width для кнопки режима, оптимизирована шапка) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
 .header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 50px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding-left: 15px; }
-.version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; margin-left: auto; margin-right: 20px; }
-.header-menu-btn { width: 33.4%; min-width: 250px; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
+.version { display: none; /* Скрыто, чтобы не ломать шапку */ }
+
+/* Кнопка режима занимает ровно 33.4% ширины, без min-width */
+.header-menu-btn { width: 33.4%; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
 .header-menu-btn:hover { background: #1a237e; }
 
 .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
 
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { width: 33.4%; min-width: 280px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 
 /* НУМПАД: Абсолютное центрирование для стабильности на любых экранах */
@@ -26,7 +28,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     gap: 6px; 
     width: 90%; 
     max-width: 260px; 
-    max-height: 95%; /* Не вылезает за пределы правой панели */
+    max-height: 95%;
 }
 .num-btn { 
     background: white; 
@@ -47,7 +49,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .num-btn.op { background: #ff9800; color: white; }
 .num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 10px 0; font-size: 2vh; min-height: 40px; }
 
-/* Если меню открыто, нумпад скрыт, поэтому absolute не мешает */
 .right-area.menu-active .numpad { display: none; }
 
 #modes-menu-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; margin: 0; padding: 0; }
@@ -116,7 +117,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     position: relative;
 }
 
-/* Светло-серый фон для всех ячеек с цифрами */
 .col-cell {
     width: clamp(20px, 5vmin, 36px);
     height: clamp(20px, 5vmin, 36px);
@@ -127,25 +127,23 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     font-size: clamp(14px, 3.5vmin, 24px);
     font-weight: bold;
     color: #1e293b;
-    background: #f1f5f9; /* Светло-серый фон, чтобы ячейки были видны */
+    background: #f1f5f9;
     border-radius: 4px;
-    margin: 1px; /* Небольшой отступ между ячейками */
+    margin: 1px;
     box-sizing: border-box;
 }
 
-/* Отступ после каждого 3-го разряда (тысячи, миллионы и т.д.) */
 .col-cell.group-gap {
     margin-left: clamp(6px, 1.5vmin, 12px);
 }
 
 .col-cell.clickable {
-    background: #cbd5e1; /* Чуть темнее для кликабельных переносов */
+    background: #cbd5e1;
     cursor: pointer;
     transition: background 0.15s;
 }
 .col-cell.clickable:hover { background: #94a3b8; }
 
-/* Пустые ячейки (без цифр и без переносов) */
 .col-cell.empty-cell {
     background: transparent;
     box-shadow: none;
