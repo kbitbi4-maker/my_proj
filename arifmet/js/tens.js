@@ -1,4 +1,4 @@
-// version: v1.8 (Интеграция с настройками сложности для режима "В столбик")
+// version: v1.9 (Финальная проверка совместимости с новыми настройками и вкладками)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -6,7 +6,7 @@ import { renderSubtractionVisual } from './subtraction_visual.js';
 import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
 import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
 import { renderColumnVisual } from './column_visual.js';
-import { settings } from './settings.js'; // Импортируем настройки
+import { settings } from './settings.js';
 
 let isAddition = true;
 
@@ -28,7 +28,6 @@ export function generateExample() {
     const isHundreds = state.currentMode === 'hundreds';
 
     if (isColumn) {
-        // Используем настройку значности
         const digits = settings.columnDigits || 2;
         const min = Math.pow(10, digits - 1);
         const max = Math.pow(10, digits) - 1;
@@ -38,9 +37,6 @@ export function generateExample() {
                 num1 = Math.floor(Math.random() * (max - min + 1)) + min;
                 num2 = Math.floor(Math.random() * (max - min + 1)) + min;
                 
-                // Для столбика не обязательно жестко требовать переноса через десяток, 
-                // чтобы избежать зависаний на однозначных (1+1=2), 
-                // просто генерируем случайные числа нужной длины.
                 text = `${num1}+${num2}`;
                 if (!state.usedExamples.includes(text)) { 
                     correctValue = num1 + num2; 
@@ -52,7 +48,6 @@ export function generateExample() {
                 num1 = Math.floor(Math.random() * (max - min + 1)) + min;
                 num2 = Math.floor(Math.random() * (max - min + 1)) + min;
                 
-                // Вычитание: первое число должно быть больше второго, чтобы не было отрицательных
                 if (num1 > num2) { 
                     text = `${num1}-${num2}`;
                     if (!state.usedExamples.includes(text)) { 
@@ -63,7 +58,6 @@ export function generateExample() {
             }
         }
     } else {
-        // Старая логика для Десятков, Сотен и Микса
         const min = isHundreds ? 100 : 10;
         const max = isHundreds ? 900 : 90;
 
@@ -116,7 +110,6 @@ export function getTensHistoryHTML(item, index, mode) {
     const report = state.validateCurrentInput(index);
     const targetLen = String(item.correctValue).length;
 
-    // СПЕЦИАЛЬНЫЙ РЕНДЕРИНГ ДЛЯ РЕЖИМА СТОЛБИКА В ЛЕВОЙ ПАНЕЛИ
     if (mode === 'column') {
         let simHTML = '';
         let finHTML = '';
@@ -128,7 +121,6 @@ export function getTensHistoryHTML(item, index, mode) {
         return { simHTML, finHTML };
     }
 
-    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
