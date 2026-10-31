@@ -1,4 +1,4 @@
-/* version: v2.4 (Резиновая сетка и адаптация под горизонтальный режим) */
+/* version: v2.5 (Фикс позиционирования нумпада на планшетах, сетка столбика с фоновыми ячейками и разрядными отступами) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -12,11 +12,46 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
 
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { width: 33.4%; min-width: 280px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.right-area { width: 33.4%; min-width: 280px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 
-#modes-menu-container { display: flex; flex-direction: column; width: 100%; height: auto; margin: 0; padding: 0; }
-#modes-menu-container .mode-btn { width: 100%; height: 9.6vh; min-height: 50px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
+/* НУМПАД: Абсолютное центрирование для стабильности на любых экранах */
+.numpad { 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 6px; 
+    width: 90%; 
+    max-width: 260px; 
+    max-height: 95%; /* Не вылезает за пределы правой панели */
+}
+.num-btn { 
+    background: white; 
+    border: 1px solid #ccc; 
+    border-radius: 10px; 
+    font-size: 2.4vh; 
+    font-weight: bold; 
+    padding: 8px 0; 
+    cursor: pointer; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    min-height: 45px; 
+}
+.num-btn:active { background: #ddd; transform: scale(0.95); }
+.num-btn.clear { background: #ff4b2b; color: white; }
+.num-btn.op { background: #ff9800; color: white; }
+.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 10px 0; font-size: 2vh; min-height: 40px; }
+
+/* Если меню открыто, нумпад скрыт, поэтому absolute не мешает */
+.right-area.menu-active .numpad { display: none; }
+
+#modes-menu-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; margin: 0; padding: 0; }
+#modes-menu-container .mode-btn { width: 100%; flex: 1; min-height: 50px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
 #modes-menu-container .mode-btn:hover { filter: brightness(1.1); }
 #modes-menu-container .mode-btn[data-mode="tens"] { background: #86efac; color: #064e3b; }
 #modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
@@ -24,13 +59,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 #modes-menu-container .mode-btn[data-mode="hundreds"] { background: #93c5fd; color: #1e3a8a; }
 #modes-menu-container .mode-btn[data-mode="column"] { background: #c084fc; color: #3b0764; }
 #modes-menu-container .mode-btn[data-mode="division"] { background: #fca5a5; color: #7f1d1d; }
-
-.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 250px; }
-.num-btn { background: white; border: 1px solid #ccc; border-radius: 10px; font-size: 2.4vh; font-weight: bold; padding: 8px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 45px; }
-.num-btn:active { background: #ddd; transform: scale(0.95); }
-.num-btn.clear { background: #ff4b2b; color: white; }
-.num-btn.op { background: #ff9800; color: white; }
-.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 10px 0; font-size: 2vh; min-height: 40px; }
 
 .example-line { font-size: 3.2vh; font-weight: bold; color: #333; margin-bottom: 15px; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 5px; border-radius: 8px; cursor: pointer; }
 .example-line:hover { background: #f0f2f5; }
@@ -73,9 +101,9 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .col-grid {
     display: flex;
     flex-direction: column;
-    background: #f8fafc;
+    background: #ffffff;
     border-radius: 8px;
-    padding: 4px; /* Уменьшили padding для компактности */
+    padding: 4px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px #e2e8f0;
     margin: 0 auto;
     max-height: 100%;
@@ -88,8 +116,8 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     position: relative;
 }
 
+/* Светло-серый фон для всех ячеек с цифрами */
 .col-cell {
-    /* Сделали размер ячейки зависимым от vmin, чтобы на узких экранах не было перебора */
     width: clamp(20px, 5vmin, 36px);
     height: clamp(20px, 5vmin, 36px);
     display: flex;
@@ -99,22 +127,32 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     font-size: clamp(14px, 3.5vmin, 24px);
     font-weight: bold;
     color: #1e293b;
+    background: #f1f5f9; /* Светло-серый фон, чтобы ячейки были видны */
+    border-radius: 4px;
+    margin: 1px; /* Небольшой отступ между ячейками */
     box-sizing: border-box;
 }
 
+/* Отступ после каждого 3-го разряда (тысячи, миллионы и т.д.) */
+.col-cell.group-gap {
+    margin-left: clamp(6px, 1.5vmin, 12px);
+}
+
 .col-cell.clickable {
-    background: #e2e8f0;
-    border-radius: 4px;
-    margin: 1px;
-    width: calc(clamp(20px, 5vmin, 36px) - 2px);
-    height: calc(clamp(20px, 5vmin, 36px) - 2px);
+    background: #cbd5e1; /* Чуть темнее для кликабельных переносов */
     cursor: pointer;
     transition: background 0.15s;
 }
-.col-cell.clickable:hover { background: #cbd5e1; }
+.col-cell.clickable:hover { background: #94a3b8; }
 
-.col-cell.ans-correct { color: #155724 !important; background: #d4edda !important; border-radius: 4px;}
-.col-cell.ans-incorrect { color: #721c24 !important; background: #f8d7da !important; border-radius: 4px;}
+/* Пустые ячейки (без цифр и без переносов) */
+.col-cell.empty-cell {
+    background: transparent;
+    box-shadow: none;
+}
+
+.col-cell.ans-correct { color: #155724 !important; background: #d4edda !important; }
+.col-cell.ans-incorrect { color: #721c24 !important; background: #f8d7da !important; }
 
 .col-sign {
     position: absolute;
@@ -151,7 +189,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .settings-save-btn { margin-top: 20px; background: #3f51b5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(63,81,181,0.2); transition: background 0.2s; }
 .settings-save-btn:hover { background: #2c387e; }
 
-/* ========== ОБЛАСТЬ ВИЗУАЛА (нижняя панель) ========== */
+/* ========== ОБЛАСТЬ ВИЗУАЛА ========== */
 #game-zone {
     display: flex;
     justify-content: center;
@@ -163,7 +201,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     border-top: 2px dashed #4ade80;
     box-shadow: inset 0 4px 6px rgba(0,0,0,0.02);
     box-sizing: border-box;
-    padding: 5px; /* Уменьшили общие отступы */
+    padding: 5px;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -172,25 +210,13 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; }
     .main-container { height: calc(100dvh - 10vh); }
+    #game-zone { height: 42%; padding: 2px; }
+    .left-area, .right-area { height: 58%; }
     
-    /* Увеличиваем область визуала на 10% (с 32 до 42%) */
-    #game-zone { 
-        height: 42%; 
-        padding: 2px;
-    }
-    .left-area, .right-area { 
-        height: 58%; /* Соответственно уменьшаем верхнюю часть */
-    }
-    
-    /* Дополнительно сжимаем сетку в ландшафте */
     .col-cell {
         width: clamp(18px, 4.5vmin, 30px);
         height: clamp(18px, 4.5vmin, 30px);
         font-size: clamp(12px, 3vmin, 20px);
-    }
-    .col-cell.clickable {
-        width: calc(clamp(18px, 4.5vmin, 30px) - 2px);
-        height: calc(clamp(18px, 4.5vmin, 30px) - 2px);
     }
     .col-sign { left: -18px; font-size: clamp(14px, 3vmin, 22px); }
 }
