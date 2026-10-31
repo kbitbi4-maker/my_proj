@@ -1,38 +1,29 @@
-/* version: v3.3 (Шапка с квадратной кнопкой Назад, стили вкладок настроек) */
+/* version: v3.4 (Исправлена шапка: убран padding, кнопки-квадраты, ровная стрелка) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
-/* УМЕНЬШЕННАЯ ШАПКА (минус 10% высоты, шрифты минус 15%) */
 .header { 
     display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
+    align-items: stretch; /* Растягиваем детей по высоте */
     background: #3f51b5; 
     color: white; 
     position: sticky; 
     top: 0; 
     z-index: 1000; 
-    height: 8.64vh; /* Было 9.6vh, уменьшено на 10% */
-    min-height: 45px; /* Было 50px */
+    height: 8.64vh; 
+    min-height: 45px; 
     box-sizing: border-box; 
     box-shadow: 0 2px 10px rgba(0,0,0,0.3); 
     flex-shrink: 0; 
-    padding: 0 10px;
+    padding: 0; /* Убираем padding, чтобы кнопка режима точно совпадала по ширине */
 }
 
-/* Квадратная кнопка "Назад" */
-.nav-square-btn { 
+/* Квадратные кнопки */
+.nav-square-btn, .icon-btn { 
     background: #2c387e; 
     color: white; 
     border: none; 
-    border-radius: 8px; 
-    width: 5.5vh; 
-    height: 5.5vh; 
-    min-width: 32px; 
-    min-height: 32px; 
-    font-size: 2.4vh; 
-    font-weight: bold; 
     cursor: pointer; 
     display: flex; 
     align-items: center; 
@@ -40,31 +31,29 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     transition: background 0.2s; 
     padding: 0;
     flex-shrink: 0;
+    aspect-ratio: 1 / 1; /* Квадрат */
+    height: 100%; /* Ровно высота шапки */
+    font-family: monospace; /* Для ровной стрелки */
 }
-.nav-square-btn:hover { background: #1a237e; }
 
-/* Контейнер для иконок (карта, настройки) */
+.nav-square-btn { 
+    border-radius: 0; /* Без скруглений, прикреплена к углу */
+    font-size: 2.4vh; 
+    background: #4c5a9e; /* Светлее основной полосы */
+}
+.nav-square-btn:hover { background: #5f6eb8; }
+
 .header-icons { 
     display: flex; 
-    gap: 6px; 
-    align-items: center; 
-    margin-left: 10px;
+    gap: 2px; /* Тонкий зазор между квадратами */
+    margin-left: 4px;
     flex-shrink: 0;
 }
 
 .icon-btn { 
-    background: #475569; 
-    color: white; 
-    border: none; 
-    padding: 4px 8px; 
-    border-radius: 6px; 
-    cursor: pointer; 
     font-size: 2vh; 
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 32px;
+    border: 1px solid #1f2a5e; /* Темная рамка, чтобы квадраты не сливались */
+    border-radius: 2px;
 }
 .icon-btn:hover { background: #334155; }
 
@@ -78,7 +67,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     align-items: center; 
     justify-content: center; 
     font-weight: bold; 
-    font-size: 1.7vh; /* Было 2vh, уменьшено на 15% */
+    font-size: 1.7vh; 
     box-sizing: border-box; 
     transition: background 0.2s; 
     margin-left: auto;
@@ -255,7 +244,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 }
 
 /* ========== СТИЛИ НАСТРОЕК ========== */
-/* Вкладки в настройках */
 .settings-tab-btn { 
     flex: 1; 
     background: transparent; 
@@ -271,7 +259,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .settings-tab-btn.active { border-bottom-color: #3f51b5; color: #3f51b5; }
 .settings-tab-btn.disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Кнопки управления шрифтом */
 .font-adj-btn { 
     background: #e2e8f0; 
     border: 1px solid #cbd5e1; 
@@ -327,9 +314,9 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
-    .header { height: 10vh; min-height: 40px; padding: 0 5px; }
-    .nav-square-btn { width: 6vh; height: 6vh; min-width: 28px; min-height: 28px; font-size: 2vh; }
-    .icon-btn { font-size: 1.8vh; padding: 2px 6px; min-height: 28px; }
+    .header { height: 10vh; min-height: 40px; padding: 0; }
+    .nav-square-btn { font-size: 2vh; }
+    .icon-btn { font-size: 1.8vh; }
     .header-menu-btn { font-size: 1.6vh; }
     
     .main-container { flex-direction: column; }
