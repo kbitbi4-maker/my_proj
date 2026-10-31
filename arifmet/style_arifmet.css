@@ -1,22 +1,22 @@
-/* version: v2.2 (Добавлены стили для страницы настроек и кнопки-шестеренки) */
+/* version: v2.3 (Адаптация под горизонтальный режим: уменьшен нумпад, добавлен отступ снизу) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
-.header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+.header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 50px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding-left: 15px; }
 .version { font-size: 1.8vh; opacity: 0.8; background: #2c387e; padding: 4px 8px; border-radius: 4px; flex-shrink: 0; margin-left: auto; margin-right: 20px; }
-.header-menu-btn { width: 33.4%; min-width: 300px; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
+.header-menu-btn { width: 33.4%; min-width: 250px; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
 .header-menu-btn:hover { background: #1a237e; }
 
 .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
 
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { width: 33.4%; min-width: 300px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.right-area { width: 33.4%; min-width: 280px; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 
 #modes-menu-container { display: flex; flex-direction: column; width: 100%; height: auto; margin: 0; padding: 0; }
-#modes-menu-container .mode-btn { width: 100%; height: 9.6vh; min-height: 60px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
+#modes-menu-container .mode-btn { width: 100%; height: 9.6vh; min-height: 50px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
 #modes-menu-container .mode-btn:hover { filter: brightness(1.1); }
 #modes-menu-container .mode-btn[data-mode="tens"] { background: #86efac; color: #064e3b; }
 #modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
@@ -25,12 +25,13 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 #modes-menu-container .mode-btn[data-mode="column"] { background: #c084fc; color: #3b0764; }
 #modes-menu-container .mode-btn[data-mode="division"] { background: #fca5a5; color: #7f1d1d; }
 
-.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; max-width: 280px; }
-.num-btn { background: white; border: 1px solid #ccc; border-radius: 12px; font-size: 2.8vh; font-weight: bold; padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 55px; }
+/* УМЕНЬШЕННЫЙ НУМПАД (на ~10%) */
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 250px; }
+.num-btn { background: white; border: 1px solid #ccc; border-radius: 10px; font-size: 2.4vh; font-weight: bold; padding: 8px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 45px; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
-.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 12px 0; font-size: 2.2vh; }
+.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 10px 0; font-size: 2vh; min-height: 40px; }
 
 .example-line { font-size: 3.2vh; font-weight: bold; color: #333; margin-bottom: 15px; text-align: left; animation: fadeIn 0.3s; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 5px; border-radius: 8px; cursor: pointer; }
 .example-line:hover { background: #f0f2f5; }
@@ -147,6 +148,33 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 .settings-save-btn { margin-top: 20px; background: #3f51b5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(63,81,181,0.2); transition: background 0.2s; }
 .settings-save-btn:hover { background: #2c387e; }
+
+/* ========== ОБЛАСТЬ ВИЗУАЛА (нижняя панель) ========== */
+#game-zone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    height: 32%;
+    background-color: #f0fdf4;
+    border-top: 2px dashed #4ade80;
+    box-shadow: inset 0 4px 6px rgba(0,0,0,0.02);
+    box-sizing: border-box;
+    padding: 10px 10px calc(10px + 3.3vh) 10px; /* Добавлен отступ снизу (1/30 высоты) */
+    overflow-y: auto;
+}
+
+/* В горизонтальном режиме (ландшафт) на мобильных устройствах */
+@media (orientation: landscape) and (max-height: 500px) {
+    .header { height: 10vh; min-height: 40px; }
+    .main-container { height: calc(100dvh - 10vh); }
+    #game-zone { 
+        height: 35%; /* Чуть увеличим высоту визуала, чтобы влезло больше */
+        padding-bottom: calc(10px + 5vh); /* Увеличим отступ снизу под навигацию */
+    }
+    .left-area, .right-area { height: 65%; }
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
