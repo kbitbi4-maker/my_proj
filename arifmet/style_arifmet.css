@@ -1,4 +1,4 @@
-/* version: v2.3 (Адаптация под горизонтальный режим: уменьшен нумпад, добавлен отступ снизу) */
+/* version: v2.4 (Резиновая сетка и адаптация под горизонтальный режим) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -25,7 +25,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 #modes-menu-container .mode-btn[data-mode="column"] { background: #c084fc; color: #3b0764; }
 #modes-menu-container .mode-btn[data-mode="division"] { background: #fca5a5; color: #7f1d1d; }
 
-/* УМЕНЬШЕННЫЙ НУМПАД (на ~10%) */
 .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; max-width: 250px; }
 .num-btn { background: white; border: 1px solid #ccc; border-radius: 10px; font-size: 2.4vh; font-weight: bold; padding: 8px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 45px; }
 .num-btn:active { background: #ddd; transform: scale(0.95); }
@@ -76,9 +75,11 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     flex-direction: column;
     background: #f8fafc;
     border-radius: 8px;
-    padding: 8px;
+    padding: 4px; /* Уменьшили padding для компактности */
     box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px #e2e8f0;
     margin: 0 auto;
+    max-height: 100%;
+    height: fit-content;
 }
 
 .col-row {
@@ -88,13 +89,14 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 }
 
 .col-cell {
-    width: clamp(24px, 6vmin, 40px);
-    height: clamp(24px, 6vmin, 40px);
+    /* Сделали размер ячейки зависимым от vmin, чтобы на узких экранах не было перебора */
+    width: clamp(20px, 5vmin, 36px);
+    height: clamp(20px, 5vmin, 36px);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: monospace;
-    font-size: clamp(16px, 4vmin, 28px);
+    font-size: clamp(14px, 3.5vmin, 24px);
     font-weight: bold;
     color: #1e293b;
     box-sizing: border-box;
@@ -104,8 +106,8 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     background: #e2e8f0;
     border-radius: 4px;
     margin: 1px;
-    width: calc(clamp(24px, 6vmin, 40px) - 2px);
-    height: calc(clamp(24px, 6vmin, 40px) - 2px);
+    width: calc(clamp(20px, 5vmin, 36px) - 2px);
+    height: calc(clamp(20px, 5vmin, 36px) - 2px);
     cursor: pointer;
     transition: background 0.15s;
 }
@@ -116,15 +118,15 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 .col-sign {
     position: absolute;
-    left: -25px;
+    left: -22px;
     color: #475569;
-    font-size: clamp(20px, 4.5vmin, 32px);
+    font-size: clamp(18px, 4vmin, 28px);
 }
 
 .col-row.divider {
     height: 2px;
     background: #475569;
-    margin: 4px 0 6px 0;
+    margin: 2px 0 4px 0;
     width: 100%;
     justify-content: flex-end;
 }
@@ -161,19 +163,36 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     border-top: 2px dashed #4ade80;
     box-shadow: inset 0 4px 6px rgba(0,0,0,0.02);
     box-sizing: border-box;
-    padding: 10px 10px calc(10px + 3.3vh) 10px; /* Добавлен отступ снизу (1/30 высоты) */
+    padding: 5px; /* Уменьшили общие отступы */
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-/* В горизонтальном режиме (ландшафт) на мобильных устройствах */
-@media (orientation: landscape) and (max-height: 500px) {
+/* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
+@media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; }
     .main-container { height: calc(100dvh - 10vh); }
+    
+    /* Увеличиваем область визуала на 10% (с 32 до 42%) */
     #game-zone { 
-        height: 35%; /* Чуть увеличим высоту визуала, чтобы влезло больше */
-        padding-bottom: calc(10px + 5vh); /* Увеличим отступ снизу под навигацию */
+        height: 42%; 
+        padding: 2px;
     }
-    .left-area, .right-area { height: 65%; }
+    .left-area, .right-area { 
+        height: 58%; /* Соответственно уменьшаем верхнюю часть */
+    }
+    
+    /* Дополнительно сжимаем сетку в ландшафте */
+    .col-cell {
+        width: clamp(18px, 4.5vmin, 30px);
+        height: clamp(18px, 4.5vmin, 30px);
+        font-size: clamp(12px, 3vmin, 20px);
+    }
+    .col-cell.clickable {
+        width: calc(clamp(18px, 4.5vmin, 30px) - 2px);
+        height: calc(clamp(18px, 4.5vmin, 30px) - 2px);
+    }
+    .col-sign { left: -18px; font-size: clamp(14px, 3vmin, 22px); }
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
