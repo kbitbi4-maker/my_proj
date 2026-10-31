@@ -1,16 +1,21 @@
-// version: v1.3 (Добавлена кнопка настроек)
+// version: v1.4 (Добавлен обработчик квадратной кнопки "Назад")
 import { toggleMenuMode, handleModeSelection } from './menu.js';
 import { pressNum, confirmAndNext } from './numpad.js';
 import { openProjectMap, closeProjectMap, copyProjectMap } from './project_map.js';
 import { renderSettings } from './settings.js';
 
-// Слушатели оригинального модального окна карты
+// Слушатели модального окна карты
 document.getElementById('project-map-btn')?.addEventListener('click', openProjectMap);
 document.getElementById('close-map-btn')?.addEventListener('click', closeProjectMap);
 document.getElementById('copy-map-btn')?.addEventListener('click', copyProjectMap);
 
-// Слушатель кнопки настроек
+// Кнопка настроек
 document.getElementById('settings-btn')?.addEventListener('click', renderSettings);
+
+// Кнопка "Назад" (возврат в главное меню)
+document.getElementById('back-btn')?.addEventListener('click', () => {
+    window.location.href = '../index.html';
+});
 
 document.getElementById('menu-toggle-btn')?.addEventListener('click', toggleMenuMode);
 
