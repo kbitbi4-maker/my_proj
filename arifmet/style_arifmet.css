@@ -1,4 +1,4 @@
-/* version: v3.6 (Кнопки в шапке без рамок и отступов, градиент цвета) */
+/* version: v3.7 (Строгое чередование цветов кнопок шапки без отступов и рамок) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -17,51 +17,55 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     box-shadow: 0 2px 10px rgba(0,0,0,0.3); 
     flex-shrink: 0; 
     padding: 0; 
+    margin: 0;
 }
 
-/* Общие стили для 3 квадратных кнопок слева */
+/* Группа левых квадратных кнопок */
+.header-icons {
+    display: flex;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
 .nav-square-btn, .icon-btn { 
     color: white; 
-    border: none; /* Убрали рамки */
+    border: none; 
     cursor: pointer; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    transition: filter 0.2s; 
     padding: 0;
+    margin: 0;
     flex-shrink: 0;
     aspect-ratio: 1 / 1; 
     height: 100%; 
     font-family: monospace; 
-    border-radius: 0; /* Убрали скругления */
+    border-radius: 0; 
+    outline: none;
 }
-.nav-square-btn:hover, .icon-btn:hover { filter: brightness(1.1); }
 
-/* Градиент цветов (от светлого к темному) */
+/* Чередование цветов: Назад = Режим, Карта = Шапка, Настройки = Режим */
 .nav-square-btn { 
-    background: #c3cbf7; /* Самый светлый (+60% к #3f51b5) */
+    background: #2c387e; 
     font-size: 4.8vh; 
-    color: #1a237e; /* Темный текст для контраста со светлым фоном */
 }
+.nav-square-btn:hover { background: #1a237e; }
+
 .icon-btn.map-btn { 
-    background: #97a4ec; /* Средний (+30% к #3f51b5) */
+    background: #3f51b5; 
     font-size: 2.4vh;
-    color: #1a237e;
 }
+.icon-btn.map-btn:hover { background: #32408f; }
+
 .icon-btn.settings-btn { 
-    background: #6b7ce0; /* Темнее (+15% к #3f51b5) */
+    background: #2c387e; 
     font-size: 2.4vh;
 }
+.icon-btn.settings-btn:hover { background: #1a237e; }
 
-/* Контейнер для иконок без отступов */
-.header-icons { 
-    display: flex; 
-    gap: 0; /* Убрали отступы */
-    margin-left: 0;
-    flex-shrink: 0;
-}
-
-/* Кнопка режима (ширина 33.4%) */
+/* Кнопка режима */
 .header-menu-btn { 
     width: 33.4%; 
     height: 100%; 
