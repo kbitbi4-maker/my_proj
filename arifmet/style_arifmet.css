@@ -1,6 +1,6 @@
-/* version: v2.1 (Полный код стилей: адаптивность + сетка столбика + фиксы) */
+/* version: v2.2 (Добавлены стили для страницы настроек и кнопки-шестеренки) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
-body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; /* Fallback ниже */ }
+body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
 .header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 60px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
@@ -127,6 +127,26 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     width: 100%;
     justify-content: flex-end;
 }
+
+/* ========== СТИЛИ НАСТРОЕК ========== */
+.settings-container { padding: 20px; font-family: sans-serif; max-width: 600px; }
+.settings-container h2 { margin-top: 0; color: #334155; display: flex; align-items: center; gap: 10px; font-size: 24px; }
+.settings-container p { color: #64748b; margin-bottom: 20px; font-size: 14px; }
+
+.settings-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.settings-card h3 { margin: 0 0 10px 0; font-size: 18px; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+.settings-card.disabled { background: #f1f5f9; border: 1px solid #e2e8f0; opacity: 0.7; }
+
+.settings-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+.settings-row label { font-weight: bold; color: #475569; font-size: 15px; }
+.settings-row input[type="number"] { padding: 8px 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 16px; font-weight: bold; width: 80px; outline: none; transition: border-color 0.2s; }
+.settings-row input[type="number"]:focus { border-color: #3f51b5; }
+
+.settings-hint { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+.settings-soon { font-weight: bold; color: #94a3b8; font-size: 14px; }
+
+.settings-save-btn { margin-top: 20px; background: #3f51b5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(63,81,181,0.2); transition: background 0.2s; }
+.settings-save-btn:hover { background: #2c387e; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
