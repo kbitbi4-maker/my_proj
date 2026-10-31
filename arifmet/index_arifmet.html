@@ -1,4 +1,4 @@
-<!-- version: v1.7 (Убрана текстовая версия и надпись с кнопки карты для стабильной ширины шапки) -->
+<!-- version: v1.8 (Изменена шапка: квадратная кнопка "Назад", уменьшена высота) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,10 +10,15 @@
 <body>
 
     <div class="header">
-        <a href="../index.html" title="Главное меню">←</a>
-        <!-- Версия перенесена в title для отладки, чтобы не занимать место -->
-        <button id="project-map-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:2vh; margin-left:15px;" title="Карта проекта 🗺️">🗺️</button>
-        <button id="settings-btn" style="background:#475569; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:2vh; margin-left:10px;" title="Настройки">⚙️</button>
+        <!-- Кнопка "Назад" теперь квадратная и синяя -->
+        <button id="back-btn" class="nav-square-btn" title="Главное меню">←</button>
+        
+        <!-- Контейнер для кнопок-иконок -->
+        <div class="header-icons">
+            <button id="project-map-btn" class="icon-btn" title="Карта проекта 🗺️">🗺️</button>
+            <button id="settings-btn" class="icon-btn" title="Настройки">⚙️</button>
+        </div>
+        
         <div class="header-menu-btn" id="menu-toggle-btn">Режим: Выбрать ▼</div>
     </div>
 
