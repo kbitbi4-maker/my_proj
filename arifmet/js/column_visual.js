@@ -1,4 +1,4 @@
-// version: v3.3 (Добавлены отступы между разрядами и серый фон ячеек)
+// version: v3.4 (Исправлено позиционирование отступов между разрядами)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 
@@ -34,8 +34,9 @@ export function renderColumnVisual() {
     function cell(content, isClickable, digitPosFromRight, extraClass = '') {
         let cls = `col-cell ${isClickable ? 'clickable' : ''} ${extraClass}`.trim();
         
-        // Добавляем отступ для тысяч, миллионов (каждый 3-й разряд справа)
-        if (digitPosFromRight > 0 && digitPosFromRight % 3 === 0) {
+        // Добавляем отступ ПЕРЕД тысячами (т.е. для сотен, которые идут левее)
+        // Если digitPosFromRight === 3 (тысячи), то отступ должен быть у digitPosFromRight === 2 (сотни)
+        if (digitPosFromRight > 0 && digitPosFromRight % 3 === 2) {
             cls += ' group-gap';
         }
         
@@ -55,7 +56,6 @@ export function renderColumnVisual() {
             carryClickable = true;
             carryContent = carries[posFromRight] || '';
         }
-        // Если перенос пустой и не кликабельный (т.е. единицы) - делаем прозрачным
         const carryEmptyClass = (!carryClickable && !carryContent) ? 'empty-cell' : '';
         rowCarry += cell(carryContent, carryClickable, posFromRight, carryEmptyClass);
 
@@ -97,7 +97,7 @@ export function renderColumnVisual() {
         `;
     }
 
-    const cacheKey = `${item.exampleText}_col_v3.3_${report.phase}_${userAns}_${JSON.stringify(carries)}`;
+    const cacheKey = `${item.exampleText}_col_v3.4_${report.phase}_${userAns}_${JSON.stringify(carries)}`;
     GameCanvas.renderZoneScene(gridHTML, cacheKey);
 
     // Обработчики кликов по переносам
