@@ -1,4 +1,4 @@
-// version: v1.7 (Добавлен независимый рендер истории для режима "В столбик")
+// version: v1.8 (Интеграция с настройками сложности для режима "В столбик")
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 import { renderAdditionVisual } from './addition_visual.js';
@@ -6,6 +6,7 @@ import { renderSubtractionVisual } from './subtraction_visual.js';
 import { renderAdditionHundredsVisual } from './addition_hundreds_visual.js';
 import { renderSubtractionHundredsVisual } from './subtraction_hundreds_visual.js';
 import { renderColumnVisual } from './column_visual.js';
+import { settings } from './settings.js'; // Импортируем настройки
 
 let isAddition = true;
 
@@ -23,24 +24,64 @@ export function generateExample() {
     if (!state.usedExamples) state.usedExamples = [];
     let num1, num2, correctValue, text;
 
-    const isHundreds = state.currentMode === 'hundreds' || state.currentMode === 'column';
-    const min = isHundreds ? 100 : 10;
-    const max = isHundreds ? 900 : 90;
+    const isColumn = state.currentMode === 'column';
+    const isHundreds = state.currentMode === 'hundreds';
 
-    if (isAddition) {
-        while (true) {
-            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-            let sum = num1 + num2;
-            if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
-                text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+    if (isColumn) {
+        // Используем настройку значности
+        const digits = settings.columnDigits || 2;
+        const min = Math.pow(10, digits - 1);
+        const max = Math.pow(10, digits) - 1;
+
+        if (isAddition) {
+            while (true) {
+                num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+                num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+                
+                // Для столбика не обязательно жестко требовать переноса через десяток, 
+                // чтобы избежать зависаний на однозначных (1+1=2), 
+                // просто генерируем случайные числа нужной длины.
+                text = `${num1}+${num2}`;
+                if (!state.usedExamples.includes(text)) { 
+                    correctValue = num1 + num2; 
+                    break; 
+                }
+            }
+        } else {
+            while (true) {
+                num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+                num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+                
+                // Вычитание: первое число должно быть больше второго, чтобы не было отрицательных
+                if (num1 > num2) { 
+                    text = `${num1}-${num2}`;
+                    if (!state.usedExamples.includes(text)) { 
+                        correctValue = num1 - num2; 
+                        break; 
+                    } 
+                }
             }
         }
     } else {
-        while (true) {
-            num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
-            let ones1 = num1 % 10, ones2 = num2 % 10;
-            if (num1 > num2 && ones2 !== 0) { 
-                text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+        // Старая логика для Десятков, Сотен и Микса
+        const min = isHundreds ? 100 : 10;
+        const max = isHundreds ? 900 : 90;
+
+        if (isAddition) {
+            while (true) {
+                num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+                let sum = num1 + num2;
+                if ((num1 % 10 + num2 % 10) > 10 && sum < (isHundreds ? 1000 : 100)) { 
+                    text = `${num1}+${num2}`; if (!state.usedExamples.includes(text)) { correctValue = sum; break; } 
+                }
+            }
+        } else {
+            while (true) {
+                num1 = Math.floor(Math.random() * max) + min; num2 = Math.floor(Math.random() * max) + min;
+                let ones1 = num1 % 10, ones2 = num2 % 10;
+                if (num1 > num2 && ones2 !== 0) { 
+                    text = `${num1}-${num2}`; if (!state.usedExamples.includes(text)) { correctValue = num1 - num2; break; } 
+                }
             }
         }
     }
@@ -87,7 +128,7 @@ export function getTensHistoryHTML(item, index, mode) {
         return { simHTML, finHTML };
     }
 
-    // СТАНДАРТНЫЙ РЕНДЕРИНГ (ВОССТАНОВЛЕН ПОЛНОСТЬЮ)
+    // СТАНДАРТНЫЙ РЕНДЕРИНГ ДЛЯ ОСТАЛЬНЫХ РЕЖИМОВ
     const parts = item.currentInput.split('='), simText = parts.at(0) || '', finText = parts.at(1) || '';
     let simHTML = ` = <span class="block">${simText || '_'}</span>`;
     if (item.currentInput.includes('=')) simHTML = ` = <span class="block ${report.simCorrect ? 'block-correct' : 'block-incorrect'}">${simText || '?'}</span>`;
