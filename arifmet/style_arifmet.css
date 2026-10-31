@@ -1,4 +1,4 @@
-/* version: v2.0 (Адаптация под мобильные экраны, сетка 12x6, стили для режима "В столбик") */
+/* version: v2.1 (Полный код стилей: адаптивность + сетка столбика + фиксы) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; /* Fallback ниже */ }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -69,16 +69,64 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .hundred-crystal.mixed { background: linear-gradient(180deg, #fb7185 0%, #be123c 45%, #c084fc 55%, #7e22ce 100%); }
 .hundred-crystal.empty { background: #ffffff !important; border: 1px solid #000 !important; box-shadow: 0 0 0 1px #000 !important; animation: none !important; opacity: 0.4; }
 
-/* ========== СТИЛИ ДЛЯ РЕЖИМА "В СТОЛБИК" (СЕТКА 12x6) ========== */
-.column-math-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 10px; box-sizing: border-box; }
-.grid-wrapper { display: flex; flex-direction: column; gap: 2px; background: #f8fafc; border-radius: 8px; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px #e2e8f0; }
-.grid-row { display: flex; gap: 2px; }
-.grid-cell { width: clamp(28px, 5.5vmin, 48px); height: clamp(28px, 5.5vmin, 48px); display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: clamp(16px, 3vmin, 28px); font-weight: bold; color: #1e293b; border-radius: 4px; user-select: none; }
-.carry-box-clickable { background: #e2e8f0; cursor: pointer; transition: background 0.15s, transform 0.1s; }
-.carry-box-clickable:hover { background: #cbd5e1; }
-.carry-box-clickable:active { transform: scale(0.92); }
-.ans-correct { color: #155724 !important; background: #d4edda !important; }
-.ans-incorrect { color: #721c24 !important; background: #f8d7da !important; }
+/* ========== СТИЛИ ДЛЯ РЕЖИМА "В СТОЛБИК" ========== */
+.col-grid {
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 0 0 1px #e2e8f0;
+    margin: 0 auto;
+}
+
+.col-row {
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+}
+
+.col-cell {
+    width: clamp(24px, 6vmin, 40px);
+    height: clamp(24px, 6vmin, 40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: clamp(16px, 4vmin, 28px);
+    font-weight: bold;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+.col-cell.clickable {
+    background: #e2e8f0;
+    border-radius: 4px;
+    margin: 1px;
+    width: calc(clamp(24px, 6vmin, 40px) - 2px);
+    height: calc(clamp(24px, 6vmin, 40px) - 2px);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.col-cell.clickable:hover { background: #cbd5e1; }
+
+.col-cell.ans-correct { color: #155724 !important; background: #d4edda !important; border-radius: 4px;}
+.col-cell.ans-incorrect { color: #721c24 !important; background: #f8d7da !important; border-radius: 4px;}
+
+.col-sign {
+    position: absolute;
+    left: -25px;
+    color: #475569;
+    font-size: clamp(20px, 4.5vmin, 32px);
+}
+
+.col-row.divider {
+    height: 2px;
+    background: #475569;
+    margin: 4px 0 6px 0;
+    width: 100%;
+    justify-content: flex-end;
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes monsterJump { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-20px) scale(1.05); box-shadow: 0 15px 20px rgba(74, 222, 128, 0.2); border-color: #4ade80 !important; } }
