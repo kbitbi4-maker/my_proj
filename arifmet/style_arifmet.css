@@ -1,4 +1,4 @@
-/* version: v2.9 (Полная адаптация нумпада: не шире родителя, вписывается по высоте) */
+/* version: v3.0 (Удалены жесткие проценты в ландшафте, Flexbox распределяет пространство) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -12,6 +12,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
 
+/* Верхняя часть (игра) - растягивается */
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
 .right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; overflow: hidden; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
@@ -20,7 +21,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .numpad { 
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
-    grid-template-rows: repeat(5, 1fr) auto; /* 5 рядов кнопок и 1 авто для "Следующий пример" */
+    grid-template-rows: repeat(5, 1fr) auto; 
     gap: clamp(4px, 1vmin, 8px); 
     width: 100%; 
     max-width: 100%; 
@@ -51,7 +52,6 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
 
-/* Кнопка "Следующий пример" */
 .num-btn.next { 
     background: #4caf50; 
     color: white; 
@@ -221,8 +221,26 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; }
-    #game-zone { height: 42%; padding: 2px; }
-    .left-area, .right-area { height: 58%; }
+    
+    /* Убираем жесткие проценты, даем Flexbox самому распределить место */
+    .main-container { flex-direction: column; }
+    
+    /* Верхняя часть (игра) занимает все свободное место */
+    .main-container > div:first-child { 
+        flex: 1; 
+        min-height: 0; 
+        height: auto !important; 
+    }
+    
+    #game-zone { 
+        height: 40%; /* Чуть увеличили визуал для ландшафта */
+        padding: 2px; 
+        flex-shrink: 0;
+    }
+    
+    .left-area, .right-area { 
+        height: 100% !important; /* Растягиваем на всю доступную высоту верхней части */
+    }
     
     .col-cell {
         width: clamp(18px, 4.5vmin, 30px);
