@@ -1,58 +1,65 @@
-/* version: v2.6 (Убраны ограничения min-width для кнопки режима, оптимизирована шапка) */
+/* version: v2.8 (Квадратные кнопки нумпада, широкая кнопка "Следующий пример") */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
 
-.header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 50px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+.header { display: flex; align-items: center; justify-content: space-between; background: #3f51b5; color: white; position: sticky; top: 0; z-index: 1000; height: 9.6vh; min-height: 50px; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.3); flex-shrink: 0; }
 .header a { color: white; text-decoration: none; font-size: 3.5vh; font-weight: bold; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding-left: 15px; }
-.version { display: none; /* Скрыто, чтобы не ломать шапку */ }
+.version { display: none; }
 
-/* Кнопка режима занимает ровно 33.4% ширины, без min-width */
 .header-menu-btn { width: 33.4%; height: 100%; background: #2c387e; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 2vh; box-sizing: border-box; transition: background 0.2s; }
 .header-menu-btn:hover { background: #1a237e; }
 
-.main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding-bottom: env(safe-area-inset-bottom); box-sizing: border-box; }
+.main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
 
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
+.right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 
-/* НУМПАД: Абсолютное центрирование для стабильности на любых экранах */
+/* НУМПАД: Кнопки квадратные (aspect-ratio), последняя на всю ширину */
 .numpad { 
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
-    gap: 6px; 
-    width: 90%; 
-    max-width: 260px; 
-    max-height: 95%;
+    gap: 8px; 
+    width: 100%; 
+    max-width: 280px; 
+    margin: 0 auto;
 }
+
 .num-btn { 
     background: white; 
     border: 1px solid #ccc; 
     border-radius: 10px; 
-    font-size: 2.4vh; 
+    font-size: clamp(16px, 3vmin, 24px); 
     font-weight: bold; 
-    padding: 8px 0; 
     cursor: pointer; 
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    min-height: 45px; 
+    aspect-ratio: 1 / 1; /* Делает кнопку строго квадратной */
+    width: 100%;
+    padding: 0;
 }
+
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
-.num-btn.next { background: #4caf50; color: white; grid-column: span 3; padding: 10px 0; font-size: 2vh; min-height: 40px; }
+
+/* Кнопка "Следующий пример": ширина как у 3 кнопок + 2 отступа (gap) */
+.num-btn.next { 
+    background: #4caf50; 
+    color: white; 
+    grid-column: span 3; 
+    aspect-ratio: auto; /* Убираем квадрат */
+    height: clamp(40px, 6vmin, 60px); /* Задаем фиксированную высоту по вкусу */
+    font-size: clamp(14px, 2.2vmin, 20px);
+}
 
 .right-area.menu-active .numpad { display: none; }
 
 #modes-menu-container { display: flex; flex-direction: column; width: 100%; height: 100%; overflow-y: auto; margin: 0; padding: 0; }
-#modes-menu-container .mode-btn { width: 100%; flex: 1; min-height: 50px; font-size: 2.2vh; border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
+#modes-menu-container .mode-btn { width: 100%; flex: 1; min-height: 40px; font-size: clamp(14px, 2.5vmin, 22px); border: none; border-bottom: 1px solid rgba(255,255,255,0.4); border-radius: 0; margin: 0; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: none; transition: filter 0.2s; }
 #modes-menu-container .mode-btn:hover { filter: brightness(1.1); }
 #modes-menu-container .mode-btn[data-mode="tens"] { background: #86efac; color: #064e3b; }
 #modes-menu-container .mode-btn[data-mode="multiplication"] { background: #fde047; color: #451a03; }
@@ -75,7 +82,7 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 .crystal-truck { display: flex; align-items: center; position: relative; }
 .crystal-deck { display: flex; gap: 4px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; padding: 6px; min-height: 95px; align-items: flex-end; box-sizing: border-box; }
-.crystal-column { display: flex; flex-direction: column-reverse; gap: 1px; }
+.crystal-column { display: flex; flex-direction: column; gap: 1px; }
 .crystal-item { width: 12px; height: 7px; background: #38bdf8; border: 1px solid #0284c7; border-radius: 1px; box-shadow: inset 0 1px 2px rgba(255,255,255,0.4); }
 .crystal-column .crystal-item:nth-last-child(5) { margin-bottom: 4px; }
 .orange-theme .crystal-item { background: #fb923c; border: 1px solid #ea580c; }
@@ -202,12 +209,12 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
     padding: 5px;
     overflow-y: auto;
     overflow-x: hidden;
+    flex-shrink: 0;
 }
 
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; }
-    .main-container { height: calc(100dvh - 10vh); }
     #game-zone { height: 42%; padding: 2px; }
     .left-area, .right-area { height: 58%; }
     
