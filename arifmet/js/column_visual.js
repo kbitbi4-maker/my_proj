@@ -1,4 +1,4 @@
-// version: v3.1 (Исправлено позиционирование, Grid-сетка, фикс наложения)
+// version: v3.2 (Универсальные переносы для любого количества знаков)
 import { state } from './state.js';
 import { GameCanvas } from './game_canvas.js';
 
@@ -16,8 +16,9 @@ export function renderColumnVisual() {
     const num1 = parseInt(nums[0], 10);
     const num2 = parseInt(nums[1], 10);
 
+    // Инициализация состояния переносов (объект для хранения по индексу)
     if (!carryState[state.activeIndex]) {
-        carryState[state.activeIndex] = { thousands: '', hundreds: '', tens: '' };
+        carryState[state.activeIndex] = {};
     }
     const carries = carryState[state.activeIndex];
 
@@ -30,28 +31,25 @@ export function renderColumnVisual() {
     const paddedAns = userAns.padStart(maxLen, ' ');
 
     // Вспомогательная функция: рендер одной ячейки
-    function cell(content, isClickable, digitType, extraClass = '') {
+    function cell(content, isClickable, digitPosFromRight, extraClass = '') {
         const cls = `col-cell ${isClickable ? 'clickable' : ''} ${extraClass}`.trim();
-        const data = isClickable ? `data-digit="${digitType}"` : '';
+        const data = isClickable ? `data-pos="${digitPosFromRight}"` : '';
         return `<div class="${cls}" ${data}>${content || ''}</div>`;
     }
 
     // Генерируем ряды
-    let rowCarry = '', rowNum1 = '', rowNum2 = '', rowAns = '', rowSign = '';
+    let rowCarry = '', rowNum1 = '', rowNum2 = '', rowAns = '';
 
     for (let i = 0; i < maxLen; i++) {
         const posFromRight = maxLen - 1 - i; // 0 - единицы, 1 - десятки, ...
         
         // Ряд переносов
-        let carryContent = '', carryClickable = false, carryType = '';
+        let carryContent = '', carryClickable = false;
         if (posFromRight > 0) { // Квадратик есть только над десятками и выше
             carryClickable = true;
-            if (posFromRight === 1) carryType = 'tens';
-            else if (posFromRight === 2) carryType = 'hundreds';
-            else if (posFromRight === 3) carryType = 'thousands';
-            carryContent = carries[carryType] || '';
+            carryContent = carries[posFromRight] || '';
         }
-        rowCarry += cell(carryContent, carryClickable, carryType);
+        rowCarry += cell(carryContent, carryClickable, posFromRight);
 
         // Ряды с числами
         const ch1 = s1[i], ch2 = s2[i];
@@ -64,7 +62,7 @@ export function renderColumnVisual() {
         // Ряд ответа
         const chAns = paddedAns[i];
         const ansClass = report.isFullySolved ? 'ans-correct' : (report.isWrongAnswer ? 'ans-incorrect' : '');
-        rowAns += cell(chAns === ' ' ? '_' : chAns, false, '', ansClass);
+        rowAns += cell(chAns === ' ' ? '_' : chAns, false, -1, ansClass);
     }
 
     // Собираем сетку в зависимости от режима (Сложение/Вычитание)
@@ -91,7 +89,7 @@ export function renderColumnVisual() {
         `;
     }
 
-    const cacheKey = `${item.exampleText}_col_v3.1_${report.phase}_${userAns}_${carries.thousands}_${carries.hundreds}_${carries.tens}`;
+    const cacheKey = `${item.exampleText}_col_v3.2_${report.phase}_${userAns}_${JSON.stringify(carries)}`;
     GameCanvas.renderZoneScene(gridHTML, cacheKey);
 
     // Обработчики кликов по переносам
@@ -99,15 +97,17 @@ export function renderColumnVisual() {
     if (container) {
         container.querySelectorAll('.col-cell.clickable').forEach(box => {
             box.addEventListener('click', (e) => {
-                const digitType = e.currentTarget.getAttribute('data-digit');
-                if (!digitType) return;
-                let currentVal = carryState[state.activeIndex][digitType];
+                const posStr = e.currentTarget.getAttribute('data-pos');
+                if (posStr === null) return;
+                const pos = parseInt(posStr, 10);
+                
+                let currentVal = carries[pos] || '';
                 
                 // Цикл: '' -> '1' -> ''
                 if (currentVal === '') currentVal = '1';
                 else currentVal = '';
 
-                carryState[state.activeIndex][digitType] = currentVal;
+                carries[pos] = currentVal;
                 renderColumnVisual();
             });
         });
