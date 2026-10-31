@@ -1,4 +1,4 @@
-/* version: v3.0 (Удалены жесткие проценты в ландшафте, Flexbox распределяет пространство) */
+/* version: v3.1 (Математически точный расчет квадратов нумпада через aspect-ratio) */
 html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; overscroll-behavior-y: none; touch-action: pan-x pan-y; overflow: hidden; }
 body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dvh; }
 @supports not (height: 100dvh) { body { height: 100vh; } }
@@ -12,54 +12,56 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 
 .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; box-sizing: border-box; }
 
-/* Верхняя часть (игра) - растягивается */
 .left-area { width: 66.6%; display: flex; flex-direction: column; background: #ffffff; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-.right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; overflow: hidden; }
+.right-area { width: 33.4%; background: #e4e7eb; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-left: 2px solid #ccc; position: relative; overflow: hidden; }
 .right-area.menu-active { justify-content: flex-start !important; padding: 0 !important; border-left: none; }
 
-/* НУМПАД: Адаптивный, не вылезает за пределы родителя */
+/* НУМПАД: Математически выверенная сетка */
 .numpad { 
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
-    grid-template-rows: repeat(5, 1fr) auto; 
-    gap: clamp(4px, 1vmin, 8px); 
-    width: 100%; 
-    max-width: 100%; 
-    height: 100%;
+    /* Высота контейнера определяется содержимым, но не превышает 100% родителя */
+    width: auto; 
+    max-width: 100%;
     max-height: 100%;
-    padding: 2px;
-    box-sizing: border-box;
+    gap: clamp(4px, 1.2vmin, 10px);
+    margin: auto; /* Центрируем по вертикали и горизонтали */
 }
 
 .num-btn { 
     background: white; 
     border: 1px solid #ccc; 
     border-radius: 8px; 
-    font-size: clamp(14px, 2.8vmin, 24px); 
+    /* Шрифт будет масштабироваться в зависимости от ширины кнопки */
+    font-size: clamp(14px, 3.5vmin, 24px); 
     font-weight: bold; 
     cursor: pointer; 
     box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    width: 100%;
-    height: 100%;
-    padding: 0;
+    /* ГЛАВНАЯ МАГИЯ: кнопка всегда квадратная */
+    aspect-ratio: 1 / 1;
+    width: 100%; 
     box-sizing: border-box;
+    padding: 0;
 }
 
 .num-btn:active { background: #ddd; transform: scale(0.95); }
 .num-btn.clear { background: #ff4b2b; color: white; }
 .num-btn.op { background: #ff9800; color: white; }
 
+/* Кнопка "Следующий пример" (ширина 3 квадрата + 2 отступа) */
 .num-btn.next { 
     background: #4caf50; 
     color: white; 
     grid-column: span 3; 
-    height: clamp(30px, 6vmin, 50px); 
-    font-size: clamp(12px, 2.2vmin, 20px);
-    border-radius: 8px;
-    margin-top: 2px;
+    aspect-ratio: auto; /* Отменяем квадрат */
+    /* Высота равна высоте одной квадратной кнопки */
+    height: auto;
+    padding: clamp(6px, 1vmin, 12px) 0;
+    font-size: clamp(12px, 2.5vmin, 18px);
+    margin-top: 4px;
 }
 
 .right-area.menu-active .numpad { display: none; }
@@ -221,26 +223,10 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
 /* АДАПТАЦИЯ ПОД ГОРИЗОНТАЛЬНЫЙ РЕЖИМ */
 @media (orientation: landscape) and (max-height: 600px) {
     .header { height: 10vh; min-height: 40px; }
-    
-    /* Убираем жесткие проценты, даем Flexbox самому распределить место */
     .main-container { flex-direction: column; }
-    
-    /* Верхняя часть (игра) занимает все свободное место */
-    .main-container > div:first-child { 
-        flex: 1; 
-        min-height: 0; 
-        height: auto !important; 
-    }
-    
-    #game-zone { 
-        height: 40%; /* Чуть увеличили визуал для ландшафта */
-        padding: 2px; 
-        flex-shrink: 0;
-    }
-    
-    .left-area, .right-area { 
-        height: 100% !important; /* Растягиваем на всю доступную высоту верхней части */
-    }
+    .main-container > div:first-child { flex: 1; min-height: 0; height: auto !important; }
+    #game-zone { height: 38%; padding: 2px; flex-shrink: 0; }
+    .left-area, .right-area { height: 100% !important; }
     
     .col-cell {
         width: clamp(18px, 4.5vmin, 30px);
@@ -248,6 +234,11 @@ body { display: flex; flex-direction: column; background: #f0f2f5; height: 100dv
         font-size: clamp(12px, 3vmin, 20px);
     }
     .col-sign { left: -18px; font-size: clamp(14px, 3vmin, 22px); }
+    
+    /* Уменьшаем отступы в нумпаде для ландшафта */
+    .numpad { gap: 4px; padding: 4px; }
+    .num-btn { font-size: clamp(12px, 3vmin, 20px); }
+    .num-btn.next { padding: 4px 0; font-size: clamp(10px, 2.2vmin, 16px); }
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
